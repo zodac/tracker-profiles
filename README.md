@@ -12,7 +12,7 @@ Open the [ProfileScreenshotter.java](./profile/src/main/java/me/zodac/tracker/Pr
 
 ### Environment Variables
 
-The following two environment variables need to be set, in order to redact sensitive information from the screenshot:
+The following two environment variables need to be set, in order to redact sensitive information from the screenshot.
 
 | Environment Variable | Description          |
 |----------------------|----------------------|
@@ -26,13 +26,13 @@ information here.
 
 ### Output Directory
 
-Each screenshot will be stored in a directory **screenshots** in the root of this project.
+Each screenshot will be stored in a directory called `screenshots` in the root of this project.
 
 ## Supporting New Trackers
 
 All supported private trackers have an implementation found in the [handler](./profile/src/main/java/me/zodac/tracker/handler) package. To add a new
 one, extend [TrackerHandler.java](./profile/src/main/java/me/zodac/tracker/framework/TrackerHandler.java), following the convention from an existing
-implementation like [AitherHandler.java](./profile/src/main/java/me/zodac/tracker/handler/AitherHandler.java).
+implementation, like [AitherHandler.java](./profile/src/main/java/me/zodac/tracker/handler/AitherHandler.java).
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
 screenshots. While we usually run in headless mode, this can be updated
