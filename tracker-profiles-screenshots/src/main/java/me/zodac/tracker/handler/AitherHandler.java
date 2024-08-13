@@ -20,27 +20,40 @@ package me.zodac.tracker.handler;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandler;
-import me.zodac.tracker.framework.TrackerType;
-import me.zodac.tracker.util.ScriptExecutor;
+import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.framework.TrackerInfo;
+import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.SearchContext;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 
-@TrackerType(trackerName = "Aither")
+/**
+ * Implementation of {@link TrackerHandler} for the {@code Aither} tracker.
+ */
+@TrackerHandlerType(trackerName = "Aither", accessibility = TrackerAccessibility.PRIVATE)
 public class AitherHandler extends TrackerHandler {
 
+    /**
+     * Default constructor.
+     *
+     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     */
+    public AitherHandler(final ChromeDriver driver) {
+        super(driver);
+    }
+
     @Override
-    public void openLoginPage(final WebDriver driver, final TrackerInfo trackerInfo) {
+    public void openLoginPage(final TrackerInfo trackerInfo) {
         driver.navigate().to(trackerInfo.loginLink());
     }
 
     @Override
-    public void login(final WebDriver driver, final TrackerInfo trackerInfo) {
+    public void login(final TrackerInfo trackerInfo) {
         final WebElement username = driver.findElement(By.id("username"));
         username.clear();
         username.sendKeys(trackerInfo.username());
@@ -55,12 +68,14 @@ public class AitherHandler extends TrackerHandler {
         ScriptExecutor.waitForPageToLoad(driver, Duration.of(10, ChronoUnit.SECONDS));
     }
 
-    public void openProfilePage(final WebDriver driver, final TrackerInfo trackerInfo) {
+    @Override
+    public void openProfilePage(final TrackerInfo trackerInfo) {
         driver.navigate().to(trackerInfo.profilePage());
         ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
-    public boolean canCookieBannerBeCleared(final WebDriver driver) {
+    @Override
+    public boolean canCookieBannerBeCleared() {
         final WebElement alertElement = driver.findElement(By.className("alerts"));
         final WebElement cookieButton = alertElement.findElement(By.tagName("button"));
         cookieButton.click();
@@ -71,14 +86,15 @@ public class AitherHandler extends TrackerHandler {
         return true;
     }
 
-    public List<WebElement> getElementsToBeMasked(final WebDriver driver) {
-        final List<WebElement> elementsToBeMasked = new ArrayList<>();
-        elementsToBeMasked.addAll(ipAddressElements(driver));
-        elementsToBeMasked.addAll(emailAddressElements(driver));
+    @Override
+    public Collection<WebElement> getElementsToBeMasked() {
+        final Collection<WebElement> elementsToBeMasked = new ArrayList<>();
+        elementsToBeMasked.addAll(ipAddressElements());
+        elementsToBeMasked.addAll(emailAddressElements());
         return elementsToBeMasked;
     }
 
-    private static List<WebElement> ipAddressElements(final SearchContext driver) {
+    private List<WebElement> ipAddressElements() {
         return driver
             .findElements(By.tagName("td"))
             .stream()
@@ -86,7 +102,7 @@ public class AitherHandler extends TrackerHandler {
             .toList();
     }
 
-    private static List<WebElement> emailAddressElements(final SearchContext driver) {
+    private List<WebElement> emailAddressElements() {
         return driver
             .findElements(By.tagName("dd"))
             .stream()

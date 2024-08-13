@@ -17,17 +17,18 @@
 
 package me.zodac.tracker.framework;
 
-import org.apache.commons.csv.CSVRecord;
+/**
+ * Enum defining the accessibility of a given tracker.
+ */
+public enum TrackerAccessibility {
 
-public record TrackerInfo(String name, String loginLink, String profilePage, String username, String password) {
+    /**
+     * A private tracker, often invite-only, or requiring an interview.
+     */
+    PRIVATE,
 
-    public static TrackerInfo fromCsv(final CSVRecord csvRecord) {
-        return new TrackerInfo(
-            csvRecord.get("name"),
-            csvRecord.get("loginLink"),
-            csvRecord.get("profilePage"),
-            csvRecord.get("username"),
-            csvRecord.get("password")
-        );
-    }
+    /**
+     * A public tracker, available to all to use.
+     */
+    PUBLIC
 }

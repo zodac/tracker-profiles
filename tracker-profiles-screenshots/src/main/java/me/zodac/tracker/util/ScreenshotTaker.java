@@ -30,6 +30,9 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+/**
+ * Utility class used to take a screenshot of a website.
+ */
 public final class ScreenshotTaker {
 
     private static final Dimension DEFAULT_WINDOW_SIZE = new Dimension(1680, 1050);
@@ -38,27 +41,34 @@ public final class ScreenshotTaker {
 
     }
 
+    /**
+     * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The size of the browser window is set to
+     * {@link #DEFAULT_WINDOW_SIZE} to ensure visibility, then saved as a {@code .png} file in the provided {@code outputDirectoryPath}. The file name
+     * will be {@code trackerName.png}.
+     *
+     * @param driver              the {@link RemoteWebDriver} with the loaded web page
+     * @param trackerName         the name of the tracker having a screenshot taken (used as the file name)
+     * @param outputDirectoryPath the directory where the screenshot should be saved
+     * @param previewScreenshot   whether to show the screenshot during execution or not
+     * @return the {@link File} instance of the saved screenshot
+     * @throws IOException thrown if an error occurs saving the screenshot to the file system
+     */
     public static File takeScreenshot(
         final RemoteWebDriver driver,
         final String trackerName,
         final String outputDirectoryPath,
         final boolean previewScreenshot
-    ) {
+    ) throws IOException {
         driver.manage().window().setSize(DEFAULT_WINDOW_SIZE);
         final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE);
         final File screenshot = new File(outputDirectoryPath + File.separator + trackerName + ".png");
+        FileUtils.copyFile(rawScreenshot, screenshot);
 
-        try {
-            FileUtils.copyFile(rawScreenshot, screenshot);
-
-            if (previewScreenshot) {
-                showImage(screenshot, trackerName);
-            }
-
-            return screenshot;
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
+        if (previewScreenshot) {
+            showImage(screenshot, trackerName);
         }
+
+        return screenshot;
     }
 
     private static void showImage(final File screenshot, final String trackerName) {

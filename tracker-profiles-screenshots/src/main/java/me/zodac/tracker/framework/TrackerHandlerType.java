@@ -26,9 +26,25 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation used to mark an implementation of {@link TrackerHandler} to be used to generate screenshots for specific websites.
+ */
 @Retention(RUNTIME)
-@Target({ TYPE, METHOD, FIELD, PARAMETER })
-public @interface TrackerType {
+@Target({TYPE, METHOD, FIELD, PARAMETER})
+public @interface TrackerHandlerType {
 
+    /**
+     * The name of the tracker website, which should link to a {@link TrackerHandler} implementation.
+     *
+     * @return the name of the tracker
+     * @see TrackerHandlerFactory
+     */
     String trackerName();
+
+    /**
+     * Metadata value, defining whether the tracker is public or private.
+     *
+     * @return the accessibility of the tracker
+     */
+    TrackerAccessibility accessibility();
 }

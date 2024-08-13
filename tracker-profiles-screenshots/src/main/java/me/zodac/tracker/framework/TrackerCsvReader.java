@@ -25,7 +25,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 
+/**
+ * Utility class to read the {@code trackers.csv} input file.
+ */
 public final class TrackerCsvReader {
 
     private static final String CSV_FILE_NAME = "trackers.csv";
@@ -41,7 +45,15 @@ public final class TrackerCsvReader {
 
     }
 
-    public static List<TrackerInfo> readTrackerInfo() {
+    /**
+     * Reads the input file {@value CSV_FILE_NAME}, and converts each row into a {@link TrackerInfo}.
+     *
+     * @return th {@link List} of {@link TrackerInfo}s
+     * @throws URISyntaxException thrown if the {@value #CSV_FILE_NAME} resource URL is malformed
+     * @throws IOException        throw if there is a problem reading the header or skipping the first record
+     * @see TrackerInfo#fromCsv(CSVRecord)
+     */
+    public static List<TrackerInfo> readTrackerInfo() throws IOException, URISyntaxException {
         try (
             final Reader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(CSV_FILE_NAME).toURI()));
             final CSVParser csvParser = new CSVParser(reader, DEFAULT_FORMAT)
@@ -50,8 +62,6 @@ public final class TrackerCsvReader {
                 .stream()
                 .map(TrackerInfo::fromCsv)
                 .toList();
-        } catch (final IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
         }
     }
 }

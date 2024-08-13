@@ -11,7 +11,7 @@
     <name>[${project.artifactId}] project</name>
 
     <modules>
-        <module>profile</module>
+        <module>tracker-profiles-screenshots</module>
     </modules>
 
     <properties>
@@ -26,7 +26,6 @@
         <skip-sonarqube>true</skip-sonarqube>
 
         <!-- 3PP Versions -->
-        <assertj-core.version>3.26.0</assertj-core.version>
         <commons-csv.version>1.11.0</commons-csv.version>
         <commons-io.version>2.16.1</commons-io.version>
         <log4j.version>2.23.1</log4j.version>
@@ -81,11 +80,6 @@
     <dependencyManagement>
         <dependencies>
             <!-- 3PP Dependencies -->
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>${assertj-core.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>
