@@ -1,0 +1,12 @@
+# IntelliJ
+*.iml
+.idea/
+
+# Build
+target/
+pom.xml.versionsBackup
+*.log
+
+# Tracker details
+screenshots/
+trackers.csv

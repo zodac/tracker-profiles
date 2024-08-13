@@ -1,0 +1,4 @@
+name,loginLink,profilePage,username,password
+Tracker1,https://firsttracker.site.com/login,https://firsttracker.site.com/users/username,username,password
+#CommentLineHere
+Tracker2,https://secondtracker.site.com/login,https://secondtracker.site.com/users/id,username,password
