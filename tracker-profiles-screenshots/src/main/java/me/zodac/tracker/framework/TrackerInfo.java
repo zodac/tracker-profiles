@@ -38,7 +38,7 @@ public record TrackerInfo(String name, String loginLink, String profilePage, Str
      */
     public static TrackerInfo fromCsv(final CSVRecord csvRecord) {
         return new TrackerInfo(
-            csvRecord.get("name"),
+            csvRecord.get("trackerName"),
             csvRecord.get("loginLink"),
             csvRecord.get("profilePage"),
             csvRecord.get("username"),

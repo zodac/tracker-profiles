@@ -1,3 +1,3 @@
-name,loginLink,profilePage,username,password
+trackerName,loginLink,profilePage,username,password
 Tracker1,https://firsttracker.site.com/login,https://firsttracker.site.com/users/username,username,password
 #Tracker2,https://secondtracker.site.com/login,https://secondtracker.site.com/users/id,username,password
