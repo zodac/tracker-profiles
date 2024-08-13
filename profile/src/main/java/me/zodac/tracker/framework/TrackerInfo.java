@@ -1,4 +1,4 @@
-package me.zodac.tracker.util;
+package me.zodac.tracker.framework;
 
 import org.apache.commons.csv.CSVRecord;
 

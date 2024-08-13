@@ -7,7 +7,7 @@ import java.util.List;
 import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerType;
 import me.zodac.tracker.util.ScriptExecutor;
-import me.zodac.tracker.util.TrackerInfo;
+import me.zodac.tracker.framework.TrackerInfo;
 import org.openqa.selenium.By;
 import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
@@ -16,9 +16,6 @@ import org.openqa.selenium.interactions.Actions;
 
 @TrackerType(trackerName = "Aither")
 public class AitherHandler extends TrackerHandler {
-
-    private static final String HOST_IP_ADDRESS = System.getProperty("HOST_IP_ADDRESS", System.getenv("HOST_IP_ADDRESS"));
-    private static final String EMAIL_ADDRESS = System.getProperty("EMAIL_ADDRESS", System.getenv("EMAIL_ADDRESS"));
 
     @Override
     public void openLoginPage(final WebDriver driver, final TrackerInfo trackerInfo) {
@@ -51,6 +48,7 @@ public class AitherHandler extends TrackerHandler {
         final WebElement cookieButton = alertElement.findElement(By.tagName("button"));
         cookieButton.click();
 
+        // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         final Actions actions = new Actions(driver);
         actions.moveToLocation(0, 0).perform();
         return true;

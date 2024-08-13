@@ -6,7 +6,7 @@ This is a tool used to log in to private torrent websites and take a screenshot 
 
 ## Running Application
 
-Open the [ProfileScreenshotter.java](./profile/src/main/java/me/zodac/tracker/ProfileScreenshotter.java) and run the **main** method.
+Open the [ProfileScreenshotter.java](./profile/src/main/java/me/zodac/tracker/ProfileScreenshotter.java) and run the `main` method.
 
 ## Configuration
 
