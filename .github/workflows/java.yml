@@ -1,0 +1,47 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '.github/workflows/doc.yml'
+      - 'ci/doc/**'
+      - 'LICENSE'
+      - 'README.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 22
+        uses: actions/setup-java@v4.2.1
+        with:
+          cache: 'maven'
+          distribution: 'temurin'
+          java-version: '22'
+
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@v1.14.0
+        with:
+          java-distribution: 'temurin'
+          java-version: '22'
+          maven-version: '3.9.8'
+
+      - name: Cache local .m2
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**.pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run lints and test with Maven (including SonarQube)
+        env:
+          SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
+        run: mvn clean install -Dall -Dsonarqube

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="zodac's Ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/3.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/3.0.0 http://pmd.sourceforge.net/ruleset_3_0_0.xsd">
+
+    <description>
+        Custom ruleset defined for Java projects. Based on:
+        https://pmd.github.io/latest/pmd_userdocs_making_rulesets.html
+    </description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Don't think a rule is necessary, should take it on a case-by-case basis to use a Supplier -->
+        <exclude name="GuardLogStatement"/>
+        <!-- False positives with other assertion libraries -->
+        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <!-- I have no problem with multiple asserts in my tests -->
+        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <!-- I think explicit 2D arrays looks clearer -->
+        <exclude name="UseVarargs"/>
+    </rule>
+    <!-- When using an indexed FOR loop, certain scenarios exist where I'd like to skip the increment -->
+    <rule ref="category/java/bestpractices.xml/AvoidReassigningLoopVariables">
+        <properties>
+            <property name="foreachReassign" value="deny"/>
+            <property name="forReassign" value="skip"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml">
+        <!-- Public constructors are fine in many cases -->
+        <exclude name="AtLeastOneConstructor"/>
+        <!-- Unnecessary -->
+        <exclude name="CommentDefaultAccessModifier"/>
+        <!-- Plenty of scenarios where we would like to exit a method early in error cases -->
+        <exclude name="OnlyOneReturn"/>
+        <!-- False positives when multiplying 2 ints to result in a long -->
+        <exclude name="UnnecessaryCast"/>
+        <!-- I prefer to be explicit in TRY-WITH-RESOURCES blocks -->
+        <!-- Would be nice to keep the check for other cases (interfaces/annotations), but not possible -->
+        <!-- Caught by SonarQube analysis -->
+        <exclude name="UnnecessaryModifier"/>
+        <!-- I'm happy to use 'var', no need to forbid it -->
+        <exclude name="UseExplicitTypes" />
+
+        <!-- Issues for a style guide -->
+        <exclude name="ClassNamingConventions"/>
+        <exclude name="LongVariable"/>
+        <exclude name="ShortClassName"/>
+        <exclude name="ShortMethodName"/>
+        <exclude name="ShortVariable"/>
+        <exclude name="TooManyStaticImports"/>
+        <exclude name="UselessParentheses"/>
+    </rule>
+    <!-- I don't want to stick to the convention for unit tests, reasonable for production methods though -->
+    <rule ref="category/java/codestyle.xml/MethodNamingConventions">
+        <properties>
+            <property name="methodPattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="staticPattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="nativePattern" value="[a-z][a-zA-Z0-9]*"/>
+            <property name="junit3TestPattern" value=".*"/>
+            <property name="junit4TestPattern" value=".*"/>
+            <property name="junit5TestPattern" value=".*"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml">
+        <!-- Disagree, useful to explicitly catch generic Exceptions in some scenarios -->
+        <exclude name="AvoidCatchingGenericException"/>
+        <!-- A little hit & miss -->
+        <exclude name="GodClass"/>
+        <!-- I like chaining methods -->
+        <exclude name="LawOfDemeter"/>
+        <!-- Not necessary -->
+        <exclude name="LoosePackageCoupling"/>
+
+        <!-- Don't care about these rules, conflicts too much with the utility classes -->
+        <exclude name="CognitiveComplexity"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NcssCount"/>
+        <exclude name="NPathComplexity"/>
+
+        <!-- Issues for a style guide -->
+        <exclude name="CouplingBetweenObjects"/>
+        <exclude name="ExcessiveImports"/>
+        <exclude name="ExcessiveParameterList"/>
+        <exclude name="TooManyMethods"/>
+        <exclude name="UseObjectForClearerAPI"/>
+        <exclude name="ExcessivePublicCount"/>
+    </rule>
+
+    <!-- Not checking this rule here, will be handled by Checkstyle -->
+    <!-- <rule ref="category/java/documentation.xml"/> -->
+
+    <rule ref="category/java/errorprone.xml">
+        <!-- Don't agree, not worth it -->
+        <exclude name="AvoidDuplicateLiterals"/>
+        <!-- Disagree, nicer to have getters with the field name -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+    </rule>
+
+    <rule ref="category/java/multithreading.xml">
+        <!-- Need to interrupt the thread when catching an InterruptedException -->
+        <exclude name="DoNotUseThreads"/>
+        <!-- Not necessary, see https://github.com/pmd/pmd/issues/2926 for discussion -->
+        <exclude name="UseConcurrentHashMap"/>
+    </rule>
+
+    <rule ref="category/java/performance.xml">
+        <!-- False positives when creating mutable ArrayList instances -->
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+    </rule>
+
+    <rule ref="category/java/security.xml"/>
+</ruleset>
