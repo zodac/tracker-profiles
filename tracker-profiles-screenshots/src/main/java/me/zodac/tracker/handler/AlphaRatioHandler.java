@@ -30,10 +30,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code AR} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code AlphaRatio} tracker.
  */
-@TrackerHandlerType(trackerCode = "AR", accessibility = TrackerAccessibility.PRIVATE)
-public class ArHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "AlphaRatio", accessibility = TrackerAccessibility.PRIVATE)
+public class AlphaRatioHandler extends AbstractTrackerHandler {
 
     private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
     private static final By LOGOUT_ELEMENT_SELECTOR = By.id("nav_logout");
@@ -43,7 +43,7 @@ public class ArHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public ArHandler(final ChromeDriver driver) {
+    public AlphaRatioHandler(final ChromeDriver driver) {
         super(driver);
     }
 

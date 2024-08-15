@@ -33,7 +33,7 @@ import org.apache.commons.csv.CSVRecord;
 public final class TrackerCsvReader {
 
     private static final String CSV_FILE_NAME = "trackers.csv";
-    private static final String[] CSV_HEADERS = {"trackerName", "trackerCode", "loginLink", "profilePage", "username", "password"};
+    private static final String[] CSV_HEADERS = {"trackerName", "loginLink", "profilePage", "username", "password"};
     private static final CSVFormat DEFAULT_FORMAT = CSVFormat.DEFAULT
         .builder()
         .setHeader(CSV_HEADERS)

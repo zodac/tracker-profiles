@@ -31,10 +31,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code ATH} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
  */
-@TrackerHandlerType(trackerCode = "ATH", accessibility = TrackerAccessibility.PRIVATE)
-public class AthHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "Aither", accessibility = TrackerAccessibility.PRIVATE)
+public class AitherHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
     private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
@@ -45,7 +45,7 @@ public class AthHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public AthHandler(final ChromeDriver driver) {
+    public AitherHandler(final ChromeDriver driver) {
         super(driver);
     }
 

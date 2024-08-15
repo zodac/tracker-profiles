@@ -47,31 +47,31 @@ public final class TrackerHandlerFactory {
     /**
      * Finds an implementation of {@link AbstractTrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it.
      * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a
-     * {@link TrackerHandlerType#trackerCode()}, which should match the input (the match is case-insensitive).
+     * {@link TrackerHandlerType#trackerName()}, which should match the input (the match is case-insensitive).
      *
-     * @param trackerCode the abbreviated code of the tracker for which we want a {@link AbstractTrackerHandler}
+     * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @param driver      the {@link ChromeDriver} used to instantiate the {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalArgumentException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      * @throws IllegalStateException    thrown if an error occured when instantiating the {@link AbstractTrackerHandler}
      */
-    public static AbstractTrackerHandler getHandler(final String trackerCode, final ChromeDriver driver) {
+    public static AbstractTrackerHandler getHandler(final String trackerName, final ChromeDriver driver) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
-            if (hasMatchingAnnotation(trackerHandler, trackerCode)) {
+            if (hasMatchingAnnotation(trackerHandler, trackerName)) {
                 return makeNewInstance(trackerHandler, driver);
             }
         }
 
         throw new IllegalArgumentException(
-            String.format("Unable to find %s with trackerName '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerCode));
+            String.format("Unable to find %s with trackerName '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName));
     }
 
-    private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerCode) {
+    private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerName) {
         if (!trackerHandler.isAnnotationPresent(TrackerHandlerType.class)) {
             return false;
         }
         final TrackerHandlerType annotation = trackerHandler.getAnnotation(TrackerHandlerType.class);
-        return annotation.trackerCode().equalsIgnoreCase(trackerCode);
+        return annotation.trackerName().equalsIgnoreCase(trackerName);
     }
 
     private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final ChromeDriver driver) {

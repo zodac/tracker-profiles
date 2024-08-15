@@ -35,12 +35,12 @@ import me.zodac.tracker.handler.AbstractTrackerHandler;
 public @interface TrackerHandlerType {
 
     /**
-     * The abbreviated code of the tracker website, which should link to a {@link AbstractTrackerHandler} implementation.
+     * The name of the tracker website, which should link to an implementation of {@link AbstractTrackerHandler}.
      *
      * @return the code of the tracker
      * @see TrackerHandlerFactory
      */
-    String trackerCode();
+    String trackerName();
 
     /**
      * Metadata value, defining whether the tracker is public or private.

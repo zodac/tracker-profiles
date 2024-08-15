@@ -62,7 +62,7 @@ public final class ProfileScreenshotter {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
 
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
-            LOGGER.info("{}", trackerDefinition.trackerName());
+            LOGGER.info("{}", trackerDefinition.name());
             final ChromeDriver driver = createDriver();
 
             try {
@@ -75,7 +75,7 @@ public final class ProfileScreenshotter {
 
     private static void takeScreenshotOfTrackerProfilePage(final ChromeDriver driver, final TrackerDefinition trackerDefinition) throws IOException {
         LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
-        final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.trackerCode(), driver);
+        final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
 
         trackerHandler.openLoginPage(trackerDefinition);
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
@@ -97,7 +97,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Masked the text of '{}' element{}", elementsToBeMasked.size(), plural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), trackerHandler.zoomLevelForScreenshot());
+        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.name(), trackerHandler.zoomLevelForScreenshot());
         LOGGER.info("\t- Screenshot saved at: [{}]", screenshot.getAbsolutePath());
 
         trackerHandler.logout();

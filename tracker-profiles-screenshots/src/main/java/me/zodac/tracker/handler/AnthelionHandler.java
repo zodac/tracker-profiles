@@ -30,10 +30,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code ANT} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Anthelion} tracker.
  */
-@TrackerHandlerType(trackerCode = "ANT", accessibility = TrackerAccessibility.PRIVATE)
-public class AntHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "Anthelion", accessibility = TrackerAccessibility.PRIVATE)
+public class AnthelionHandler extends AbstractTrackerHandler {
 
     private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
     private static final By LOGOUT_ELEMENT_SELECTOR = By.xpath("//div[@id='user_menu']//a[text()='Logout']");
@@ -43,7 +43,7 @@ public class AntHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public AntHandler(final ChromeDriver driver) {
+    public AnthelionHandler(final ChromeDriver driver) {
         super(driver);
     }
 
