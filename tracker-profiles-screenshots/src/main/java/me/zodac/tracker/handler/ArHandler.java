@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerDefinition;
-import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScreenshotTaker;
 import me.zodac.tracker.util.ScriptExecutor;
@@ -31,10 +30,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link TrackerHandler} for the {@code AR} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code AR} tracker.
  */
 @TrackerHandlerType(trackerCode = "AR", accessibility = TrackerAccessibility.PRIVATE)
-public class ArHandler extends TrackerHandler {
+public class ArHandler extends AbstractTrackerHandler {
 
     private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
     private static final By LOGOUT_ELEMENT_SELECTOR = By.id("nav_logout");

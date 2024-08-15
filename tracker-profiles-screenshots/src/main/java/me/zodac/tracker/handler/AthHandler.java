@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerDefinition;
-import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -32,10 +31,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link TrackerHandler} for the {@code ATH} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code ATH} tracker.
  */
 @TrackerHandlerType(trackerCode = "ATH", accessibility = TrackerAccessibility.PRIVATE)
-public class AthHandler extends TrackerHandler {
+public class AthHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
     private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");

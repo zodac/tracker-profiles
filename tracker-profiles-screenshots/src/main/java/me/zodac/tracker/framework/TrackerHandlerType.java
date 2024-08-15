@@ -25,16 +25,17 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import me.zodac.tracker.handler.AbstractTrackerHandler;
 
 /**
- * Annotation used to mark an implementation of {@link TrackerHandler} to be used to generate screenshots for specific websites.
+ * Annotation used to mark an implementation of {@link AbstractTrackerHandler} to be used to generate screenshots for specific websites.
  */
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
 public @interface TrackerHandlerType {
 
     /**
-     * The abbreviated code of the tracker website, which should link to a {@link TrackerHandler} implementation.
+     * The abbreviated code of the tracker website, which should link to a {@link AbstractTrackerHandler} implementation.
      *
      * @return the code of the tracker
      * @see TrackerHandlerFactory

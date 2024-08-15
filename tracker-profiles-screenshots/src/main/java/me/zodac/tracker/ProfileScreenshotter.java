@@ -26,8 +26,8 @@ import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerCsvReader;
 import me.zodac.tracker.framework.TrackerDefinition;
-import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerFactory;
+import me.zodac.tracker.handler.AbstractTrackerHandler;
 import me.zodac.tracker.util.ScreenshotTaker;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -50,9 +50,9 @@ public final class ProfileScreenshotter {
 
     /**
      * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
-     * tracker a {@link TrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other required
-     * actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in the
-     * {@link ConfigurationProperties#outputDirectoryPath()}.
+     * tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other
+     * required actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in
+     * the {@link ConfigurationProperties#outputDirectoryPath()}.
      *
      * @param args input arguments, unused
      * @throws IOException        thrown on error parsing CSV input file
@@ -75,7 +75,7 @@ public final class ProfileScreenshotter {
 
     private static void takeScreenshotOfTrackerProfilePage(final ChromeDriver driver, final TrackerDefinition trackerDefinition) throws IOException {
         LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
-        final TrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.trackerCode(), driver);
+        final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.trackerCode(), driver);
 
         trackerHandler.openLoginPage(trackerDefinition);
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());

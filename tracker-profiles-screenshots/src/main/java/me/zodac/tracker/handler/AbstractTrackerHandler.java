@@ -15,23 +15,26 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package me.zodac.tracker.framework;
+package me.zodac.tracker.handler;
 
 import java.util.Collection;
+import me.zodac.tracker.framework.Configuration;
+import me.zodac.tracker.framework.ConfigurationProperties;
+import me.zodac.tracker.framework.TrackerDefinition;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Abstract class used to define a {@link TrackerHandler}. All implementations will be used by {@link me.zodac.tracker.ProfileScreenshotter}, if the
- * tracker is included in the {@code trackers.csv} input file. This class lists the high-level methods required for
+ * Abstract class used to define a {@link AbstractTrackerHandler}. All implementations will be used by {@link me.zodac.tracker.ProfileScreenshotter},
+ * if the tracker is included in the {@code trackers.csv} input file. This class lists the high-level methods required for
  * {@link me.zodac.tracker.ProfileScreenshotter} to be able to successfully generate a screenshot for a given tracker.
  *
  * <p>
- * Since each tracker website has its own UI and own page structure, each implementation of {@link TrackerHandler} will contain the tracker-specific
- * {@code selenium} logic to perform the UI actions.
+ * Since each tracker website has its own UI and own page structure, each implementation of {@link AbstractTrackerHandler} will contain the
+ * tracker-specific {@code selenium} logic to perform the UI actions.
  */
-public abstract class TrackerHandler {
+public abstract class AbstractTrackerHandler {
 
     /**
      * The {@link ConfigurationProperties} for the system.
@@ -48,7 +51,7 @@ public abstract class TrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    protected TrackerHandler(final ChromeDriver driver) {
+    protected AbstractTrackerHandler(final ChromeDriver driver) {
         this.driver = driver;
     }
 
@@ -76,7 +79,7 @@ public abstract class TrackerHandler {
     /**
      * Defines the zoom percentage required for the trakcer in order or all relevant details to be shown on the profile page and correctly screenshot.
      *
-     * @return the zoom level required for the {@link TrackerHandler}
+     * @return the zoom level required for the {@link AbstractTrackerHandler}
      * @see me.zodac.tracker.util.ScriptExecutor#zoom(JavascriptExecutor, double)
      */
     public abstract double zoomLevelForScreenshot();
