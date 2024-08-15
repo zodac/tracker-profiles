@@ -9,7 +9,7 @@ This is a tool used to log in to private torrent websites and take a screenshot 
 First, copy the [trackers_example.csv](./tracker-profiles-screenshots/src/main/resources/trackers_example.csv) file and rename it to **trackers.csv**.
 This file needs to be updated with your tracker's information. The
 [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AbstractTrackerHandler.java) implementation for
-each tracker is retrieved by the _trackerCode_ field within the CSV file.
+each tracker is retrieved by the *trackerCode* field within the CSV file.
 
 Open the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/ProfileScreenshotter.java) and run the `main`
 method.
@@ -35,7 +35,7 @@ All supported private trackers have an implementation found in the [handler](./t
 package. To add a new one,
 extend [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AbstractTrackerHandler.java), following the
 convention from an existing implementation,
-like [AthHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AthHandler.java).
+like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AitherHandler.java).
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
 screenshots. While we usually run in headless mode, this can be updated in the [Configuration](#configuration). This will cause a new browser

@@ -37,7 +37,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  */
 public final class TrackerHandlerFactory {
 
-    private static final Pattern PACKAGE_RENAMER_PATTERN = Pattern.compile("[.]");
+    private static final Pattern PACKAGE_SEPARATOR = Pattern.compile("[.]");
     private static final Set<Class<?>> TRACKER_HANDLER_CLASSES = findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName());
 
     private TrackerHandlerFactory() {
@@ -84,7 +84,7 @@ public final class TrackerHandlerFactory {
     }
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {
-        final String packageLoader = PACKAGE_RENAMER_PATTERN.matcher(packageName).replaceAll("/");
+        final String packageLoader = PACKAGE_SEPARATOR.matcher(packageName).replaceAll("/");
         try (
             final InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(packageLoader);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(stream), StandardCharsets.UTF_8))
@@ -94,7 +94,7 @@ public final class TrackerHandlerFactory {
                 .map(line -> getClass(line, packageName))
                 .filter(aClass -> aClass.isAnnotationPresent(TrackerHandlerType.class))
                 .collect(Collectors.toSet());
-        } catch (final IllegalStateException | IOException e) {
+        } catch (final IllegalStateException | IOException ignored) {
             return Set.of();
         }
     }
@@ -102,8 +102,8 @@ public final class TrackerHandlerFactory {
     private static Class<?> getClass(final String className, final String packageName) {
         try {
             return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
-        } catch (final ClassNotFoundException ignored) {
-            throw new IllegalStateException(String.format("Unable to retrieve class '%s' from package '%s'", className, packageName));
+        } catch (final ClassNotFoundException e) {
+            throw new IllegalStateException(String.format("Unable to retrieve class '%s' from package '%s'", className, packageName), e);
         }
     }
 }

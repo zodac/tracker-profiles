@@ -50,7 +50,7 @@ public record ConfigurationProperties(
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PROPRTIES_FILE_NAME = "config.properties";
-    private static final Pattern COMMA_SEPARATED_VALUES_PATTERN = Pattern.compile("\\s*,\\s*");
+    private static final Pattern COMMA_SEPARATED_VALUES = Pattern.compile("\\s*,\\s*");
 
     // Default values
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM";
@@ -100,6 +100,6 @@ public record ConfigurationProperties(
 
     private static Collection<String> getCommaSeparatedStringProperty(final Properties properties, final String propertyName) {
         final String value = properties.getProperty(propertyName, "");
-        return Arrays.asList(COMMA_SEPARATED_VALUES_PATTERN.split(value));
+        return Arrays.asList(COMMA_SEPARATED_VALUES.split(value));
     }
 }
