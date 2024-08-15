@@ -76,12 +76,6 @@ public final class TrackerHandlerFactory {
 
     private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final ChromeDriver driver) {
         try {
-            // Reconfirming class type, but these should be already filtered
-            if (AbstractTrackerHandler.class.isAssignableFrom(trackerHandler)) {
-                throw new IllegalStateException(
-                    String.format("%s is not an instance of %s", trackerHandler, AbstractTrackerHandler.class.getSimpleName()));
-            }
-
             final Constructor<?> constructorWithChromeDriver = trackerHandler.getDeclaredConstructor(ChromeDriver.class);
             return (AbstractTrackerHandler) constructorWithChromeDriver.newInstance(driver);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
