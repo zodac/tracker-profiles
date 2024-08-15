@@ -58,8 +58,10 @@ public final class ProfileScreenshotter {
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
+        LOGGER.info("Taking screenshots for {} trackers, saving to: '{}'", trackerDefinitions.size(), CONFIG.outputDirectory());
 
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
+            LOGGER.info("");
             LOGGER.info("{}", trackerDefinition.name());
             final ChromeDriver driver = createDriver();
 
