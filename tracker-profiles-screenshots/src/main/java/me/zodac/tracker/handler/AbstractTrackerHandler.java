@@ -160,24 +160,30 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Returns a {@link Collection} of {@link WebElement}s from the user's profile page, where the inner text needs to be masked. This is used for
-     * {@link WebElement}s that has sensitive information (like an IP address), which should not be visible in the screenshot.
+     * Retrieves the {@link Collection} of {@link WebElement}s from the user's profile page where the inner text contains sensitive information, then
+     * redacts the text. This is used for {@link WebElement}s that has information like an IP address, which should not be visible in the screenshot.
      *
      * <p>
      * By default, we search <b>all</b> {@link WebElement}s on the page, and check for {@link #doesElementContainEmailAddress(WebElement)} or
      * {@link #doesElementContainIpAddress(WebElement)}. Should be overridden otherwise.
      *
-     * @return a {@link Collection} of {@link WebElement}s where the text needs to be masked
-     * @see me.zodac.tracker.util.ScriptExecutor#maskInnerTextOfElement(JavascriptExecutor, WebElement)
+     * @return the number of {@link WebElement}s that were redacted
+     * @see me.zodac.tracker.util.ScriptExecutor#redactInnerTextOfElement(JavascriptExecutor, WebElement)
      * @see ConfigurationProperties#emailAddresses()
      * @see ConfigurationProperties#ipAddresses()
      */
-    public Collection<WebElement> getElementsToBeMasked() {
-        return driver
+    public int redactSensitiveElements() {
+        final Collection<WebElement> elementsToBeMasked = driver
             .findElements(By.xpath("//*"))
             .stream()
             .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
             .toList();
+
+        for (final WebElement elementToBeMasked : elementsToBeMasked) {
+            ScriptExecutor.redactInnerTextOfElement(driver, elementToBeMasked);
+        }
+
+        return elementsToBeMasked.size();
     }
 
     /**

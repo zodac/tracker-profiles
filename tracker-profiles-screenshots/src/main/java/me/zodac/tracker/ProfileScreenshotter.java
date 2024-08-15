@@ -20,8 +20,8 @@ package me.zodac.tracker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerCsvReader;
@@ -29,10 +29,8 @@ import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandlerFactory;
 import me.zodac.tracker.handler.AbstractTrackerHandler;
 import me.zodac.tracker.util.ScreenshotTaker;
-import me.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
@@ -51,8 +49,8 @@ public final class ProfileScreenshotter {
     /**
      * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
      * tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other
-     * required actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in
-     * the {@link ConfigurationProperties#outputDirectory()}.
+     * required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by {@link ScreenshotTaker}, then saved
+     * in the {@link ConfigurationProperties#outputDirectory()}.
      *
      * @param args input arguments, unused
      * @throws IOException        thrown on error parsing CSV input file
@@ -66,17 +64,21 @@ public final class ProfileScreenshotter {
             final ChromeDriver driver = createDriver();
 
             try {
-                takeScreenshotOfTrackerProfilePage(driver, trackerDefinition);
+                final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
+                takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
+            } catch (final NoSuchElementException e) {
+                LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
             } finally {
                 driver.quit();
             }
         }
     }
 
-    private static void takeScreenshotOfTrackerProfilePage(final ChromeDriver driver, final TrackerDefinition trackerDefinition) throws IOException {
+    private static void takeScreenshotOfProfilePage(final ChromeDriver driver,
+                                                    final AbstractTrackerHandler trackerHandler,
+                                                    final TrackerDefinition trackerDefinition
+    ) throws IOException {
         LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
-        final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
-
         trackerHandler.openLoginPage(trackerDefinition);
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);
@@ -88,13 +90,10 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
         trackerHandler.openProfilePage(trackerDefinition);
 
-        final Collection<WebElement> elementsToBeMasked = trackerHandler.getElementsToBeMasked();
-        for (final WebElement elementToBeMasked : elementsToBeMasked) {
-            ScriptExecutor.maskInnerTextOfElement(driver, elementToBeMasked);
-        }
-        if (!elementsToBeMasked.isEmpty()) {
-            final String plural = elementsToBeMasked.size() == 1 ? "" : "s";
-            LOGGER.info("\t- Masked the text of '{}' element{}", elementsToBeMasked.size(), plural);
+        final int numberOfRedactedElements = trackerHandler.redactSensitiveElements();
+        if (numberOfRedactedElements != 0) {
+            final String plural = numberOfRedactedElements == 1 ? "" : "s";
+            LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, plural);
         }
 
         final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.name(), trackerHandler.zoomLevelForScreenshot());
