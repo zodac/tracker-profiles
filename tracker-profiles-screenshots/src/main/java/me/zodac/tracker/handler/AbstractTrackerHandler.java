@@ -197,25 +197,11 @@ public abstract class AbstractTrackerHandler {
      */
     protected abstract WebElement findLogoutButton();
 
-    /**
-     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
-     * {@link ConfigurationProperties#emailAddresses()}.
-     *
-     * @param element the {@link WebElement} to check
-     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#emailAddresses()}
-     */
-    protected boolean doesElementContainEmailAddress(final WebElement element) {
+    private static boolean doesElementContainEmailAddress(final WebElement element) {
         return doesElementContainAnyProvideString(element, CONFIG.emailAddresses());
     }
 
-    /**
-     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
-     * {@link ConfigurationProperties#ipAddresses()}.
-     *
-     * @param element the {@link WebElement} to check
-     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#ipAddresses()}
-     */
-    protected boolean doesElementContainIpAddress(final WebElement element) {
+    private static boolean doesElementContainIpAddress(final WebElement element) {
         return doesElementContainAnyProvideString(element, CONFIG.ipAddresses());
     }
 
