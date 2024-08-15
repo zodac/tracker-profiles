@@ -52,7 +52,7 @@ public final class ProfileScreenshotter {
      * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
      * tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other
      * required actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in
-     * the {@link ConfigurationProperties#outputDirectoryPath()}.
+     * the {@link ConfigurationProperties#outputDirectory()}.
      *
      * @param args input arguments, unused
      * @throws IOException        thrown on error parsing CSV input file

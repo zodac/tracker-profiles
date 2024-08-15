@@ -18,8 +18,14 @@
 package me.zodac.tracker.framework;
 
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
@@ -30,22 +36,26 @@ import org.apache.logging.log4j.Logger;
  *
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
  * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
- * @param outputDirectoryPath      the save location for the screenshots
+ * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
  * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
  * @param useHeadlessBrowser       whether to use a headless browser or not
  */
 public record ConfigurationProperties(
     Collection<String> emailAddresses,
     Collection<String> ipAddresses,
-    String outputDirectoryPath,
+    Path outputDirectory,
     boolean previewTrackerScreenshot,
     boolean useHeadlessBrowser
 ) {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PROPRTIES_FILE_NAME = "config.properties";
-    private static final String DEFAULT_OUTPUT_DIRECTORY_PATH = "./screenshots";
     private static final Pattern COMMA_SEPARATED_VALUES_PATTERN = Pattern.compile("\\s*,\\s*");
+
+    // Default values
+    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM";
+    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "./screenshots";
+    private static final String DEFAULT_TIMEZONE = "UTC";
 
     /**
      * Loads the properties configured in the {@link #PROPRTIES_FILE_NAME} file.
@@ -59,10 +69,10 @@ public record ConfigurationProperties(
         try (final InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROPRTIES_FILE_NAME)) {
             properties.load(inputStream);
 
-            final var configurationProperties = new ConfigurationProperties(
+            final ConfigurationProperties configurationProperties = new ConfigurationProperties(
                 getCommaSeparatedStringProperty(properties, "emailAddresses"),
                 getCommaSeparatedStringProperty(properties, "ipAddresses"),
-                properties.getProperty("outputDirectoryPath", DEFAULT_OUTPUT_DIRECTORY_PATH),
+                getOutputDirectory(properties),
                 getBooleanProperty(properties, "previewTrackerScreenshot"),
                 getBooleanProperty(properties, "useHeadlessBrowser")
             );
@@ -72,6 +82,16 @@ public record ConfigurationProperties(
         } catch (final Exception e) {
             throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME), e);
         }
+    }
+
+    private static Path getOutputDirectory(final Properties properties) {
+        final String timeZone = properties.getProperty("timeZone", DEFAULT_TIMEZONE);
+        final String outputDirectoryNameFormat = properties.getProperty("outputDirectoryNameFormat", DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT);
+        final String outputDirectoryParentPath = properties.getProperty("outputDirectoryParentPath", DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH);
+
+        final LocalDate currentDate = LocalDate.now(ZoneId.of(timeZone));
+        final String outputDirectoryName = currentDate.format(DateTimeFormatter.ofPattern(outputDirectoryNameFormat, Locale.getDefault()));
+        return Paths.get(outputDirectoryParentPath, outputDirectoryName);
     }
 
     private static boolean getBooleanProperty(final Properties properties, final String propertyName) {

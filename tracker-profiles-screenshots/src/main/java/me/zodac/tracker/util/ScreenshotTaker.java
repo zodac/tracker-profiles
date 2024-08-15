@@ -52,7 +52,7 @@ public final class ScreenshotTaker {
     /**
      * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The size of the browser window is set to
      * {@link #DEFAULT_WINDOW_SIZE} and then a zoom is performed to ensure visibility. The browser viewport is then saved as a {@code .png} file in
-     * the provided {@code outputDirectoryPath}. The file name will be {@code trackerName.png}.
+     * the provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
      *
      * @param driver      the {@link RemoteWebDriver} with the loaded web page
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
@@ -62,7 +62,7 @@ public final class ScreenshotTaker {
      */
     public static File takeScreenshot(final RemoteWebDriver driver, final String trackerName, final double zoomLevel) throws IOException {
         final File rawScreenshot = resizeViewportAndTakeScreenshot(driver, zoomLevel);
-        final File screenshot = new File(CONFIG.outputDirectoryPath() + File.separator + trackerName + ".png");
+        final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");
         FileUtils.copyFile(rawScreenshot, screenshot);
 
         if (CONFIG.previewTrackerScreenshot()) {
