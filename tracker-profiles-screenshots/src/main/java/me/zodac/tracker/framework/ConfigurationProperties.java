@@ -53,7 +53,7 @@ public record ConfigurationProperties(
     private static final Pattern COMMA_SEPARATED_VALUES = Pattern.compile("\\s*,\\s*");
 
     // Default values
-    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM";
+    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "./screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
 

@@ -18,7 +18,6 @@
 package me.zodac.tracker.util;
 
 import java.time.Duration;
-import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -71,16 +70,16 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Waits for the page that the {@link WebDriver} is loading to find a {@link WebElement} defined by the provided {@link By} selector. If the
-     * {@code timeout} {@link Duration} is exceeded, the execution will continue.
+     * Waits for the page that the {@link WebDriver} is loading to find the provided {@link WebElement} . If the {@code timeout} {@link Duration} is
+     * exceeded, the execution will continue.
      *
      * @param driver  the {@link WebDriver} with the loaded web page
-     * @param by      the {@link By} selector for the wanted {@link WebElement}
+     * @param element the wanted {@link WebElement}
      * @param timeout the maximum {@link Duration} to wait
      */
-    public static void waitForElementToAppear(final WebDriver driver, final By by, final Duration timeout) {
+    public static void waitForElementToAppear(final WebDriver driver, final WebElement element, final Duration timeout) {
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+        wait.until(ExpectedConditions.visibilityOf(element));
     }
 
     /**

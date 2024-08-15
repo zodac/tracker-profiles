@@ -17,13 +17,7 @@
 
 package me.zodac.tracker.handler;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
-import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -37,8 +31,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public class AitherHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
-    private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
-    private static final By LOGOUT_ELEMENT_SELECTOR = By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
 
     /**
      * Default constructor.
@@ -50,36 +42,9 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void openLoginPage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
-    }
-
-    @Override
-    public void login(final TrackerDefinition trackerDefinition) {
-        final WebElement username = driver.findElement(By.id("username"));
-        username.clear();
-        username.sendKeys(trackerDefinition.username());
-
-        final WebElement password = driver.findElement(By.id("password"));
-        password.clear();
-        password.sendKeys(trackerDefinition.password());
-
-        final WebElement loginButton = driver.findElement(LOGIN_ELEMENT_SELECTOR);
-        loginButton.click();
-
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
-    }
-
-    @Override
-    public void openProfilePage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.profilePage());
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
-    }
-
-    @Override
-    public double zoomLevelForScreenshot() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    public WebElement findLoginButton() {
+        final By loginElementSelector = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
+        return driver.findElement(loginElementSelector);
     }
 
     @Override
@@ -94,38 +59,18 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public Collection<WebElement> getElementsToBeMasked() {
-        final Collection<WebElement> elementsToBeMasked = new ArrayList<>();
-        elementsToBeMasked.addAll(emailAddressElements());
-        elementsToBeMasked.addAll(ipAddressElements());
-        return elementsToBeMasked;
-    }
-
-    private List<WebElement> emailAddressElements() {
-        return driver
-            .findElements(By.tagName("dd"))
-            .stream()
-            .filter(this::doesElementContainEmailAddress)
-            .toList();
-    }
-
-    private List<WebElement> ipAddressElements() {
-        return driver
-            .findElements(By.tagName("td"))
-            .stream()
-            .filter(this::doesElementContainIpAddress)
-            .toList();
+    public double zoomLevelForScreenshot() {
+        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override
-    public void logout() {
+    public WebElement findLogoutButton() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        final WebElement logoutButton = logoutParent.findElement(LOGOUT_ELEMENT_SELECTOR);
-        logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, LOGIN_ELEMENT_SELECTOR, Duration.of(5, ChronoUnit.SECONDS));
+        final By logoutElementSelector = By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
+        return logoutParent.findElement(logoutElementSelector);
     }
 }

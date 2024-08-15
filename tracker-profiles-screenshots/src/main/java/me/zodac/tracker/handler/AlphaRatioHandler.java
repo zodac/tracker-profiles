@@ -17,14 +17,8 @@
 
 package me.zodac.tracker.handler;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import me.zodac.tracker.framework.TrackerAccessibility;
-import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandlerType;
-import me.zodac.tracker.util.ScreenshotTaker;
-import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -34,9 +28,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
  */
 @TrackerHandlerType(trackerName = "AlphaRatio", accessibility = TrackerAccessibility.PRIVATE)
 public class AlphaRatioHandler extends AbstractTrackerHandler {
-
-    private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
-    private static final By LOGOUT_ELEMENT_SELECTOR = By.id("nav_logout");
 
     /**
      * Default constructor.
@@ -48,56 +39,14 @@ public class AlphaRatioHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void openLoginPage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
+    public WebElement findLoginButton() {
+        final By loginElementSelector = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
+        return driver.findElement(loginElementSelector);
     }
 
     @Override
-    public void login(final TrackerDefinition trackerDefinition) {
-        final WebElement username = driver.findElement(By.id("username"));
-        username.clear();
-        username.sendKeys(trackerDefinition.username());
-
-        final WebElement password = driver.findElement(By.id("password"));
-        password.clear();
-        password.sendKeys(trackerDefinition.password());
-
-        final WebElement loginButton = driver.findElement(LOGIN_ELEMENT_SELECTOR);
-        loginButton.click();
-
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
-    }
-
-    @Override
-    public void openProfilePage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.profilePage());
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
-    }
-
-    @Override
-    public double zoomLevelForScreenshot() {
-        return ScreenshotTaker.DEFAULT_ZOOM_LEVEL;
-    }
-
-    @Override
-    public boolean canCookieBannerBeCleared() {
-        return false;
-    }
-
-    @Override
-    public Collection<WebElement> getElementsToBeMasked() {
-        return driver
-            .findElements(By.tagName("a"))
-            .stream()
-            .filter(this::doesElementContainEmailAddress)
-            .toList();
-    }
-
-    @Override
-    public void logout() {
-        final WebElement logoutButton = driver.findElement(LOGOUT_ELEMENT_SELECTOR);
-        logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, LOGIN_ELEMENT_SELECTOR, Duration.of(5, ChronoUnit.SECONDS));
+    public WebElement findLogoutButton() {
+        final By logoutElementSelector = By.id("nav_logout");
+        return driver.findElement(logoutElementSelector);
     }
 }
