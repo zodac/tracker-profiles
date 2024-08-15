@@ -18,9 +18,12 @@
 package me.zodac.tracker.util;
 
 import java.time.Duration;
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -47,7 +50,41 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Waits for the page that the {@link WebDriver} is loaded to completely load. If the {@code timeout} {@link Duration} is exceeded, the execution
+     * Moves the mouse cursor to the provided {@link WebElement}.
+     *
+     * @param driver  the {@link JavascriptExecutor} with the loaded web page
+     * @param element the {@link WebElement} to move to
+     */
+    public static void moveTo(final WebDriver driver, final WebElement element) {
+        final Actions actions = new Actions(driver);
+        actions.moveToElement(element).perform();
+    }
+
+    /**
+     * Moves the mouse cursor the origin of the web page; the top-left corner.
+     *
+     * @param driver the {@link JavascriptExecutor} with the loaded web page
+     */
+    public static void moveToOrigin(final WebDriver driver) {
+        final Actions actions = new Actions(driver);
+        actions.moveToLocation(0, 0).perform();
+    }
+
+    /**
+     * Waits for the page that the {@link WebDriver} is loading to find a {@link WebElement} defined by the provided {@link By} selector. If the
+     * {@code timeout} {@link Duration} is exceeded, the execution will continue.
+     *
+     * @param driver  the {@link WebDriver} with the loaded web page
+     * @param by      the {@link By} selector for the wanted {@link WebElement}
+     * @param timeout the maximum {@link Duration} to wait
+     */
+    public static void waitForElementToAppear(final WebDriver driver, final By by, final Duration timeout) {
+        final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+    }
+
+    /**
+     * Waits for the page that the {@link WebDriver} is loading to completely load. If the {@code timeout} {@link Duration} is exceeded, the execution
      * will continue.
      *
      * @param driver  the {@link WebDriver} with the loaded web page
@@ -56,5 +93,16 @@ public final class ScriptExecutor {
     public static void waitForPageToLoad(final WebDriver driver, final Duration timeout) {
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
         wait.until(_ -> "complete".equals(((JavascriptExecutor) driver).executeScript("return document.readyState")));
+    }
+
+    /**
+     * Zooms in/out on the currently loaded web page. Uses the {@code zoomLevel} as a decimal format of the zoom (<b>1.0</b> for 100%, <b>0.75</b> for
+     * 75%, etc.)
+     *
+     * @param driver    the {@link JavascriptExecutor} with the loaded web page
+     * @param zoomLevel the zoom level
+     */
+    public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
+        driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
     }
 }

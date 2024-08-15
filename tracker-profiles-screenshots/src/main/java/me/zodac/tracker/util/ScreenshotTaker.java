@@ -25,6 +25,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import me.zodac.tracker.framework.Configuration;
+import me.zodac.tracker.framework.ConfigurationProperties;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
@@ -35,7 +37,13 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 public final class ScreenshotTaker {
 
+    /**
+     * The default zoom level of 100%.
+     */
+    public static final double DEFAULT_ZOOM_LEVEL = 1.0D;
+
     private static final Dimension DEFAULT_WINDOW_SIZE = new Dimension(1680, 1050);
+    private static final ConfigurationProperties CONFIG = Configuration.get();
 
     private ScreenshotTaker() {
 
@@ -43,32 +51,34 @@ public final class ScreenshotTaker {
 
     /**
      * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The size of the browser window is set to
-     * {@link #DEFAULT_WINDOW_SIZE} to ensure visibility, then saved as a {@code .png} file in the provided {@code outputDirectoryPath}. The file name
-     * will be {@code trackerName.png}.
+     * {@link #DEFAULT_WINDOW_SIZE} and then a zoom is performed to ensure visibility. The browser viewport is then saved as a {@code .png} file in
+     * the provided {@code outputDirectoryPath}. The file name will be {@code trackerName.png}.
      *
-     * @param driver              the {@link RemoteWebDriver} with the loaded web page
-     * @param trackerName         the name of the tracker having a screenshot taken (used as the file name)
-     * @param outputDirectoryPath the directory where the screenshot should be saved
-     * @param previewScreenshot   whether to show the screenshot during execution or not
+     * @param driver      the {@link RemoteWebDriver} with the loaded web page
+     * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
+     * @param zoomLevel   the zoom level required for the tracker's profile page
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
      */
-    public static File takeScreenshot(
-        final RemoteWebDriver driver,
-        final String trackerName,
-        final String outputDirectoryPath,
-        final boolean previewScreenshot
-    ) throws IOException {
-        driver.manage().window().setSize(DEFAULT_WINDOW_SIZE);
-        final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE);
-        final File screenshot = new File(outputDirectoryPath + File.separator + trackerName + ".png");
+    public static File takeScreenshot(final RemoteWebDriver driver, final String trackerName, final double zoomLevel) throws IOException {
+        final File rawScreenshot = resizeViewportAndTakeScreenshot(driver, zoomLevel);
+        final File screenshot = new File(CONFIG.outputDirectoryPath() + File.separator + trackerName + ".png");
         FileUtils.copyFile(rawScreenshot, screenshot);
 
-        if (previewScreenshot) {
+        if (CONFIG.previewTrackerScreenshot()) {
             showImage(screenshot, trackerName);
         }
 
         return screenshot;
+    }
+
+    private static File resizeViewportAndTakeScreenshot(final RemoteWebDriver driver, final double zoomLevel) {
+        ScriptExecutor.zoom(driver, zoomLevel);
+        driver.manage().window().setSize(DEFAULT_WINDOW_SIZE);
+
+        final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE);
+        ScriptExecutor.zoom(driver, 1.0D);
+        return rawScreenshot;
     }
 
     private static void showImage(final File screenshot, final String trackerName) {

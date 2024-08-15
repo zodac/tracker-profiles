@@ -74,6 +74,14 @@ public abstract class TrackerHandler {
     public abstract void openProfilePage(TrackerDefinition trackerDefinition);
 
     /**
+     * Defines the zoom percentage required for the trakcer in order or all relevant details to be shown on the profile page and correctly screenshot.
+     *
+     * @return the zoom level required for the {@link TrackerHandler}
+     * @see me.zodac.tracker.util.ScriptExecutor#zoom(JavascriptExecutor, double)
+     */
+    public abstract double zoomLevelForScreenshot();
+
+    /**
      * Checks if there is a cookie banner on the profile page, and clicks it.
      *
      * @return {@code true} if there was a cookie banner, and it was cleared

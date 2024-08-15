@@ -81,12 +81,12 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);
 
-        LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
-        trackerHandler.openProfilePage(trackerDefinition);
-
         if (trackerHandler.canCookieBannerBeCleared()) {
             LOGGER.info("\t- Cookie banner has been cleared");
         }
+
+        LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
+        trackerHandler.openProfilePage(trackerDefinition);
 
         final Collection<WebElement> elementsToBeMasked = trackerHandler.getElementsToBeMasked();
         for (final WebElement elementToBeMasked : elementsToBeMasked) {
@@ -97,8 +97,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Masked the text of '{}' element{}", elementsToBeMasked.size(), plural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), CONFIG.outputDirectoryPath(),
-            CONFIG.previewTrackerScreenshot());
+        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), trackerHandler.zoomLevelForScreenshot());
         LOGGER.info("\t- Screenshot saved at: [{}]", screenshot.getAbsolutePath());
 
         trackerHandler.logout();

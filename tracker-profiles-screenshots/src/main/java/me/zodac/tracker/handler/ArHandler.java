@@ -24,6 +24,7 @@ import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerType;
+import me.zodac.tracker.util.ScreenshotTaker;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -34,6 +35,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
  */
 @TrackerHandlerType(trackerCode = "AR", accessibility = TrackerAccessibility.PRIVATE)
 public class ArHandler extends TrackerHandler {
+
+    private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
+    private static final By LOGOUT_ELEMENT_SELECTOR = By.id("nav_logout");
 
     /**
      * Default constructor.
@@ -47,6 +51,7 @@ public class ArHandler extends TrackerHandler {
     @Override
     public void openLoginPage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.loginLink());
+        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
     @Override
@@ -59,17 +64,21 @@ public class ArHandler extends TrackerHandler {
         password.clear();
         password.sendKeys(trackerDefinition.password());
 
-        final By loginBy = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
-        final WebElement loginButton = driver.findElement(loginBy);
+        final WebElement loginButton = driver.findElement(LOGIN_ELEMENT_SELECTOR);
         loginButton.click();
 
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(10, ChronoUnit.SECONDS));
+        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
     @Override
     public void openProfilePage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.profilePage());
         ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
+    }
+
+    @Override
+    public double zoomLevelForScreenshot() {
+        return ScreenshotTaker.DEFAULT_ZOOM_LEVEL;
     }
 
     @Override
@@ -88,8 +97,8 @@ public class ArHandler extends TrackerHandler {
 
     @Override
     public void logout() {
-        final By logoutBy = By.id("nav_logout");
-        final WebElement logoutButton = driver.findElement(logoutBy);
+        final WebElement logoutButton = driver.findElement(LOGOUT_ELEMENT_SELECTOR);
         logoutButton.click();
+        ScriptExecutor.waitForElementToAppear(driver, LOGIN_ELEMENT_SELECTOR, Duration.of(5, ChronoUnit.SECONDS));
     }
 }

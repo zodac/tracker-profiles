@@ -30,13 +30,16 @@ import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.interactions.Actions;
 
 /**
  * Implementation of {@link TrackerHandler} for the {@code ATH} tracker.
  */
 @TrackerHandlerType(trackerCode = "ATH", accessibility = TrackerAccessibility.PRIVATE)
 public class AthHandler extends TrackerHandler {
+
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
+    private static final By LOGIN_ELEMENT_SELECTOR = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
+    private static final By LOGOUT_ELEMENT_SELECTOR = By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
 
     /**
      * Default constructor.
@@ -50,6 +53,7 @@ public class AthHandler extends TrackerHandler {
     @Override
     public void openLoginPage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.loginLink());
+        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
     @Override
@@ -62,10 +66,10 @@ public class AthHandler extends TrackerHandler {
         password.clear();
         password.sendKeys(trackerDefinition.password());
 
-        final WebElement loginButton = driver.findElement(By.tagName("button"));
+        final WebElement loginButton = driver.findElement(LOGIN_ELEMENT_SELECTOR);
         loginButton.click();
 
-        ScriptExecutor.waitForPageToLoad(driver, Duration.of(10, ChronoUnit.SECONDS));
+        ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
     @Override
@@ -75,14 +79,18 @@ public class AthHandler extends TrackerHandler {
     }
 
     @Override
+    public double zoomLevelForScreenshot() {
+        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    }
+
+    @Override
     public boolean canCookieBannerBeCleared() {
         final WebElement alertElement = driver.findElement(By.className("alerts"));
         final WebElement cookieButton = alertElement.findElement(By.tagName("button"));
         cookieButton.click();
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        final Actions actions = new Actions(driver);
-        actions.moveToLocation(0, 0).perform();
+        ScriptExecutor.moveToOrigin(driver);
         return true;
     }
 
@@ -112,13 +120,13 @@ public class AthHandler extends TrackerHandler {
 
     @Override
     public void logout() {
+        // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
-        final Actions actions = new Actions(driver);
-        actions.moveToElement(logoutParent).perform();
+        ScriptExecutor.moveTo(driver, logoutParent);
 
-        final By logoutBy = By.xpath("//form[@action='https://aither.cc/logout']//button[@type='submit']");
-        final WebElement logoutButton = driver.findElement(logoutBy);
+        final WebElement logoutButton = logoutParent.findElement(LOGOUT_ELEMENT_SELECTOR);
         logoutButton.click();
+        ScriptExecutor.waitForElementToAppear(driver, LOGIN_ELEMENT_SELECTOR, Duration.of(5, ChronoUnit.SECONDS));
     }
 }

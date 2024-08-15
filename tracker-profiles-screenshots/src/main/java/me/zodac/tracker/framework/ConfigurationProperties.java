@@ -27,6 +27,12 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Utility file that loads configuration detail from the {@code config.properties} file.
+ *
+ * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
+ * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
+ * @param outputDirectoryPath      the save location for the screenshots
+ * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
+ * @param useHeadlessBrowser       whether to use a headless browser or not
  */
 public record ConfigurationProperties(
     Collection<String> emailAddresses,
@@ -64,7 +70,7 @@ public record ConfigurationProperties(
             LOGGER.debug("");
             return configurationProperties;
         } catch (final Exception e) {
-            throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME));
+            throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME), e);
         }
     }
 

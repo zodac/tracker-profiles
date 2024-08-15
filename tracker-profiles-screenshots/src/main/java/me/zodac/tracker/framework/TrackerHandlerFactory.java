@@ -48,7 +48,7 @@ public final class TrackerHandlerFactory {
      * @param driver      the {@link ChromeDriver} used to instantiate the {@link TrackerHandler}
      * @return an instance of the matching {@link TrackerHandler}
      * @throws IllegalArgumentException thrown if no valid {@link TrackerHandler} implementation could be found
-     * @throws IllegalStateException    thrown if a error occured when instantiating the {@link TrackerHandler}
+     * @throws IllegalStateException    thrown if an error occured when instantiating the {@link TrackerHandler}
      */
     public static TrackerHandler getHandler(final String trackerCode, final ChromeDriver driver) {
         for (final Class<? extends TrackerHandler> trackerHandler : TRACKER_HANDLER_CLASSES) {
