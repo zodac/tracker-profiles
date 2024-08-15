@@ -34,14 +34,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public abstract class TrackerHandler {
 
     /**
-     * The user's email address, defined by the environment variable {@code EMAIL_ADDRESS}.
+     * The {@link ConfigurationProperties} for the system.
      */
-    protected static final String EMAIL_ADDRESS = System.getProperty("EMAIL_ADDRESS", System.getenv("EMAIL_ADDRESS"));
-
-    /**
-     * The user's host IP address, defined by the environment variable {@code HOST_IP_ADDRESS}.
-     */
-    protected static final String HOST_IP_ADDRESS = System.getProperty("HOST_IP_ADDRESS", System.getenv("HOST_IP_ADDRESS"));
+    protected static final ConfigurationProperties CONFIG = Configuration.get();
 
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
@@ -93,4 +88,40 @@ public abstract class TrackerHandler {
      * @see me.zodac.tracker.util.ScriptExecutor#maskInnerTextOfElement(JavascriptExecutor, WebElement)
      */
     public abstract Collection<WebElement> getElementsToBeMasked();
+
+    /**
+     * Logs out of the tracker, ending the user's session.
+     */
+    public abstract void logout();
+
+    /**
+     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
+     * {@link ConfigurationProperties#emailAddresses()}.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#emailAddresses()}
+     */
+    protected boolean doesElementContainEmailAddress(final WebElement element) {
+        return doesElementContainAnyProvideString(element, CONFIG.emailAddresses());
+    }
+
+    /**
+     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
+     * {@link ConfigurationProperties#ipAddresses()}.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#ipAddresses()}
+     */
+    protected boolean doesElementContainIpAddress(final WebElement element) {
+        return doesElementContainAnyProvideString(element, CONFIG.ipAddresses());
+    }
+
+    private static boolean doesElementContainAnyProvideString(final WebElement element, final Collection<String> stringsToFind) {
+        for (final String stringToFind : stringsToFind) {
+            if (element.getText().contains(stringToFind)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -3,10 +3,12 @@
 .idea/
 
 # Build
-target/
-pom.xml.versionsBackup
 *.log
+pom.xml.versionsBackup
+target/
 
 # Tracker details
+config.properties
 screenshots/
 trackers.csv
+

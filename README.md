@@ -11,25 +11,23 @@ method.
 
 ## Configuration
 
-### Environment Variables
+Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/resources/config_example.properties) file and rename it to *
+*config.properties**. It is configured with some default values which can be updated as below.
 
-The following two environment variables need to be set, in order to redact sensitive information from the screenshot.
+| Configuration Property     | Description                                                                  | Default Value |
+|----------------------------|------------------------------------------------------------------------------|---------------|
+| *emailAddresses*           | A comma-separated list of the user's email addresses                         |               |
+| *ipAddresses*              | A comma-separated list of the user's IP addresses                            |               |
+| *outputDirectoryPath*      | The output location of the screenshots, relative to the project root         | ./screenshots |
+| *previewTrackerScreenshot* | Whether to provide a pop-up preview of the screenshot once it has been taken | false         |
+| *useHeadlessBrowser*       | Whether to use a headless browser for screenshots, or a full browser         | false         |
 
-| Environment Variable | Description          |
-|----------------------|----------------------|
-| *EMAIL_ADDRESS*      | User's email address |
-| *HOST_IP_ADDRESS*    | User's IP address    |
-
-### Trackers
+## Trackers
 
 Copy the [trackers_example.csv](./tracker-profiles-screenshots/src/main/resources/trackers_example.csv) file and rename it to **trackers.csv**. Add
 your tracker's information here.
 
-### Output Directory
-
-Each screenshot will be stored in a directory called `screenshots` in the root of this project.
-
-## Supporting New Trackers
+## Implementing New Tracker Handlers
 
 All supported private trackers have an implementation found in the [handler](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler)
 package. To add a new one, extend [TrackerHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/framework/TrackerHandler.java),
@@ -37,12 +35,5 @@ following the convention from an existing implementation,
 like [AthHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AthHandler.java).
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
-screenshots. While we usually run in headless mode, this can be updated
-in [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/ProfileScreenshotter.java), by commenting out the
-following line:
-
-```java
-    chromeOptions.addArguments("--headless=new");
-```
-
-This will cause a new browser instance to launch when taking a screenshot, and can be used for debugging a new implementation.
+screenshots. While we usually run in headless mode, this can be updated in the [Configuration](#configuration). This will cause a new browser
+instance to launch when taking a screenshot, and can be used for debugging a new implementation.

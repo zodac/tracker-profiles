@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
+import me.zodac.tracker.framework.Configuration;
+import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerCsvReader;
 import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandler;
@@ -40,10 +42,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 public final class ProfileScreenshotter {
 
     private static final Logger LOGGER = LogManager.getLogger();
-
-    // Config
-    private static final String OUTPUT_DIRECTORY_PATH = "./screenshots";
-    private static final boolean PREVIEW_SCREENSHOT = true;
+    private static final ConfigurationProperties CONFIG = Configuration.get();
 
     private ProfileScreenshotter() {
 
@@ -53,7 +52,7 @@ public final class ProfileScreenshotter {
      * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
      * tracker a {@link TrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other required
      * actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in the
-     * {@value #OUTPUT_DIRECTORY_PATH}.
+     * {@link ConfigurationProperties#outputDirectoryPath()}.
      *
      * @param args input arguments, unused
      * @throws IOException        thrown on error parsing CSV input file
@@ -68,9 +67,8 @@ public final class ProfileScreenshotter {
 
             try {
                 takeScreenshotOfTrackerProfilePage(driver, trackerDefinition);
-            } catch (final IOException e) {
+            } finally {
                 driver.quit();
-                throw e;
             }
         }
     }
@@ -83,7 +81,7 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);
 
-        LOGGER.info("\t- Logged in, redirecting to '{}'", trackerDefinition.profilePage());
+        LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
         trackerHandler.openProfilePage(trackerDefinition);
 
         if (trackerHandler.canCookieBannerBeCleared()) {
@@ -99,14 +97,21 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Masked the text of '{}' element{}", elementsToBeMasked.size(), plural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), OUTPUT_DIRECTORY_PATH, PREVIEW_SCREENSHOT);
-        LOGGER.info("\t- Screenshot saved at: {}", screenshot.getAbsolutePath());
+        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), CONFIG.outputDirectoryPath(),
+            CONFIG.previewTrackerScreenshot());
+        LOGGER.info("\t- Screenshot saved at: [{}]", screenshot.getAbsolutePath());
+
+        trackerHandler.logout();
+        LOGGER.info("\t- Logged out");
         LOGGER.info("");
     }
 
     private static ChromeDriver createDriver() {
         final ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless=new");
+
+        if (CONFIG.useHeadlessBrowser()) {
+            chromeOptions.addArguments("--headless=new");
+        }
         return new ChromeDriver(chromeOptions);
     }
 }

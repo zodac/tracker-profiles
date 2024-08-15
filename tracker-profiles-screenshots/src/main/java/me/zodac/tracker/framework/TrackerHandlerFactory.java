@@ -21,6 +21,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import me.zodac.tracker.handler.ArHandler;
 import me.zodac.tracker.handler.AthHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -30,6 +31,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public final class TrackerHandlerFactory {
 
     private static final List<Class<? extends TrackerHandler>> TRACKER_HANDLER_CLASSES = List.of(
+        ArHandler.class,
         AthHandler.class
     );
 

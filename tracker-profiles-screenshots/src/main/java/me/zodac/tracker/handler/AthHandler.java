@@ -89,24 +89,36 @@ public class AthHandler extends TrackerHandler {
     @Override
     public Collection<WebElement> getElementsToBeMasked() {
         final Collection<WebElement> elementsToBeMasked = new ArrayList<>();
-        elementsToBeMasked.addAll(ipAddressElements());
         elementsToBeMasked.addAll(emailAddressElements());
+        elementsToBeMasked.addAll(ipAddressElements());
         return elementsToBeMasked;
-    }
-
-    private List<WebElement> ipAddressElements() {
-        return driver
-            .findElements(By.tagName("td"))
-            .stream()
-            .filter(element -> element.getText().contains(HOST_IP_ADDRESS))
-            .toList();
     }
 
     private List<WebElement> emailAddressElements() {
         return driver
             .findElements(By.tagName("dd"))
             .stream()
-            .filter(element -> element.getText().contains(EMAIL_ADDRESS))
+            .filter(this::doesElementContainEmailAddress)
             .toList();
+    }
+
+    private List<WebElement> ipAddressElements() {
+        return driver
+            .findElements(By.tagName("td"))
+            .stream()
+            .filter(this::doesElementContainIpAddress)
+            .toList();
+    }
+
+    @Override
+    public void logout() {
+        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final Actions actions = new Actions(driver);
+        actions.moveToElement(logoutParent).perform();
+
+        final By logoutBy = By.xpath("//form[@action='https://aither.cc/logout']//button[@type='submit']");
+        final WebElement logoutButton = driver.findElement(logoutBy);
+        logoutButton.click();
     }
 }
