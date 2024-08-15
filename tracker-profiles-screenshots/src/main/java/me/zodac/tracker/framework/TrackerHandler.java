@@ -60,23 +60,23 @@ public abstract class TrackerHandler {
     /**
      * Navigates to the login page of the tracker.
      *
-     * @param trackerInfo the {@link TrackerInfo} containing the login page URL
+     * @param trackerDefinition the {@link TrackerDefinition} containing the login page URL
      */
-    public abstract void openLoginPage(TrackerInfo trackerInfo);
+    public abstract void openLoginPage(TrackerDefinition trackerDefinition);
 
     /**
      * Enters the user's credential and logs in to the tracker. Ideally, this method will wait until the redirect page after login has fully loaded.
      *
-     * @param trackerInfo the {@link TrackerInfo} containing the login credentials
+     * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
-    public abstract void login(TrackerInfo trackerInfo);
+    public abstract void login(TrackerDefinition trackerDefinition);
 
     /**
      * Once logged in, navigates to the user's profile page on the tracker.
      *
-     * @param trackerInfo the {@link TrackerInfo} containing the user's profile URL
+     * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
-    public abstract void openProfilePage(TrackerInfo trackerInfo);
+    public abstract void openProfilePage(TrackerDefinition trackerDefinition);
 
     /**
      * Checks if there is a cookie banner on the profile page, and clicks it.

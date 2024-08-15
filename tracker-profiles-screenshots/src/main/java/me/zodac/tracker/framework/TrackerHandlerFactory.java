@@ -21,7 +21,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import me.zodac.tracker.handler.AitherHandler;
+import me.zodac.tracker.handler.AthHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public final class TrackerHandlerFactory {
 
     private static final List<Class<? extends TrackerHandler>> TRACKER_HANDLER_CLASSES = List.of(
-        AitherHandler.class
+        AthHandler.class
     );
 
     private TrackerHandlerFactory() {
@@ -39,31 +39,32 @@ public final class TrackerHandlerFactory {
 
     /**
      * Finds an implementation of {@link TrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it. Implementations
-     * of {@link TrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a {@link TrackerHandlerType#trackerName()}, which
+     * of {@link TrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a {@link TrackerHandlerType#trackerCode()}, which
      * should match the input (the match is case-insensitive).
      *
-     * @param trackerName the name of the tracker for which we want a {@link TrackerHandler}
+     * @param trackerCode the abbreviated code of the tracker for which we want a {@link TrackerHandler}
      * @param driver      the {@link ChromeDriver} used to instantiate the {@link TrackerHandler}
      * @return an instance of the matching {@link TrackerHandler}
      * @throws IllegalArgumentException thrown if no valid {@link TrackerHandler} implementation could be found
      * @throws IllegalStateException    thrown if a error occured when instantiating the {@link TrackerHandler}
      */
-    public static TrackerHandler getHandler(final String trackerName, final ChromeDriver driver) {
+    public static TrackerHandler getHandler(final String trackerCode, final ChromeDriver driver) {
         for (final Class<? extends TrackerHandler> trackerHandler : TRACKER_HANDLER_CLASSES) {
-            if (hasMatchingAnnotation(trackerHandler, trackerName)) {
+            if (hasMatchingAnnotation(trackerHandler, trackerCode)) {
                 return makeNewInstance(trackerHandler, driver);
             }
         }
 
-        throw new IllegalArgumentException(String.format("Unable to find %s with name '%s'", TrackerHandler.class.getSimpleName(), trackerName));
+        throw new IllegalArgumentException(
+            String.format("Unable to find %s with trackerName '%s'", TrackerHandler.class.getSimpleName(), trackerCode));
     }
 
-    private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerName) {
+    private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerCode) {
         if (!trackerHandler.isAnnotationPresent(TrackerHandlerType.class)) {
             return false;
         }
         final TrackerHandlerType annotation = trackerHandler.getAnnotation(TrackerHandlerType.class);
-        return annotation.trackerName().equalsIgnoreCase(trackerName);
+        return annotation.trackerCode().equalsIgnoreCase(trackerCode);
     }
 
     private static TrackerHandler makeNewInstance(final Class<? extends TrackerHandler> attributeHandler, final ChromeDriver driver) {

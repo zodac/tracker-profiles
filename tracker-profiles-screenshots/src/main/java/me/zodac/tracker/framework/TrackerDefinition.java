@@ -22,22 +22,24 @@ import org.apache.commons.csv.CSVRecord;
 /**
  * Simple class to hold the information for a given tracker.
  *
- * @param name        the tracker name
+ * @param trackerCode the tracker's abbreviated code
+ * @param trackerName the tracker name
  * @param loginLink   the link to the tracker's login page
  * @param profilePage the link to the user's profile page on the tracker
  * @param username    the user's username
  * @param password    the user's password
  */
-public record TrackerInfo(String name, String loginLink, String profilePage, String username, String password) {
+public record TrackerDefinition(String trackerCode, String trackerName, String loginLink, String profilePage, String username, String password) {
 
     /**
-     * Converts a {@link CSVRecord} from {@link TrackerCsvReader} into a {@link TrackerInfo} instance.
+     * Converts a {@link CSVRecord} from {@link TrackerCsvReader} into a {@link TrackerDefinition} instance.
      *
      * @param csvRecord the {@link CSVRecord} holding a single tracker's information
-     * @return the {@link TrackerInfo}
+     * @return the {@link TrackerDefinition}
      */
-    public static TrackerInfo fromCsv(final CSVRecord csvRecord) {
-        return new TrackerInfo(
+    public static TrackerDefinition fromCsv(final CSVRecord csvRecord) {
+        return new TrackerDefinition(
+            csvRecord.get("trackerCode"),
             csvRecord.get("trackerName"),
             csvRecord.get("loginLink"),
             csvRecord.get("profilePage"),

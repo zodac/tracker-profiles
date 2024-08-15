@@ -34,12 +34,12 @@ import java.lang.annotation.Target;
 public @interface TrackerHandlerType {
 
     /**
-     * The name of the tracker website, which should link to a {@link TrackerHandler} implementation.
+     * The abbreviated code of the tracker website, which should link to a {@link TrackerHandler} implementation.
      *
-     * @return the name of the tracker
+     * @return the code of the tracker
      * @see TrackerHandlerFactory
      */
-    String trackerName();
+    String trackerCode();
 
     /**
      * Metadata value, defining whether the tracker is public or private.

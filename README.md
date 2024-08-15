@@ -34,7 +34,7 @@ Each screenshot will be stored in a directory called `screenshots` in the root o
 All supported private trackers have an implementation found in the [handler](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler)
 package. To add a new one, extend [TrackerHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/framework/TrackerHandler.java),
 following the convention from an existing implementation,
-like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AitherHandler.java).
+like [AthHandler.java](./tracker-profiles-screenshots/src/main/java/me/zodac/tracker/handler/AthHandler.java).
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
 screenshots. While we usually run in headless mode, this can be updated

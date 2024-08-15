@@ -33,7 +33,7 @@ import org.apache.commons.csv.CSVRecord;
 public final class TrackerCsvReader {
 
     private static final String CSV_FILE_NAME = "trackers.csv";
-    private static final String[] CSV_HEADERS = {"trackerName", "loginLink", "profilePage", "username", "password"};
+    private static final String[] CSV_HEADERS = {"trackerCode", "trackerName", "loginLink", "profilePage", "username", "password"};
     private static final CSVFormat DEFAULT_FORMAT = CSVFormat.DEFAULT
         .builder()
         .setHeader(CSV_HEADERS)
@@ -46,21 +46,21 @@ public final class TrackerCsvReader {
     }
 
     /**
-     * Reads the input file {@value CSV_FILE_NAME}, and converts each row into a {@link TrackerInfo}.
+     * Reads the input file {@value CSV_FILE_NAME}, and converts each row into a {@link TrackerDefinition}.
      *
-     * @return th {@link List} of {@link TrackerInfo}s
+     * @return the {@link List} of {@link TrackerDefinition}s
      * @throws URISyntaxException thrown if the {@value #CSV_FILE_NAME} resource URL is malformed
      * @throws IOException        throw if there is a problem reading the header or skipping the first record
-     * @see TrackerInfo#fromCsv(CSVRecord)
+     * @see TrackerDefinition#fromCsv(CSVRecord)
      */
-    public static List<TrackerInfo> readTrackerInfo() throws IOException, URISyntaxException {
+    public static List<TrackerDefinition> readTrackerInfo() throws IOException, URISyntaxException {
         try (
             final Reader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(CSV_FILE_NAME).toURI()));
             final CSVParser csvParser = new CSVParser(reader, DEFAULT_FORMAT)
         ) {
             return csvParser
                 .stream()
-                .map(TrackerInfo::fromCsv)
+                .map(TrackerDefinition::fromCsv)
                 .toList();
         }
     }

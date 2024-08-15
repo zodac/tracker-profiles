@@ -23,9 +23,9 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import me.zodac.tracker.framework.TrackerCsvReader;
+import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerFactory;
-import me.zodac.tracker.framework.TrackerInfo;
 import me.zodac.tracker.util.ScreenshotTaker;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -50,9 +50,9 @@ public final class ProfileScreenshotter {
     }
 
     /**
-     * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerInfo}. For each tracker a
-     * {@link TrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other required actions). At
-     * this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in the
+     * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
+     * tracker a {@link TrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other required
+     * actions). At this point, any sensitive information is masked, and then a screenshot is taken by {@link ScreenshotTaker}, then saved in the
      * {@value #OUTPUT_DIRECTORY_PATH}.
      *
      * @param args input arguments, unused
@@ -60,14 +60,14 @@ public final class ProfileScreenshotter {
      * @throws URISyntaxException thrown on error reading CSV input file
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
-        final List<TrackerInfo> trackerInfos = TrackerCsvReader.readTrackerInfo();
+        final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
 
-        for (final TrackerInfo trackerInfo : trackerInfos) {
-            LOGGER.info("{}", trackerInfo.name());
+        for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
+            LOGGER.info("{}", trackerDefinition.trackerName());
             final ChromeDriver driver = createDriver();
 
             try {
-                takeScreenshotOfTrackerProfilePage(driver, trackerInfo);
+                takeScreenshotOfTrackerProfilePage(driver, trackerDefinition);
             } catch (final IOException e) {
                 driver.quit();
                 throw e;
@@ -75,16 +75,16 @@ public final class ProfileScreenshotter {
         }
     }
 
-    private static void takeScreenshotOfTrackerProfilePage(final ChromeDriver driver, final TrackerInfo trackerInfo) throws IOException {
-        LOGGER.info("\t- Opening login page at '{}'", trackerInfo.loginLink());
-        final TrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerInfo.name(), driver);
+    private static void takeScreenshotOfTrackerProfilePage(final ChromeDriver driver, final TrackerDefinition trackerDefinition) throws IOException {
+        LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
+        final TrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.trackerCode(), driver);
 
-        trackerHandler.openLoginPage(trackerInfo);
-        LOGGER.info("\t- Logging in as '{}'", trackerInfo.username());
-        trackerHandler.login(trackerInfo);
+        trackerHandler.openLoginPage(trackerDefinition);
+        LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
+        trackerHandler.login(trackerDefinition);
 
-        LOGGER.info("\t- Logged in, redirecting to '{}'", trackerInfo.profilePage());
-        trackerHandler.openProfilePage(trackerInfo);
+        LOGGER.info("\t- Logged in, redirecting to '{}'", trackerDefinition.profilePage());
+        trackerHandler.openProfilePage(trackerDefinition);
 
         if (trackerHandler.canCookieBannerBeCleared()) {
             LOGGER.info("\t- Cookie banner has been cleared");
@@ -99,7 +99,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Masked the text of '{}' element{}", elementsToBeMasked.size(), plural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerInfo.name(), OUTPUT_DIRECTORY_PATH, PREVIEW_SCREENSHOT);
+        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.trackerName(), OUTPUT_DIRECTORY_PATH, PREVIEW_SCREENSHOT);
         LOGGER.info("\t- Screenshot saved at: {}", screenshot.getAbsolutePath());
         LOGGER.info("");
     }

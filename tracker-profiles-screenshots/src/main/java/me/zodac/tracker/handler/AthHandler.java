@@ -23,9 +23,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
+import me.zodac.tracker.framework.TrackerDefinition;
 import me.zodac.tracker.framework.TrackerHandler;
 import me.zodac.tracker.framework.TrackerHandlerType;
-import me.zodac.tracker.framework.TrackerInfo;
 import me.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -33,34 +33,34 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 
 /**
- * Implementation of {@link TrackerHandler} for the {@code Aither} tracker.
+ * Implementation of {@link TrackerHandler} for the {@code ATH} tracker.
  */
-@TrackerHandlerType(trackerName = "Aither", accessibility = TrackerAccessibility.PRIVATE)
-public class AitherHandler extends TrackerHandler {
+@TrackerHandlerType(trackerCode = "ATH", accessibility = TrackerAccessibility.PRIVATE)
+public class AthHandler extends TrackerHandler {
 
     /**
      * Default constructor.
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public AitherHandler(final ChromeDriver driver) {
+    public AthHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
-    public void openLoginPage(final TrackerInfo trackerInfo) {
-        driver.navigate().to(trackerInfo.loginLink());
+    public void openLoginPage(final TrackerDefinition trackerDefinition) {
+        driver.navigate().to(trackerDefinition.loginLink());
     }
 
     @Override
-    public void login(final TrackerInfo trackerInfo) {
+    public void login(final TrackerDefinition trackerDefinition) {
         final WebElement username = driver.findElement(By.id("username"));
         username.clear();
-        username.sendKeys(trackerInfo.username());
+        username.sendKeys(trackerDefinition.username());
 
         final WebElement password = driver.findElement(By.id("password"));
         password.clear();
-        password.sendKeys(trackerInfo.password());
+        password.sendKeys(trackerDefinition.password());
 
         final WebElement loginButton = driver.findElement(By.tagName("button"));
         loginButton.click();
@@ -69,8 +69,8 @@ public class AitherHandler extends TrackerHandler {
     }
 
     @Override
-    public void openProfilePage(final TrackerInfo trackerInfo) {
-        driver.navigate().to(trackerInfo.profilePage());
+    public void openProfilePage(final TrackerDefinition trackerDefinition) {
+        driver.navigate().to(trackerDefinition.profilePage());
         ScriptExecutor.waitForPageToLoad(driver, Duration.of(5, ChronoUnit.SECONDS));
     }
 
