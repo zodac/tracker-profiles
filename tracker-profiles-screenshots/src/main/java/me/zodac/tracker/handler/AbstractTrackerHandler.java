@@ -17,15 +17,10 @@
 
 package me.zodac.tracker.handler;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerDefinition;
-import me.zodac.tracker.util.ScreenshotTaker;
-import me.zodac.tracker.util.ScriptExecutor;
-import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -46,8 +41,6 @@ public abstract class AbstractTrackerHandler {
      */
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 
-    private static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(5L, ChronoUnit.SECONDS);
-
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
      */
@@ -63,151 +56,74 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Navigates to the login page of the tracker.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login page URL
      */
-    public void openLoginPage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
+    public abstract void openLoginPage(TrackerDefinition trackerDefinition);
 
     /**
-     * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Enters the user's credential and logs in to the tracker. Ideally, this method will wait until the redirect page after login has fully loaded.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
-    public void login(final TrackerDefinition trackerDefinition) {
-        final WebElement usernameField = findUsernameField();
-        usernameField.clear();
-        usernameField.sendKeys(trackerDefinition.username());
-
-        final WebElement passwordField = findPasswordField();
-        passwordField.clear();
-        passwordField.sendKeys(trackerDefinition.password());
-
-        final WebElement loginButton = findLoginButton();
-        loginButton.click();
-
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
+    public abstract void login(TrackerDefinition trackerDefinition);
 
     /**
-     * Retrieves the {@link WebElement} where the username is entered to log in to the tracker.
-     *
-     * <p>
-     * By default, we assume the username field has an <i>id</i> of <b>username</b>. Should be overridden otherwise.
-     *
-     * @return th username field {@link WebElement}
-     */
-    protected WebElement findUsernameField() {
-        return driver.findElement(By.id("username"));
-    }
-
-    /**
-     * Retrieves the {@link WebElement} where the password is entered to log in to the tracker.
-     *
-     * <p>
-     * By default, we assume the password field has an <i>id</i> of <b>password</b>. Should be overridden otherwise.
-     *
-     * @return th password field {@link WebElement}
-     */
-    protected WebElement findPasswordField() {
-        return driver.findElement(By.id("password"));
-    }
-
-    /**
-     * Retrieves the {@link WebElement} of the login button.
-     *
-     * @return the login button {@link WebElement}
-     */
-    protected abstract WebElement findLoginButton();
-
-    /**
-     * Checks if there is a cookie banner on the profile page, and clicks it.
-     *
-     * <p>
-     * By default, we assume there is no cookie banner to clear, so this method returns {@code false}. Should be overridden otherwise.
-     *
-     * @return {@code true} if there was a cookie banner, and it was cleared
-     */
-    public boolean canCookieBannerBeCleared() {
-        return false;
-    }
-
-    /**
-     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Once logged in, navigates to the user's profile page on the tracker.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
-    public void openProfilePage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.profilePage());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
+    public abstract void openProfilePage(TrackerDefinition trackerDefinition);
 
     /**
-     * Defines the zoom percentage required for the tracker in order or all relevant details to be shown on the profile page and correctly screenshot.
-     *
-     * <p>
-     * By default, we assume the default zoom level is acceptable, so this method returns {@link ScreenshotTaker#DEFAULT_ZOOM_LEVEL}. Should be
-     * overridden otherwise.
+     * Defines the zoom percentage required for the trakcer in order or all relevant details to be shown on the profile page and correctly screenshot.
      *
      * @return the zoom level required for the {@link AbstractTrackerHandler}
      * @see me.zodac.tracker.util.ScriptExecutor#zoom(JavascriptExecutor, double)
      */
-    public double zoomLevelForScreenshot() {
-        return ScreenshotTaker.DEFAULT_ZOOM_LEVEL;
-    }
+    public abstract double zoomLevelForScreenshot();
 
     /**
-     * Retrieves the {@link Collection} of {@link WebElement}s from the user's profile page where the inner text contains sensitive information, then
-     * redacts the text. This is used for {@link WebElement}s that has information like an IP address, which should not be visible in the screenshot.
+     * Checks if there is a cookie banner on the profile page, and clicks it.
      *
-     * <p>
-     * By default, we search <b>all</b> {@link WebElement}s on the page, and check for {@link #doesElementContainEmailAddress(WebElement)} or
-     * {@link #doesElementContainIpAddress(WebElement)}. Should be overridden otherwise.
-     *
-     * @return the number of {@link WebElement}s that were redacted
-     * @see me.zodac.tracker.util.ScriptExecutor#redactInnerTextOfElement(JavascriptExecutor, WebElement)
-     * @see ConfigurationProperties#emailAddresses()
-     * @see ConfigurationProperties#ipAddresses()
+     * @return {@code true} if there was a cookie banner, and it was cleared
      */
-    public int redactSensitiveElements() {
-        final Collection<WebElement> elementsToBeMasked = driver
-            .findElements(By.xpath("//*"))
-            .stream()
-            .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
-            .toList();
-
-        for (final WebElement elementToBeMasked : elementsToBeMasked) {
-            ScriptExecutor.redactInnerTextOfElement(driver, elementToBeMasked);
-        }
-
-        return elementsToBeMasked.size();
-    }
+    public abstract boolean canCookieBannerBeCleared();
 
     /**
-     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the {@link #findLoginButton()} to load,
-     * signifying that we have successfully logged out and been redirected to the login page.
+     * Returns a {@link Collection} of {@link WebElement}s from the user's profile page, where the inner text needs to be masked. This is used for
+     * {@link WebElement}s that has sensitive information (like an IP address), which should not be visible in the screenshot.
+     *
+     * @return a {@link Collection} of {@link WebElement}s where the text needs to be masked
+     * @see me.zodac.tracker.util.ScriptExecutor#maskInnerTextOfElement(JavascriptExecutor, WebElement)
      */
-    public void logout() {
-        final WebElement logoutButton = findLogoutButton();
-        logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, findLoginButton(), DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
+    public abstract Collection<WebElement> getElementsToBeMasked();
 
     /**
-     * Retrieves the {@link WebElement} of the logout button.
-     *
-     * @return the logout button {@link WebElement}
+     * Logs out of the tracker, ending the user's session.
      */
-    protected abstract WebElement findLogoutButton();
+    public abstract void logout();
 
-    private static boolean doesElementContainEmailAddress(final WebElement element) {
+    /**
+     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
+     * {@link ConfigurationProperties#emailAddresses()}.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#emailAddresses()}
+     */
+    protected boolean doesElementContainEmailAddress(final WebElement element) {
         return doesElementContainAnyProvideString(element, CONFIG.emailAddresses());
     }
 
-    private static boolean doesElementContainIpAddress(final WebElement element) {
+    /**
+     * Function that checks the {@link WebElement} to see if the {@link WebElement#getText()} contains any of the configured
+     * {@link ConfigurationProperties#ipAddresses()}.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if the {@link WebElement#getText()} contains any of the {@link ConfigurationProperties#ipAddresses()}
+     */
+    protected boolean doesElementContainIpAddress(final WebElement element) {
         return doesElementContainAnyProvideString(element, CONFIG.ipAddresses());
     }
 

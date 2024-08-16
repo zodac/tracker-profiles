@@ -23,7 +23,7 @@ Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/res
 |-----------------------------|--------------------------------------------------------------------------------------------------------|---------------|
 | *emailAddresses*            | A comma-separated list of the user's email addresses                                                   |               |
 | *ipAddresses*               | A comma-separated list of the user's IP addresses                                                      |               |
-| *outputDirectoryNameFormat* | The name of the output directory to be created for the of the screenshots                              | yyyy-MM-dd    |
+| *outputDirectoryNameFormat* | The name of the output directory to be created for the of the screenshots                              | yyyy-MM       |
 | *outputDirectoryParentPath* | The output location of for the new directory created for the screenshots, relative to the project root | ./screenshots |
 | *previewTrackerScreenshot*  | Whether to provide a pop-up preview of the screenshot once it has been taken                           | false         |
 | *timeZone*                  | The local timezone, used to retrieve the current date to name the output directory                     | UTC           |

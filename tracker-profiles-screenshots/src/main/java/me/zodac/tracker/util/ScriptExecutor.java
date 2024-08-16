@@ -18,6 +18,7 @@
 package me.zodac.tracker.util;
 
 import java.time.Duration;
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -31,21 +32,21 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  */
 public final class ScriptExecutor {
 
-    private static final String REDACTION_TEXT = "----";
+    private static final String MASK_VALUE = "----";
 
     private ScriptExecutor() {
 
     }
 
     /**
-     * Updates the text of the provided {@link WebElement} and replaces the value with {@value #REDACTION_TEXT}. This can be valuable when trying to
+     * Updates the text of the provided {@link WebElement} and replaces the value with {@value #MASK_VALUE}. This can be valuable when trying to
      * hide/redact sentitive information like IP addresses.
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page
-     * @param element the {@link WebElement} to redact
+     * @param element the {@link WebElement} to mask
      */
-    public static void redactInnerTextOfElement(final JavascriptExecutor driver, final WebElement element) {
-        driver.executeScript(String.format("arguments[0].innerText = '%s'", REDACTION_TEXT), element);
+    public static void maskInnerTextOfElement(final JavascriptExecutor driver, final WebElement element) {
+        driver.executeScript(String.format("arguments[0].innerText = '%s'", MASK_VALUE), element);
     }
 
     /**
@@ -70,16 +71,16 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Waits for the page that the {@link WebDriver} is loading to find the provided {@link WebElement} . If the {@code timeout} {@link Duration} is
-     * exceeded, the execution will continue.
+     * Waits for the page that the {@link WebDriver} is loading to find a {@link WebElement} defined by the provided {@link By} selector. If the
+     * {@code timeout} {@link Duration} is exceeded, the execution will continue.
      *
      * @param driver  the {@link WebDriver} with the loaded web page
-     * @param element the wanted {@link WebElement}
+     * @param by      the {@link By} selector for the wanted {@link WebElement}
      * @param timeout the maximum {@link Duration} to wait
      */
-    public static void waitForElementToAppear(final WebDriver driver, final WebElement element, final Duration timeout) {
+    public static void waitForElementToAppear(final WebDriver driver, final By by, final Duration timeout) {
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
-        wait.until(ExpectedConditions.visibilityOf(element));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(by));
     }
 
     /**

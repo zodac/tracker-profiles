@@ -25,7 +25,6 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -53,8 +52,8 @@ public final class TrackerHandlerFactory {
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @param driver      the {@link ChromeDriver} used to instantiate the {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
-     * @throws IllegalStateException  thrown if an error occured when instantiating the {@link AbstractTrackerHandler}
-     * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
+     * @throws IllegalArgumentException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
+     * @throws IllegalStateException    thrown if an error occured when instantiating the {@link AbstractTrackerHandler}
      */
     public static AbstractTrackerHandler getHandler(final String trackerName, final ChromeDriver driver) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
@@ -63,8 +62,8 @@ public final class TrackerHandlerFactory {
             }
         }
 
-        final String errorMessage = String.format("Unable to find %s with name '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
-        throw new NoSuchElementException(errorMessage);
+        throw new IllegalArgumentException(
+            String.format("Unable to find %s with trackerName '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName));
     }
 
     private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerName) {
