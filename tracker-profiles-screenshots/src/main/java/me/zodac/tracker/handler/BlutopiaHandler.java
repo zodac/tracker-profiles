@@ -27,10 +27,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
  */
-@TrackerHandlerType(trackerName = "Aither", accessibility = TrackerAccessibility.PRIVATE)
-public class AitherHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "Blutopia", accessibility = TrackerAccessibility.PRIVATE)
+public class BlutopiaHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
@@ -39,19 +39,19 @@ public class AitherHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public AitherHandler(final ChromeDriver driver) {
+    public BlutopiaHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
-    protected WebElement findLoginButton() {
-        final By loginElementSelector = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
+    public WebElement findLoginButton() {
+        final By loginElementSelector = By.xpath("//button[text()='Login' and @class='auth-form__primary-button']");
         return driver.findElement(loginElementSelector);
     }
 
     @Override
     public boolean canCookieBannerBeCleared() {
-        final WebElement alertElement = driver.findElement(By.className("alerts"));
+        final WebElement alertElement = driver.findElement(By.className("alert__content"));
         final WebElement cookieButton = alertElement.findElement(By.tagName("button"));
         cookieButton.click();
 
@@ -74,7 +74,7 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findLogoutButton() {
+    public WebElement findLogoutButton() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement logoutParent = driver.findElement(logoutParentBy);

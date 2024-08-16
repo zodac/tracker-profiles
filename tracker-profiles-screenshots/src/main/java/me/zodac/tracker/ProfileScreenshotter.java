@@ -20,6 +20,7 @@ package me.zodac.tracker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import me.zodac.tracker.framework.Configuration;
@@ -58,9 +59,18 @@ public final class ProfileScreenshotter {
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
-        LOGGER.info("Taking screenshots for {} trackers, saving to: '{}'", trackerDefinitions.size(), CONFIG.outputDirectory());
-
+        final List<TrackerDefinition> trackers = new ArrayList<>();
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
+            if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
+                trackers.add(trackerDefinition);
+            } else {
+                LOGGER.info("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
+            }
+        }
+
+        LOGGER.info("Taking screenshots for {} trackers, saving to: '{}'", trackers.size(), CONFIG.outputDirectory());
+
+        for (final TrackerDefinition trackerDefinition : trackers) {
             LOGGER.info("");
             LOGGER.info("{}", trackerDefinition.name());
             final ChromeDriver driver = createDriver();

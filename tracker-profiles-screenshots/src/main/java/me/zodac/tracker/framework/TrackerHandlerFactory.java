@@ -46,6 +46,19 @@ public final class TrackerHandlerFactory {
     }
 
     /**
+     * Checks if an implementation of {@link AbstractTrackerHandler} exists that matches the wanted {@code trackerName}.
+     *
+     * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
+     * @return {@code true} if an implementation of {@link AbstractTrackerHandler} exists for the {@code trackerName}
+     */
+    public static boolean doesHandlerExist(final String trackerName) {
+        return TRACKER_HANDLER_CLASSES.stream()
+            .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandlerType.class))
+            .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandlerType.class))
+            .anyMatch(annotation -> annotation.trackerName().equalsIgnoreCase(trackerName));
+    }
+
+    /**
      * Finds an implementation of {@link AbstractTrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it.
      * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a
      * {@link TrackerHandlerType#trackerName()}, which should match the input (the match is case-insensitive).
