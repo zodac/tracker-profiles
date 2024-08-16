@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,10 +49,9 @@ public record ConfigurationProperties(
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PROPRTIES_FILE_NAME = "config.properties";
-    private static final Pattern COMMA_SEPARATED_VALUES = Pattern.compile("\\s*,\\s*");
 
     // Default values
-    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM";
+    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "./screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
 
@@ -76,8 +74,7 @@ public record ConfigurationProperties(
                 getBooleanProperty(properties, "previewTrackerScreenshot"),
                 getBooleanProperty(properties, "useHeadlessBrowser")
             );
-            LOGGER.debug("Loaded properties: {}", configurationProperties);
-            LOGGER.debug("");
+            LOGGER.info("Loaded properties: {}", configurationProperties);
             return configurationProperties;
         } catch (final Exception e) {
             throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME), e);
@@ -100,6 +97,6 @@ public record ConfigurationProperties(
 
     private static Collection<String> getCommaSeparatedStringProperty(final Properties properties, final String propertyName) {
         final String value = properties.getProperty(propertyName, "");
-        return Arrays.asList(COMMA_SEPARATED_VALUES.split(value));
+        return Arrays.asList(value.split(","));
     }
 }
