@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
  * Utility file that loads configuration detail from the {@code config.properties} file.
  *
  * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
+ * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
  * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
  * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
@@ -42,6 +43,7 @@ import org.apache.logging.log4j.Logger;
  */
 public record ConfigurationProperties(
     String browserDimensions,
+    char csvCommentSymbol,
     Collection<String> emailAddresses,
     Collection<String> ipAddresses,
     Path outputDirectory,
@@ -55,6 +57,7 @@ public record ConfigurationProperties(
     // Default values
     private static final String DEFAULT_BROWSER_WIDTH = "1680";
     private static final String DEFAULT_BROWSER_HEIGHT = "1050";
+    private static final String DEFAULT_CSV_COMMENT_SYMBOL = "#";
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
@@ -73,6 +76,7 @@ public record ConfigurationProperties(
 
             final ConfigurationProperties configurationProperties = new ConfigurationProperties(
                 getBrowserDimensions(properties),
+                getCsvCommentSymbol(properties),
                 getCommaSeparatedStringProperty(properties, "emailAddresses"),
                 getCommaSeparatedStringProperty(properties, "ipAddresses"),
                 getOutputDirectory(properties),
@@ -90,6 +94,10 @@ public record ConfigurationProperties(
         final String browserWidth = properties.getProperty("browserWidth", DEFAULT_BROWSER_WIDTH);
         final String browserHeight = properties.getProperty("browserHeight", DEFAULT_BROWSER_HEIGHT);
         return String.format("%s,%s", browserWidth, browserHeight);
+    }
+
+    private static char getCsvCommentSymbol(final Properties properties) {
+        return properties.getProperty("csvCommentSymbol", DEFAULT_CSV_COMMENT_SYMBOL).charAt(0);
     }
 
     private static Path getOutputDirectory(final Properties properties) {
