@@ -46,7 +46,10 @@ public abstract class AbstractTrackerHandler {
      */
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 
-    private static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(5L, ChronoUnit.SECONDS);
+    /**
+     * The default wait {@link Duration} when waiting for {@link WebElement}s or a web page load.
+     */
+    protected static final Duration DEFAULT_WAIT_FOR_WEB_ELEMENTS = Duration.of(5L, ChronoUnit.SECONDS);
 
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
@@ -63,17 +66,17 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login page URL
      */
     public void openLoginPage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
     }
 
     /**
-     * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
@@ -89,7 +92,7 @@ public abstract class AbstractTrackerHandler {
         final WebElement loginButton = findLoginButton();
         loginButton.click();
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
     }
 
     /**
@@ -136,13 +139,13 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
     public void openProfilePage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.profilePage());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
     }
 
     /**
@@ -189,13 +192,26 @@ public abstract class AbstractTrackerHandler {
     protected abstract Collection<By> getRootSelectorsForElementsToBeRedacted();
 
     /**
-     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the {@link #findLoginButton()} to load,
+     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the {@link #findPostLogoutElement()} to load,
      * signifying that we have successfully logged out and been redirected to the login page.
      */
     public void logout() {
         final WebElement logoutButton = findLogoutButton();
         logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, findLoginButton(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForElementToAppear(driver, findPostLogoutElement(), DEFAULT_WAIT_FOR_WEB_ELEMENTS);
+    }
+
+    /**
+     * Retrieves the {@link WebElement} that signifies that the {@link #logout()} was successfully executed.
+     *
+     * <p>
+     * By default, we assume that we will be redirected to the login page, so this method returns {@link #findLoginButton()}. Should be overridden
+     * otherwise.
+     *
+     * @return the login button {@link WebElement}
+     */
+    protected WebElement findPostLogoutElement() {
+        return findLoginButton();
     }
 
     /**

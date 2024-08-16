@@ -33,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * Utility file that loads configuration detail from the {@code config.properties} file.
  *
+ * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
  * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
  * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
@@ -40,6 +41,7 @@ import org.apache.logging.log4j.Logger;
  * @param useHeadlessBrowser       whether to use a headless browser or not
  */
 public record ConfigurationProperties(
+    String browserDimensions,
     Collection<String> emailAddresses,
     Collection<String> ipAddresses,
     Path outputDirectory,
@@ -51,8 +53,10 @@ public record ConfigurationProperties(
     private static final String PROPRTIES_FILE_NAME = "config.properties";
 
     // Default values
+    private static final String DEFAULT_BROWSER_WIDTH = "1680";
+    private static final String DEFAULT_BROWSER_HEIGHT = "1050";
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
-    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "./screenshots";
+    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
 
     /**
@@ -68,6 +72,7 @@ public record ConfigurationProperties(
             properties.load(inputStream);
 
             final ConfigurationProperties configurationProperties = new ConfigurationProperties(
+                getBrowserDimensions(properties),
                 getCommaSeparatedStringProperty(properties, "emailAddresses"),
                 getCommaSeparatedStringProperty(properties, "ipAddresses"),
                 getOutputDirectory(properties),
@@ -79,6 +84,12 @@ public record ConfigurationProperties(
         } catch (final Exception e) {
             throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME), e);
         }
+    }
+
+    private static String getBrowserDimensions(final Properties properties) {
+        final String browserWidth = properties.getProperty("browserWidth", DEFAULT_BROWSER_WIDTH);
+        final String browserHeight = properties.getProperty("browserHeight", DEFAULT_BROWSER_HEIGHT);
+        return String.format("%s,%s", browserWidth, browserHeight);
     }
 
     private static Path getOutputDirectory(final Properties properties) {

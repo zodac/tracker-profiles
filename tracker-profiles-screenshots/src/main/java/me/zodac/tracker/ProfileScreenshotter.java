@@ -53,9 +53,16 @@ public final class ProfileScreenshotter {
      * required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by {@link ScreenshotTaker}, then saved
      * in the {@link ConfigurationProperties#outputDirectory()}.
      *
+     * <p>
+     * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
+     * {@link ConfigurationProperties#browserDimensions()}. If {@link ConfigurationProperties#useHeadlessBrowser()} is {@code true}, then the
+     * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
+     * debugging.
+     *
      * @param args input arguments, unused
      * @throws IOException        thrown on error parsing CSV input file
      * @throws URISyntaxException thrown on error reading CSV input file
+     * @see ScreenshotTaker
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
@@ -64,11 +71,12 @@ public final class ProfileScreenshotter {
             if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
                 trackers.add(trackerDefinition);
             } else {
-                LOGGER.info("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
+                LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
             }
         }
 
-        LOGGER.info("Taking screenshots for {} trackers, saving to: '{}'", trackers.size(), CONFIG.outputDirectory());
+        final String trackersPlural = trackers.size() == 1 ? "" : "s";
+        LOGGER.info("Screenshotting {} tracker{}, saving to: [{}]", trackers.size(), trackersPlural, CONFIG.outputDirectory().toAbsolutePath());
 
         for (final TrackerDefinition trackerDefinition : trackers) {
             LOGGER.info("");
@@ -105,8 +113,8 @@ public final class ProfileScreenshotter {
 
         final int numberOfRedactedElements = trackerHandler.redactElements();
         if (numberOfRedactedElements != 0) {
-            final String plural = numberOfRedactedElements == 1 ? "" : "s";
-            LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, plural);
+            final String redactedElementsPlural = numberOfRedactedElements == 1 ? "" : "s";
+            LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, redactedElementsPlural);
         }
 
         final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.name(), trackerHandler.zoomLevelForScreenshot());
@@ -118,10 +126,11 @@ public final class ProfileScreenshotter {
 
     private static ChromeDriver createDriver() {
         final ChromeOptions chromeOptions = new ChromeOptions();
-
+        chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
         if (CONFIG.useHeadlessBrowser()) {
             chromeOptions.addArguments("--headless=new");
         }
+
         return new ChromeDriver(chromeOptions);
     }
 }

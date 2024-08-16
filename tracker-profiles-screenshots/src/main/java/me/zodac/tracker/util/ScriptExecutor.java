@@ -18,6 +18,7 @@
 package me.zodac.tracker.util;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -31,21 +32,39 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  */
 public final class ScriptExecutor {
 
-    private static final String REDACTION_TEXT = "----";
+    /**
+     * Default {@link String} used to redact sensisitve text.
+     */
+    public static final String DEFAULT_REDACTION_TEXT = "----";
+
+    private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(250L, ChronoUnit.MILLIS);
 
     private ScriptExecutor() {
 
     }
 
     /**
-     * Updates the text of the provided {@link WebElement} and replaces the value with {@value #REDACTION_TEXT}. This can be valuable when trying to
-     * hide/redact sentitive information like IP addresses.
+     * Updates the text of the provided {@link WebElement} and replaces the value with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when
+     * trying to hide/redact sentitive information like IP addresses.
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page
      * @param element the {@link WebElement} to redact
+     * @see #redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element) {
-        driver.executeScript(String.format("arguments[0].innerText = '%s'", REDACTION_TEXT), element);
+        redactInnerTextOf(driver, element, DEFAULT_REDACTION_TEXT);
+    }
+
+    /**
+     * Updates the text of the provided {@link WebElement} and replaces the value with {@code #redactionText}. This can be valuable when trying to
+     * hide/redact sentitive information like IP addresses.
+     *
+     * @param driver        the {@link JavascriptExecutor} with the loaded web page
+     * @param element       the {@link WebElement} to redact
+     * @param redactionText the text to replace the existing text in the {@link WebElement}
+     */
+    public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element, final String redactionText) {
+        driver.executeScript(String.format("arguments[0].innerText = '%s'", redactionText), element);
     }
 
     /**
@@ -57,6 +76,7 @@ public final class ScriptExecutor {
     public static void moveTo(final WebDriver driver, final WebElement element) {
         final Actions actions = new Actions(driver);
         actions.moveToElement(element).perform();
+        explicitWait();
     }
 
     /**
@@ -67,6 +87,7 @@ public final class ScriptExecutor {
     public static void moveToOrigin(final WebDriver driver) {
         final Actions actions = new Actions(driver);
         actions.moveToLocation(0, 0).perform();
+        explicitWait();
     }
 
     /**
@@ -103,5 +124,13 @@ public final class ScriptExecutor {
      */
     public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
         driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
+    }
+
+    private static void explicitWait() {
+        try {
+            Thread.sleep(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

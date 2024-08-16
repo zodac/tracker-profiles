@@ -28,7 +28,6 @@ import javax.swing.WindowConstants;
 import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -42,7 +41,6 @@ public final class ScreenshotTaker {
      */
     public static final double DEFAULT_ZOOM_LEVEL = 1.0D;
 
-    private static final Dimension DEFAULT_WINDOW_SIZE = new Dimension(1680, 1050);
     private static final ConfigurationProperties CONFIG = Configuration.get();
 
     private ScreenshotTaker() {
@@ -50,9 +48,10 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The size of the browser window is set to
-     * {@link #DEFAULT_WINDOW_SIZE} and then a zoom is performed to ensure visibility. The browser viewport is then saved as a {@code .png} file in
-     * the provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
+     * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. In order to ensure visibility of all required elements, the
+     * viewport is zoomed to the appropriate {@code zoomLevel} for the tracker. The browser viewport is then saved as a {@code .png} file in the
+     * provided {@code outputDirectory}. The file name will be {@code trackerName.png}. The zoom is then reset, in order for other UI actions to
+     * correctly direct to required elements.
      *
      * @param driver      the {@link RemoteWebDriver} with the loaded web page
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
@@ -74,8 +73,6 @@ public final class ScreenshotTaker {
 
     private static File resizeViewportAndTakeScreenshot(final RemoteWebDriver driver, final double zoomLevel) {
         ScriptExecutor.zoom(driver, zoomLevel);
-        driver.manage().window().setSize(DEFAULT_WINDOW_SIZE);
-
         final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE);
         ScriptExecutor.zoom(driver, 1.0D);
         return rawScreenshot;
