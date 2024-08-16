@@ -87,7 +87,7 @@ public final class ProfileScreenshotter {
                 final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
                 takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
             } catch (final NoSuchElementException e) {
-                LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
+                LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
             } finally {
                 driver.quit();
             }

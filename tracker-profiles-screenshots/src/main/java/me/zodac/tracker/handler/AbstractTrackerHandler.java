@@ -139,7 +139,8 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
+     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish
+     * loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
@@ -192,8 +193,8 @@ public abstract class AbstractTrackerHandler {
     protected abstract Collection<By> getRootSelectorsForElementsToBeRedacted();
 
     /**
-     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the {@link #findPostLogoutElement()} to load,
-     * signifying that we have successfully logged out and been redirected to the login page.
+     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the {@link #findPostLogoutElement()} to
+     * load, signifying that we have successfully logged out and been redirected to the login page.
      */
     public void logout() {
         final WebElement logoutButton = findLogoutButton();

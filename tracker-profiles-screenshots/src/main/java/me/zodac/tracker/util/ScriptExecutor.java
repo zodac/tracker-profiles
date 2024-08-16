@@ -130,7 +130,7 @@ public final class ScriptExecutor {
         try {
             Thread.sleep(DEFAULT_WAIT_FOR_MOUSE_MOVE);
         } catch (final InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 }
