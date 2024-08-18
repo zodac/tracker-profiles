@@ -38,22 +38,11 @@ public final class ScriptExecutor {
      */
     public static final String DEFAULT_REDACTION_TEXT = "----";
 
+    private static final Duration DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
     private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(250L, ChronoUnit.MILLIS);
 
     private ScriptExecutor() {
 
-    }
-
-    /**
-     * Performs a {@link Thread#sleep(Duration)} for the supplied {@link Duration}.
-     */
-    public static void explicitWait(final Duration sleepTime) {
-        try {
-            Thread.sleep(sleepTime);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
     }
 
     /**
@@ -124,6 +113,7 @@ public final class ScriptExecutor {
      * @param timeout the maximum {@link Duration} to wait
      */
     public static void waitForPageToLoad(final WebDriver driver, final Duration timeout) {
+        explicitWait(DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD);
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
         wait.until(_ -> "complete".equals(((JavascriptExecutor) driver).executeScript("return document.readyState")));
     }
@@ -137,5 +127,14 @@ public final class ScriptExecutor {
      */
     public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
         driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
+    }
+
+    private static void explicitWait(final Duration sleepTime) {
+        try {
+            Thread.sleep(sleepTime);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 }

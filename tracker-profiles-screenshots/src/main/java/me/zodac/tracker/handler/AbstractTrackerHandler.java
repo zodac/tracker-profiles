@@ -97,7 +97,6 @@ public abstract class AbstractTrackerHandler {
         final WebElement loginButton = driver.findElement(loginButtonSelector());
         loginButton.click();
 
-        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
