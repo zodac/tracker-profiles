@@ -50,8 +50,7 @@ public class AitherHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean canCookieBannerBeCleared() {
-        final WebElement alertElement = driver.findElement(By.className("alerts"));
-        final WebElement cookieButton = alertElement.findElement(By.tagName("button"));
+        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
         cookieButton.click();
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page

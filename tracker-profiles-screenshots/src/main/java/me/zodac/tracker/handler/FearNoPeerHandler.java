@@ -27,10 +27,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code FearNoPeer} tracker.
  */
-@TrackerHandlerType(trackerName = "Blutopia", accessibility = TrackerAccessibility.PRIVATE)
-public class BlutopiaHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "FearNoPeer", accessibility = TrackerAccessibility.PRIVATE)
+public class FearNoPeerHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
@@ -39,13 +39,13 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public BlutopiaHandler(final ChromeDriver driver) {
+    public FearNoPeerHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
-    public By loginButtonSelector() {
-        return By.xpath("//button[text()='Login' and @class='auth-form__primary-button']");
+    protected By loginButtonSelector() {
+        return By.xpath("//button[@class='auth-form__primary-button' and text()='Login']");
     }
 
     @Override
