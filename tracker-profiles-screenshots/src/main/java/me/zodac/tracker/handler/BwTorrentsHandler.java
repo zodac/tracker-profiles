@@ -22,7 +22,6 @@ import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
@@ -41,31 +40,29 @@ public class BwTorrentsHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findUsernameField() {
-        return driver.findElement(By.xpath("//input[@name='username' and @type='text' and @placeholder='Username']"));
+    protected By usernameFieldSelector() {
+        return By.xpath("//input[@name='username' and @type='text' and @placeholder='Username']");
     }
 
     @Override
-    protected WebElement findPasswordField() {
-        return driver.findElement(By.xpath("//input[@name='password' and @type='password' and @placeholder='Password']"));
+    protected By passwordFieldSelector() {
+        return By.xpath("//input[@name='password' and @type='password' and @placeholder='Password']");
     }
 
     @Override
-    public WebElement findLoginButton() {
-        final By loginElementSelector = By.xpath("//input[@value='LOG IN' and @type='submit']");
-        return driver.findElement(loginElementSelector);
+    public By loginButtonSelector() {
+        return By.xpath("//input[@value='LOG IN' and @type='submit']");
     }
 
     @Override
-    protected Collection<By> getRootSelectorsForElementsToBeRedacted() {
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("a")
         );
     }
 
     @Override
-    public WebElement findLogoutButton() {
-        final By logoutElementSelector = By.xpath("//div[@id='right-sts-aeon']//a[@title='Logout']");
-        return driver.findElement(logoutElementSelector);
+    protected By logoutButtonSelector() {
+        return By.xpath("//div[@id='right-sts-aeon']//a[@title='Logout']");
     }
 }

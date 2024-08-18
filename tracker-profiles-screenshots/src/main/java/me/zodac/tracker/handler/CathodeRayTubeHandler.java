@@ -46,19 +46,18 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findUsernameField() {
-        return driver.findElement(By.xpath("//div[@id='username']//input[@name='username']"));
+    protected By usernameFieldSelector() {
+        return By.xpath("//div[@id='username']//input[@name='username']");
     }
 
     @Override
-    protected WebElement findPasswordField() {
-        return driver.findElement(By.xpath("//div[@id='password']//input[@name='password']"));
+    protected By passwordFieldSelector() {
+        return By.xpath("//div[@id='password']//input[@name='password']");
     }
 
     @Override
-    public WebElement findLoginButton() {
-        final By loginElementSelector = By.id("login_button");
-        return driver.findElement(loginElementSelector);
+    public By loginButtonSelector() {
+        return By.id("login_button");
     }
 
     @Override
@@ -95,7 +94,7 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getRootSelectorsForElementsToBeRedacted() {
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("a"),
             By.tagName("span")
@@ -103,18 +102,17 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public WebElement findLogoutButton() {
+    protected By logoutButtonSelector() {
         // Highlight the profile menu to make the logout button interactable
         final By logoutParentBy = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        final By logoutElementSelector = By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
-        return logoutParent.findElement(logoutElementSelector);
+        return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
     }
 
     @Override
-    protected WebElement findPostLogoutElement() {
-        return driver.findElement(By.xpath("//table[@id='maincontent']//a[@href='/login' and text()='Login']"));
+    protected By postLogoutElementSelector() {
+        return By.xpath("//table[@id='maincontent']//a[text()='Login']");
     }
 }

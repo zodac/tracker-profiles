@@ -42,26 +42,24 @@ public class AnthelionHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findLoginButton() {
-        final By loginElementSelector = By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
-        return driver.findElement(loginElementSelector);
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
     }
 
     @Override
-    protected Collection<By> getRootSelectorsForElementsToBeRedacted() {
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("a")
         );
     }
 
     @Override
-    protected WebElement findLogoutButton() {
+    protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.id("nav_user");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        final By logoutElementSelector = By.xpath("//div[@id='user_menu']//a[text()='Logout']");
-        return driver.findElement(logoutElementSelector);
+        return By.xpath("//div[@id='user_menu']//a[text()='Logout']");
     }
 }

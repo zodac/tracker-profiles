@@ -22,7 +22,6 @@ import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
@@ -41,21 +40,19 @@ public class AlphaRatioHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findLoginButton() {
-        final By loginElementSelector = By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
-        return driver.findElement(loginElementSelector);
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
     }
 
     @Override
-    protected Collection<By> getRootSelectorsForElementsToBeRedacted() {
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("a")
         );
     }
 
     @Override
-    protected WebElement findLogoutButton() {
-        final By logoutElementSelector = By.id("nav_logout");
-        return driver.findElement(logoutElementSelector);
+    protected By logoutButtonSelector() {
+        return By.id("nav_logout");
     }
 }

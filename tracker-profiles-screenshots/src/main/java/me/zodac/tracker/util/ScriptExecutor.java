@@ -19,6 +19,7 @@ package me.zodac.tracker.util;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -41,6 +42,18 @@ public final class ScriptExecutor {
 
     private ScriptExecutor() {
 
+    }
+
+    /**
+     * Performs a {@link Thread#sleep(Duration)} for the supplied {@link Duration}.
+     */
+    public static void explicitWait(final Duration sleepTime) {
+        try {
+            Thread.sleep(sleepTime);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
@@ -76,7 +89,7 @@ public final class ScriptExecutor {
     public static void moveTo(final WebDriver driver, final WebElement element) {
         final Actions actions = new Actions(driver);
         actions.moveToElement(element).perform();
-        explicitWait();
+        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
     }
 
     /**
@@ -87,20 +100,20 @@ public final class ScriptExecutor {
     public static void moveToOrigin(final WebDriver driver) {
         final Actions actions = new Actions(driver);
         actions.moveToLocation(0, 0).perform();
-        explicitWait();
+        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
     }
 
     /**
-     * Waits for the page that the {@link WebDriver} is loading to find the provided {@link WebElement} . If the {@code timeout} {@link Duration} is
+     * Waits for the page that the {@link WebDriver} is loading to find the wanted {@link WebElement}. If the {@code timeout} {@link Duration} is
      * exceeded, the execution will continue.
      *
-     * @param driver  the {@link WebDriver} with the loaded web page
-     * @param element the wanted {@link WebElement}
-     * @param timeout the maximum {@link Duration} to wait
+     * @param driver   the {@link WebDriver} with the loaded web page
+     * @param selector the {@link By} selector for the wanted {@link WebElement}
+     * @param timeout  the maximum {@link Duration} to wait
      */
-    public static void waitForElementToAppear(final WebDriver driver, final WebElement element, final Duration timeout) {
+    public static void waitForElementToAppear(final WebDriver driver, final By selector, final Duration timeout) {
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
-        wait.until(ExpectedConditions.visibilityOf(element));
+        wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(selector));
     }
 
     /**
@@ -124,14 +137,5 @@ public final class ScriptExecutor {
      */
     public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
         driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
-    }
-
-    private static void explicitWait() {
-        try {
-            Thread.sleep(DEFAULT_WAIT_FOR_MOUSE_MOVE);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
     }
 }

@@ -44,9 +44,8 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findLoginButton() {
-        final By loginElementSelector = By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
-        return driver.findElement(loginElementSelector);
+    protected By loginButtonSelector() {
+        return By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
     }
 
     @Override
@@ -66,7 +65,7 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getRootSelectorsForElementsToBeRedacted() {
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("dd"),
             By.tagName("td")
@@ -74,13 +73,12 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected WebElement findLogoutButton() {
+    protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        final By logoutElementSelector = By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
-        return logoutParent.findElement(logoutElementSelector);
+        return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
     }
 }

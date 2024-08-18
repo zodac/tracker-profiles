@@ -47,9 +47,14 @@ public abstract class AbstractTrackerHandler {
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 
     /**
-     * The default wait {@link Duration} when waiting for {@link WebElement}s or a web page load.
+     * The default wait {@link Duration} when waiting for a web page load.
      */
-    protected static final Duration DEFAULT_WAIT_FOR_WEB_ELEMENTS = Duration.of(5L, ChronoUnit.SECONDS);
+    protected static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(5L, ChronoUnit.SECONDS);
+
+    /**
+     * The default wait {@link Duration} when waiting for an element to be clicked or a page load to begin.
+     */
+    protected static final Duration DEFAULT_WAIT_FOR_TRANSITIONS = Duration.of(500L, ChronoUnit.MILLIS);
 
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
@@ -66,65 +71,66 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
+     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login page URL
      */
     public void openLoginPage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
-     * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish loading.
+     * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
     public void login(final TrackerDefinition trackerDefinition) {
-        final WebElement usernameField = findUsernameField();
+        final WebElement usernameField = driver.findElement(usernameFieldSelector());
         usernameField.clear();
         usernameField.sendKeys(trackerDefinition.username());
 
-        final WebElement passwordField = findPasswordField();
+        final WebElement passwordField = driver.findElement(passwordFieldSelector());
         passwordField.clear();
         passwordField.sendKeys(trackerDefinition.password());
 
-        final WebElement loginButton = findLoginButton();
+        final WebElement loginButton = driver.findElement(loginButtonSelector());
         loginButton.click();
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
+        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
-     * Retrieves the {@link WebElement} where the username is entered to log in to the tracker.
+     * Defines the {@link By} selector of the {@link WebElement} where the username is entered to log in to the tracker.
      *
      * <p>
      * By default, we assume the username field has an <i>id</i> of <b>username</b>. Should be overridden otherwise.
      *
-     * @return th username field {@link WebElement}
+     * @return the username field {@link By} selector
      */
-    protected WebElement findUsernameField() {
-        return driver.findElement(By.id("username"));
+    protected By usernameFieldSelector() {
+        return By.id("username");
     }
 
     /**
-     * Retrieves the {@link WebElement} where the password is entered to log in to the tracker.
+     * Defines the {@link By} selector of the {@link WebElement} where the password is entered to log in to the tracker.
      *
      * <p>
      * By default, we assume the password field has an <i>id</i> of <b>password</b>. Should be overridden otherwise.
      *
-     * @return th password field {@link WebElement}
+     * @return the password field {@link By} selector
      */
-    protected WebElement findPasswordField() {
-        return driver.findElement(By.id("password"));
+    protected By passwordFieldSelector() {
+        return By.id("password");
     }
 
     /**
-     * Retrieves the {@link WebElement} of the login button.
+     * Defines the {@link By} selector of the {@link WebElement} of the login button.
      *
-     * @return the login button {@link WebElement}
+     * @return the login button {@link By} selector
      */
-    protected abstract WebElement findLoginButton();
+    protected abstract By loginButtonSelector();
 
     /**
      * Checks if there is a cookie banner on the profile page, and clicks it.
@@ -139,14 +145,14 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the page to finish
+     * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish
      * loading.
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
     public void openProfilePage(final TrackerDefinition trackerDefinition) {
         driver.navigate().to(trackerDefinition.profilePage());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_WEB_ELEMENTS);
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
@@ -172,7 +178,7 @@ public abstract class AbstractTrackerHandler {
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      */
     public int redactElements() {
-        final Collection<WebElement> elementsToBeRedacted = getRootSelectorsForElementsToBeRedacted().stream()
+        final Collection<WebElement> elementsToBeRedacted = getElementsPotentiallyContainingSensitiveInformation().stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
             .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
             .toList();
@@ -185,34 +191,33 @@ public abstract class AbstractTrackerHandler {
     }
 
     /**
-     * Returns a {@link Collection} of {@link By} selectors which define the root HTML element which may contain child (or subchild) HTML elements
-     * with sensitive data to be redacted.
+     * Returns a {@link Collection} of {@link By} selectors which define all possible HTML elements which may contain sensitive data to be redacted.
      *
      * @return the root {@link By} selectors for elements to be redacted
      */
-    protected abstract Collection<By> getRootSelectorsForElementsToBeRedacted();
+    protected abstract Collection<By> getElementsPotentiallyContainingSensitiveInformation();
 
     /**
-     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_WEB_ELEMENTS} for the {@link #findPostLogoutElement()} to
+     * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the {@link #postLogoutElementSelector()} to
      * load, signifying that we have successfully logged out and been redirected to the login page.
      */
     public void logout() {
-        final WebElement logoutButton = findLogoutButton();
+        final WebElement logoutButton = driver.findElement(logoutButtonSelector());
         logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, findPostLogoutElement(), DEFAULT_WAIT_FOR_WEB_ELEMENTS);
+        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
-     * Retrieves the {@link WebElement} that signifies that the {@link #logout()} was successfully executed.
+     * Defines the {@link By} selectors of the {@link WebElement} that signifies that the {@link #logout()} was successfully executed.
      *
      * <p>
-     * By default, we assume that we will be redirected to the login page, so this method returns {@link #findLoginButton()}. Should be overridden
+     * By default, we assume that we will be redirected to the login page, so this method returns {@link #loginButtonSelector()}. Should be overridden
      * otherwise.
      *
      * @return the login button {@link WebElement}
      */
-    protected WebElement findPostLogoutElement() {
-        return findLoginButton();
+    protected By postLogoutElementSelector() {
+        return loginButtonSelector();
     }
 
     /**
@@ -220,7 +225,7 @@ public abstract class AbstractTrackerHandler {
      *
      * @return the logout button {@link WebElement}
      */
-    protected abstract WebElement findLogoutButton();
+    protected abstract By logoutButtonSelector();
 
     private static boolean doesElementContainEmailAddress(final WebElement element) {
         return doesElementContain(element, CONFIG.emailAddresses());
