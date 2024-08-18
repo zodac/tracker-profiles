@@ -201,6 +201,7 @@ public abstract class AbstractTrackerHandler {
      * load, signifying that we have successfully logged out and been redirected to the login page.
      */
     public void logout() {
+        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector());
         logoutButton.click();
         ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
