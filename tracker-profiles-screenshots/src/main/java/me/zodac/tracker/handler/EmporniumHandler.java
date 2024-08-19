@@ -66,15 +66,15 @@ public class EmporniumHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.id("nav_userinfo");
+        final By logoutParentBy = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        return By.xpath("//a[contains(text(), 'Logout')]");
+        return By.xpath("//li[@id='nav_logout']//a[1]");
     }
 
     @Override
     protected By postLogoutElementSelector() {
-        return By.xpath("//table[@id='content']//a[text()='Login']");
+        return By.xpath("//div[@id='maincontent']//a[text()='Login']");
     }
 }

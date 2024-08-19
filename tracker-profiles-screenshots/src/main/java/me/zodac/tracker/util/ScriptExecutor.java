@@ -39,7 +39,7 @@ public final class ScriptExecutor {
     public static final String DEFAULT_REDACTION_TEXT = "----";
 
     private static final Duration DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
-    private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(250L, ChronoUnit.MILLIS);
+    private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(1L, ChronoUnit.SECONDS);
 
     private ScriptExecutor() {
 

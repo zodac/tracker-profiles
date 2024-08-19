@@ -28,7 +28,8 @@ import org.apache.commons.csv.CSVRecord;
  * @param username    the user's username
  * @param password    the user's password
  */
-public record TrackerDefinition(String name, String loginLink, String profilePage, String username, String password) {
+public record TrackerDefinition(String name, String loginLink, String profilePage, String username, String password)
+    implements Comparable<TrackerDefinition> {
 
     /**
      * Converts a {@link CSVRecord} from {@link TrackerCsvReader} into a {@link TrackerDefinition} instance.
@@ -44,5 +45,10 @@ public record TrackerDefinition(String name, String loginLink, String profilePag
             csvRecord.get("username"),
             csvRecord.get("password")
         );
+    }
+
+    @Override
+    public int compareTo(final TrackerDefinition other) {
+        return name.compareTo(other.name);
     }
 }

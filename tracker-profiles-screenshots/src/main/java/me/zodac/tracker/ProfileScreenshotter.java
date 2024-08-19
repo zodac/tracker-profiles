@@ -20,9 +20,11 @@ package me.zodac.tracker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.TreeSet;
 import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerCsvReader;
@@ -65,8 +67,14 @@ public final class ProfileScreenshotter {
      * @see ScreenshotTaker
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
+        for (final TrackerDefinition trackerDefinition : getTrackers()) {
+            takeScreenshotPerTracker(trackerDefinition);
+        }
+    }
+
+    private static Collection<TrackerDefinition> getTrackers() throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
-        final List<TrackerDefinition> trackers = new ArrayList<>();
+        final Set<TrackerDefinition> trackers = new TreeSet<>();
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
             if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
                 trackers.add(trackerDefinition);
@@ -77,20 +85,21 @@ public final class ProfileScreenshotter {
 
         final String trackersPlural = trackers.size() == 1 ? "" : "s";
         LOGGER.info("Screenshotting {} tracker{}, saving to: [{}]", trackers.size(), trackersPlural, CONFIG.outputDirectory().toAbsolutePath());
+        return trackers;
+    }
 
-        for (final TrackerDefinition trackerDefinition : trackers) {
-            LOGGER.info("");
-            LOGGER.info("{}", trackerDefinition.name());
-            final ChromeDriver driver = createDriver();
+    private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) throws IOException {
+        LOGGER.info("");
+        LOGGER.info("{}", trackerDefinition.name());
+        final ChromeDriver driver = createDriver();
 
-            try {
-                final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
-                takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
-            } catch (final NoSuchElementException e) {
-                LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
-            } finally {
-                driver.quit();
-            }
+        try {
+            final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
+            takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
+        } catch (final NoSuchElementException e) {
+            LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
+        } finally {
+            driver.quit();
         }
     }
 
