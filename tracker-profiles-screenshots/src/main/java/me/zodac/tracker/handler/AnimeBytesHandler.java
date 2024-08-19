@@ -17,8 +17,6 @@
 
 package me.zodac.tracker.handler;
 
-import java.util.Collection;
-import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScriptExecutor;
@@ -51,11 +49,6 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     @Override
     public double zoomLevelForScreenshot() {
         return ZOOM_LEVEL_FOR_SCREENSHOT;
-    }
-
-    @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of();
     }
 
     @Override

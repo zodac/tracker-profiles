@@ -20,6 +20,7 @@ package me.zodac.tracker.handler;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.List;
 import me.zodac.tracker.framework.Configuration;
 import me.zodac.tracker.framework.ConfigurationProperties;
 import me.zodac.tracker.framework.TrackerDefinition;
@@ -192,9 +193,15 @@ public abstract class AbstractTrackerHandler {
     /**
      * Returns a {@link Collection} of {@link By} selectors which define all possible HTML elements which may contain sensitive data to be redacted.
      *
-     * @return the root {@link By} selectors for elements to be redacted
+     * <p>
+     * By default, we assume that there are no elements to redact, so this method returns an empty {@link List}. Should be overridden
+     * otherwise.
+     *
+     * @return the {@link By} selectors for elements that may contain sensitive information
      */
-    protected abstract Collection<By> getElementsPotentiallyContainingSensitiveInformation();
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of();
+    }
 
     /**
      * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the {@link #postLogoutElementSelector()} to

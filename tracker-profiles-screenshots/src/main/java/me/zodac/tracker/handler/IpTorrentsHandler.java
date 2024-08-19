@@ -17,8 +17,6 @@
 
 package me.zodac.tracker.handler;
 
-import java.util.Collection;
-import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScriptExecutor;
@@ -84,11 +82,6 @@ public class IpTorrentsHandler extends AbstractTrackerHandler {
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
 
         return superRedactedElements + 1;
-    }
-
-    @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of();
     }
 
     @Override

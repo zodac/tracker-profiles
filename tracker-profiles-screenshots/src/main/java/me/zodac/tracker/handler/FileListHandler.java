@@ -17,8 +17,6 @@
 
 package me.zodac.tracker.handler;
 
-import java.util.Collection;
-import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import org.openqa.selenium.By;
@@ -42,11 +40,6 @@ public class FileListHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @value='Login']");
-    }
-
-    @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of();
     }
 
     @Override
