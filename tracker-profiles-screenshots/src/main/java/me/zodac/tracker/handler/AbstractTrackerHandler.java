@@ -40,7 +40,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Since each tracker website has its own UI and own page structure, each implementation of {@link AbstractTrackerHandler} will contain the
  * tracker-specific {@code selenium} logic to perform the UI actions.
  */
-public abstract class AbstractTrackerHandler {
+public abstract class AbstractTrackerHandler implements AutoCloseable {
 
     /**
      * The {@link ConfigurationProperties} for the system.
@@ -233,6 +233,11 @@ public abstract class AbstractTrackerHandler {
      * @return the logout button {@link WebElement}
      */
     protected abstract By logoutButtonSelector();
+
+    @Override
+    public void close() {
+        driver.quit();
+    }
 
     private static boolean doesElementContainEmailAddress(final WebElement element) {
         return doesElementContain(element, CONFIG.emailAddresses());

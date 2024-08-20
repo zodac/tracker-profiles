@@ -93,13 +93,10 @@ public final class ProfileScreenshotter {
         LOGGER.info("{}", trackerDefinition.name());
         final ChromeDriver driver = createDriver();
 
-        try {
-            final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver);
+        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver)) {
             takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
-        } finally {
-            driver.quit();
         }
     }
 
