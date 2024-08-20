@@ -27,59 +27,39 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Redacted} tracker.
  */
-// TODO: UNIT3D
-@TrackerHandlerType(trackerName = "Blutopia", accessibility = TrackerAccessibility.PRIVATE)
-public class BlutopiaHandler extends AbstractTrackerHandler {
-
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
+@TrackerHandlerType(trackerName = "Redacted", accessibility = TrackerAccessibility.PRIVATE)
+public class RedactedHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public BlutopiaHandler(final ChromeDriver driver) {
+    public RedactedHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
-    public By loginButtonSelector() {
-        return By.xpath("//button[text()='Login' and @class='auth-form__primary-button']");
-    }
-
-    @Override
-    public boolean canBannerBeCleared() {
-        // Cookie banner
-        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
-        cookieButton.click();
-
-        // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        ScriptExecutor.moveToOrigin(driver);
-        return true;
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
     }
 
     @Override
     protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("dd"),
-            By.tagName("td")
+            By.tagName("a") // Not currently visible, kept just in case
         );
     }
 
     @Override
     protected By logoutButtonSelector() {
-        // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        // Highlight the profile menu to make the logout button interactable
+        final By logoutParentBy = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
+        return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
     }
 }

@@ -17,6 +17,7 @@
 
 package me.zodac.tracker.framework;
 
+import java.util.Locale;
 import org.apache.commons.csv.CSVRecord;
 
 /**
@@ -49,6 +50,6 @@ public record TrackerDefinition(String name, String loginLink, String profilePag
 
     @Override
     public int compareTo(final TrackerDefinition other) {
-        return name.compareTo(other.name);
+        return name.toLowerCase(Locale.getDefault()).compareTo(other.name.toLowerCase(Locale.getDefault()));
     }
 }

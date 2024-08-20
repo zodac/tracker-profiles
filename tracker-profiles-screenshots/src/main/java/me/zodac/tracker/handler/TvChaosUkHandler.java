@@ -17,8 +17,6 @@
 
 package me.zodac.tracker.handler;
 
-import java.util.Collection;
-import java.util.List;
 import me.zodac.tracker.framework.TrackerAccessibility;
 import me.zodac.tracker.framework.TrackerHandlerType;
 import me.zodac.tracker.util.ScriptExecutor;
@@ -27,11 +25,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-// TODO: UNIT3D
-@TrackerHandlerType(trackerName = "Blutopia", accessibility = TrackerAccessibility.PRIVATE)
-public class BlutopiaHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "TVChaosUK", accessibility = TrackerAccessibility.PRIVATE)
+public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
@@ -40,19 +37,19 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public BlutopiaHandler(final ChromeDriver driver) {
+    public TvChaosUkHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
     public By loginButtonSelector() {
-        return By.xpath("//button[text()='Login' and @class='auth-form__primary-button']");
+        return By.id("login-button");
     }
 
     @Override
     public boolean canBannerBeCleared() {
         // Cookie banner
-        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
+        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(text(), 'Allow cookies')]"));
         cookieButton.click();
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
@@ -66,20 +63,12 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of(
-            By.tagName("dd"),
-            By.tagName("td")
-        );
-    }
-
-    @Override
     protected By logoutButtonSelector() {
-        // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        // Click the profile menu to make the logout button interactable
+        final By logoutParentBy = By.xpath("//ul[contains(@class, 'right-navbar')]//li[2]//a[contains(@class, 'dropdown-toggle')]");
         final WebElement logoutParent = driver.findElement(logoutParentBy);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        logoutParent.click();
 
-        return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
+        return By.xpath("//a[i[contains(@class, 'fa-sign-out')]]");
     }
 }

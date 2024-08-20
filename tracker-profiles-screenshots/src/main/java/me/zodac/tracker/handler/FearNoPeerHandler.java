@@ -50,7 +50,8 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public boolean canCookieBannerBeCleared() {
+    public boolean canBannerBeCleared() {
+        // Cookie banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
         cookieButton.click();
 

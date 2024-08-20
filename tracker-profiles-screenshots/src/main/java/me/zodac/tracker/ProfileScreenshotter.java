@@ -106,8 +106,8 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);
 
-        if (trackerHandler.canCookieBannerBeCleared()) {
-            LOGGER.info("\t- Cookie banner has been cleared");
+        if (trackerHandler.canBannerBeCleared()) {
+            LOGGER.info("\t- Banner has been cleared");
         }
 
         LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());

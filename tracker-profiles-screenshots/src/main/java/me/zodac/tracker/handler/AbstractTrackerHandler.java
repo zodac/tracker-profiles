@@ -133,14 +133,15 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected abstract By loginButtonSelector();
 
     /**
-     * Checks if there is a cookie banner on the profile page, and clicks it.
+     * Checks if there is a banner on the tracker web page, and closes it. This may be a cookie banner, or some other warning banner that can
+     * obscure content, or expose unwated information.
      *
      * <p>
-     * By default, we assume there is no cookie banner to clear, so this method returns {@code false}. Should be overridden otherwise.
+     * By default, we assume there is no banner to clear, so this method returns {@code false}. Should be overridden otherwise.
      *
-     * @return {@code true} if there was a cookie banner, and it was cleared
+     * @return {@code true} if there was a banner, and it was cleared
      */
-    public boolean canCookieBannerBeCleared() {
+    public boolean canBannerBeCleared() {
         return false;
     }
 
@@ -208,10 +209,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * load, signifying that we have successfully logged out and been redirected to the login page.
      */
     public void logout() {
-        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
-        final WebElement logoutButton = driver.findElement(logoutButtonSelector());
+        final By logoutButtonSelector = logoutButtonSelector();
+        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         logoutButton.click();
-        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_TRANSITIONS);
     }
 
     /**
