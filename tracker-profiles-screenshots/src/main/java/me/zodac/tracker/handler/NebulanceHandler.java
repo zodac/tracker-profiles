@@ -28,48 +28,32 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Cathode-Ray.Tube} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Nebulance} tracker.
  */
-@TrackerHandlerType(trackerName = "Cathode-Ray.Tube", accessibility = TrackerAccessibility.PRIVATE)
-public class CathodeRayTubeHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "Nebulance", accessibility = TrackerAccessibility.PRIVATE)
+public class NebulanceHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
     /**
      * Default constructor.
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public CathodeRayTubeHandler(final ChromeDriver driver) {
+    public NebulanceHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
-    protected By usernameFieldSelector() {
-        return By.xpath("//div[@id='username']//input[@name='username']");
-    }
-
-    @Override
-    protected By passwordFieldSelector() {
-        return By.xpath("//div[@id='password']//input[@name='password']");
-    }
-
-    @Override
-    public By loginButtonSelector() {
-        return By.id("login_button");
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link CathodeRayTubeHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
+     * For {@link MoreThanTvHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all next with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
      *
@@ -80,7 +64,6 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     public int redactElements() {
         final int superRedactedElements = super.redactElements();
 
-        // TODO: Replace this with an XPath to find the single WebElement
         final List<WebElement> passkeyElements = driver.findElements(By.tagName("li"))
             .stream()
             .filter(element -> element.getText().contains(PASSKEY_PREFIX))
@@ -104,16 +87,6 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
 
     @Override
     protected By logoutButtonSelector() {
-        // Highlight the profile menu to make the logout button interactable
-        final By logoutParentBy = By.id("userinfo_username");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
-        ScriptExecutor.moveTo(driver, logoutParent);
-
         return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//table[@id='maincontent']//a[text()='Login']");
     }
 }

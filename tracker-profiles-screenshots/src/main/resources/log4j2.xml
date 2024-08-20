@@ -2,7 +2,7 @@
 <Configuration monitorInterval="60">
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] %msg%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-4level] %msg%n"/>
         </Console>
     </Appenders>
 
