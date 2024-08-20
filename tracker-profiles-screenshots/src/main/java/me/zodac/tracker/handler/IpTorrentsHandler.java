@@ -58,7 +58,7 @@ public class IpTorrentsHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public double zoomLevelForScreenshot() {
+    public double zoomLevel() {
         return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 

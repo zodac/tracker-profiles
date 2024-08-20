@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import me.zodac.tracker.handler.AbstractTrackerHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * Utility class used to retrieve an instance of a {@link AbstractTrackerHandler}.
@@ -39,6 +40,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public final class TrackerHandlerFactory {
 
     private static final Pattern PACKAGE_SEPARATOR = Pattern.compile("[.]");
+    private static final ConfigurationProperties CONFIG = Configuration.get();
     private static final Set<Class<?>> TRACKER_HANDLER_CLASSES = findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName());
 
     private TrackerHandlerFactory() {
@@ -63,16 +65,18 @@ public final class TrackerHandlerFactory {
      * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a
      * {@link TrackerHandlerType#trackerName()}, which should match the input (the match is case-insensitive).
      *
+     * <p>
+     * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
+     *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
-     * @param driver      the {@link ChromeDriver} used to instantiate the {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalStateException  thrown if an error occured when instantiating the {@link AbstractTrackerHandler}
      * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      */
-    public static AbstractTrackerHandler getHandler(final String trackerName, final ChromeDriver driver) {
+    public static AbstractTrackerHandler getHandler(final String trackerName) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
             if (hasMatchingAnnotation(trackerHandler, trackerName)) {
-                return makeNewInstance(trackerHandler, driver);
+                return makeNewInstance(trackerHandler);
             }
         }
 
@@ -88,13 +92,24 @@ public final class TrackerHandlerFactory {
         return annotation.trackerName().equalsIgnoreCase(trackerName);
     }
 
-    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final ChromeDriver driver) {
+    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler) {
         try {
             final Constructor<?> constructorWithChromeDriver = trackerHandler.getDeclaredConstructor(ChromeDriver.class);
+            final ChromeDriver driver = createDriver();
             return (AbstractTrackerHandler) constructorWithChromeDriver.newInstance(driver);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException(String.format("Error instantiating an instance of '%s'", trackerHandler), e);
         }
+    }
+
+    private static ChromeDriver createDriver() {
+        final ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
+        if (CONFIG.useHeadlessBrowser()) {
+            chromeOptions.addArguments("--headless=new");
+        }
+
+        return new ChromeDriver(chromeOptions);
     }
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {

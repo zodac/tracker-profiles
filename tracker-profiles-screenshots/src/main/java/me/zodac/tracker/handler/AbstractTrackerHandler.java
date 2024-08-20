@@ -165,7 +165,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return the zoom level required for the {@link AbstractTrackerHandler}
      * @see me.zodac.tracker.util.ScriptExecutor#zoom(JavascriptExecutor, double)
      */
-    public double zoomLevelForScreenshot() {
+    public double zoomLevel() {
         return ScreenshotTaker.DEFAULT_ZOOM_LEVEL;
     }
 
@@ -237,6 +237,15 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     @Override
     public void close() {
         driver.quit();
+    }
+
+    /**
+     * Retrieves the {@link ChromeDriver}.
+     *
+     * @return the {@link ChromeDriver}
+     */
+    public ChromeDriver driver() {
+        return driver;
     }
 
     private static boolean doesElementContainEmailAddress(final WebElement element) {

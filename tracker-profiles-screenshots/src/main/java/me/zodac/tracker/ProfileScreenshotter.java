@@ -35,7 +35,6 @@ import me.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * Main driver class, which takes a screenshot of the profile page of each tracker listed in the {@code trackers.csv} input file.
@@ -91,19 +90,16 @@ public final class ProfileScreenshotter {
     private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) throws IOException {
         LOGGER.info("");
         LOGGER.info("{}", trackerDefinition.name());
-        final ChromeDriver driver = createDriver();
 
-        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), driver)) {
-            takeScreenshotOfProfilePage(driver, trackerHandler, trackerDefinition);
+        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
+            takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
         }
     }
 
-    private static void takeScreenshotOfProfilePage(final ChromeDriver driver,
-                                                    final AbstractTrackerHandler trackerHandler,
-                                                    final TrackerDefinition trackerDefinition
-    ) throws IOException {
+    private static void takeScreenshotOfProfilePage(final AbstractTrackerHandler trackerHandler, final TrackerDefinition trackerDefinition)
+        throws IOException {
         LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
         trackerHandler.openLoginPage(trackerDefinition);
 
@@ -123,20 +119,10 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, redactedElementsPlural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(driver, trackerDefinition.name(), trackerHandler.zoomLevelForScreenshot());
+        final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), trackerDefinition.name(), trackerHandler.zoomLevel());
         LOGGER.info("\t- Screenshot saved at: [{}]", screenshot.getAbsolutePath());
 
         trackerHandler.logout();
         LOGGER.info("\t- Logged out");
-    }
-
-    private static ChromeDriver createDriver() {
-        final ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
-        if (CONFIG.useHeadlessBrowser()) {
-            chromeOptions.addArguments("--headless=new");
-        }
-
-        return new ChromeDriver(chromeOptions);
     }
 }
