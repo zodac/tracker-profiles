@@ -43,7 +43,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public abstract class AbstractTrackerHandler implements AutoCloseable {
 
     /**
-     * The {@link ConfigurationProperties} for the system.
+     * The {@link ConfigurationProperties} for the application.
      */
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 

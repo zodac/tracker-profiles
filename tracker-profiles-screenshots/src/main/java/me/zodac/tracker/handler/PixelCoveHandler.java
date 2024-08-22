@@ -70,7 +70,7 @@ public class PixelCoveHandler extends AbstractTrackerHandler {
      *
      * <p>
      * For {@link PixelCoveHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
-     * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all next with the
+     * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
      *
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
@@ -80,17 +80,11 @@ public class PixelCoveHandler extends AbstractTrackerHandler {
     public int redactElements() {
         final int superRedactedElements = super.redactElements();
 
-        final List<WebElement> passkeyElements = driver.findElements(By.tagName("li"))
-            .stream()
-            .filter(element -> element.getText().contains(PASSKEY_PREFIX))
-            .toList();
-
         final String passkeyRedactionText = PASSKEY_PREFIX + ScriptExecutor.DEFAULT_REDACTION_TEXT;
-        for (final WebElement passkeyElement : passkeyElements) {
-            ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
-        }
+        final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(),'%s')]", PASSKEY_PREFIX)));
+        ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
 
-        return superRedactedElements + passkeyElements.size();
+        return superRedactedElements + 1;
     }
 
     @Override
