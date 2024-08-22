@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Logger;
  * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
+ * @param includeManualTrackers    whether to include trackers that require a manual user intervention
  * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
  * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
  * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
@@ -45,6 +46,7 @@ public record ConfigurationProperties(
     String browserDimensions,
     char csvCommentSymbol,
     Collection<String> emailAddresses,
+    boolean includeManualTrackers,
     Collection<String> ipAddresses,
     Path outputDirectory,
     boolean previewTrackerScreenshot,
@@ -78,6 +80,7 @@ public record ConfigurationProperties(
                 getBrowserDimensions(properties),
                 getCsvCommentSymbol(properties),
                 getCommaSeparatedStringProperty(properties, "emailAddresses"),
+                getBooleanProperty(properties, "includeManualTrackers"),
                 getCommaSeparatedStringProperty(properties, "ipAddresses"),
                 getOutputDirectory(properties),
                 getBooleanProperty(properties, "previewTrackerScreenshot"),

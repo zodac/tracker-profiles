@@ -25,6 +25,7 @@ Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/res
 | *browserWidth*              | The width (in pixels) of the web browser used to take screenshots                                      | 1680          |
 | *csvCommentSymbol*          | If this character is the first in a CSV row, the CSV row is considered a comment and not processed     | #             |
 | *emailAddresses*            | A comma-separated list of the user's email addresses                                                   |               |
+| *includeManualTrackers*     | Whether to take screnshots of trackers that require manual user intervention                           | false         |
 | *ipAddresses*               | A comma-separated list of the user's IP addresses                                                      |               |
 | *outputDirectoryNameFormat* | The name of the output directory to be created for the of the screenshots                              | yyyy-MM-dd    |
 | *outputDirectoryParentPath* | The output location of for the new directory created for the screenshots, relative to the project root | screenshots   |
