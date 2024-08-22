@@ -32,6 +32,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandlerType(trackerName = "Redacted", accessibility = TrackerAccessibility.PRIVATE)
 public class RedactedHandler extends AbstractTrackerHandler {
 
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
+
     /**
      * Default constructor.
      *
@@ -44,6 +46,11 @@ public class RedactedHandler extends AbstractTrackerHandler {
     @Override
     protected By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
+    }
+
+    @Override
+    public double zoomLevel() {
+        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override
