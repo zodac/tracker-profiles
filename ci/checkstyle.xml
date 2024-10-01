@@ -281,7 +281,7 @@
         <module name="InvalidJavadocPosition"/>
         <module name="JavadocTagContinuationIndentation"/>
         <module name="JavadocParagraph">
-            <property name="allowNewlineParagraph" value="false"/>
+            <property name="allowNewlineParagraph" value="true"/>
         </module>
         <module name="RequireEmptyLineBeforeBlockTagGroup"/>
         <module name="AtclauseOrder">
