@@ -45,11 +45,6 @@ jobs:
           java-version: '22'
           maven-version: '3.9.8'
 
-      - name: Deploy docker containers
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          compose-file: docker-compose-dev.yml
-
       - name: Update Maven project versions
         run: mvn versions:update-properties
 
