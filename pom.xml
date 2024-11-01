@@ -29,7 +29,7 @@
         <commons-csv.version>1.12.0</commons-csv.version>
         <commons-io.version>2.17.0</commons-io.version>
         <log4j.version>2.24.1</log4j.version>
-        <selenium-java.version>4.25.0</selenium-java.version>
+        <selenium-java.version>4.26.0</selenium-java.version>
 
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
@@ -41,20 +41,20 @@
         <versions-maven-plugin.version>2.17.1</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <checkstyle.version>10.18.2</checkstyle.version>
+        <checkstyle.version>10.20.0</checkstyle.version>
         <error_prone_core.version>2.28.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
-        <pmd.version>7.6.0</pmd.version>
+        <pmd.version>7.7.0</pmd.version>
         <spotbugs.version>4.8.6</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
         <license-maven-plugin.version>4.6</license-maven-plugin.version>
-        <maven-checkstyle-plugin.version>3.5.0</maven-checkstyle-plugin.version>
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <maven-javadoc-plugin.version>3.10.1</maven-javadoc-plugin.version>
-        <maven-pmd-plugin.version>3.25.0</maven-pmd-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
         <sonar-maven-plugin.version>4.0.0.4121</sonar-maven-plugin.version>
-        <spotbugs-maven-plugin.version>4.8.6.4</spotbugs-maven-plugin.version>
+        <spotbugs-maven-plugin.version>4.8.6.5</spotbugs-maven-plugin.version>
 
         <!-- Linter Properties -->
         <!--suppress UnresolvedMavenProperty, files are only used in child modules -->
