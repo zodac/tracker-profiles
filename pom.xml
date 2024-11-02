@@ -17,8 +17,8 @@
     <properties>
         <!-- Project Properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java-release>22</java-release>
-        <maven-release>3.9.8</maven-release>
+        <java-release>23</java-release>
+        <maven-release>3.9.9</maven-release>
 
         <!-- Lint Properties -->
         <!-- All disabled by default, activated through profiles -->

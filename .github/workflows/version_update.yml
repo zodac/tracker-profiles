@@ -24,11 +24,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 22
+      - name: Set up JDK
         uses: actions/setup-java@v4.2.1
         with:
           distribution: 'temurin'
-          java-version: '22'
+          java-version: '23'
 
       - name: Cache local .m2
         uses: actions/cache@v4.0.2
@@ -42,8 +42,8 @@ jobs:
         uses: s4u/setup-maven-action@v1.14.0
         with:
           java-distribution: 'temurin'
-          java-version: '22'
-          maven-version: '3.9.8'
+          java-version: '23'
+          maven-version: '3.9.9'
 
       - name: Update Maven project versions
         run: mvn versions:update-properties
