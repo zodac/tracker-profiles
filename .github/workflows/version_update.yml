@@ -46,27 +46,28 @@ jobs:
           maven-version: '3.9.9'
 
       - name: Update Maven project versions
-        run: mvn versions:update-properties
-
-      - name: Run linters and unit/integration tests
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: mvn clean install -Dall
-
-      - name: Commit changes
-        id: change_commit
-        if: steps.application_tests.outcome == 'success'
         run: |
-          git config user.name github-actions
-          git config user.email "actions@github.com"
-          git add .
+          mvn versions:update-properties
           if git diff-index --quiet HEAD; then
             echo "No changes to commit"
             echo "has_changes=false" >> $GITHUB_ENV
           else
-            git commit -m 'Updating versions'
             echo "has_changes=true" >> $GITHUB_ENV
           fi
+
+      - name: Run linters and unit/integration tests
+        id: application_tests
+        if: env.has_changes == 'true'
+        run: mvn clean install -Dall
+
+      - name: Commit changes
+        id: change_commit
+        if: env.has_changes == 'true'
+        run: |
+          git config user.name github-actions
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m 'Updating versions'
 
       - name: Push changes
         if: env.has_changes == 'true'
