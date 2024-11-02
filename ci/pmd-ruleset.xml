@@ -13,9 +13,9 @@
         <!-- Don't think a rule is necessary, should take it on a case-by-case basis to use a Supplier -->
         <exclude name="GuardLogStatement"/>
         <!-- False positives with other assertion libraries -->
-        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <exclude name="UnitTestShouldIncludeAssert"/>
         <!-- I have no problem with multiple asserts in my tests -->
-        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
         <!-- I think explicit 2D arrays looks clearer -->
         <exclude name="UseVarargs"/>
     </rule>
@@ -41,7 +41,7 @@
         <!-- Caught by SonarQube analysis -->
         <exclude name="UnnecessaryModifier"/>
         <!-- I'm happy to use 'var', no need to forbid it -->
-        <exclude name="UseExplicitTypes" />
+        <exclude name="UseExplicitTypes"/>
 
         <!-- Issues for a style guide -->
         <exclude name="ClassNamingConventions"/>
