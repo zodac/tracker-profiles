@@ -42,7 +42,7 @@
 
         <!-- Linter 3PP Versions -->
         <checkstyle.version>10.20.0</checkstyle.version>
-        <error_prone_core.version>2.28.0</error_prone_core.version>
+        <error_prone_core.version>2.36.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
         <pmd.version>7.7.0</pmd.version>
@@ -165,6 +165,7 @@
                             <arg>-Xdoclint:all</arg>
                             <!-- Configuration for ErrorProne -->
                             <arg>-XDcompilePolicy=simple</arg>
+                            <arg>--should-stop=ifError=FLOW</arg>
                             <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=${project.groupId}</arg>
                             <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
                             <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
