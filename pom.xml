@@ -64,7 +64,8 @@
         <license-header-definition-file>${ci-config-directory}/license-header-definition.txt</license-header-definition-file>
         <pmd-ruleset>${ci-config-directory}/pmd-ruleset.xml</pmd-ruleset>
         <sonar.exclusions>src/test/**/*</sonar.exclusions>
-        <sonar.host.url>https://sonarqube.zodac.me</sonar.host.url>
+        <!--suppress UnresolvedMavenProperty, injected by environment variable -->
+        <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
         <sonar.java.checkstyle.reportPaths>${project.build.directory}/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.java.pmd.reportPaths>${project.build.directory}/pmd.xml</sonar.java.pmd.reportPaths>
         <sonar.java.spotbugs.reportPaths>${project.build.directory}/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
