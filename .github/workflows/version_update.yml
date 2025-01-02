@@ -6,8 +6,8 @@ on:
     paths:
       - '.github/workflows/version_update.yml'
   schedule:
-    # Run once on the first of the month
-    - cron: '45 0 1 * *'
+    # Run at 02:00 on the first of the month
+    - cron: '0 2 1 * *'
 
 jobs:
   update:
