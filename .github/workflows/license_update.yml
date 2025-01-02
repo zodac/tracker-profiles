@@ -59,7 +59,8 @@ jobs:
             echo "has_changes=false" >> $GITHUB_ENV
           else
             echo "Changes to be committed:"
-            git diff --word-diff
+            out=$(git diff --word-diff)
+            echo "'${out}'"
             echo "has_changes=true" >> $GITHUB_ENV
           fi
 
