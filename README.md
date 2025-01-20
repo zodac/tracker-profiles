@@ -17,7 +17,7 @@ method.
 ## Configuration
 
 Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/resources/config_example.properties) file and rename it to
-**config.properties**. It is configured with some default values which can are described below.
+**config.properties**. It is configured with some default values that are described below.
 
 | Configuration Property      | Description                                                                                            | Default Value |
 |-----------------------------|--------------------------------------------------------------------------------------------------------|---------------|

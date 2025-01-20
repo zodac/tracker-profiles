@@ -240,7 +240,7 @@
                             <initial-year>2021</initial-year>
                             <!--suppress UnresolvedMavenProperty, defined by build-helper-maven-plugin -->
                             <year>${current-year}</year>
-                            <website>zodac.me</website>
+                            <website>zodac.net</website>
                         </properties>
                         <skip>${skip-linters}</skip>
                     </configuration>
