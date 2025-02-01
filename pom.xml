@@ -26,10 +26,10 @@
         <skip-sonarqube>true</skip-sonarqube>
 
         <!-- 3PP Versions -->
-        <commons-csv.version>1.12.0</commons-csv.version>
+        <commons-csv.version>1.13.0</commons-csv.version>
         <commons-io.version>2.18.0</commons-io.version>
         <log4j.version>2.24.3</log4j.version>
-        <selenium-java.version>4.27.0</selenium-java.version>
+        <selenium-java.version>4.28.1</selenium-java.version>
 
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
@@ -41,12 +41,12 @@
         <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <checkstyle.version>10.21.1</checkstyle.version>
+        <checkstyle.version>10.21.2</checkstyle.version>
         <error_prone_core.version>2.36.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
-        <pmd.version>7.9.0</pmd.version>
-        <spotbugs.version>4.8.6</spotbugs.version>
+        <pmd.version>7.10.0</pmd.version>
+        <spotbugs.version>4.9.0</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
         <license-maven-plugin.version>4.6</license-maven-plugin.version>
