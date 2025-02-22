@@ -25,6 +25,8 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
@@ -104,10 +106,27 @@ public final class TrackerHandlerFactory {
 
     private static ChromeDriver createDriver() {
         final ChromeOptions chromeOptions = new ChromeOptions();
+
+        // User-defined options
         chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
         if (CONFIG.useHeadlessBrowser()) {
             chromeOptions.addArguments("--headless=new");
         }
+
+        // Following 3 options are to ensure there are no conflicting issues running the browser on Linux
+        chromeOptions.addArguments("--user-data-dir=/tmp/chrome-" + System.nanoTime());
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+
+        // Disable password manager pop-ups
+        final Map<String, Object> passwordManagerPreferences = Map.of(
+            "credentials_enable_service", false,
+            "profile.password_manager_enabled", false
+        );
+        chromeOptions.setExperimentalOption("prefs", passwordManagerPreferences);
+
+        // Additional flags to remove unnecessary information on browser
+        chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
 
         return new ChromeDriver(chromeOptions);
     }
