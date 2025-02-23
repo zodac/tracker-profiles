@@ -2,6 +2,9 @@
 *.iml
 .idea/
 
+# VS Code
+.vscode/
+
 # Build
 *.log
 pom.xml.versionsBackup
