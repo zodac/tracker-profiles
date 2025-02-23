@@ -280,7 +280,7 @@
                             <goals>
                                 <goal>check</goal>
                             </goals>
-                            <phase>validate</phase>
+                            <phase>verify</phase>
                         </execution>
                     </executions>
 
@@ -351,7 +351,7 @@
                             <goals>
                                 <goal>javadoc</goal>
                             </goals>
-                            <phase>install</phase>
+                            <phase>validate</phase>
                         </execution>
                     </executions>
                 </plugin>
@@ -402,7 +402,7 @@
                             <goals>
                                 <goal>check</goal>
                             </goals>
-                            <phase>validate</phase>
+                            <phase>verify</phase>
                         </execution>
                     </executions>
                 </plugin>

@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: DavidAnson/markdownlint-cli2-action@v16.0.0
+      - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
         with:
           config: 'ci/doc/.markdownlint.json'
           globs: 'README.md'
