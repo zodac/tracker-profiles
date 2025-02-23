@@ -20,7 +20,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          fetch-tags: true
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -40,6 +39,7 @@ jobs:
       - name: Setup Maven Action
         uses: s4u/setup-maven-action@v1.18.0
         with:
+          checkout-fetch-depth: 0
           java-distribution: 'temurin'
           java-version: '23'
           maven-version: '3.9.9'
