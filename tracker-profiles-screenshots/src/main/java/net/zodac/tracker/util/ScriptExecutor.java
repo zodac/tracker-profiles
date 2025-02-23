@@ -46,6 +46,20 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Performs a {@link Thread#sleep(Duration)} for the specified {@link Duration}.
+     *
+     * @param sleepTime the time to wait
+     */
+    public static void explicitWait(final Duration sleepTime) {
+        try {
+            Thread.sleep(sleepTime);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
      * Updates the text of the provided {@link WebElement} and replaces the value with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when
      * trying to hide/redact sensitive information like IP addresses.
      *
@@ -127,14 +141,5 @@ public final class ScriptExecutor {
      */
     public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
         driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
-    }
-
-    private static void explicitWait(final Duration sleepTime) {
-        try {
-            Thread.sleep(sleepTime);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
     }
 }

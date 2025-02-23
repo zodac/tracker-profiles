@@ -63,6 +63,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected final ChromeDriver driver;
 
+    private static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
+
     /**
      * Default constructor, only for implementation classes.
      *
@@ -153,6 +155,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
     public void openProfilePage(final TrackerDefinition trackerDefinition) {
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         driver.navigate().to(trackerDefinition.profilePage());
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
