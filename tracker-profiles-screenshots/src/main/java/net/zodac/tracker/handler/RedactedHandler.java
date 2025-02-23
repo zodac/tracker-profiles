@@ -32,7 +32,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandlerType(trackerName = "Redacted", accessibility = TrackerAccessibility.PRIVATE)
 public class RedactedHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
 
     /**
      * Default constructor.
