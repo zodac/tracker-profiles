@@ -17,6 +17,8 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -58,6 +60,13 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
     @Override
     public double zoomLevel() {
         return ZOOM_LEVEL_FOR_SCREENSHOT;
+    }
+
+    @Override
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.xpath("//div[@class='blockBody']//table//tbody//td[@class='row1']")
+        );
     }
 
     @Override

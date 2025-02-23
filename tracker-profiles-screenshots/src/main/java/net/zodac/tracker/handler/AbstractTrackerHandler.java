@@ -180,7 +180,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      */
     public int redactElements() {
-        final Collection<WebElement> elementsToBeRedacted = getElementsPotentiallyContainingSensitiveInformation().stream()
+        final Collection<WebElement> elementsToBeRedacted = getElementsPotentiallyContainingSensitiveInformation()
+            .stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
             .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
             .toList();
