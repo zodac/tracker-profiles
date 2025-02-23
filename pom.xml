@@ -442,6 +442,7 @@
                         <execution>
                             <goals>
                                 <goal>check</goal>
+                                <goal>spotbugs</goal>
                             </goals>
                             <phase>validate</phase>
                         </execution>
