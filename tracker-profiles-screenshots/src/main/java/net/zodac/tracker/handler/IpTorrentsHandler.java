@@ -17,7 +17,6 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerAccessibility;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -28,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code IPTorrents} tracker.
  */
-@TrackerHandlerType(trackerName = "IPTorrents", accessibility = TrackerAccessibility.PRIVATE)
+@TrackerHandlerType(trackerName = "IPTorrents")
 public class IpTorrentsHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;

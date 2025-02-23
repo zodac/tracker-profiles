@@ -61,7 +61,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
      */
-    protected ChromeDriver driver;
+    protected final ChromeDriver driver;
 
     /**
      * Default constructor, only for implementation classes.

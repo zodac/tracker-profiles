@@ -17,7 +17,6 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerAccessibility;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -25,7 +24,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FileList} tracker.
  */
-@TrackerHandlerType(trackerName = "FileList", accessibility = TrackerAccessibility.PRIVATE)
+@TrackerHandlerType(trackerName = "FileList")
 public class FileListHandler extends AbstractTrackerHandler {
 
     /**

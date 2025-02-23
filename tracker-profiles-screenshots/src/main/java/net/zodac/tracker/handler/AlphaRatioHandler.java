@@ -19,7 +19,6 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerAccessibility;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -27,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AlphaRatio} tracker.
  */
-@TrackerHandlerType(trackerName = "AlphaRatio", accessibility = TrackerAccessibility.PRIVATE)
+@TrackerHandlerType(trackerName = "AlphaRatio")
 public class AlphaRatioHandler extends AbstractTrackerHandler {
 
     /**

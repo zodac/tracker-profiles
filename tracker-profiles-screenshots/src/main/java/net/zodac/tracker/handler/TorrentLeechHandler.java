@@ -19,7 +19,6 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerAccessibility;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -30,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TorrentLeech} tracker.
  */
-@TrackerHandlerType(trackerName = "TorrentLeech", accessibility = TrackerAccessibility.PRIVATE)
+@TrackerHandlerType(trackerName = "TorrentLeech")
 public class TorrentLeechHandler extends AbstractTrackerHandler {
 
     /**

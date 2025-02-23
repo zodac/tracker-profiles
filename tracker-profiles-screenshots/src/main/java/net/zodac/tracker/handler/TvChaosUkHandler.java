@@ -17,7 +17,6 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerAccessibility;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -27,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-@TrackerHandlerType(trackerName = "TVChaosUK", accessibility = TrackerAccessibility.PRIVATE)
+@TrackerHandlerType(trackerName = "TVChaosUK")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;

@@ -40,7 +40,7 @@ public final class TrackerCsvReader {
         .setHeader(CSV_HEADERS)
         .setSkipHeaderRecord(true)
         .setCommentMarker(CONFIG.csvCommentSymbol())
-        .build();
+        .get();
 
     private TrackerCsvReader() {
 
@@ -57,7 +57,7 @@ public final class TrackerCsvReader {
     public static List<TrackerDefinition> readTrackerInfo() throws IOException, URISyntaxException {
         try (
             final Reader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(CSV_FILE_NAME).toURI()));
-            final CSVParser csvParser = new CSVParser(reader, DEFAULT_FORMAT)
+            final CSVParser csvParser = CSVParser.builder().setReader(reader).setFormat(DEFAULT_FORMAT).get()
         ) {
             return csvParser
                 .stream()

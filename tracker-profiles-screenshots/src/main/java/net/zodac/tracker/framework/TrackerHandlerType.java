@@ -41,11 +41,4 @@ public @interface TrackerHandlerType {
      * @see TrackerHandlerFactory
      */
     String trackerName();
-
-    /**
-     * Metadata value, defining whether the tracker is public or private.
-     *
-     * @return the accessibility of the tracker
-     */
-    TrackerAccessibility accessibility();
 }
