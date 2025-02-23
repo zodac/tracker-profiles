@@ -49,17 +49,6 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public boolean canBannerBeCleared() {
-        // Cookie banner
-        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
-        cookieButton.click();
-
-        // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        ScriptExecutor.moveToOrigin(driver);
-        return true;
-    }
-
-    @Override
     public double zoomLevel() {
         return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
