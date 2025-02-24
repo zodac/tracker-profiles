@@ -32,7 +32,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandlerType(trackerName = "PassThePopcorn")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
