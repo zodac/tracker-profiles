@@ -71,14 +71,15 @@ public final class TrackerHandlerFactory {
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
+     * @param isManualTracker if the {@link AbstractTrackerHandler} requires some manual interaction
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalStateException  thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
      * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      */
-    public static AbstractTrackerHandler getHandler(final String trackerName) {
+    public static AbstractTrackerHandler getHandler(final String trackerName, final boolean isManualTracker) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
             if (hasMatchingAnnotation(trackerHandler, trackerName)) {
-                return makeNewInstance(trackerHandler);
+                return makeNewInstance(trackerHandler, isManualTracker);
             }
         }
 
@@ -94,22 +95,22 @@ public final class TrackerHandlerFactory {
         return annotation.trackerName().equalsIgnoreCase(trackerName);
     }
 
-    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler) {
+    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final boolean isManualTracker) {
         try {
             final Constructor<?> constructorWithChromeDriver = trackerHandler.getDeclaredConstructor(ChromeDriver.class);
-            final ChromeDriver driver = createDriver();
+            final ChromeDriver driver = createDriver(isManualTracker);
             return (AbstractTrackerHandler) constructorWithChromeDriver.newInstance(driver);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException(String.format("Error instantiating an instance of '%s'", trackerHandler), e);
         }
     }
 
-    private static ChromeDriver createDriver() {
+    private static ChromeDriver createDriver(final boolean isManualTracker) {
         final ChromeOptions chromeOptions = new ChromeOptions();
 
         // User-defined options
         chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
-        if (CONFIG.useHeadlessBrowser()) {
+        if (!isManualTracker && CONFIG.useHeadlessBrowser()) {
             chromeOptions.addArguments("--headless=new");
         }
 

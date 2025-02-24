@@ -28,7 +28,7 @@ import org.apache.commons.csv.CSVRecord;
  * @param profilePage the link to the user's profile page on the tracker
  * @param username    the user's username
  * @param password    the user's password
- * @param manual      whether the tracker requires a manual intervention
+ * @param manual      whether the tracker requires a manual interaction
  */
 public record TrackerDefinition(String name, String loginLink, String profilePage, String username, String password, boolean manual)
     implements Comparable<TrackerDefinition> {
@@ -46,7 +46,7 @@ public record TrackerDefinition(String name, String loginLink, String profilePag
             csvRecord.get("profilePage"),
             csvRecord.get("username"),
             csvRecord.get("password"),
-            Boolean.getBoolean(csvRecord.get("manual"))
+            Boolean.parseBoolean(csvRecord.get("manual"))
         );
     }
 

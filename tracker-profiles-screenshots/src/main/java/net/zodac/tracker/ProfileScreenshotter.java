@@ -20,11 +20,12 @@ package net.zodac.tracker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerCsvReader;
@@ -66,32 +67,53 @@ public final class ProfileScreenshotter {
      * @see ScreenshotTaker
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
-        for (final TrackerDefinition trackerDefinition : getTrackers()) {
+        final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
+
+        // Non-manual trackers
+        for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
             takeScreenshotPerTracker(trackerDefinition);
+        }
+
+        if (CONFIG.includeManualTrackers()) {
+            LOGGER.warn("\nExecuting manual trackers, will require user interaction");
+            for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
+                takeScreenshotPerTracker(trackerDefinition);
+            }
         }
     }
 
-    private static Collection<TrackerDefinition> getTrackers() throws IOException, URISyntaxException {
+    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
-        final Set<TrackerDefinition> trackers = new TreeSet<>();
+        final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
+
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
             if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
-                trackers.add(trackerDefinition);
+                final Set<TrackerDefinition> existingTrackerDefinitionsOfType =
+                    trackersByIsManual.getOrDefault(trackerDefinition.manual(), new HashSet<>());
+                existingTrackerDefinitionsOfType.add(trackerDefinition);
+                trackersByIsManual.put(trackerDefinition.manual(), existingTrackerDefinitionsOfType);
             } else {
                 LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
             }
         }
 
-        final String trackersPlural = trackers.size() == 1 ? "" : "s";
-        LOGGER.info("Screenshotting {} tracker{}, saving to: [{}]", trackers.size(), trackersPlural, CONFIG.outputDirectory().toAbsolutePath());
-        return trackers;
+        final String trackersPlural = trackersByIsManual.values().size() == 1 ? "" : "s";
+        if (CONFIG.includeManualTrackers()) {
+            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", trackersByIsManual.values().size(), trackersPlural,
+                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
+        } else {
+            LOGGER.info("Screenshotting {} tracker{} (ignoring {} manual), saving to: [{}]",
+                trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).size(), trackersPlural,
+                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
+        }
+        return trackersByIsManual;
     }
 
     private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) throws IOException {
         LOGGER.info("");
         LOGGER.info("{}", trackerDefinition.name());
 
-        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
+        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), trackerDefinition.manual())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
