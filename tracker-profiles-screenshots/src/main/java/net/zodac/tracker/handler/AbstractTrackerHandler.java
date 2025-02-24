@@ -104,11 +104,20 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         passwordField.clear();
         passwordField.sendKeys(trackerDefinition.password());
 
+        manualCheckBeforeLoginClick();
         final WebElement loginButton = driver.findElement(loginButtonSelector());
         loginButton.click();
         manualCheckAfterLoginClick();
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+    }
+
+    /**
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require an input prior
+     * to clicking the login button.
+     */
+    protected void manualCheckBeforeLoginClick() {
+        // Do nothing by default
     }
 
     /**

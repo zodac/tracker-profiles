@@ -9,6 +9,7 @@ Cathode-Ray.Tube,https://www.cathode-ray.tube/login,https://www.cathode-ray.tube
 Empornium,https://www.empornium.is/login,https://www.empornium.is/user.php?id=user_id,username,password,false
 FearNoPeer,https://fearnopeer.com/login,https://fearnopeer.com/users/username,username,password,false
 FileList,https://filelist.io/login.php,https://filelist.io/userdetails.php?id=user_id,username,password,false
+GazelleGames,https://gazellegames.net/login.php,https://gazellegames.net/user.php?id=user_id,username,password,true
 MoreThanTV,https://www.morethantv.me/login,https://www.morethantv.me/user.php?id=user_id,username,password,false
 MyAnonaMouse,https://www.myanonamouse.net/login.php,https://www.myanonamouse.net/u/user_id,email@address.com,password,false
 Nebulance,https://nebulance.io/login.php,https://nebulance.io/user.php?id=user_id,username,password,false

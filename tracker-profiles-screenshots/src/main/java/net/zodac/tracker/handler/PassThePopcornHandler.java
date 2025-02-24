@@ -58,7 +58,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
      * {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
      *
      * <p>
-     * Manual user interaction:
+     * Manual user interactions:
      * <ol>
      *     <li>Select correct answer to question</li>
      *     <li>Click the login button</li>

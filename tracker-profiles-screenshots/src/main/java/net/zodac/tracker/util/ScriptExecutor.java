@@ -19,6 +19,8 @@ package net.zodac.tracker.util;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.NoSuchElementException;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -39,10 +41,24 @@ public final class ScriptExecutor {
     public static final String DEFAULT_REDACTION_TEXT = "----";
 
     private static final Duration DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
+    private static final Duration DEFAULT_WAIT_FOR_ALERT = Duration.of(2L, ChronoUnit.SECONDS);
     private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(1L, ChronoUnit.SECONDS);
 
     private ScriptExecutor() {
 
+    }
+
+
+    /**
+     * Finds a Chrome alert and accepts it.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void acceptAlert(final WebDriver driver) {
+        final Wait<WebDriver> wait = new WebDriverWait(driver, DEFAULT_WAIT_FOR_ALERT)
+            .ignoring(NoSuchElementException.class);
+        final Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+        alert.accept();
     }
 
     /**

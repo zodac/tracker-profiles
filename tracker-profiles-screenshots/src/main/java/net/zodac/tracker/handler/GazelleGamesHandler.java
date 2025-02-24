@@ -17,32 +17,56 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandlerType;
 import net.zodac.tracker.util.ScriptExecutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeBytes} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
  */
-@TrackerHandlerType(trackerName = "AnimeBytes")
-public class AnimeBytesHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "GazelleGames")
+public class GazelleGamesHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public AnimeBytesHandler(final ChromeDriver driver) {
+    public GazelleGamesHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
     public By loginButtonSelector() {
-        return By.xpath("//input[@value='Log In!' and @type='submit']");
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link GazelleGamesHandler}, prior to clicking the login button with a successful username/password there is another section. Based on this
+     * pop-up, a question needs to be answered. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     *
+     * <p>
+     * Manual user interaction:
+     * <ol>
+     *     <li>Select correct answer to question</li>
+     * </ol>
+     */
+    @Override
+    protected void manualCheckBeforeLoginClick() {
+        LOGGER.info("\t>>> Waiting for user to select correct game title, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 
     @Override
@@ -51,17 +75,22 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.tagName("a")
+        );
+    }
+
+
+    @Override
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();
         ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         logoutButton.click();
 
-        // After clicking logout, a confirmation box appears - find and click 'Yes'
-        final By logoutConfirmationSelector = By.xpath("//form[@id='tokenconfirm']//input[@name='yes' and @type='submit']");
-        ScriptExecutor.waitForElementToAppear(driver, logoutConfirmationSelector, DEFAULT_WAIT_FOR_TRANSITIONS);
-        final WebElement logoutConfirmation = driver.findElement(logoutConfirmationSelector);
-        logoutConfirmation.click();
+        // After clicking logout, a Chrome alert appears - find and click 'Yes'
+        ScriptExecutor.acceptAlert(driver);
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -69,16 +98,6 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
 
     @Override
     protected By logoutButtonSelector() {
-        // Click the user dropdown menu bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//li[@id='username_menu']//span[contains(@class, 'clickmenu')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
-        logoutParent.click();
-
-        return By.xpath("//li[@id='username_menu']//ul[contains(@class, 'subnav')]//a[text()='Logout']");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.id("nav_login");
+        return By.xpath("//li[@id='nav_logout']//a[text()='[Logout]']");
     }
 }
