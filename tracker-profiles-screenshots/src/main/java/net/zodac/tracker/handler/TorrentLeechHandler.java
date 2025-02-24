@@ -71,7 +71,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link IpTorrentsHandler}, there is a table with our passkey. We
+     * For {@link TorrentLeechHandler}, there is a table with our passkey. We
      * find the {@literal <}{@code tr}{@literal >} {@link WebElement} which has a {@literal <}{@code th}{@literal >} {@link WebElement} with the text
      * value <b>Torrent Passkey</b>. From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs
      * its content redacted.

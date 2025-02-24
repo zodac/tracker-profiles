@@ -75,7 +75,7 @@ public final class ProfileScreenshotter {
         }
 
         if (CONFIG.includeManualTrackers()) {
-            LOGGER.warn("\nExecuting manual trackers, will require user interaction");
+            LOGGER.warn("Executing manual trackers, will require user interaction");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
                 takeScreenshotPerTracker(trackerDefinition);
             }

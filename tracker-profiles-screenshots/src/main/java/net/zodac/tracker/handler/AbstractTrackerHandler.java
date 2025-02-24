@@ -49,6 +49,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 
     /**
+     * The default wait {@link Duration} when waiting for user to perform a manual interaction.
+     */
+    protected static final Duration DEFAULT_WAIT_FOR_MANUAL_INTERACTION = Duration.of(20L, ChronoUnit.SECONDS);
+
+    /**
      * The default wait {@link Duration} when waiting for a web page load.
      */
     protected static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(5L, ChronoUnit.SECONDS);
@@ -90,6 +95,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
     public void login(final TrackerDefinition trackerDefinition) {
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         final WebElement usernameField = driver.findElement(usernameFieldSelector());
         usernameField.clear();
         usernameField.sendKeys(trackerDefinition.username());
@@ -100,8 +106,17 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         final WebElement loginButton = driver.findElement(loginButtonSelector());
         loginButton.click();
+        manualCheckAfterLoginClick();
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+    }
+
+    /**
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require a second input
+     * after clicking the login button.
+     */
+    protected void manualCheckAfterLoginClick() {
+        // Do nothing by default
     }
 
     /**

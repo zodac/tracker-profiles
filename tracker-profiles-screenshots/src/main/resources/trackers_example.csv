@@ -12,6 +12,7 @@ FileList,https://filelist.io/login.php,https://filelist.io/userdetails.php?id=us
 MoreThanTV,https://www.morethantv.me/login,https://www.morethantv.me/user.php?id=user_id,username,password,false
 MyAnonaMouse,https://www.myanonamouse.net/login.php,https://www.myanonamouse.net/u/user_id,email@address.com,password,false
 Nebulance,https://nebulance.io/login.php,https://nebulance.io/user.php?id=user_id,username,password,false
+PassThePopcorn,https://passthepopcorn.me,https://passthepopcorn.me/user.php?id=user_id,username,password,true
 PixelCove,https://www.pixelcove.me/login,https://www.pixelcove.me/user.php?id=user_id,username,password,false
 Redacted,https://redacted.sh/login.php,https://redacted.sh/user.php?id=user_id,username,password,false
 TorrentLeech,https://www.torrentleech.org,https://www.torrentleech.org/profile/username/view,username,password,false
