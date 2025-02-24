@@ -32,6 +32,8 @@
         <exclude name="AtLeastOneConstructor"/>
         <!-- Unnecessary -->
         <exclude name="CommentDefaultAccessModifier"/>
+        <!-- Some false positives where we want the default implementation to be empty -->
+        <exclude name="EmptyMethodInAbstractClassShouldBeAbstract"/>
         <!-- Plenty of scenarios where we would like to exit a method early in error cases -->
         <exclude name="OnlyOneReturn"/>
         <!-- False positives when multiplying 2 ints to result in a long -->
