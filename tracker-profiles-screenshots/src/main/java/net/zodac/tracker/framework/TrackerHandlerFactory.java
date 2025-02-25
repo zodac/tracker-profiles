@@ -127,6 +127,7 @@ public final class TrackerHandlerFactory {
         chromeOptions.setExperimentalOption("prefs", passwordManagerPreferences);
 
         // Additional flags to remove unnecessary information on browser
+        chromeOptions.addArguments("--disable-notifications");
         chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
 
         return new ChromeDriver(chromeOptions);
