@@ -32,7 +32,7 @@ import net.zodac.tracker.handler.AbstractTrackerHandler;
  */
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
-public @interface TrackerHandlerType {
+public @interface TrackerHandler {
 
     /**
      * The name of the tracker website, which should link to an implementation of {@link AbstractTrackerHandler}.
@@ -40,5 +40,5 @@ public @interface TrackerHandlerType {
      * @return the code of the tracker
      * @see TrackerHandlerFactory
      */
-    String trackerName();
+    String value();
 }

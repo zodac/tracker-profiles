@@ -19,6 +19,7 @@ package net.zodac.tracker.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * Utility class used to open the screenshot directory at the end of execution.
@@ -54,7 +55,7 @@ public final class DirectoryOpener {
     }
 
     private static String getCommand() {
-        final String operatingSystemName = System.getProperty("os.name").toLowerCase();
+        final String operatingSystemName = System.getProperty("os.name").toLowerCase(Locale.getDefault());
 
         if (operatingSystemName.contains("win")) {
             return "explorer";

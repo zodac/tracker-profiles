@@ -17,7 +17,7 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -26,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-@TrackerHandlerType(trackerName = "TVChaosUK")
+@TrackerHandler("TVChaosUK")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -43,6 +43,11 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.id("login-button");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//ul[@class='list-inline']//li[1]//a[1]");
     }
 
     @Override

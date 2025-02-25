@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code MyAnonaMouse} tracker.
  */
-@TrackerHandlerType(trackerName = "MyAnonaMouse")
+@TrackerHandler("MyAnonaMouse")
 public class MyAnonaMouseHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
@@ -55,6 +55,15 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.xpath("//input[@value='Log in!' and @type='submit']");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        // Highlight the profile menu to make the logout button interactable
+        final By profileDropDownSelector = By.xpath("//li[@class='mmUserStats']//a[@tabindex='0']");
+        final WebElement profileDropDown = driver.findElement(profileDropDownSelector);
+        ScriptExecutor.moveTo(driver, profileDropDown);
+        return By.xpath("//a[@class='myInfo']");
     }
 
     @Override

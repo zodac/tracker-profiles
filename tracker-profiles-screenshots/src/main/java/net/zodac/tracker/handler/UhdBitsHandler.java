@@ -19,14 +19,14 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code UHDBits} tracker.
  */
-@TrackerHandlerType(trackerName = "UHDBits")
+@TrackerHandler("UHDBits")
 public class UhdBitsHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
@@ -43,6 +43,11 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[@class='username']");
     }
 
     @Override

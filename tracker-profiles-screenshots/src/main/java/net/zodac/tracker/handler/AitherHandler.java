@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
  */
 // TODO: UNIT3D
-@TrackerHandlerType(trackerName = "Aither")
+@TrackerHandler("Aither")
 public class AitherHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -57,6 +57,11 @@ public class AitherHandler extends AbstractTrackerHandler {
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         ScriptExecutor.moveToOrigin(driver);
         return true;
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[@class='top-nav__username--highresolution']");
     }
 
     @Override

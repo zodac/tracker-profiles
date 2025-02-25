@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code FearNoPeer} tracker.
  */
 // TODO: UNIT3D
-@TrackerHandlerType(trackerName = "FearNoPeer")
+@TrackerHandler("FearNoPeer")
 public class FearNoPeerHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -46,6 +46,11 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
     @Override
     protected By loginButtonSelector() {
         return By.xpath("//button[@class='auth-form__primary-button' and text()='Login']");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[img[contains(@class, 'top-nav__profile-image')]]");
     }
 
     @Override

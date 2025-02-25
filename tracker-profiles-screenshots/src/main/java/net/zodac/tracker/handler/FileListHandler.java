@@ -17,14 +17,14 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FileList} tracker.
  */
-@TrackerHandlerType(trackerName = "FileList")
+@TrackerHandler("FileList")
 public class FileListHandler extends AbstractTrackerHandler {
 
     /**
@@ -39,6 +39,11 @@ public class FileListHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @value='Login']");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//div[@class='statusbar']//div/a[span]");
     }
 
     @Override

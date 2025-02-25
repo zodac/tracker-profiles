@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
  */
-@TrackerHandlerType(trackerName = "PassThePopcorn")
+@TrackerHandler("PassThePopcorn")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -46,7 +46,13 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     @Override
     public By loginButtonSelector() {
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         return By.id("login-button");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[@class='user-info-bar__link']");
     }
 
     /**

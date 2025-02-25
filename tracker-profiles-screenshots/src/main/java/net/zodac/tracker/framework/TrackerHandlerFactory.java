@@ -57,15 +57,15 @@ public final class TrackerHandlerFactory {
      */
     public static boolean doesHandlerExist(final String trackerName) {
         return TRACKER_HANDLER_CLASSES.stream()
-            .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandlerType.class))
-            .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandlerType.class))
-            .anyMatch(annotation -> annotation.trackerName().equalsIgnoreCase(trackerName));
+            .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandler.class))
+            .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandler.class))
+            .anyMatch(annotation -> annotation.value().equalsIgnoreCase(trackerName));
     }
 
     /**
      * Finds an implementation of {@link AbstractTrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it.
-     * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandlerType}, which contains a
-     * {@link TrackerHandlerType#trackerName()}, which should match the input (the match is case-insensitive).
+     * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandler}, which contains a
+     * {@link TrackerHandler#value()}, which should match the input (the match is case-insensitive).
      *
      * <p>
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
@@ -88,11 +88,11 @@ public final class TrackerHandlerFactory {
     }
 
     private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerName) {
-        if (!trackerHandler.isAnnotationPresent(TrackerHandlerType.class)) {
+        if (!trackerHandler.isAnnotationPresent(TrackerHandler.class)) {
             return false;
         }
-        final TrackerHandlerType annotation = trackerHandler.getAnnotation(TrackerHandlerType.class);
-        return annotation.trackerName().equalsIgnoreCase(trackerName);
+        final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
+        return annotation.value().equalsIgnoreCase(trackerName);
     }
 
     private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final boolean isManualTracker) {
@@ -142,7 +142,7 @@ public final class TrackerHandlerFactory {
             return reader.lines()
                 .filter(line -> line.endsWith(".class"))
                 .map(line -> getClass(line, packageName))
-                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandlerType.class))
+                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
                 .collect(Collectors.toSet());
         } catch (final IllegalStateException | IOException ignored) {
             return Set.of();

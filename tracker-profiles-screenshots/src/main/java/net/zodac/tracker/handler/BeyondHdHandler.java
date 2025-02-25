@@ -17,7 +17,7 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BeyondHD} tracker.
  */
-@TrackerHandlerType(trackerName = "BeyondHD")
+@TrackerHandler("BeyondHD")
 public class BeyondHdHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.75D;
@@ -46,6 +46,11 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.id("login-button");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[img[contains(@class, 'beta-image-avatar')]]");
     }
 
     /**

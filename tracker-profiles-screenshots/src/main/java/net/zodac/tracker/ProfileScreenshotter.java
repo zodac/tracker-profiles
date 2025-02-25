@@ -98,9 +98,12 @@ public final class ProfileScreenshotter {
     }
 
     private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {
-        final String trackersPlural = trackersByIsManual.values().size() == 1 ? "" : "s";
+        final int numberOfTrackers = trackersByIsManual.values().stream()
+            .mapToInt(Set::size)
+            .sum();
+        final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
         if (CONFIG.includeManualTrackers()) {
-            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", trackersByIsManual.values().size(), trackersPlural,
+            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", numberOfTrackers, trackersPlural,
                 trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
         } else {
             LOGGER.info("Screenshotting {} tracker{} (ignoring {} manual), saving to: [{}]",
@@ -150,9 +153,8 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Banner has been cleared");
         }
 
-        // TODO: Do this programmatically for each tracker, rather than hardcoding the links
-        LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
-        trackerHandler.openProfilePage(trackerDefinition);
+        LOGGER.info("\t- Opening user profile page");
+        trackerHandler.openProfilePage();
 
         final int numberOfRedactedElements = trackerHandler.redactElements();
         if (numberOfRedactedElements != 0) {

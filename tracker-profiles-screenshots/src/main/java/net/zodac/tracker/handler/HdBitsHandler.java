@@ -18,7 +18,7 @@
 package net.zodac.tracker.handler;
 
 import java.time.Duration;
-import net.zodac.tracker.framework.TrackerHandlerType;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code HDBits} tracker.
  */
-@TrackerHandlerType(trackerName = "HDBits")
+@TrackerHandler("HDBits")
 public class HdBitsHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -57,6 +57,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     @Override
     protected By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @value='Log in!']");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//div[@class='curuser-stats']//b//a[1]");
     }
 
     /**

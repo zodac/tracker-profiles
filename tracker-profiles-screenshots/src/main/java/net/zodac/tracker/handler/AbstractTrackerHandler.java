@@ -65,11 +65,14 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected static final Duration DEFAULT_WAIT_FOR_TRANSITIONS = Duration.of(500L, ChronoUnit.MILLIS);
 
     /**
+     * The standard wait {@link Duration} to let the login page load.
+     */
+    protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
+
+    /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
      */
     protected final ChromeDriver driver;
-
-    private static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
     /**
      * Default constructor, only for implementation classes.
@@ -95,6 +98,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
+    // TODO: Have a postLoginSelector, so we can check if this failed?
     public void login(final TrackerDefinition trackerDefinition) {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         final WebElement usernameField = driver.findElement(usernameFieldSelector());
@@ -176,14 +180,23 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * Once logged in, navigates to the user's profile page on the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish
      * loading.
-     *
-     * @param trackerDefinition the {@link TrackerDefinition} containing the user's profile URL
      */
-    public void openProfilePage(final TrackerDefinition trackerDefinition) {
+    public void openProfilePage() {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
-        driver.navigate().to(trackerDefinition.profilePage());
+        final WebElement profilePageLink = driver.findElement(profilePageSelector());
+        profilePageLink.click();
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.moveToOrigin(driver);
         additionalWaitOnProfilePage();
+    }
+
+    /**
+     * Defines the {@link By} selector of the {@link WebElement} of the user's profile page.
+     *
+     * @return the profile page {@link By} selector
+     */
+    protected By profilePageSelector() {
+        return By.id("");
     }
 
     /**
