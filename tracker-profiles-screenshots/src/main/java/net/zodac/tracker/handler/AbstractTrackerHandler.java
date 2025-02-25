@@ -29,6 +29,7 @@ import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -182,6 +183,15 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         driver.navigate().to(trackerDefinition.profilePage());
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        additionalWaitOnProfilePage();
+    }
+
+    /**
+     * For certain trackers, the page is considered 'loaded' by {@link ScriptExecutor#waitForPageToLoad(WebDriver, Duration)}, but the required
+     * elements are not all on the screen. This method can be overridden to include either explicit waits, or waiting for the wanted elements.
+     */
+    protected void additionalWaitOnProfilePage() {
+        // Nothing by default
     }
 
     /**

@@ -53,9 +53,9 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link PassThePopcornHandler}, after clicking the login button with a successful username/password, another section pops up. Based on this
-     * pop-up, a question needs to be answered, and the login button pressed again. This must be done within
-     * {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * For {@link PassThePopcornHandler}, after clicking the login button with a successful username/password, another section pops up. There is a
+     * multiple-choice question, where the correct movie title must be chosen that matches the poster, and the login button pressed again.
+     * This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
      *
      * <p>
      * Manual user interactions:

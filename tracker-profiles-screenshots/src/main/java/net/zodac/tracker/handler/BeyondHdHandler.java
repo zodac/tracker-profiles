@@ -52,8 +52,8 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link BeyondHdHandler}, prior to clicking the login button with a successful username/password there is another section. Based on this
-     * pop-up, a captcha needs to be entered. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * For {@link BeyondHdHandler}, prior to clicking the login button with a successful username/password there is another field where a
+     * Captcha needs to be entered. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
      *
      * <p>
      * Manual user interaction:

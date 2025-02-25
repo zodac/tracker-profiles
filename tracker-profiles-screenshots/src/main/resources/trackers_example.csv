@@ -7,6 +7,7 @@ BeyondHD,https://beyond-hd.me/login,https://beyond-hd.me/username.user_id,userna
 Blutopia,https://blutopia.cc/login,https://blutopia.cc/users/username,username,password,false
 BwTorrents,https://bwtorrents.tv/login.php,https://bwtorrents.tv/userdetails.php?id=user_id,username,password,false
 Cathode-Ray.Tube,https://www.cathode-ray.tube/login,https://www.cathode-ray.tube/user.php?id=user_id,username,password,false
+DigitalCore.Club,https://digitalcore.club/login,https://digitalcore.club/user/user_id/username,username,password,true
 Empornium,https://www.empornium.is/login,https://www.empornium.is/user.php?id=user_id,username,password,false
 FearNoPeer,https://fearnopeer.com/login,https://fearnopeer.com/users/username,username,password,false
 FileList,https://filelist.io/login.php,https://filelist.io/userdetails.php?id=user_id,username,password,false

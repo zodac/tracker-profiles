@@ -24,16 +24,15 @@ import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
  */
-@TrackerHandlerType(trackerName = "GazelleGames")
-public class GazelleGamesHandler extends AbstractTrackerHandler {
+@TrackerHandlerType(trackerName = "DigitalCore.Club")
+public class DigitalCoreClubHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
+    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.80D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -41,37 +40,55 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    public GazelleGamesHandler(final ChromeDriver driver) {
+    public DigitalCoreClubHandler(final ChromeDriver driver) {
         super(driver);
     }
 
     @Override
+    protected By usernameFieldSelector() {
+        return By.id("inputUsername");
+    }
+
+    @Override
+    protected By passwordFieldSelector() {
+        return By.id("inputPassword");
+    }
+
+    @Override
     public By loginButtonSelector() {
-        return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
+        return By.xpath("//button[text()='Login' and @type='submit']");
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link GazelleGamesHandler}, prior to clicking the login button with a successful username/password there is a multiple-choice question,
-     * where the correct game title must be chosen that matches the picture. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * For {@link DigitalCoreClubHandler}, prior to clicking the login button with a successful username/password there is another field where a
+     * Captcha needs to be entered. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
      *
      * <p>
      * Manual user interaction:
      * <ol>
-     *     <li>Select correct answer to question</li>
+     *     <li>Enter correct captcha value</li>
      * </ol>
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
-        LOGGER.info("\t>>> Waiting for user to select correct game title, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        LOGGER.info("\t>>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link DigitalCoreClubHandler}, the page loads but the table with user details is not visible on the initial load. So we wait for the user
+     * details table to be visible before proceeding.
+     */
     @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    protected void additionalWaitOnProfilePage() {
+        final By selector = By.xpath("//div[@id='contentContainer']//table");
+        ScriptExecutor.waitForElementToAppear(driver, selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override
@@ -82,21 +99,12 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void logout() {
-        final By logoutButtonSelector = logoutButtonSelector();
-        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        final WebElement logoutButton = driver.findElement(logoutButtonSelector);
-        logoutButton.click();
-
-        // After clicking logout, a Chrome alert appears - find and click 'Yes'
-        ScriptExecutor.acceptAlert(driver);
-
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public double zoomLevel() {
+        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override
     protected By logoutButtonSelector() {
-        return By.xpath("//li[@id='nav_logout']//a[text()='[Logout]']");
+        return By.xpath("//span[@class='hidden-xs2' and text()='Sign out']");
     }
 }
