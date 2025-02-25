@@ -20,6 +20,7 @@ package net.zodac.tracker;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
+import net.zodac.tracker.util.DirectoryOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,6 +92,9 @@ public final class ProfileScreenshotter {
                 takeScreenshotPerTracker(trackerDefinition);
             }
         }
+
+        final Path directory = CONFIG.outputDirectory().toAbsolutePath();
+        DirectoryOpener.open(directory.toFile());
     }
 
     private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {
