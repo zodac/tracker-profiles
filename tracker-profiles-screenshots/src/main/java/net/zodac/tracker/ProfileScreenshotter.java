@@ -21,11 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerCsvReader;
@@ -68,7 +68,7 @@ public final class ProfileScreenshotter {
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
-        if (trackersByIsManual.values().isEmpty()) {
+        if (trackersByIsManual.isEmpty()) {
             LOGGER.warn("No trackers selected!");
             return;
         }
@@ -84,7 +84,7 @@ public final class ProfileScreenshotter {
         //   - Highlight element that requires an input
         //   - Allow execution to resume when input is finished rather than waiting a static period of time
         //   - Show timer on web-page (or remove entirely, but have a catch-all timer to kill execution eventually)
-        if (CONFIG.includeManualTrackers()) {
+        if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
             LOGGER.warn("Executing manual trackers, will require user interaction");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
                 takeScreenshotPerTracker(trackerDefinition);
@@ -111,7 +111,7 @@ public final class ProfileScreenshotter {
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
             if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
                 final Set<TrackerDefinition> existingTrackerDefinitionsOfType =
-                    trackersByIsManual.getOrDefault(trackerDefinition.manual(), new HashSet<>());
+                    trackersByIsManual.getOrDefault(trackerDefinition.manual(), new TreeSet<>());
                 existingTrackerDefinitionsOfType.add(trackerDefinition);
                 trackersByIsManual.put(trackerDefinition.manual(), existingTrackerDefinitionsOfType);
             } else {
