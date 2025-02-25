@@ -68,6 +68,12 @@ public final class ProfileScreenshotter {
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
+        if (trackersByIsManual.values().isEmpty()) {
+            LOGGER.warn("No trackers selected!");
+            return;
+        }
+
+        printTrackersInfo(trackersByIsManual);
 
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
@@ -86,6 +92,18 @@ public final class ProfileScreenshotter {
         }
     }
 
+    private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {
+        final String trackersPlural = trackersByIsManual.values().size() == 1 ? "" : "s";
+        if (CONFIG.includeManualTrackers()) {
+            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", trackersByIsManual.values().size(), trackersPlural,
+                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
+        } else {
+            LOGGER.info("Screenshotting {} tracker{} (ignoring {} manual), saving to: [{}]",
+                trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).size(), trackersPlural,
+                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
+        }
+    }
+
     private static Map<Boolean, Set<TrackerDefinition>> getTrackers() throws IOException, URISyntaxException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
@@ -101,15 +119,6 @@ public final class ProfileScreenshotter {
             }
         }
 
-        final String trackersPlural = trackersByIsManual.values().size() == 1 ? "" : "s";
-        if (CONFIG.includeManualTrackers()) {
-            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", trackersByIsManual.values().size(), trackersPlural,
-                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
-        } else {
-            LOGGER.info("Screenshotting {} tracker{} (ignoring {} manual), saving to: [{}]",
-                trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).size(), trackersPlural,
-                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
-        }
         return trackersByIsManual;
     }
 
