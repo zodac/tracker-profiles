@@ -81,7 +81,6 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
         );
     }
 
-
     @Override
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();

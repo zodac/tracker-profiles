@@ -3,6 +3,7 @@ Aither,https://aither.cc/login,https://aither.cc/users/username,username,passwor
 AlphaRatio,https://alpharatio.cc/login.php,https://alpharatio.cc/user.php?id=user_id,username,password,false
 AnimeBytes,https://animebytes.tv/user/login,https://animebytes.tv/user.php?id=user_id,username,password,false
 Anthelion,https://anthelion.me/login.php,https://anthelion.me/user.php?id=user_id,username,password,false
+BeyondHD,https://beyond-hd.me/login,https://beyond-hd.me/username.user_id,username,password,true
 Blutopia,https://blutopia.cc/login,https://blutopia.cc/users/username,username,password,false
 BwTorrents,https://bwtorrents.tv/login.php,https://bwtorrents.tv/userdetails.php?id=user_id,username,password,false
 Cathode-Ray.Tube,https://www.cathode-ray.tube/login,https://www.cathode-ray.tube/user.php?id=user_id,username,password,false

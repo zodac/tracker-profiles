@@ -48,7 +48,6 @@ public final class ScriptExecutor {
 
     }
 
-
     /**
      * Finds a Chrome alert and accepts it.
      *
