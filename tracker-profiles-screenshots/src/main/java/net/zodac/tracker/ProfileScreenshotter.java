@@ -74,6 +74,10 @@ public final class ProfileScreenshotter {
             takeScreenshotPerTracker(trackerDefinition);
         }
 
+        // TODO: Make manual inputs more interactive:
+        //   - Highlight element that requires an input
+        //   - Allow execution to resume when input is finished rather than waiting a static period of time
+        //   - Show timer on web-page (or remove entirely, but have a catch-all timer to kill execution eventually)
         if (CONFIG.includeManualTrackers()) {
             LOGGER.warn("Executing manual trackers, will require user interaction");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
@@ -132,6 +136,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Banner has been cleared");
         }
 
+        // TODO: Do this programmatically for each tracker, rather than hardcoding the links
         LOGGER.info("\t- Redirecting to user profile page at '{}'", trackerDefinition.profilePage());
         trackerHandler.openProfilePage(trackerDefinition);
 
