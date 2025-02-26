@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
  */
-@TrackerHandler("GazelleGames")
+@TrackerHandler(name = "GazelleGames", url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
@@ -39,10 +39,11 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public GazelleGamesHandler(final ChromeDriver driver) {
-        super(driver);
+    public GazelleGamesHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

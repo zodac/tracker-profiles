@@ -23,10 +23,12 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import java.util.Collection;
+
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-@TrackerHandler("TVChaosUK")
+@TrackerHandler(name = "TVChaosUK", url = "https://tvchaosuk.com/")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -34,10 +36,11 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public TvChaosUkHandler(final ChromeDriver driver) {
-        super(driver);
+    public TvChaosUkHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

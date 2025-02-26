@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Redacted} tracker.
  */
-@TrackerHandler("Redacted")
+@TrackerHandler(name = "Redacted", url = "https://redacted.sh/login.php")
 public class RedactedHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
@@ -36,10 +36,11 @@ public class RedactedHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public RedactedHandler(final ChromeDriver driver) {
-        super(driver);
+    public RedactedHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

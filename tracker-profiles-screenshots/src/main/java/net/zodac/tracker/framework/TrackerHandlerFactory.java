@@ -21,10 +21,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -59,18 +60,18 @@ public final class TrackerHandlerFactory {
         return TRACKER_HANDLER_CLASSES.stream()
             .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandler.class))
             .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandler.class))
-            .anyMatch(annotation -> annotation.value().equalsIgnoreCase(trackerName));
+            .anyMatch(annotation -> annotation.name().equalsIgnoreCase(trackerName));
     }
 
     /**
      * Finds an implementation of {@link AbstractTrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it.
      * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandler}, which contains a
-     * {@link TrackerHandler#value()}, which should match the input (the match is case-insensitive).
+     * {@link TrackerHandler#name()}, which should match the input (the match is case-insensitive).
      *
      * <p>
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
      *
-     * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
+     * @param trackerName     the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @param isManualTracker if the {@link AbstractTrackerHandler} requires some manual interaction
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalStateException  thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
@@ -78,8 +79,11 @@ public final class TrackerHandlerFactory {
      */
     public static AbstractTrackerHandler getHandler(final String trackerName, final boolean isManualTracker) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
-            if (hasMatchingAnnotation(trackerHandler, trackerName)) {
-                return makeNewInstance(trackerHandler, isManualTracker);
+            if (trackerHandler.isAnnotationPresent(TrackerHandler.class)) {
+                final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
+                if (annotation.name().equalsIgnoreCase(trackerName)) {
+                    return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), isManualTracker);
+                }
             }
         }
 
@@ -87,19 +91,11 @@ public final class TrackerHandlerFactory {
         throw new NoSuchElementException(errorMessage);
     }
 
-    private static boolean hasMatchingAnnotation(final AnnotatedElement trackerHandler, final String trackerName) {
-        if (!trackerHandler.isAnnotationPresent(TrackerHandler.class)) {
-            return false;
-        }
-        final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
-        return annotation.value().equalsIgnoreCase(trackerName);
-    }
-
-    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final boolean isManualTracker) {
+    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final List<String> urls, final boolean isManualTracker) {
         try {
-            final Constructor<?> constructorWithChromeDriver = trackerHandler.getDeclaredConstructor(ChromeDriver.class);
+            final Constructor<?> constructorWithChromeDriverAndUrls = trackerHandler.getDeclaredConstructor(ChromeDriver.class, Collection.class);
             final ChromeDriver driver = createDriver(isManualTracker);
-            return (AbstractTrackerHandler) constructorWithChromeDriver.newInstance(driver);
+            return (AbstractTrackerHandler) constructorWithChromeDriverAndUrls.newInstance(driver, urls);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException(String.format("Error instantiating an instance of '%s'", trackerHandler), e);
         }

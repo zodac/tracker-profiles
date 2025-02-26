@@ -37,8 +37,16 @@ public @interface TrackerHandler {
     /**
      * The name of the tracker website, which should link to an implementation of {@link AbstractTrackerHandler}.
      *
-     * @return the code of the tracker
+     * @return the name of the tracker
      * @see TrackerHandlerFactory
      */
-    String value();
+    String name();
+
+    /**
+     * The URLs of the tracker website. Multiple can be included for sites with backups, but will be executed in order until one successfully loads.
+     * This URL should load the login page of the tracker.
+     *
+     * @return the URLs of the tracker
+     */
+    String[] url();
 }

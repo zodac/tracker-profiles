@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PixelCove} tracker.
  */
-@TrackerHandler("PixelCove")
+@TrackerHandler(name = "PixelCove", url = "https://www.pixelcove.me/login")
 public class PixelCoveHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
@@ -38,10 +38,11 @@ public class PixelCoveHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public PixelCoveHandler(final ChromeDriver driver) {
-        super(driver);
+    public PixelCoveHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

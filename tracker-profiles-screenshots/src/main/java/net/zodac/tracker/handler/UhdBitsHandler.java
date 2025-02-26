@@ -26,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code UHDBits} tracker.
  */
-@TrackerHandler("UHDBits")
+@TrackerHandler(name = "UHDBits", url = "https://uhdbits.org/login.php")
 public class UhdBitsHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
@@ -34,10 +34,11 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public UhdBitsHandler(final ChromeDriver driver) {
-        super(driver);
+    public UhdBitsHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

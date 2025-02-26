@@ -29,19 +29,20 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
  */
-@TrackerHandler("DigitalCore.Club")
+@TrackerHandler(name = "DigitalCore.Club", url = {"https://digitalcore.club/", "https://prxy.digitalcore.club/"})
 public class DigitalCoreClubHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.80D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * Default constructor.
+     * Constructs a new {@link DigitalCoreClubHandler}.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public DigitalCoreClubHandler(final ChromeDriver driver) {
-        super(driver);
+    public DigitalCoreClubHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

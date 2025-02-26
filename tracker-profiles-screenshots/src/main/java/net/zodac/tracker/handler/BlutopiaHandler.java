@@ -28,8 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
  */
-// TODO: UNIT3D
-@TrackerHandler("Blutopia")
+@TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/")
 public class BlutopiaHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -37,10 +36,11 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public BlutopiaHandler(final ChromeDriver driver) {
-        super(driver);
+    public BlutopiaHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

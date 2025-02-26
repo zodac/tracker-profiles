@@ -27,9 +27,12 @@ import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.util.ScriptExecutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -69,28 +72,49 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     /**
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
      */
     protected final ChromeDriver driver;
+    private final List<String> trackerUrls;
 
     /**
      * Default constructor, only for implementation classes.
      *
      * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
      */
-    protected AbstractTrackerHandler(final ChromeDriver driver) {
+    protected AbstractTrackerHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         this.driver = driver;
+        this.trackerUrls = List.copyOf(trackerUrls);
     }
 
     /**
      * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
-     *
-     * @param trackerDefinition the {@link TrackerDefinition} containing the login page URL
      */
-    public void openLoginPage(final TrackerDefinition trackerDefinition) {
-        driver.navigate().to(trackerDefinition.loginLink());
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public void openLoginPage() {
+        boolean unableToConnect = true;
+        for (final String trackerUrl : trackerUrls) {
+            try {
+                LOGGER.info("\t\t- '{}'", trackerUrl);
+                driver.navigate().to(trackerUrl);
+                unableToConnect = false;
+                ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+                break; // No need to load another page
+            } catch (final WebDriverException e) {
+                // If website can't be resolved, assume the site is down and attempt the next URL (if any), else rethrow exception
+                if (e.getMessage() != null && e.getMessage().contains("ERR_NAME_NOT_RESOLVED")) {
+                    LOGGER.warn("\t\t- Unable to connect: {}", e.getMessage().split("\n")[0]);
+                } else {
+                    throw e;
+                }
+            }
+        }
+
+        if (unableToConnect) {
+            throw new IllegalStateException(String.format("Unable to connect to any URL for '%s': %s", getClass().getSimpleName(), trackerUrls));
+        }
     }
 
     /**
@@ -195,9 +219,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      *
      * @return the profile page {@link By} selector
      */
-    protected By profilePageSelector() {
-        return By.id("");
-    }
+    protected abstract By profilePageSelector();
 
     /**
      * For certain trackers, the page is considered 'loaded' by {@link ScriptExecutor#waitForPageToLoad(WebDriver, Duration)}, but the required

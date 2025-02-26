@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BeyondHD} tracker.
  */
-@TrackerHandler("BeyondHD")
+@TrackerHandler(name = "BeyondHD", url = "https://beyond-hd.me/")
 public class BeyondHdHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.75D;
@@ -37,10 +38,11 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public BeyondHdHandler(final ChromeDriver driver) {
-        super(driver);
+    public BeyondHdHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

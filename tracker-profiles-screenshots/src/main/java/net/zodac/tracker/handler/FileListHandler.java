@@ -20,20 +20,22 @@ package net.zodac.tracker.handler;
 import net.zodac.tracker.framework.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
+import java.util.Collection;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FileList} tracker.
  */
-@TrackerHandler("FileList")
+@TrackerHandler(name = "FileList", url = {"https://filelist.io/", "https://thefl.org/"})
 public class FileListHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public FileListHandler(final ChromeDriver driver) {
-        super(driver);
+    public FileListHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

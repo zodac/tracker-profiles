@@ -28,16 +28,17 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Anthelion} tracker.
  */
-@TrackerHandler("Anthelion")
+@TrackerHandler(name = "Anthelion", url = "https://anthelion.me/")
 public class AnthelionHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public AnthelionHandler(final ChromeDriver driver) {
-        super(driver);
+    public AnthelionHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

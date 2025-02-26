@@ -28,16 +28,17 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
  */
-@TrackerHandler("Empornium")
+@TrackerHandler(name = "Empornium", url = {"https://www.empornium.is/login", "https://www.empornium.sx/login"})
 public class EmporniumHandler extends AbstractTrackerHandler {
 
     /**
-     * Default constructor.
+     * Constructs an instance of {@link EmporniumHandler}.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public EmporniumHandler(final ChromeDriver driver) {
-        super(driver);
+    public EmporniumHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

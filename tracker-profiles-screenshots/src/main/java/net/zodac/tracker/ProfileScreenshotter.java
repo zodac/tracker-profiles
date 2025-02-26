@@ -143,8 +143,10 @@ public final class ProfileScreenshotter {
 
     private static void takeScreenshotOfProfilePage(final AbstractTrackerHandler trackerHandler, final TrackerDefinition trackerDefinition)
         throws IOException {
-        LOGGER.info("\t- Opening login page at '{}'", trackerDefinition.loginLink());
-        trackerHandler.openLoginPage(trackerDefinition);
+
+        // TODO: Update this to open main page and redirect to login page if required
+        LOGGER.info("\t- Opening login page");
+        trackerHandler.openLoginPage();
 
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);
@@ -159,6 +161,7 @@ public final class ProfileScreenshotter {
         final int numberOfRedactedElements = trackerHandler.redactElements();
         if (numberOfRedactedElements != 0) {
             final String redactedElementsPlural = numberOfRedactedElements == 1 ? "" : "s";
+            // TODO: Print the elements
             LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, redactedElementsPlural);
         }
 

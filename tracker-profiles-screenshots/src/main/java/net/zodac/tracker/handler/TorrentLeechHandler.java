@@ -29,16 +29,23 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TorrentLeech} tracker.
  */
-@TrackerHandler("TorrentLeech")
+@TrackerHandler(name = "TorrentLeech", url = {
+    "https://www.torrentleech.org/",
+    "https://www.torrentleech.cc/",
+    "https://www.torrentleech.me/",
+    "https://www.tleechreload.org/",
+    "https://www.tlgetin.cc/"
+})
 public class TorrentLeechHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public TorrentLeechHandler(final ChromeDriver driver) {
-        super(driver);
+    public TorrentLeechHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

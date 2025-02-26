@@ -28,8 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
  */
-// TODO: UNIT3D
-@TrackerHandler("Aither")
+@TrackerHandler(name = "Aither", url = "https://aither.cc/")
 public class AitherHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -37,10 +36,11 @@ public class AitherHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public AitherHandler(final ChromeDriver driver) {
-        super(driver);
+    public AitherHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

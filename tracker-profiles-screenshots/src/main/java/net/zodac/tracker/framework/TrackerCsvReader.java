@@ -34,8 +34,8 @@ public final class TrackerCsvReader {
 
     private static final ConfigurationProperties CONFIG = Configuration.get();
     private static final String CSV_FILE_NAME = "trackers.csv";
-    // TODO: Move loginLink into tracker definition instead of in CSV
-    private static final String[] CSV_HEADERS = {"trackerName", "loginLink", "username", "password", "manual"};
+    // TODO: Move 'manual' into tracker definition instead of in CSV
+    private static final String[] CSV_HEADERS = {"trackerName", "username", "password", "manual"};
     private static final CSVFormat DEFAULT_FORMAT = CSVFormat.DEFAULT
         .builder()
         .setHeader(CSV_HEADERS)

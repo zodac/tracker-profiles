@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -26,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeBytes} tracker.
  */
-@TrackerHandler("AnimeBytes")
+@TrackerHandler(name = "AnimeBytes", url = "https://animebytes.tv/user/login")
 public class AnimeBytesHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
@@ -34,10 +35,11 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public AnimeBytesHandler(final ChromeDriver driver) {
-        super(driver);
+    public AnimeBytesHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override

@@ -26,16 +26,17 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AlphaRatio} tracker.
  */
-@TrackerHandler("AlphaRatio")
+@TrackerHandler(name = "AlphaRatio", url = "https://alpharatio.cc/")
 public class AlphaRatioHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls the URLs to the tracker
      */
-    public AlphaRatioHandler(final ChromeDriver driver) {
-        super(driver);
+    public AlphaRatioHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+        super(driver, trackerUrls);
     }
 
     @Override
