@@ -17,18 +17,17 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-import java.util.Collection;
-
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-@TrackerHandler(name = "TVChaosUK", url = "https://tvchaosuk.com/")
+@TrackerHandler(name = "TVChaosUK", needsManualInput = false, url = "https://tvchaosuk.com/")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;

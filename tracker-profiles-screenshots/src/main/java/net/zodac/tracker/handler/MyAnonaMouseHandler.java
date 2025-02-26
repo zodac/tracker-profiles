@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code MyAnonaMouse} tracker.
  */
-@TrackerHandler(name = "MyAnonaMouse", url = "https://www.myanonamouse.net/")
+@TrackerHandler(name = "MyAnonaMouse", needsManualInput = false, url = "https://www.myanonamouse.net/")
 public class MyAnonaMouseHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;

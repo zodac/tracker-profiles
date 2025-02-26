@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
  */
-@TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/")
+@TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/", needsManualInput = false)
 public class BlutopiaHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;

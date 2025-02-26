@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BeyondHD} tracker.
  */
-@TrackerHandler(name = "BeyondHD", url = "https://beyond-hd.me/")
+@TrackerHandler(name = "BeyondHD", needsManualInput = true, url = "https://beyond-hd.me/")
 public class BeyondHdHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.75D;

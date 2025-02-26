@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TorrentLeech} tracker.
  */
-@TrackerHandler(name = "TorrentLeech", url = {
+@TrackerHandler(name = "TorrentLeech", needsManualInput = false, url = {
     "https://www.torrentleech.org/",
     "https://www.torrentleech.cc/",
     "https://www.torrentleech.me/",

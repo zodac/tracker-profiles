@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Nebulance} tracker.
  */
-@TrackerHandler(name = "Nebulance", url = "https://nebulance.io/login.php")
+@TrackerHandler(name = "Nebulance", needsManualInput = false, url = "https://nebulance.io/login.php")
 public class NebulanceHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";

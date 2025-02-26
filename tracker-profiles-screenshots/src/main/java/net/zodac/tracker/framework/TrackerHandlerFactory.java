@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -54,13 +55,14 @@ public final class TrackerHandlerFactory {
      * Checks if an implementation of {@link AbstractTrackerHandler} exists that matches the wanted {@code trackerName}.
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
-     * @return {@code true} if an implementation of {@link AbstractTrackerHandler} exists for the {@code trackerName}
+     * @return {@link Optional} {@link TrackerHandler} for a matching {@code trackerName}
      */
-    public static boolean doesHandlerExist(final String trackerName) {
+    public static Optional<TrackerHandler> findMatchingHandler(final String trackerName) {
         return TRACKER_HANDLER_CLASSES.stream()
             .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandler.class))
             .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandler.class))
-            .anyMatch(annotation -> annotation.name().equalsIgnoreCase(trackerName));
+            .filter(annotation -> annotation.name().equalsIgnoreCase(trackerName))
+            .findAny();
     }
 
     /**
@@ -72,17 +74,16 @@ public final class TrackerHandlerFactory {
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
      *
      * @param trackerName     the name of the tracker for which we want a {@link AbstractTrackerHandler}
-     * @param isManualTracker if the {@link AbstractTrackerHandler} requires some manual interaction
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalStateException  thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
      * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      */
-    public static AbstractTrackerHandler getHandler(final String trackerName, final boolean isManualTracker) {
+    public static AbstractTrackerHandler getHandler(final String trackerName) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
             if (trackerHandler.isAnnotationPresent(TrackerHandler.class)) {
                 final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
                 if (annotation.name().equalsIgnoreCase(trackerName)) {
-                    return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), isManualTracker);
+                    return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.needsManualInput());
                 }
             }
         }

@@ -25,12 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
+import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import net.zodac.tracker.util.DirectoryOpener;
@@ -117,11 +119,13 @@ public final class ProfileScreenshotter {
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
 
         for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
-            if (TrackerHandlerFactory.doesHandlerExist(trackerDefinition.name())) {
-                final Set<TrackerDefinition> existingTrackerDefinitionsOfType =
-                    trackersByIsManual.getOrDefault(trackerDefinition.manual(), new TreeSet<>());
+            final Optional<TrackerHandler> trackerHandler = TrackerHandlerFactory.findMatchingHandler(trackerDefinition.name());
+
+            if (trackerHandler.isPresent()) {
+                final boolean isManual = trackerHandler.get().needsManualInput();
+                final Set<TrackerDefinition> existingTrackerDefinitionsOfType = trackersByIsManual.getOrDefault(isManual, new TreeSet<>());
                 existingTrackerDefinitionsOfType.add(trackerDefinition);
-                trackersByIsManual.put(trackerDefinition.manual(), existingTrackerDefinitionsOfType);
+                trackersByIsManual.put(isManual, existingTrackerDefinitionsOfType);
             } else {
                 LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
             }
@@ -134,7 +138,7 @@ public final class ProfileScreenshotter {
         LOGGER.info("");
         LOGGER.info("{}", trackerDefinition.name());
 
-        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name(), trackerDefinition.manual())) {
+        try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);

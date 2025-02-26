@@ -17,15 +17,18 @@
 
 package net.zodac.tracker.handler;
 
+import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
-import java.util.Collection;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FileList} tracker.
  */
-@TrackerHandler(name = "FileList", url = {"https://filelist.io/", "https://thefl.org/"})
+@TrackerHandler(name = "FileList", needsManualInput = false, url = {
+    "https://filelist.io/",
+    "https://thefl.org/"
+})
 public class FileListHandler extends AbstractTrackerHandler {
 
     /**

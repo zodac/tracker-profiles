@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Anthelion} tracker.
  */
-@TrackerHandler(name = "Anthelion", url = "https://anthelion.me/")
+@TrackerHandler(name = "Anthelion", needsManualInput = false, url = "https://anthelion.me/")
 public class AnthelionHandler extends AbstractTrackerHandler {
 
     /**

@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FearNoPeer} tracker.
  */
-@TrackerHandler(name = "FearNoPeer", url= "https://fearnopeer.com/login")
+@TrackerHandler(name = "FearNoPeer", needsManualInput = false, url = "https://fearnopeer.com/login")
 public class FearNoPeerHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;

@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Redacted} tracker.
  */
-@TrackerHandler(name = "Redacted", url = "https://redacted.sh/login.php")
+@TrackerHandler(name = "Redacted", needsManualInput = false, url = "https://redacted.sh/login.php")
 public class RedactedHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;

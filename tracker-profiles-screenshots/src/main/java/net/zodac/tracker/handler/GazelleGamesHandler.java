@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
  */
-@TrackerHandler(name = "GazelleGames", url = "https://gazellegames.net/")
+@TrackerHandler(name = "GazelleGames", needsManualInput = true, url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;

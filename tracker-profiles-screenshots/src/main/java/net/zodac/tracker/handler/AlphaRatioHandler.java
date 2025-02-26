@@ -26,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AlphaRatio} tracker.
  */
-@TrackerHandler(name = "AlphaRatio", url = "https://alpharatio.cc/")
+@TrackerHandler(name = "AlphaRatio", needsManualInput = false, url = "https://alpharatio.cc/")
 public class AlphaRatioHandler extends AbstractTrackerHandler {
 
     /**

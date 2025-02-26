@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
  */
-@TrackerHandler(name = "PassThePopcorn", url = "https://passthepopcorn.me/")
+@TrackerHandler(name = "PassThePopcorn", needsManualInput = true, url = "https://passthepopcorn.me/")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;

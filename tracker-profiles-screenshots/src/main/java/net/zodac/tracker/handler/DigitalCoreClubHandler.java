@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
  */
-@TrackerHandler(name = "DigitalCore.Club", url = {"https://digitalcore.club/", "https://prxy.digitalcore.club/"})
+@TrackerHandler(name = "DigitalCore.Club", needsManualInput = true, url = {"https://digitalcore.club/", "https://prxy.digitalcore.club/"})
 public class DigitalCoreClubHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.80D;

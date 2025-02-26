@@ -83,7 +83,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * Default constructor, only for implementation classes.
      *
-     * @param driver a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param trackerUrls all possible URLs to connect to the tracker home page
      */
     protected AbstractTrackerHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         this.driver = driver;

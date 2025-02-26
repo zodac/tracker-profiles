@@ -26,7 +26,10 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BwTorrents} tracker.
  */
-@TrackerHandler(name = "BwTorrents", url = {"https://bwtorrents.tv/", "https://bwtorrents.cc/"})
+@TrackerHandler(name = "BwTorrents", needsManualInput = false, url = {
+    "https://bwtorrents.tv/",
+    "https://bwtorrents.cc/"
+})
 public class BwTorrentsHandler extends AbstractTrackerHandler {
 
     /**
