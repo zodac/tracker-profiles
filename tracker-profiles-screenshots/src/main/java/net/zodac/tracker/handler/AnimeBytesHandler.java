@@ -27,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeBytes} tracker.
  */
-@TrackerHandler(name = "AnimeBytes", needsManualInput = false, url = "https://animebytes.tv/user/login")
+@TrackerHandler(name = "AnimeBytes", needsManualInput = false, url = "https://animebytes.tv/")
 public class AnimeBytesHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
@@ -40,6 +40,14 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
      */
     public AnimeBytesHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.id("nav_login");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

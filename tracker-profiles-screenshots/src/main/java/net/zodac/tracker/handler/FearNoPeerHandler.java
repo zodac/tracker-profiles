@@ -27,6 +27,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FearNoPeer} tracker.
+ *
+ * <p>
+ * Note that the URL is set to the login page in order to bypass the site's Cloudflare check
  */
 @TrackerHandler(name = "FearNoPeer", needsManualInput = false, url = "https://fearnopeer.com/login")
 public class FearNoPeerHandler extends AbstractTrackerHandler {

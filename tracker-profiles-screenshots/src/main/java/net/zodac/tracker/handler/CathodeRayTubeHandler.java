@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Cathode-Ray.Tube} tracker.
  */
-@TrackerHandler(name = "Cathode-Ray.Tube", needsManualInput = false, url = "https://www.cathode-ray.tube/login")
+@TrackerHandler(name = "Cathode-Ray.Tube", needsManualInput = false, url = "https://www.cathode-ray.tube/")
 public class CathodeRayTubeHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
@@ -43,6 +43,14 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
      */
     public CathodeRayTubeHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

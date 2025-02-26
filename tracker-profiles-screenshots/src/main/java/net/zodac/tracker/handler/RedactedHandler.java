@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Redacted} tracker.
  */
-@TrackerHandler(name = "Redacted", needsManualInput = false, url = "https://redacted.sh/login.php")
+@TrackerHandler(name = "Redacted", needsManualInput = false, url = "https://redacted.sh/")
 public class RedactedHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
@@ -41,6 +41,14 @@ public class RedactedHandler extends AbstractTrackerHandler {
      */
     public RedactedHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.xpath("//a[text()='Log in']");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Nebulance} tracker.
  */
-@TrackerHandler(name = "Nebulance", needsManualInput = false, url = "https://nebulance.io/login.php")
+@TrackerHandler(name = "Nebulance", needsManualInput = false, url = "https://nebulance.io/")
 public class NebulanceHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
@@ -42,6 +42,14 @@ public class NebulanceHandler extends AbstractTrackerHandler {
      */
     public NebulanceHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

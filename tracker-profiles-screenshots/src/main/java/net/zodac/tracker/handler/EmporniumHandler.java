@@ -29,8 +29,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
  */
 @TrackerHandler(name = "Empornium", needsManualInput = false, url = {
-    "https://www.empornium.is/login",
-    "https://www.empornium.sx/login"
+    "https://www.empornium.is/",
+    "https://www.empornium.sx/"
 })
 public class EmporniumHandler extends AbstractTrackerHandler {
 
@@ -42,6 +42,14 @@ public class EmporniumHandler extends AbstractTrackerHandler {
      */
     public EmporniumHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code MoreThanTV} tracker.
  */
-@TrackerHandler(name = "MoreThanTV", needsManualInput = false, url = "https://www.morethantv.me/login")
+@TrackerHandler(name = "MoreThanTV", needsManualInput = false, url = "https://www.morethantv.me/")
 public class MoreThanTvHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
@@ -43,6 +43,14 @@ public class MoreThanTvHandler extends AbstractTrackerHandler {
      */
     public MoreThanTvHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    public void navigateToLoginPage() {
+        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final WebElement loginLink = driver.findElement(loginLinkSelector);
+        loginLink.click();
+        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override
