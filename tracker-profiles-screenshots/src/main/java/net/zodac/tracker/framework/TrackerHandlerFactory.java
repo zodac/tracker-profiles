@@ -18,6 +18,7 @@
 package net.zodac.tracker.framework;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,7 +74,7 @@ public final class TrackerHandlerFactory {
      * <p>
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
      *
-     * @param trackerName     the name of the tracker for which we want a {@link AbstractTrackerHandler}
+     * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
      * @throws IllegalStateException  thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
      * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
@@ -112,8 +113,11 @@ public final class TrackerHandlerFactory {
             chromeOptions.addArguments("--start-maximized");
         }
 
+        // Cache to avoid reloading data on subsequent runs
+        chromeOptions.addArguments("--disk-cache-dir=" + CONFIG.browserDataStoragePath() + File.separator + "selenium");
+
         // Following 3 options are to ensure there are no conflicting issues running the browser on Linux
-        chromeOptions.addArguments("--user-data-dir=/tmp/chrome-" + System.nanoTime());
+        chromeOptions.addArguments("--user-data-dir=" + CONFIG.browserDataStoragePath() + File.separator + System.nanoTime());
         chromeOptions.addArguments("--no-sandbox");
         chromeOptions.addArguments("--disable-dev-shm-usage");
 

@@ -21,6 +21,7 @@ Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/res
 
 | Configuration Property      | Description                                                                                            | Default Value |
 |-----------------------------|--------------------------------------------------------------------------------------------------------|---------------|
+| *browserDataStoragePath*    | The file path in which to store browser data (profiles, caches, etc.)                                  | /tmp/chrome   |
 | *browserHeight*             | The height (in pixels) of the web browser used to take screenshots                                     | 1050          |
 | *browserWidth*              | The width (in pixels) of the web browser used to take screenshots                                      | 1680          |
 | *csvCommentSymbol*          | If this character is the first in a CSV row, the CSV row is considered a comment and not processed     | #             |

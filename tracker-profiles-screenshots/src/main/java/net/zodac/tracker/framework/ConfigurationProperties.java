@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.framework;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * Utility file that loads configuration detail from the {@code config.properties} file.
  *
+ * @param browserDataStoragePath   the file path in which to store browser data (profiles, caches, etc.)
  * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
@@ -43,6 +45,7 @@ import org.apache.logging.log4j.Logger;
  * @param useHeadlessBrowser       whether to use a headless browser or not
  */
 public record ConfigurationProperties(
+    String browserDataStoragePath,
     String browserDimensions,
     char csvCommentSymbol,
     Collection<String> emailAddresses,
@@ -57,6 +60,7 @@ public record ConfigurationProperties(
     private static final String PROPRTIES_FILE_NAME = "config.properties";
 
     // Default values
+    private static final String DEFAULT_BROWSER_DATA_STORAGE_PATH = File.separator + "tmp" + File.separator + "chrome";
     private static final String DEFAULT_BROWSER_WIDTH = "1680";
     private static final String DEFAULT_BROWSER_HEIGHT = "1050";
     private static final String DEFAULT_CSV_COMMENT_SYMBOL = "#";
@@ -77,6 +81,7 @@ public record ConfigurationProperties(
             properties.load(inputStream);
 
             final ConfigurationProperties configurationProperties = new ConfigurationProperties(
+                properties.getProperty("browserDataStoragePath", DEFAULT_BROWSER_DATA_STORAGE_PATH),
                 getBrowserDimensions(properties),
                 getCsvCommentSymbol(properties),
                 getCommaSeparatedStringProperty(properties, "emailAddresses"),
