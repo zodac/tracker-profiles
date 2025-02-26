@@ -29,7 +29,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
  */
 @TrackerHandler(name = "Empornium", needsManualInput = false, url = {
-    "https://www.empornium.is/login", "https://www.empornium.sx/login"
+    "https://www.empornium.is/login",
+    "https://www.empornium.sx/login"
 })
 public class EmporniumHandler extends AbstractTrackerHandler {
 

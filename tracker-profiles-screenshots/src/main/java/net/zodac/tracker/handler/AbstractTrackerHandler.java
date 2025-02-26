@@ -92,9 +92,9 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Navigates to the login page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
+     * Navigates to the home page of the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
      */
-    public void openLoginPage() {
+    public void openTracker() {
         boolean unableToConnect = true;
         for (final String trackerUrl : trackerUrls) {
             try {
@@ -106,7 +106,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
             } catch (final WebDriverException e) {
                 // If website can't be resolved, assume the site is down and attempt the next URL (if any), else rethrow exception
                 if (e.getMessage() != null && e.getMessage().contains("ERR_NAME_NOT_RESOLVED")) {
-                    LOGGER.warn("\t\t- Unable to connect: {}", e.getMessage().split("\n")[0]);
+                    final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+                    LOGGER.warn("\t\t- Unable to connect: {}", errorMessage);
                 } else {
                     throw e;
                 }
@@ -116,6 +117,14 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         if (unableToConnect) {
             throw new IllegalStateException(String.format("Unable to connect to any URL for '%s': %s", getClass().getSimpleName(), trackerUrls));
         }
+    }
+
+    /**
+     * For some trackers the home page does not automatically redirect to the login page. In these cases, we need to explicitly click on the login
+     * link to redirect.
+     */
+    public void navigateToLoginPage() {
+        // Do nothing by default
     }
 
     /**

@@ -40,6 +40,7 @@ import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.UnreachableBrowserException;
 
 /**
  * Main driver class, which takes a screenshot of the profile page of each tracker listed in the {@code trackers.csv} input file.
@@ -134,23 +135,29 @@ public final class ProfileScreenshotter {
         return trackersByIsManual;
     }
 
-    private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) throws IOException {
+    private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) {
         LOGGER.info("");
-        LOGGER.info("{}", trackerDefinition.name());
+        LOGGER.info("[{}]", trackerDefinition.name());
 
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
+        } catch (final UnreachableBrowserException e) {
+            throw e;
+        } catch (final Exception e) {
+            final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+            LOGGER.debug("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage, e);
+            LOGGER.warn("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
         }
     }
 
     private static void takeScreenshotOfProfilePage(final AbstractTrackerHandler trackerHandler, final TrackerDefinition trackerDefinition)
         throws IOException {
 
-        // TODO: Update this to open main page and redirect to login page if required
-        LOGGER.info("\t- Opening login page");
-        trackerHandler.openLoginPage();
+        LOGGER.info("\t- Opening tracker");
+        trackerHandler.openTracker();
+        trackerHandler.navigateToLoginPage();
 
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition);

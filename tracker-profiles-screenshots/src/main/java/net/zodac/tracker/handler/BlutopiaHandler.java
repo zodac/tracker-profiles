@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
  */
-@TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/", needsManualInput = false)
+@TrackerHandler(name = "Blutopia", needsManualInput = false, url = "https://blutopia.cc/")
 public class BlutopiaHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -50,7 +50,12 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
 
     @Override
     protected By profilePageSelector() {
-        return By.xpath("//a[img[contains(@class, 'top-nav__profile-image')]]");
+        // Highlight the nav bar to make the logout button interactable
+        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        ScriptExecutor.moveTo(driver, logoutParent);
+
+        return By.xpath("//a[@class='top-nav__username']");
     }
 
     @Override

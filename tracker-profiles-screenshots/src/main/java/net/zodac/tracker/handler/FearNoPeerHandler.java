@@ -49,11 +49,6 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected By profilePageSelector() {
-        return By.xpath("//a[img[contains(@class, 'top-nav__profile-image')]]");
-    }
-
-    @Override
     public boolean canBannerBeCleared() {
         // Cookie banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
@@ -62,6 +57,16 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         ScriptExecutor.moveToOrigin(driver);
         return true;
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        // Highlight the nav bar to make the logout button interactable
+        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        ScriptExecutor.moveTo(driver, logoutParent);
+
+        return By.xpath("//a[@class='top-nav__username']");
     }
 
     @Override

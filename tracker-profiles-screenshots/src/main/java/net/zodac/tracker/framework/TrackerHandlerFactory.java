@@ -109,6 +109,7 @@ public final class TrackerHandlerFactory {
         chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
         if (!isManualTracker && CONFIG.useHeadlessBrowser()) {
             chromeOptions.addArguments("--headless=new");
+            chromeOptions.addArguments("--start-maximized");
         }
 
         // Following 3 options are to ensure there are no conflicting issues running the browser on Linux
@@ -124,7 +125,9 @@ public final class TrackerHandlerFactory {
         chromeOptions.setExperimentalOption("prefs", passwordManagerPreferences);
 
         // Additional flags to remove unnecessary information on browser
+        chromeOptions.addArguments("--disable-gpu");
         chromeOptions.addArguments("--disable-notifications");
+        chromeOptions.addArguments("disable-infobars");
         chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
 
         return new ChromeDriver(chromeOptions);

@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
  */
-@TrackerHandler(name = "Aither", url = "https://aither.cc/", needsManualInput = false)
+@TrackerHandler(name = "Aither", needsManualInput = false, url = "https://aither.cc/")
 public class AitherHandler extends AbstractTrackerHandler {
 
     private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
@@ -61,7 +61,12 @@ public class AitherHandler extends AbstractTrackerHandler {
 
     @Override
     protected By profilePageSelector() {
-        return By.xpath("//a[@class='top-nav__username--highresolution']");
+        // Highlight the nav bar to make the logout button interactable
+        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        ScriptExecutor.moveTo(driver, logoutParent);
+
+        return By.xpath("//a[@class='top-nav__username']");
     }
 
     @Override
