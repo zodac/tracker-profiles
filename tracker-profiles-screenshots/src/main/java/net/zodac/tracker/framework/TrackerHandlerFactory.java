@@ -72,6 +72,9 @@ public final class TrackerHandlerFactory {
      * {@link TrackerHandler#name()}, which should match the input (the match is case-insensitive).
      *
      * <p>
+     * If the {@link AbstractTrackerHandler} also has the annotation {@link TrackerDisabled}, it will be skipped.
+     *
+     * <p>
      * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
@@ -81,7 +84,7 @@ public final class TrackerHandlerFactory {
      */
     public static AbstractTrackerHandler getHandler(final String trackerName) {
         for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
-            if (trackerHandler.isAnnotationPresent(TrackerHandler.class)) {
+            if (trackerHandler.isAnnotationPresent(TrackerHandler.class) && !trackerHandler.isAnnotationPresent(TrackerDisabled.class)) {
                 final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
                 if (annotation.name().equalsIgnoreCase(trackerName)) {
                     return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.needsManualInput());
