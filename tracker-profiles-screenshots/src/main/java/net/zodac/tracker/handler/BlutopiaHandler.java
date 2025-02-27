@@ -49,6 +49,11 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.xpath("//main[@class='page__home']");
+    }
+
+    @Override
     protected By profilePageSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");

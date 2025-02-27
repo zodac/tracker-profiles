@@ -48,6 +48,11 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("main-content");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//ul[@class='list-inline']//li[1]//a[1]");
     }

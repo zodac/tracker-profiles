@@ -47,6 +47,11 @@ public class AnthelionHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("shoutbox");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
     }

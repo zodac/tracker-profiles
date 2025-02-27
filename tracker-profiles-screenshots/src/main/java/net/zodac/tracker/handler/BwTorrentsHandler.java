@@ -58,6 +58,11 @@ public class BwTorrentsHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("header-aeon");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//div[@id='left-sts-aeon']//a[1]");
     }

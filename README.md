@@ -4,6 +4,11 @@
 
 This is a tool used to log in to private torrent websites and take a screenshot of the user's profile page.
 
+## Requirements
+
+- Google Chrome
+- Java (JDK 23+)
+
 ## Running Application
 
 First, copy the [trackers_example.csv](./tracker-profiles-screenshots/src/main/resources/trackers_example.csv) file and rename it to **trackers.csv**.
@@ -12,12 +17,12 @@ This file needs to be updated with your user's information for each tracker. The
 each tracker is retrieved by the *trackerName* field within the CSV file.
 
 Open the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ProfileScreenshotter.java) and run the `main`
-method.
+method from your IDE.
 
 ## Configuration
 
 Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/resources/config_example.properties) file and rename it to
-**config.properties**. It is configured with some default values that are described below.
+**config.properties**. It is pre-configured with some default values that are described below, which you can adjust to your preference.
 
 | Configuration Property      | Description                                                                                            | Default Value |
 |-----------------------------|--------------------------------------------------------------------------------------------------------|---------------|
@@ -43,5 +48,6 @@ the convention from an existing implementation,
 like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AitherHandler.java).
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
-screenshots. While we usually run in headless mode, this can be updated in the [configuration](#configuration). This will cause a new browser
-instance to launch when taking a screenshot, and can be used for debugging a new implementation.
+screenshots. While we usually run in headless mode, this can be changed by updating the `useHeadlessBrowser` value in
+the [configuration](#configuration). This
+will cause a new browser instance to launch when taking a screenshot, and can be used for debugging a new implementation.

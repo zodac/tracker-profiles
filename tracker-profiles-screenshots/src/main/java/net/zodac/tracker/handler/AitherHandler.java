@@ -49,6 +49,11 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.xpath("//main[@class='page__home']");
+    }
+
+    @Override
     public boolean canBannerBeCleared() {
         // Cookie banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));

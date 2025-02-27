@@ -69,6 +69,11 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.xpath("//table[contains(@class, 'userinfo_stats')]");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
     }

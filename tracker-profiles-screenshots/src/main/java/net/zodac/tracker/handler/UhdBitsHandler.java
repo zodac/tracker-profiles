@@ -57,6 +57,11 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("userinfo");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
     }

@@ -47,6 +47,11 @@ public class FileListHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("maincolumn");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//div[@class='statusbar']//div/a[span]");
     }

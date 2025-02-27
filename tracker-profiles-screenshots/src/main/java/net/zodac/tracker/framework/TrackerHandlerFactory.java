@@ -92,7 +92,7 @@ public final class TrackerHandlerFactory {
             }
         }
 
-        final String errorMessage = String.format("Unable to find %s with name'%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
+        final String errorMessage = String.format("Unable to find %s with name '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
         throw new NoSuchElementException(errorMessage);
     }
 

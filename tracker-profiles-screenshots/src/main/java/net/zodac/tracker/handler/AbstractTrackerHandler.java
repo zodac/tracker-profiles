@@ -72,6 +72,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
+    /**
+     * The maximum wait {@link Duration} when waiting for a web page to resolve.
+     */
+    protected static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -99,6 +104,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         for (final String trackerUrl : trackerUrls) {
             try {
                 LOGGER.info("\t\t- '{}'", trackerUrl);
+                driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
                 driver.navigate().to(trackerUrl);
                 unableToConnect = false;
                 ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -132,7 +138,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      *
      * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
      */
-    // TODO: Have a postLoginSelector, so we can check if this failed?
     public void login(final TrackerDefinition trackerDefinition) {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         final WebElement usernameField = driver.findElement(usernameFieldSelector());
@@ -148,7 +153,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         loginButton.click();
         manualCheckAfterLoginClick();
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
@@ -197,6 +202,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return the login button {@link By} selector
      */
     protected abstract By loginButtonSelector();
+
+    /**
+     * Defines the {@link By} selector of the {@link WebElement} used to confirm that the user has successfully logged in.
+     *
+     * @return the post-login {@link By} selector
+     */
+    protected abstract By postLoginSelector();
 
     /**
      * Checks if there is a banner on the tracker web page, and closes it. This may be a cookie banner, or some other warning banner that can

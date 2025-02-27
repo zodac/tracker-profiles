@@ -69,6 +69,11 @@ public class PixelCoveHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("userinfo_username");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
     }

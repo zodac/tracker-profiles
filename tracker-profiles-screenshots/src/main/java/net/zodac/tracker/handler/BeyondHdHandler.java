@@ -51,6 +51,11 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("main");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//a[img[contains(@class, 'beta-image-avatar')]]");
     }

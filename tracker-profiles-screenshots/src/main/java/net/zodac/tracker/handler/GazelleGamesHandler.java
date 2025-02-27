@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
+import net.zodac.tracker.framework.TrackerDisabled;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +31,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
  */
+@TrackerDisabled("Tracker down (28th Feb 2025)")
 @TrackerHandler(name = "GazelleGames", needsManualInput = true, url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
 
@@ -49,6 +51,11 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
     @Override
     public By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.xpath(""); // TODO
     }
 
     @Override

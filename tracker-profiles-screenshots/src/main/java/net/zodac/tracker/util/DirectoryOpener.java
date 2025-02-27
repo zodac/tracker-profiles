@@ -33,9 +33,9 @@ public final class DirectoryOpener {
     /**
      * Opens the provided directory using the appropriate OS-native command:
      * <ul>
-     *     <li>Windows: 'explorer'</li>
-     *     <li>MacOS: 'open'</li>
-     *     <li>Linux: 'xdg-open'</li>
+     *     <li>Windows: {@code explorer}</li>
+     *     <li>MacOS: {@code open}</li>
+     *     <li>Linux: {@code xdg-open}</li>
      * </ul>
      *
      * @param directoryToOpen the directory to be opened

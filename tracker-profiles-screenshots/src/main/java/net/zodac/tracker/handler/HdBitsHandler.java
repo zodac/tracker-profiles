@@ -62,6 +62,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("news");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//div[@class='curuser-stats']//b//a[1]");
     }
@@ -81,6 +86,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
+        // TODO: Update prompt to mention wanted picture
         LOGGER.info("\t>>> Waiting for user to select valid image, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }

@@ -59,6 +59,11 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.id("userStat");
+    }
+
+    @Override
     protected By profilePageSelector() {
         // Highlight the profile menu to make the logout button interactable
         final By profileDropDownSelector = By.xpath("//li[@class='mmUserStats']//a[@tabindex='0']");

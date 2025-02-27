@@ -64,6 +64,10 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.xpath("//div[contains(@class, 'navbar') and contains(@class, 'loggedin')]");
+    }
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//span[@class='user_superuser']");
     }

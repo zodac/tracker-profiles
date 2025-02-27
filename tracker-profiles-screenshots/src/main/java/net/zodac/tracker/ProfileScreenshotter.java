@@ -142,7 +142,8 @@ public final class ProfileScreenshotter {
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
         } catch (final NoSuchElementException e) {
-            LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.debug("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
         } catch (final UnreachableBrowserException e) {
             throw e;
         } catch (final Exception e) {

@@ -64,6 +64,11 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected By postLoginSelector() {
+        return By.tagName("main-menu");
+    }
+
+    @Override
     protected By profilePageSelector() {
         return By.xpath("//user//a[1]");
     }

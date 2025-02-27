@@ -73,7 +73,7 @@ public final class ScreenshotTaker {
 
     private static File resizeViewportAndTakeScreenshot(final RemoteWebDriver driver, final double zoomLevel) {
         ScriptExecutor.zoom(driver, zoomLevel);
-        final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE);
+        final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE); // TODO: Investigate taking a full-screen screenshot instead of resizing
         ScriptExecutor.zoom(driver, 1.0D);
         return rawScreenshot;
     }
