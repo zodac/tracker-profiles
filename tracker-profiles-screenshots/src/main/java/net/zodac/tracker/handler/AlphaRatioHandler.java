@@ -27,7 +27,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AlphaRatio} tracker.
  */
-@TrackerDisabled("Tracker down (28th Feb 2025)")
 @TrackerHandler(name = "AlphaRatio", needsManualInput = false, url = "https://alpharatio.cc/")
 public class AlphaRatioHandler extends AbstractTrackerHandler {
 
@@ -48,7 +47,7 @@ public class AlphaRatioHandler extends AbstractTrackerHandler {
 
     @Override
     protected By postLoginSelector() {
-        return By.xpath(""); // TODO
+        return By.id("content");
     }
 
     @Override
