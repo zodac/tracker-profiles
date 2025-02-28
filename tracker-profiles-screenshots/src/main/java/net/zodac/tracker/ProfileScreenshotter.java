@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
+import net.zodac.tracker.framework.DisabledTrackerException;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
@@ -72,6 +73,11 @@ public final class ProfileScreenshotter {
      * @see ScreenshotTaker
      */
     public static void main(final String[] args) throws IOException, URISyntaxException {
+        final File outputDirectory = CONFIG.outputDirectory().toFile();
+        if (!outputDirectory.exists()) {
+            outputDirectory.mkdirs();
+        }
+
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
         if (trackersByIsManual.isEmpty()) {
             LOGGER.warn("No trackers selected!");
@@ -90,7 +96,8 @@ public final class ProfileScreenshotter {
         //   - Allow execution to resume when input is finished rather than waiting a static period of time
         //   - Show timer on web-page (or remove entirely, but have a catch-all timer to kill execution eventually)
         if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
-            LOGGER.warn("Executing manual trackers, will require user interaction");
+            LOGGER.warn("");
+            LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
                 takeScreenshotPerTracker(trackerDefinition);
             }
@@ -141,10 +148,14 @@ public final class ProfileScreenshotter {
 
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
+        } catch (final DisabledTrackerException e) {
+            LOGGER.debug("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage(), e);
+            LOGGER.warn("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage());
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
         } catch (final UnreachableBrowserException e) {
+            LOGGER.warn("Browser unavailable, most likely user-cancelled");
             throw e;
         } catch (final Exception e) {
             final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
@@ -177,7 +188,11 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, redactedElementsPlural);
         }
 
-        final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), trackerDefinition.name(), trackerHandler.zoomLevel());
+        if (trackerHandler.canDisableFixedHeader()) {
+            LOGGER.info("\t- Header has been updated to not be fixed");
+        }
+
+        final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), trackerDefinition.name());
         LOGGER.info("\t- Screenshot saved at: [{}]", screenshot.getAbsolutePath());
 
         trackerHandler.logout();

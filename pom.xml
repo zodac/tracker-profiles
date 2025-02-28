@@ -26,6 +26,7 @@
         <skip-sonarqube>true</skip-sonarqube>
 
         <!-- 3PP Versions -->
+        <ashot.version>1.5.4</ashot.version>
         <commons-csv.version>1.13.0</commons-csv.version>
         <commons-io.version>2.18.0</commons-io.version>
         <log4j.version>2.24.3</log4j.version>
@@ -81,6 +82,28 @@
     <dependencyManagement>
         <dependencies>
             <!-- 3PP Dependencies -->
+            <dependency>
+                <groupId>ru.yandex.qatools.ashot</groupId>
+                <artifactId>ashot</artifactId>
+                <version>${ashot.version}</version>
+                <exclusions>
+                    <!-- Already imported -->
+                    <exclusion>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                    </exclusion>
+                    <!-- Excluded due to CVEs -->
+                    <exclusion>
+                        <groupId>com.google.code.gson</groupId>
+                        <artifactId>gson</artifactId>
+                    </exclusion>
+                    <!-- Already imported -->
+                    <exclusion>
+                        <groupId>org.seleniumhq.selenium</groupId>
+                        <artifactId>selenium-remote-driver</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>

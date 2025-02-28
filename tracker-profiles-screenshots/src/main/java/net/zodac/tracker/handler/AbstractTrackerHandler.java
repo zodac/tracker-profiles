@@ -25,7 +25,6 @@ import net.zodac.tracker.ProfileScreenshotter;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerDefinition;
-import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +74,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * The maximum wait {@link Duration} when waiting for a web page to resolve.
      */
-    protected static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
+    protected static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -153,6 +152,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         loginButton.click();
         manualCheckAfterLoginClick();
 
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
@@ -252,20 +252,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Defines the zoom percentage required for the tracker in order or all relevant details to be shown on the profile page and correctly screenshot.
-     *
-     * <p>
-     * By default, we assume the default zoom level is acceptable, so this method returns {@link ScreenshotTaker#DEFAULT_ZOOM_LEVEL}. Should be
-     * overridden otherwise.
-     *
-     * @return the zoom level required for the {@link AbstractTrackerHandler}
-     * @see ScriptExecutor#zoom(JavascriptExecutor, double)
-     */
-    public double zoomLevel() {
-        return ScreenshotTaker.DEFAULT_ZOOM_LEVEL;
-    }
-
-    /**
      * Retrieves a {@link Collection} of {@link WebElement}s from the user's profile page, where the inner text needs to be redacted. This is used for
      * {@link WebElement}s that has sensitive information (like an IP address), which should not be visible in the screenshot. Once found, the text
      * in the {@link WebElement}s is redacted.
@@ -298,6 +284,19 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of();
+    }
+
+    /**
+     * Checks if there is a header on the tracker's user profile, and updates it to not be fixed. This is to avoid the banner appearing multiple times
+     * in the user profile screenshot as we scroll through the page.
+     *
+     * <p>
+     * By default, we assume there is no header to update, so this method returns {@code false}. Should be overridden otherwise.
+     *
+     * @return {@code true} if there was a fixed header, and it was updated
+     */
+    public boolean canDisableFixedHeader() {
+        return false;
     }
 
     /**
@@ -348,11 +347,23 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         return driver;
     }
 
-    private static boolean doesElementContainEmailAddress(final WebElement element) {
+    /**
+     * Checks if the {@link WebElement} contains an email address to be redacted.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if it contains one of the specified email addresses
+     */
+    protected static boolean doesElementContainEmailAddress(final WebElement element) {
         return doesElementContain(element, CONFIG.emailAddresses());
     }
 
-    private static boolean doesElementContainIpAddress(final WebElement element) {
+    /**
+     * Checks if the {@link WebElement} contains an IP address to be redacted.
+     *
+     * @param element the {@link WebElement} to check
+     * @return {@code true} if it contains one of the specified IP addresses
+     */
+    protected static boolean doesElementContainIpAddress(final WebElement element) {
         return doesElementContain(element, CONFIG.ipAddresses());
     }
 

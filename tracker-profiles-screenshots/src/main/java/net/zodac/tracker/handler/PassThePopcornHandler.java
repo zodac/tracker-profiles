@@ -32,7 +32,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "PassThePopcorn", needsManualInput = true, url = "https://passthepopcorn.me/")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -79,7 +78,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
     @Override
     protected void manualCheckAfterLoginClick() {
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("\t>>> Waiting for user to select correct movie title and click the login button, for {} seconds",
+        LOGGER.info("\t\t >>> Waiting for user to select correct movie title and click the login button, for {} seconds",
             DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
 
@@ -87,11 +86,6 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
         if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
             throw new IllegalStateException("User interaction was meant to complete log in, but still on login page");
         }
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

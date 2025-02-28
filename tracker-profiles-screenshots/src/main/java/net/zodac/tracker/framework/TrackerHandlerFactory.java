@@ -79,21 +79,30 @@ public final class TrackerHandlerFactory {
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
-     * @throws IllegalStateException  thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
-     * @throws NoSuchElementException thrown if no valid {@link AbstractTrackerHandler} implementation could be found
+     * @throws DisabledTrackerException thrown is a {@link AbstractTrackerHandler} exists but is annotated by {@link TrackerDisabled}
+     * @throws IllegalStateException    thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
+     * @throws NoSuchElementException   thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      */
     public static AbstractTrackerHandler getHandler(final String trackerName) {
-        for (final Class<?> trackerHandler : TRACKER_HANDLER_CLASSES) {
-            if (trackerHandler.isAnnotationPresent(TrackerHandler.class) && !trackerHandler.isAnnotationPresent(TrackerDisabled.class)) {
-                final TrackerHandler annotation = trackerHandler.getAnnotation(TrackerHandler.class);
-                if (annotation.name().equalsIgnoreCase(trackerName)) {
-                    return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.needsManualInput());
-                }
-            }
+        final var matchingTrackerHandlerOptional = TRACKER_HANDLER_CLASSES.stream()
+            .filter(handler -> handler.isAnnotationPresent(TrackerHandler.class))
+            .map(handler -> Map.entry(handler, handler.getAnnotation(TrackerHandler.class)))
+            .filter(entry -> entry.getValue().name().equalsIgnoreCase(trackerName))
+            .findFirst();
+
+        if (matchingTrackerHandlerOptional.isEmpty()) {
+            final String errorMessage = String.format("Unable to find %s with name '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
+            throw new NoSuchElementException(errorMessage);
         }
 
-        final String errorMessage = String.format("Unable to find %s with name '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
-        throw new NoSuchElementException(errorMessage);
+        final var matchingTrackerHandler = matchingTrackerHandlerOptional.get();
+        final Class<?> trackerHandler = matchingTrackerHandler.getKey();
+        if (trackerHandler.isAnnotationPresent(TrackerDisabled.class)) {
+            throw new DisabledTrackerException(trackerHandler.getAnnotation(TrackerDisabled.class).value());
+        }
+
+        final TrackerHandler annotation = matchingTrackerHandler.getValue();
+        return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.needsManualInput());
     }
 
     private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final List<String> urls, final boolean isManualTracker) {

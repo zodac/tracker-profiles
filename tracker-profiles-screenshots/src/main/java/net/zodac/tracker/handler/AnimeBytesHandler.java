@@ -30,8 +30,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "AnimeBytes", needsManualInput = false, url = "https://animebytes.tv/")
 public class AnimeBytesHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.9D;
-
     /**
      * Default constructor.
      *
@@ -63,11 +61,6 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

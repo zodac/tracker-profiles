@@ -31,8 +31,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "Aither", needsManualInput = false, url = "https://aither.cc/")
 public class AitherHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
-
     /**
      * Default constructor.
      *
@@ -75,16 +73,18 @@ public class AitherHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
-    }
-
-    @Override
     protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("dd"),
             By.tagName("td")
         );
+    }
+
+    @Override
+    public boolean canDisableFixedHeader() {
+        final WebElement stickyElement = driver.findElement(By.tagName("header"));
+        ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        return true;
     }
 
     @Override

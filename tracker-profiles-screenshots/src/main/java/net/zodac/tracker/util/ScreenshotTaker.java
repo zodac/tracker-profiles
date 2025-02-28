@@ -18,8 +18,10 @@
 package net.zodac.tracker.util;
 
 import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -27,19 +29,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
-import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.WebDriver;
+import ru.yandex.qatools.ashot.AShot;
+import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
 /**
  * Utility class used to take a screenshot of a website.
  */
 public final class ScreenshotTaker {
-
-    /**
-     * The default zoom level of 100%.
-     */
-    public static final double DEFAULT_ZOOM_LEVEL = 1.0D;
 
     private static final ConfigurationProperties CONFIG = Configuration.get();
 
@@ -48,21 +45,18 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. In order to ensure visibility of all required elements, the
-     * viewport is zoomed to the appropriate {@code zoomLevel} for the tracker. The browser viewport is then saved as a {@code .png} file in the
-     * provided {@code outputDirectory}. The file name will be {@code trackerName.png}. The zoom is then reset, in order for other UI actions to
-     * correctly direct to required elements.
+     * Takes a screenshot of the current web page loaded by the {@link WebDriver}. The browser viewport is then saved as a {@code .png} file in the
+     * provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
      *
-     * @param driver      the {@link RemoteWebDriver} with the loaded web page
+     * @param driver      the {@link WebDriver} with the loaded web page
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
-     * @param zoomLevel   the zoom level required for the tracker's profile page
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
      */
-    public static File takeScreenshot(final RemoteWebDriver driver, final String trackerName, final double zoomLevel) throws IOException {
-        final File rawScreenshot = resizeViewportAndTakeScreenshot(driver, zoomLevel);
+    public static File takeScreenshot(final WebDriver driver, final String trackerName) throws IOException {
+        final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver);
         final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");
-        FileUtils.copyFile(rawScreenshot, screenshot);
+        ImageIO.write(screenshotImage, "PNG", screenshot);
 
         if (CONFIG.previewTrackerScreenshot()) {
             showImage(screenshot, trackerName);
@@ -71,11 +65,11 @@ public final class ScreenshotTaker {
         return screenshot;
     }
 
-    private static File resizeViewportAndTakeScreenshot(final RemoteWebDriver driver, final double zoomLevel) {
-        ScriptExecutor.zoom(driver, zoomLevel);
-        final File rawScreenshot = driver.getScreenshotAs(OutputType.FILE); // TODO: Investigate taking a full-screen screenshot instead of resizing
-        ScriptExecutor.zoom(driver, 1.0D);
-        return rawScreenshot;
+    private static BufferedImage takeScreenshotOfEntirePage(final WebDriver driver) {
+        return new AShot()
+            .shootingStrategy(ShootingStrategies.viewportPasting(100))
+            .takeScreenshot(driver)
+            .getImage();
     }
 
     private static void showImage(final File screenshot, final String trackerName) {

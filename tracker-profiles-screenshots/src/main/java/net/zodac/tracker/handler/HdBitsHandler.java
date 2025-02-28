@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -87,7 +88,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     @Override
     protected void manualCheckBeforeLoginClick() {
         // TODO: Update prompt to mention wanted picture
-        LOGGER.info("\t>>> Waiting for user to select valid image, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to select valid image, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 
@@ -99,10 +100,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     /**
      * For {@link HdBitsHandler}, there is a table with our IP address and passkey. We find the {@literal <}{@code tr}{@literal >} {@link WebElement}s
      * which have a {@literal <}{@code th}{@literal >} {@link WebElement} with the text value <b>Address</b> or <b>Passkey</b>.
-     * From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted.
+     * From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted. There is
+     * also a table of IPs that have been used for login which needs to be traversed and redacted.
      *
      * <p>
-     * We do <b>not</b> execute the super-method {@link AbstractTrackerHandler#redactElements()}, only the explicit redactions defined here.
+     * We do <b>not</b> execute the super-method {@link AbstractTrackerHandler#redactElements()}, due to constant 'stale element reference' errors.
      *
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      */
@@ -113,8 +115,19 @@ public class HdBitsHandler extends AbstractTrackerHandler {
 
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
+        final int superRedactedElements = super.redactElements();
 
-        return 2;
+        final List<WebElement> securityLogPasswordElements = driver
+            .findElements(By.xpath("//td[text()='Sec log']/following-sibling::td/table//td"))
+            .stream()
+            .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
+            .toList();
+
+        for (final WebElement element : securityLogPasswordElements) {
+            ScriptExecutor.redactInnerTextOf(driver, element);
+        }
+
+        return securityLogPasswordElements.size() + superRedactedElements;
     }
 
     @Override

@@ -101,7 +101,7 @@ public final class ScriptExecutor {
     /**
      * Moves the mouse cursor to the provided {@link WebElement}.
      *
-     * @param driver  the {@link JavascriptExecutor} with the loaded web page
+     * @param driver  the {@link WebDriver} with the loaded web page
      * @param element the {@link WebElement} to move to
      */
     public static void moveTo(final WebDriver driver, final WebElement element) {
@@ -113,12 +113,25 @@ public final class ScriptExecutor {
     /**
      * Moves the mouse cursor the origin of the web page; the top-left corner.
      *
-     * @param driver the {@link JavascriptExecutor} with the loaded web page
+     * @param driver the {@link WebDriver} with the loaded web page
      */
     public static void moveToOrigin(final WebDriver driver) {
         final Actions actions = new Actions(driver);
         actions.moveToLocation(0, 0).perform();
         explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+    }
+
+    /**
+     * Updates the provided CSS property for the {@link WebElement}.
+     *
+     * @param driver        the {@link JavascriptExecutor} with the loaded web page
+     * @param element       the {@link WebElement} whose CSS property should be updated
+     * @param propertyName  the CSS property name
+     * @param propertyValue the new CSS property value
+     */
+    public static void updateCss(final JavascriptExecutor driver, final WebElement element, final String propertyName, final String propertyValue) {
+        final String script = String.format("arguments[0].style.%s = '%s';", propertyName, propertyValue);
+        driver.executeScript(script, element);
     }
 
     /**
@@ -145,16 +158,5 @@ public final class ScriptExecutor {
         explicitWait(DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD);
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
         wait.until(_ -> "complete".equals(((JavascriptExecutor) driver).executeScript("return document.readyState")));
-    }
-
-    /**
-     * Zooms in/out on the currently loaded web page. Uses the {@code zoomLevel} as a decimal format of the zoom (<b>1.0</b> for 100%, <b>0.75</b> for
-     * 75%, etc.)
-     *
-     * @param driver    the {@link JavascriptExecutor} with the loaded web page
-     * @param zoomLevel the zoom level
-     */
-    public static void zoom(final JavascriptExecutor driver, final double zoomLevel) {
-        driver.executeScript(String.format("document.body.style.zoom = '%.2f'", zoomLevel));
     }
 }

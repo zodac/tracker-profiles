@@ -33,7 +33,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public class CathodeRayTubeHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
     /**
      * Default constructor.
@@ -78,11 +77,6 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
         return By.xpath("//a[@class='username']");
     }
 
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -91,8 +85,8 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
      *
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      * @see AbstractTrackerHandler#redactElements()
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     @Override
     public int redactElements() {

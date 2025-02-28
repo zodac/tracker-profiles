@@ -75,8 +75,8 @@ public class NebulanceHandler extends AbstractTrackerHandler {
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
      *
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      * @see AbstractTrackerHandler#redactElements()
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     @Override
     public int redactElements() {

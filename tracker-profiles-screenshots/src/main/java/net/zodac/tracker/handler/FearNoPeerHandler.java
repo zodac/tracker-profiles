@@ -34,8 +34,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "FearNoPeer", needsManualInput = false, url = "https://fearnopeer.com/login")
 public class FearNoPeerHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
-
     /**
      * Default constructor.
      *
@@ -75,11 +73,6 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//a[@class='top-nav__username']");
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

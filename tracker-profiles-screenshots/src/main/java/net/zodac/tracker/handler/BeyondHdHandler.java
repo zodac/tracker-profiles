@@ -32,7 +32,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "BeyondHD", needsManualInput = true, url = "https://beyond-hd.me/")
 public class BeyondHdHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.75D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -75,13 +74,15 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
-        LOGGER.info("\t>>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 
     @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    public boolean canDisableFixedHeader() {
+        final WebElement stickyElement = driver.findElement(By.id("stickyBar"));
+        ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        return true;
     }
 
     @Override

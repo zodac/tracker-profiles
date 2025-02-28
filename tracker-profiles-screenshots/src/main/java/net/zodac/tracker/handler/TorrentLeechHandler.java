@@ -67,6 +67,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
     protected By postLoginSelector() {
         return By.xpath("//div[contains(@class, 'navbar') and contains(@class, 'loggedin')]");
     }
+
     @Override
     protected By profilePageSelector() {
         return By.xpath("//span[@class='user_superuser']");
@@ -92,8 +93,8 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
      * value <b>Torrent Passkey</b>. From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs
      * its content redacted.
      *
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      * @see AbstractTrackerHandler#redactElements()
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      */
     @Override
     public int redactElements() {

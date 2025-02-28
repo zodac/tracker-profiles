@@ -18,6 +18,7 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -29,8 +30,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
  */
 @TrackerHandler(name = "TVChaosUK", needsManualInput = false, url = "https://tvchaosuk.com/")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
-
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
 
     /**
      * Default constructor.
@@ -69,8 +68,10 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.tagName("td")
+        );
     }
 
     @Override

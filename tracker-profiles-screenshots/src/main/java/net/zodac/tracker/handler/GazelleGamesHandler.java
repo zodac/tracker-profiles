@@ -35,7 +35,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "GazelleGames", needsManualInput = true, url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -78,13 +77,8 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
-        LOGGER.info("\t>>> Waiting for user to select correct game title, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to select correct game title, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

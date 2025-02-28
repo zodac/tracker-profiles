@@ -35,7 +35,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 })
 public class DigitalCoreClubHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.75D;
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
@@ -88,7 +87,7 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
-        LOGGER.info("\t>>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 
@@ -110,11 +109,6 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
         return List.of(
             By.tagName("a")
         );
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

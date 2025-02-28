@@ -31,8 +31,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "Redacted", needsManualInput = false, url = "https://redacted.sh/")
 public class RedactedHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.67D;
-
     /**
      * Default constructor.
      *
@@ -64,11 +62,6 @@ public class RedactedHandler extends AbstractTrackerHandler {
     @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override

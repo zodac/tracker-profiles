@@ -31,8 +31,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 @TrackerHandler(name = "UHDBits", needsManualInput = false, url = "https://uhdbits.org/")
 public class UhdBitsHandler extends AbstractTrackerHandler {
 
-    private static final double ZOOM_LEVEL_FOR_SCREENSHOT = 0.8D;
-
     /**
      * Default constructor.
      *
@@ -64,11 +62,6 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     @Override
     protected By profilePageSelector() {
         return By.xpath("//a[@class='username']");
-    }
-
-    @Override
-    public double zoomLevel() {
-        return ZOOM_LEVEL_FOR_SCREENSHOT;
     }
 
     @Override
