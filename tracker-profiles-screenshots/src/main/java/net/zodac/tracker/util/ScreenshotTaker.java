@@ -39,6 +39,7 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 public final class ScreenshotTaker {
 
     private static final ConfigurationProperties CONFIG = Configuration.get();
+    private static final int TIME_BETWEEN_SCROLLS_IN_MILLISECONDS = 100;
 
     private ScreenshotTaker() {
 
@@ -67,7 +68,7 @@ public final class ScreenshotTaker {
 
     private static BufferedImage takeScreenshotOfEntirePage(final WebDriver driver) {
         return new AShot()
-            .shootingStrategy(ShootingStrategies.viewportPasting(100))
+            .shootingStrategy(ShootingStrategies.viewportPasting(TIME_BETWEEN_SCROLLS_IN_MILLISECONDS))
             .takeScreenshot(driver)
             .getImage();
     }
