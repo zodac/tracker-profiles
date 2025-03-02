@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -87,8 +88,9 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick() {
-        // TODO: Update prompt to mention wanted picture
-        LOGGER.info("\t\t >>> Waiting for user to select valid image, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+        final WebElement captchaTextElement = driver.findElement(By.xpath("//div[@class='captchaIntro']/p[1]/strong[1]"));
+        LOGGER.info("\t\t >>> Waiting for user to select the '{}' image, for {} seconds", captchaTextElement.getText(),
+            DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
