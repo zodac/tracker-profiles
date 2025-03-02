@@ -17,6 +17,8 @@
 
 package net.zodac.tracker.handler;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
@@ -24,6 +26,7 @@ import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
@@ -46,7 +49,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     @Override
     public By loginButtonSelector() {
-        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
+        ScriptExecutor.explicitWait(Duration.of(2L, ChronoUnit.SECONDS)); // Wait a couple of seconds for the hidden captcha to load
         return By.id("login-button");
     }
 
@@ -80,6 +83,9 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to select correct movie title and click the login button, for {} seconds",
             DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+
+        final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='captcha_container']"));
+        ScriptExecutor.highlightElement(driver, selectionElement);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
 
         final String nextUrl = driver.getCurrentUrl();

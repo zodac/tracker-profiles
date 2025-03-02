@@ -75,6 +75,9 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     @Override
     protected void manualCheckBeforeLoginClick() {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+
+        final WebElement captchaElement = driver.findElement(By.xpath("//*[@id='captcha']/ancestor::div[1]"));
+        ScriptExecutor.highlightElement(driver, captchaElement);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 

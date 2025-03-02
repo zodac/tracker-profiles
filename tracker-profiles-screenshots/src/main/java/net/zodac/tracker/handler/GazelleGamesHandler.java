@@ -76,6 +76,9 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
     @Override
     protected void manualCheckBeforeLoginClick() {
         LOGGER.info("\t\t >>> Waiting for user to select correct game title, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+
+        final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='tdwrap']/form[1]/table[1]"));
+        ScriptExecutor.highlightElement(driver, selectionElement);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 

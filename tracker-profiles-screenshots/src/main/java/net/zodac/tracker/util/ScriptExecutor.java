@@ -75,6 +75,16 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Highlight.
+     *
+     * @param driver  d
+     * @param element e
+     */
+    public static void highlightElement(final JavascriptExecutor driver, final WebElement element) {
+        updateCss(driver, element, "border", "3px solid red");
+    }
+
+    /**
      * Updates the text of the provided {@link WebElement} and replaces the value with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when
      * trying to hide/redact sensitive information like IP addresses.
      *

@@ -89,6 +89,9 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     protected void manualCheckBeforeLoginClick() {
         // TODO: Update prompt to mention wanted picture
         LOGGER.info("\t\t >>> Waiting for user to select valid image, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+
+        final WebElement captchaElement = driver.findElement(By.id("captcha"));
+        ScriptExecutor.highlightElement(driver, captchaElement);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
     }
 

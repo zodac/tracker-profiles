@@ -92,7 +92,6 @@ public final class ProfileScreenshotter {
         }
 
         // TODO: Make manual inputs more interactive:
-        //   - Highlight element that requires an input
         //   - Allow execution to resume when input is finished rather than waiting a static period of time
         //   - Show timer on web-page (or remove entirely, but have a catch-all timer to kill execution eventually)
         if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
