@@ -84,6 +84,12 @@ public final class ProfileScreenshotter {
             return;
         }
 
+        if (!CONFIG.includeManualTrackers() && trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).isEmpty()) {
+            LOGGER.warn("No automatic trackers selected, but manual trackers not enabled!");
+            return;
+        }
+
+
         printTrackersInfo(trackersByIsManual);
 
         // Non-manual trackers
