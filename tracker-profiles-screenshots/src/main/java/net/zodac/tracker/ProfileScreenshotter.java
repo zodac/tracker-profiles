@@ -180,11 +180,11 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Opening user profile page");
         trackerHandler.openProfilePage();
 
+        LOGGER.info("\t- Redacting elements with sensitive information");
         final int numberOfRedactedElements = trackerHandler.redactElements();
         if (numberOfRedactedElements != 0) {
             final String redactedElementsPlural = numberOfRedactedElements == 1 ? "" : "s";
-            // TODO: Print the elements
-            LOGGER.info("\t- Redacted the text of '{}' element{}", numberOfRedactedElements, redactedElementsPlural);
+            LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, redactedElementsPlural);
         }
 
         if (trackerHandler.canDisableFixedHeader()) {
