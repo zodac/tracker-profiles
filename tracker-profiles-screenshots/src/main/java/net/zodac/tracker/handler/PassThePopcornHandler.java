@@ -88,9 +88,11 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
         ScriptExecutor.highlightElement(driver, selectionElement);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
 
+        // If the user didn't click 'login', do it for them
         final String nextUrl = driver.getCurrentUrl();
         if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
-            throw new IllegalStateException("User interaction was meant to complete log in, but still on login page");
+            final WebElement loginButton = driver.findElement(loginButtonSelector());
+            loginButton.click();
         }
     }
 
