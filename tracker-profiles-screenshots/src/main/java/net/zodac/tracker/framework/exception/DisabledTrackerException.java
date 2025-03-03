@@ -15,24 +15,24 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.framework;
+package net.zodac.tracker.framework.exception;
 
 import java.io.Serial;
 
 /**
- * Exception used to indicate that a manual tracker has not received a user input due to the use closing the dialog box.
+ * Exception used to indicate that a tracker has been disabled.
  */
-public class CancelledInputException extends RuntimeException {
-
-    private static final String ERROR_MESSAGE = "User cancelled manual input";
+public class DisabledTrackerException extends RuntimeException {
 
     @Serial
-    private static final long serialVersionUID = -4567630877374812049L;
+    private static final long serialVersionUID = -426556692715711779L;
 
     /**
-     * Creates a {@link CancelledInputException} with the standard {@value #ERROR_MESSAGE}.
+     * Constructor that takes an error message.
+     *
+     * @param message the error message
      */
-    public CancelledInputException() {
-        super(ERROR_MESSAGE);
+    public DisabledTrackerException(final String message) {
+        super(message);
     }
 }

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
-import net.zodac.tracker.framework.DisabledTrackerException;
+import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
@@ -90,24 +91,32 @@ public final class ProfileScreenshotter {
         }
 
         printTrackersInfo(trackersByIsManual);
+        final Collection<String> successfulTrackers = new TreeSet<>();
 
         // TODO: Run these in parallel?
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
-            takeScreenshotPerTracker(trackerDefinition);
+            final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);
+            if (successfullyTakenScreenshot) {
+                successfulTrackers.add(trackerDefinition.name());
+            }
         }
 
         if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
-                takeScreenshotPerTracker(trackerDefinition);
+                final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);
+                if (successfullyTakenScreenshot) {
+                    successfulTrackers.add(trackerDefinition.name());
+                }
             }
         }
 
-        // TODO: Don't show if there are no successful screenshots
-        final Path directory = CONFIG.outputDirectory().toAbsolutePath();
-        FileOpener.open(directory.toFile());
+        if (!successfulTrackers.isEmpty()) {
+            final Path directory = CONFIG.outputDirectory().toAbsolutePath();
+            FileOpener.open(directory.toFile());
+        }
     }
 
     private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {
@@ -145,18 +154,21 @@ public final class ProfileScreenshotter {
         return trackersByIsManual;
     }
 
-    private static void takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) {
+    private static boolean takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) {
         LOGGER.info("");
         LOGGER.info("[{}]", trackerDefinition.name());
 
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
+            return true;
         } catch (final DisabledTrackerException e) {
             LOGGER.debug("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage(), e);
             LOGGER.warn("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage());
+            return false;
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
+            return false;
         } catch (final UnreachableBrowserException e) {
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
             throw e;
@@ -164,6 +176,7 @@ public final class ProfileScreenshotter {
             final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
             LOGGER.debug("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage, e);
             LOGGER.warn("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
+            return false;
         }
     }
 
