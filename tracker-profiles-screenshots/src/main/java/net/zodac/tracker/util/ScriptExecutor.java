@@ -20,6 +20,7 @@ package net.zodac.tracker.util;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
+import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Alert;
@@ -45,6 +46,7 @@ public final class ScriptExecutor {
     private static final Duration DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
     private static final Duration DEFAULT_WAIT_FOR_ALERT = Duration.of(2L, ChronoUnit.SECONDS);
     private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(1L, ChronoUnit.SECONDS);
+    private static final Pattern NEWLINE_PATTERN = Pattern.compile("\\r?\\n");
     private static final Logger LOGGER = LogManager.getLogger();
 
     private ScriptExecutor() {
@@ -108,7 +110,7 @@ public final class ScriptExecutor {
      * @param redactionText the text to replace the existing text in the {@link WebElement}
      */
     public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element, final String redactionText) {
-        LOGGER.info("\t\t- Found: '{}' in <{}>", element.getText(), element.getTagName());
+        LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
         driver.executeScript(String.format("arguments[0].innerText = '%s'", redactionText), element);
     }
 
