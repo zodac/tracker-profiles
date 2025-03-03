@@ -15,7 +15,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.gui;
+package net.zodac.tracker.framework.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

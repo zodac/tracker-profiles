@@ -113,7 +113,7 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Remove a HTML attribute from the {@link WebElement}
+     * Remove a HTML attribute from the {@link WebElement}.
      *
      * @param driver        the {@link JavascriptExecutor} with the loaded web page
      * @param element       the {@link WebElement} to update
