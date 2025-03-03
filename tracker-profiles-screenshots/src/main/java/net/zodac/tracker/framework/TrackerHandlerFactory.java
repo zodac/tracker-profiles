@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 

@@ -15,16 +15,13 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.handler;
+package net.zodac.tracker.framework;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
-import net.zodac.tracker.framework.Configuration;
-import net.zodac.tracker.framework.ConfigurationProperties;
-import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

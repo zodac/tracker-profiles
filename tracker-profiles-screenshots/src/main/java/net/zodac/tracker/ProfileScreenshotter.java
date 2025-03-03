@@ -36,7 +36,7 @@ import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
+import net.zodac.tracker.framework.AbstractTrackerHandler;
 import net.zodac.tracker.util.FileOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;

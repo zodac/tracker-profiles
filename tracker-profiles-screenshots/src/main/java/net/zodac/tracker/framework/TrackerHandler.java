@@ -25,7 +25,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
 
 /**
  * Annotation used to mark an implementation of {@link AbstractTrackerHandler} to be used to generate screenshots for specific websites.
