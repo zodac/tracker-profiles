@@ -131,26 +131,28 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * Enters the user's credential and logs in to the tracker. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the page to finish loading.
      *
-     * @param trackerDefinition the {@link TrackerDefinition} containing the login credentials
+     * @param username    the user's username for the tracker
+     * @param password    the user's password for the tracker
+     * @param trackerName the name of the tracker
      */
-    public void login(final TrackerDefinition trackerDefinition) {
+    public void login(final String username, final String password, final String trackerName) {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         final WebElement usernameField = driver.findElement(usernameFieldSelector());
         usernameField.clear();
-        usernameField.sendKeys(trackerDefinition.username());
+        usernameField.sendKeys(username);
 
         final WebElement passwordField = driver.findElement(passwordFieldSelector());
         passwordField.clear();
-        passwordField.sendKeys(trackerDefinition.password());
+        passwordField.sendKeys(password);
 
-        manualCheckBeforeLoginClick(trackerDefinition.name());
+        manualCheckBeforeLoginClick(trackerName);
 
         final By loginButtonSelector = loginButtonSelector();
         if (loginButtonSelector != null) {
             final WebElement loginButton = driver.findElement(loginButtonSelector);
             loginButton.click();
         }
-        manualCheckAfterLoginClick(trackerDefinition.name());
+        manualCheckAfterLoginClick(trackerName);
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -299,7 +301,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      *
      * @return the {@link By} selectors for elements that may contain sensitive information
      */
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of();
     }
 

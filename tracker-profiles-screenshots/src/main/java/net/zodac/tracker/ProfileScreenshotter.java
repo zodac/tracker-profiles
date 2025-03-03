@@ -35,7 +35,9 @@ import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
+import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
+import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import net.zodac.tracker.util.FileOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
@@ -160,6 +162,10 @@ public final class ProfileScreenshotter {
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
             return true;
+        } catch (final CancelledInputException e) {
+            LOGGER.debug("\t- User cancelled manual input for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.warn("\t- User cancelled manual input for tracker '{}'", trackerDefinition.name());
+            return false;
         } catch (final DisabledTrackerException e) {
             LOGGER.debug("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage(), e);
             LOGGER.warn("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage());
@@ -168,26 +174,29 @@ public final class ProfileScreenshotter {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
             return false;
+        } catch (final NoUserInputException e) {
+            LOGGER.debug("\t- User provided no manual input for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.warn("\t- User provided no manual input for tracker '{}'", trackerDefinition.name());
+            return false;
         } catch (final UnreachableBrowserException e) {
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
             throw e;
         } catch (final Exception e) {
             final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
-            LOGGER.debug("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage, e);
-            LOGGER.warn("\t- Error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
+            LOGGER.debug("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage, e);
+            LOGGER.warn("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
             return false;
         }
     }
 
     private static void takeScreenshotOfProfilePage(final AbstractTrackerHandler trackerHandler, final TrackerDefinition trackerDefinition)
         throws IOException {
-
         LOGGER.info("\t- Opening tracker");
         trackerHandler.openTracker();
         trackerHandler.navigateToLoginPage();
 
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
-        trackerHandler.login(trackerDefinition);
+        trackerHandler.login(trackerDefinition.username(), trackerDefinition.password(), trackerDefinition.name());
 
         if (trackerHandler.canBannerBeCleared()) {
             LOGGER.info("\t- Banner has been cleared");
@@ -196,11 +205,13 @@ public final class ProfileScreenshotter {
         LOGGER.info("\t- Opening user profile page");
         trackerHandler.openProfilePage();
 
-        LOGGER.info("\t- Redacting elements with sensitive information");
-        final int numberOfRedactedElements = trackerHandler.redactElements();
-        if (numberOfRedactedElements != 0) {
-            final String redactedElementsPlural = numberOfRedactedElements == 1 ? "" : "s";
-            LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, redactedElementsPlural);
+        if (!trackerHandler.getElementsPotentiallyContainingSensitiveInformation().isEmpty()) {
+            LOGGER.info("\t- Redacting elements with sensitive information");
+            final int numberOfRedactedElements = trackerHandler.redactElements();
+            if (numberOfRedactedElements != 0) {
+                final String redactedElementsPlural = numberOfRedactedElements == 1 ? "" : "s";
+                LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, redactedElementsPlural);
+            }
         }
 
         if (trackerHandler.canDisableFixedHeader()) {
