@@ -42,11 +42,6 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public By loginButtonSelector() {
-        return By.id("login-button");
-    }
-
-    @Override
     protected By postLoginSelector() {
         return By.id("main-content");
     }
@@ -68,7 +63,7 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("td")
         );

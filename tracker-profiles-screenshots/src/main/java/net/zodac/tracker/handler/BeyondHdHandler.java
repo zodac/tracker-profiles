@@ -45,11 +45,6 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
         super(driver, trackerUrls);
     }
 
-    @Override
-    public By loginButtonSelector() {
-        return By.id("login-button");
-    }
-
     /**
      * {@inheritDoc}
      *

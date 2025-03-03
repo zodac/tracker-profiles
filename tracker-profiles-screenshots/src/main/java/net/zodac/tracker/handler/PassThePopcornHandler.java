@@ -101,7 +101,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("a")
         );

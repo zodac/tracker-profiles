@@ -24,7 +24,6 @@ import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
-import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -217,7 +216,9 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return the login button {@link By} selector
      */
     @Nullable
-    protected abstract By loginButtonSelector();
+    protected By loginButtonSelector() {
+        return By.id("login-button");
+    }
 
     /**
      * Defines the {@link By} selector of the {@link WebElement} used to confirm that the user has successfully logged in.
@@ -336,10 +337,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Defines the {@link By} selectors of the {@link WebElement} that signifies that the {@link #logout()} was successfully executed.
      *
      * <p>
-     * By default, we assume that we will be redirected to the login page, so this method returns {@link #loginButtonSelector()}. Should be overridden
-     * otherwise.
+     * By default, we assume that we will be redirected to the login page, so this method returns {@link #usernameFieldSelector()}. Should be
+     * overridden otherwise.
      *
-     * @return the login button {@link WebElement}
+     * @return the post-logout button {@link WebElement}
      */
     protected By postLogoutElementSelector() {
         return usernameFieldSelector();

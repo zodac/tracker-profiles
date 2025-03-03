@@ -62,7 +62,7 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.tagName("dd"),
             By.tagName("td")
