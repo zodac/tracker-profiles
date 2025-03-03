@@ -36,7 +36,7 @@ import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
-import net.zodac.tracker.util.DirectoryOpener;
+import net.zodac.tracker.util.FileOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,17 +89,14 @@ public final class ProfileScreenshotter {
             return;
         }
 
-
         printTrackersInfo(trackersByIsManual);
 
+        // TODO: Run these in parallel?
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
             takeScreenshotPerTracker(trackerDefinition);
         }
 
-        // TODO: Make manual inputs more interactive:
-        //   - Allow execution to resume when input is finished rather than waiting a static period of time
-        //   - Show timer on web-page (or remove entirely, but have a catch-all timer to kill execution eventually)
         if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
@@ -108,8 +105,9 @@ public final class ProfileScreenshotter {
             }
         }
 
+        // TODO: Don't show if there are no successful screenshots
         final Path directory = CONFIG.outputDirectory().toAbsolutePath();
-        DirectoryOpener.open(directory.toFile());
+        FileOpener.open(directory.toFile());
     }
 
     private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {

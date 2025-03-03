@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,7 +79,7 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
      *
      * <p>
      * For {@link DigitalCoreClubHandler}, prior to clicking the login button with a successful username/password there is another field where a
-     * Captcha needs to be entered. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * Captcha needs to be entered. This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
      *
      * <p>
      * Manual user interaction:
@@ -87,12 +88,12 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
      * </ol>
      */
     @Override
-    protected void manualCheckBeforeLoginClick() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
+        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
-        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
+        DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 
     /**

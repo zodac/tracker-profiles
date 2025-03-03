@@ -52,11 +52,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected static final ConfigurationProperties CONFIG = Configuration.get();
 
     /**
-     * The default wait {@link Duration} when waiting for user to perform a manual interaction.
-     */
-    protected static final Duration DEFAULT_WAIT_FOR_MANUAL_INTERACTION = Duration.of(20L, ChronoUnit.SECONDS);
-
-    /**
      * The default wait {@link Duration} when waiting for a web page load.
      */
     protected static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(5L, ChronoUnit.SECONDS);
@@ -147,10 +142,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         passwordField.clear();
         passwordField.sendKeys(trackerDefinition.password());
 
-        manualCheckBeforeLoginClick();
+        manualCheckBeforeLoginClick(trackerDefinition.name());
         final WebElement loginButton = driver.findElement(loginButtonSelector());
         loginButton.click();
-        manualCheckAfterLoginClick();
+        manualCheckAfterLoginClick(trackerDefinition.name());
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -159,16 +154,20 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require an input prior
      * to clicking the login button.
+     *
+     * @param trackerName the name of the tracker
      */
-    protected void manualCheckBeforeLoginClick() {
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
         // Do nothing by default
     }
 
     /**
      * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require a second input
      * after clicking the login button.
+     *
+     * @param trackerName the name of the tracker
      */
-    protected void manualCheckAfterLoginClick() {
+    protected void manualCheckAfterLoginClick(final String trackerName) {
         // Do nothing by default
     }
 

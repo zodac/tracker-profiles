@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,7 +78,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      *
      * <p>
      * For {@link HdBitsHandler}, prior to clicking the login button with a successful username/password there is another field where an image needs
-     * to be selected based on a text hint. This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * to be selected based on a text hint. This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
      *
      * <p>
      * Manual user interaction:
@@ -86,14 +87,14 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      * </ol>
      */
     @Override
-    protected void manualCheckBeforeLoginClick() {
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
         final WebElement captchaTextElement = driver.findElement(By.xpath("//div[@class='captchaIntro']/p[1]/strong[1]"));
         LOGGER.info("\t\t >>> Waiting for user to select the '{}' image, for {} seconds", captchaTextElement.getText(),
-            DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+            DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
-        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
+        DisplayUtils.userInputConfirmation(trackerName, String.format("Select the '%s' image", captchaTextElement.getText()));
     }
 
     @Override

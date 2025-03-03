@@ -78,10 +78,10 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Highlight.
+     * Highlight's an {@link WebElement} on the web page. Creates a 3px solid red border around the {@link WebElement}.
      *
-     * @param driver  d
-     * @param element e
+     * @param driver  the {@link JavascriptExecutor} with the loaded web page
+     * @param element the {@link WebElement} to highlight
      */
     public static void highlightElement(final JavascriptExecutor driver, final WebElement element) {
         updateCss(driver, element, "border", "3px solid red");

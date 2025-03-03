@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,7 +50,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     @Override
     public By loginButtonSelector() {
-        ScriptExecutor.explicitWait(Duration.of(2L, ChronoUnit.SECONDS)); // Wait a couple of seconds for the hidden captcha to load
+        ScriptExecutor.explicitWait(Duration.of(1L, ChronoUnit.SECONDS)); // Wait for the hidden captcha to load
         return By.id("login-button");
     }
 
@@ -69,7 +70,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
      * <p>
      * For {@link PassThePopcornHandler}, after clicking the login button with a successful username/password, another section pops up. There is a
      * multiple-choice question, where the correct movie title must be chosen that matches the poster, and the login button pressed again.
-     * This must be done within {@link #DEFAULT_WAIT_FOR_MANUAL_INTERACTION}.
+     * This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
      *
      * <p>
      * Manual user interactions:
@@ -79,14 +80,14 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
      * </ol>
      */
     @Override
-    protected void manualCheckAfterLoginClick() {
+    protected void manualCheckAfterLoginClick(final String trackerName) {
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to select correct movie title and click the login button, for {} seconds",
-            DEFAULT_WAIT_FOR_MANUAL_INTERACTION.getSeconds());
+            DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='captcha_container']"));
         ScriptExecutor.highlightElement(driver, selectionElement);
-        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_MANUAL_INTERACTION);
+        DisplayUtils.userInputConfirmation(trackerName, "Select the correct movie and click the login button");
 
         // If the user didn't click 'login', do it for them
         final String nextUrl = driver.getCurrentUrl();

@@ -17,16 +17,10 @@
 
 package net.zodac.tracker.util;
 
-import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import org.openqa.selenium.WebDriver;
@@ -53,6 +47,7 @@ public final class ScreenshotTaker {
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
+     * @see FileOpener#open(File)
      */
     public static File takeScreenshot(final WebDriver driver, final String trackerName) throws IOException {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver);
@@ -60,7 +55,7 @@ public final class ScreenshotTaker {
         ImageIO.write(screenshotImage, "PNG", screenshot);
 
         if (CONFIG.previewTrackerScreenshot()) {
-            showImage(screenshot, trackerName);
+            FileOpener.open(screenshot.getAbsoluteFile());
         }
 
         return screenshot;
@@ -71,18 +66,5 @@ public final class ScreenshotTaker {
             .shootingStrategy(ShootingStrategies.viewportPasting(TIME_BETWEEN_SCROLLS_IN_MILLISECONDS))
             .takeScreenshot(driver)
             .getImage();
-    }
-
-    private static void showImage(final File screenshot, final String trackerName) {
-        SwingUtilities.invokeLater(() -> {
-            final JFrame jFrame = new JFrame();
-            jFrame.setTitle(trackerName);
-            jFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            jFrame.getContentPane().setLayout(new GridLayout(1, 1));
-            jFrame.getContentPane().add(new JLabel(new ImageIcon(screenshot.getAbsolutePath())));
-            jFrame.pack();
-            jFrame.setLocationRelativeTo(null);
-            jFrame.setVisible(true);
-        });
     }
 }

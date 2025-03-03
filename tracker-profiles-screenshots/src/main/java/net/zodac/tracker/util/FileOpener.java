@@ -22,33 +22,32 @@ import java.io.IOException;
 import java.util.Locale;
 
 /**
- * Utility class used to open the screenshot directory at the end of execution.
+ * Utility class used to open a {@link File} (representing a regular file or a directory).
  */
-public final class DirectoryOpener {
+public final class FileOpener {
 
-    private DirectoryOpener() {
+    private FileOpener() {
 
     }
 
     /**
-     * Opens the provided directory using the appropriate OS-native command:
+     * Opens the provided {@link File} using the appropriate OS-native command:
      * <ul>
      *     <li>Windows: {@code explorer}</li>
      *     <li>MacOS: {@code open}</li>
      *     <li>Linux: {@code xdg-open}</li>
      * </ul>
      *
-     * @param directoryToOpen the directory to be opened
-     * @throws IOException              thrown if there is any error opening the directory
-     * @throws IllegalArgumentException thrown if the input {@link File} doesn't exist or is not a valid directory
+     * @param fileToOpen the {@link File} to be opened
+     * @throws IOException thrown if there is any error opening the {@link File}
      */
-    public static void open(final File directoryToOpen) throws IOException {
-        if (!directoryToOpen.exists() || !directoryToOpen.isDirectory()) {
-            throw new IllegalArgumentException("Unable to find valid directory: " + directoryToOpen);
+    public static void open(final File fileToOpen) throws IOException {
+        if (!fileToOpen.exists()) {
+            throw new IllegalArgumentException("Unable to find file: " + fileToOpen);
         }
 
-        final String openDirectoryCommand = getCommand();
-        new ProcessBuilder(openDirectoryCommand, directoryToOpen.getAbsolutePath())
+        final String openCommand = getCommand();
+        new ProcessBuilder(openCommand, fileToOpen.getAbsolutePath())
             .redirectErrorStream(true) // Merges stderr into stdout
             .redirectOutput(ProcessBuilder.Redirect.DISCARD) // Discards output
             .start();
