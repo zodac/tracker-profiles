@@ -47,7 +47,7 @@
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
         <pmd.version>7.11.0</pmd.version>
-        <spotbugs.version>4.9.1</spotbugs.version>
+        <spotbugs.version>4.9.2</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
         <license-maven-plugin.version>4.6</license-maven-plugin.version>
