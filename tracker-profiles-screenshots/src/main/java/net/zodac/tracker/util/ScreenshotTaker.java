@@ -23,7 +23,9 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
@@ -40,16 +42,21 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Takes a screenshot of the current web page loaded by the {@link WebDriver}. The browser viewport is then saved as a {@code .png} file in the
+     * Takes a screenshot of the current web page loaded by the {@link ChromeDriver}. The browser viewport is then saved as a {@code .png} file in the
      * provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
      *
-     * @param driver      the {@link WebDriver} with the loaded web page
+     * <p>
+     * Once the screenshot is saved, the page is scrolled back to the top. This is to ensure that any elements at the top of the page are clickable
+     * after scrolling.
+     *
+     * @param driver      the {@link ChromeDriver} with the loaded web page
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
      * @see FileOpener#open(File)
+     * @see ScriptExecutor#scrollToTheTop(JavascriptExecutor)
      */
-    public static File takeScreenshot(final WebDriver driver, final String trackerName) throws IOException {
+    public static File takeScreenshot(final ChromeDriver driver, final String trackerName) throws IOException {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver);
         final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");
         ImageIO.write(screenshotImage, "PNG", screenshot);
@@ -58,6 +65,7 @@ public final class ScreenshotTaker {
             FileOpener.open(screenshot.getAbsoluteFile());
         }
 
+        ScriptExecutor.scrollToTheTop(driver);
         return screenshot;
     }
 

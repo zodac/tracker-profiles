@@ -113,6 +113,18 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Remove a HTML attribute from the {@link WebElement}
+     *
+     * @param driver        the {@link JavascriptExecutor} with the loaded web page
+     * @param element       the {@link WebElement} to update
+     * @param attributeName the HTML attribute name
+     */
+    public static void removeAttribute(final JavascriptExecutor driver, final WebElement element, final String attributeName) {
+        final String script = String.format("arguments[0].removeAttribute('%s');", attributeName);
+        driver.executeScript(script, element);
+    }
+
+    /**
      * Moves the mouse cursor to the provided {@link WebElement}.
      *
      * @param driver  the {@link WebDriver} with the loaded web page
@@ -133,6 +145,15 @@ public final class ScriptExecutor {
         final Actions actions = new Actions(driver);
         actions.moveToLocation(0, 0).perform();
         explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+    }
+
+    /**
+     * Scrolls the page back to the top of the screen.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void scrollToTheTop(final JavascriptExecutor driver) {
+        driver.executeScript("window.scrollTo(0, 0);");
     }
 
     /**

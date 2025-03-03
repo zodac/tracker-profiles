@@ -149,8 +149,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         if (loginButtonSelector != null) {
             final WebElement loginButton = driver.findElement(loginButtonSelector);
             loginButton.click();
-            manualCheckAfterLoginClick(trackerDefinition.name());
         }
+        manualCheckAfterLoginClick(trackerDefinition.name());
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -235,8 +235,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     public void openProfilePage() {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
+
         final WebElement profilePageLink = driver.findElement(profilePageSelector());
+        ScriptExecutor.removeAttribute(driver, profilePageLink, "target"); // Removing 'target="_blank"', to ensure link opens in same tab
         profilePageLink.click();
+
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.moveToOrigin(driver);
         additionalWaitOnProfilePage();

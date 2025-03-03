@@ -17,7 +17,9 @@
 
 package net.zodac.tracker.handler;
 
+import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
@@ -25,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
@@ -79,12 +82,14 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckAfterLoginClick(final String trackerName) {
-        LOGGER.info("\t\t >>> Waiting for user to select the correct image and click the 'X' button to log in, for {} seconds",
-            DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
+        final WebElement captchaTextElement = driver.findElement(By.xpath("//span[@class='captchaText']"));
+        LOGGER.info("\t\t >>> Waiting for user to select the '{}' image and click the 'X' button to log in, for {} seconds",
+            captchaTextElement.getText(), DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         ScriptExecutor.highlightElement(driver, driver.findElement(By.id("captcha")));
-        ScriptExecutor.highlightElement(driver, driver.findElement(By.xpath("//td[@id='control']//table[1]//tbody[1]//tr[6]")));
-        DisplayUtils.userInputConfirmation(trackerName, "Select the correct image and click the 'X' button to log in");
+        ScriptExecutor.highlightElement(driver, driver.findElement(By.xpath("//table[count(.//tr) >= 6]/tbody/tr[6]/td[1]")));
+        DisplayUtils.userInputConfirmation(trackerName,
+            String.format("Select the '%s' image and click the 'X' button to log in", captchaTextElement.getText()));
     }
 
     @Override
@@ -98,7 +103,15 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    protected Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.tagName("span")
+        );
+    }
+
+    @Override
     protected By logoutButtonSelector() {
+        ScriptExecutor.explicitWait(Duration.ofSeconds(1L)); // Wait for the logout button to become visible and clickable again after scrolling
         return By.id("logoff");
     }
 }
