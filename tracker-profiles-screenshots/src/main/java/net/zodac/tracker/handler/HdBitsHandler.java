@@ -63,16 +63,6 @@ public class HdBitsHandler extends AbstractTrackerHandler {
         return By.xpath("//input[@type='submit' and @value='Log in!']");
     }
 
-    @Override
-    protected By postLoginSelector() {
-        return By.id("news");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//div[@class='curuser-stats']//b//a[1]");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -95,6 +85,16 @@ public class HdBitsHandler extends AbstractTrackerHandler {
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, String.format("Select the '%s' image", captchaTextElement.getText()));
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("news");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//div[@class='curuser-stats']//b//a[1]");
     }
 
     @Override

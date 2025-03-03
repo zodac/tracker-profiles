@@ -50,16 +50,6 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
         return By.id("login-button");
     }
 
-    @Override
-    protected By postLoginSelector() {
-        return By.id("main");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//a[img[contains(@class, 'beta-image-avatar')]]");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -80,6 +70,16 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
         final WebElement captchaElement = driver.findElement(By.xpath("//*[@id='captcha']/ancestor::div[1]"));
         ScriptExecutor.highlightElement(driver, captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("main");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[img[contains(@class, 'beta-image-avatar')]]");
     }
 
     @Override

@@ -160,7 +160,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require an input prior
      * to clicking the login button.
      *
+     * <p>
+     * Where possible, the element to be interacted with will be highlighted in the browser.
+     *
      * @param trackerName the name of the tracker
+     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
      */
     protected void manualCheckBeforeLoginClick(final String trackerName) {
         // Do nothing by default
@@ -170,7 +174,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require a second input
      * after clicking the login button.
      *
+     * <p>
+     * Where possible, the element to be interacted with will be highlighted in the browser.
+     *
      * @param trackerName the name of the tracker
+     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
      */
     protected void manualCheckAfterLoginClick(final String trackerName) {
         // Do nothing by default

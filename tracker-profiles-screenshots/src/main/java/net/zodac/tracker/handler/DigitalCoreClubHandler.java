@@ -64,16 +64,6 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
         return By.xpath("//button[text()='Login' and @type='submit']");
     }
 
-    @Override
-    protected By postLoginSelector() {
-        return By.tagName("main-menu");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//user//a[1]");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -94,6 +84,16 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.tagName("main-menu");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//user//a[1]");
     }
 
     /**

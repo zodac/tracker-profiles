@@ -51,16 +51,6 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
         return By.xpath("//input[@type='submit' and @name='login' and @value='Login' and @class='submit']");
     }
 
-    @Override
-    protected By postLoginSelector() {
-        return By.id("userinfo");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//a[@class='username']");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -81,6 +71,16 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
         final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='tdwrap']/form[1]/table[1]"));
         ScriptExecutor.highlightElement(driver, selectionElement);
         DisplayUtils.userInputConfirmation(trackerName, "Select the correct game");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("userinfo");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[@class='username']");
     }
 
     @Override
