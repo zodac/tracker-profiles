@@ -15,16 +15,20 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.framework;
+package net.zodac.tracker.handler;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
+import net.zodac.tracker.framework.Configuration;
+import net.zodac.tracker.framework.ConfigurationProperties;
+import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -140,9 +144,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         passwordField.sendKeys(trackerDefinition.password());
 
         manualCheckBeforeLoginClick(trackerDefinition.name());
-        final WebElement loginButton = driver.findElement(loginButtonSelector());
-        loginButton.click();
-        manualCheckAfterLoginClick(trackerDefinition.name());
+
+        final By loginButtonSelector = loginButtonSelector();
+        if (loginButtonSelector != null) {
+            final WebElement loginButton = driver.findElement(loginButtonSelector);
+            loginButton.click();
+            manualCheckAfterLoginClick(trackerDefinition.name());
+        }
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -193,10 +201,12 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Defines the {@link By} selector of the {@link WebElement} of the login button.
+     * Defines the {@link By} selector of the {@link WebElement} of the login button. Can be {@link Nullable} if there is no login button, and a user
+     * interaction is required instead,
      *
      * @return the login button {@link By} selector
      */
+    @Nullable
     protected abstract By loginButtonSelector();
 
     /**
@@ -319,7 +329,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return the login button {@link WebElement}
      */
     protected By postLogoutElementSelector() {
-        return loginButtonSelector();
+        return usernameFieldSelector();
     }
 
     /**

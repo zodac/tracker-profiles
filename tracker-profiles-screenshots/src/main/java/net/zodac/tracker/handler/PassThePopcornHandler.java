@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.AbstractTrackerHandler;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
@@ -55,16 +54,6 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
         return By.id("login-button");
     }
 
-    @Override
-    protected By postLoginSelector() {
-        return By.id("userinfo");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//a[@class='user-info-bar__link']");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -93,9 +82,22 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
         // If the user didn't click 'login', do it for them
         final String nextUrl = driver.getCurrentUrl();
         if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
-            final WebElement loginButton = driver.findElement(loginButtonSelector());
-            loginButton.click();
+            final By loginButtonSelector = loginButtonSelector();
+            if (loginButtonSelector != null) {
+                final WebElement loginButton = driver.findElement(loginButtonSelector);
+                loginButton.click();
+            }
         }
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("userinfo");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//a[@class='user-info-bar__link']");
     }
 
     @Override
