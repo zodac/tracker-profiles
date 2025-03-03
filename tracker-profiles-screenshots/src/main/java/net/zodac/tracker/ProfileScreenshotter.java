@@ -31,11 +31,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
-import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
+import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import net.zodac.tracker.util.FileOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
@@ -93,7 +93,6 @@ public final class ProfileScreenshotter {
         printTrackersInfo(trackersByIsManual);
         final Collection<String> successfulTrackers = new TreeSet<>();
 
-        // TODO: Run these in parallel?
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
             final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);

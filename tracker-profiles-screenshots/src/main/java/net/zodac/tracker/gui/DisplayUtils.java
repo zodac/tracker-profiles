@@ -156,6 +156,7 @@ public final class DisplayUtils {
                 throw new CancelledInputException();
             }
         } catch (final TimeoutException | InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
             throw new NoUserInputException(INPUT_WAIT_DURATION, e);
         } finally {
             dialog.dispose();
