@@ -53,10 +53,10 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
 
     @Override
     protected By profilePageSelector() {
-        // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        // Highlight the nav bar to make the profile button interactable
+        final By profileParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement profileParent = driver.findElement(profileParentSelector);
+        ScriptExecutor.moveTo(driver, profileParent);
 
         return By.xpath("//a[@class='top-nav__username']");
     }
@@ -79,8 +79,8 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");

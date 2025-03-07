@@ -87,8 +87,8 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//div[contains(@class, 'bhd-td')]//div[contains(@class, 'dropmenu')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.xpath("//div[contains(@class, 'bhd-td')]//div[contains(@class, 'dropmenu')]");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//a[contains(text(), 'Logout')]");

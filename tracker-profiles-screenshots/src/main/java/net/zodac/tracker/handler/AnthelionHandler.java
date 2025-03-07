@@ -66,8 +66,8 @@ public class AnthelionHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.id("nav_user");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.id("nav_user");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//div[@id='user_menu']//a[text()='Logout']");

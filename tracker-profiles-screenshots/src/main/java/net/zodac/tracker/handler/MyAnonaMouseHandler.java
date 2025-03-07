@@ -80,8 +80,8 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the profile menu to make the logout button interactable
-        final By logoutParentBy = By.id("userMenu");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.id("userMenu");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//a[text()='Log Out']");

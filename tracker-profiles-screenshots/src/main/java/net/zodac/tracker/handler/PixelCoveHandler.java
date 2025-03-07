@@ -110,8 +110,8 @@ public class PixelCoveHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//li[@id='userinfo_username']//a[contains(@class, 'username')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.xpath("//li[@id='userinfo_username']//a[contains(@class, 'username')]");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//a[contains(text(), 'Logout')]");

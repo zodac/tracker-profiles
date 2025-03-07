@@ -72,8 +72,8 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Click the profile menu to make the logout button interactable
-        final By logoutParentBy = By.xpath("//ul[contains(@class, 'right-navbar')]//li[2]//a[contains(@class, 'dropdown-toggle')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.xpath("//ul[contains(@class, 'right-navbar')]//li[2]//a[contains(@class, 'dropdown-toggle')]");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         logoutParent.click();
 
         return By.xpath("//a[i[contains(@class, 'fa-sign-out')]]");

@@ -74,8 +74,8 @@ public class RedactedHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the profile menu to make the logout button interactable
-        final By logoutParentBy = By.id("userinfo_username");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.id("userinfo_username");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");

@@ -83,8 +83,8 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         // Click the user dropdown menu bar to make the logout button interactable
-        final By logoutParentBy = By.xpath("//li[@id='username_menu']//span[contains(@class, 'clickmenu')]");
-        final WebElement logoutParent = driver.findElement(logoutParentBy);
+        final By logoutParentSelector = By.xpath("//li[@id='username_menu']//span[contains(@class, 'clickmenu')]");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
         logoutParent.click();
 
         return By.xpath("//li[@id='username_menu']//ul[contains(@class, 'subnav')]//a[text()='Logout']");
