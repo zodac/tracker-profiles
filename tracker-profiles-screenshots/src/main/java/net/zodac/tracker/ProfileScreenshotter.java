@@ -96,12 +96,15 @@ public final class ProfileScreenshotter {
 
         printTrackersInfo(trackersByIsManual);
         final Collection<String> successfulTrackers = new TreeSet<>();
+        final Collection<String> unsuccessfulTrackers = new TreeSet<>();
 
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
             final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);
             if (successfullyTakenScreenshot) {
                 successfulTrackers.add(trackerDefinition.name());
+            } else {
+                unsuccessfulTrackers.add(trackerDefinition.name());
             }
         }
 
@@ -119,6 +122,13 @@ public final class ProfileScreenshotter {
         if (!successfulTrackers.isEmpty()) {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
             FileOpener.open(directory.toFile());
+        }
+
+        if (!unsuccessfulTrackers.isEmpty()) {
+            LOGGER.warn("Failures for following trackers:");
+            for (final String unsuccessfulTracker : unsuccessfulTrackers) {
+                LOGGER.warn("\t- {}", unsuccessfulTracker);
+            }
         }
     }
 
