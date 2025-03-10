@@ -29,3 +29,4 @@ HDBits,username,password
 PassThePopcorn,username,password
 # Non-english trackers (require non-headless mode)
 DICMusic,username,password
+Kufirc,username,password
