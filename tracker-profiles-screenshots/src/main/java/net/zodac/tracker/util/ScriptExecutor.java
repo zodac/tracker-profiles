@@ -154,9 +154,10 @@ public final class ScriptExecutor {
             actions.contextClick(bodyElement).perform();
             explicitWait(DEFAULT_WAIT_FOR_CONTEXT_MENU);
 
-            // Press "Up" key 3 times  to select 'Translate to English' option from bottom of the menu
+            // Press "Up" key 3 times to select 'Translate to English' option from bottom of the menu
             final Robot robot = new Robot();
-            for (int i = 0; i < 3; i++) {
+            final int numberOfUpPressesToSelectTranslateButton = 3;
+            for (int i = 0; i < numberOfUpPressesToSelectTranslateButton; i++) {
                 robot.keyPress(KeyEvent.VK_UP);
                 robot.keyRelease(KeyEvent.VK_UP);
                 explicitWait(DEFAULT_WAIT_FOR_KEY_PRESS);

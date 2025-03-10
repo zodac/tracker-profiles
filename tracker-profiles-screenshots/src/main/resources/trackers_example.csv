@@ -23,8 +23,9 @@ UHDBits,username,password
 BeyondHD,username,password
 CGPeers,username,password
 DigitalCore.Club,username,password
+DocsPedia,username,password
 GazelleGames,username,password
 HDBits,username,password
 PassThePopcorn,username,password
-# Non-english trackers (requires non-headless mode)
+# Non-english trackers (require non-headless mode)
 DICMusic,username,password

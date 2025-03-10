@@ -20,31 +20,30 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code TorrentLeech} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Docspedia} tracker.
  */
-@TrackerHandler(name = "TorrentLeech", needsManualInput = false, url = {
-    "https://www.torrentleech.org/",
-    "https://www.torrentleech.cc/",
-    "https://www.torrentleech.me/",
-    "https://www.tleechreload.org/",
-    "https://www.tlgetin.cc/"
-})
-public class TorrentLeechHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "Docspedia", needsManualInput = true, url = "https://docspedia.world/")
+public class DocspediaHandler extends AbstractTrackerHandler {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * Default constructor.
+     * Constructs a new {@link DocspediaHandler}.
      *
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public TorrentLeechHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public DocspediaHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
@@ -60,35 +59,46 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
 
     @Override
     public By loginButtonSelector() {
-        return By.xpath("//button[contains(text(), 'Log in')]");
-    }
-
-    @Override
-    protected By postLoginSelector() {
-        return By.xpath("//div[contains(@class, 'navbar') and contains(@class, 'loggedin')]");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        return By.xpath("//span[@class='user_superuser']");
-    }
-
-    @Override
-    public boolean canBannerBeCleared() {
-        // IP address warning banner
-        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'close') and @title='Dismiss']"));
-        cookieButton.click();
-
-        // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        ScriptExecutor.moveToOrigin(driver);
-        return true;
+        return By.xpath("//input[@value='Login' and @type='submit']");
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link TorrentLeechHandler}, there is a table with our passkey. We
+     * For {@link DocspediaHandler}, prior to clicking the login button with a successful username/password there is another field where a
+     * Captcha needs to be entered. This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
+     *
+     * <p>
+     * Manual user interaction:
+     * <ol>
+     *     <li>Enter correct captcha value</li>
+     * </ol>
+     */
+    @Override
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
+        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
+
+        final WebElement captchaElement = driver.findElement(By.id("captcha"));
+        ScriptExecutor.highlightElement(driver, captchaElement);
+        DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("navigation");
+    }
+
+    @Override
+    protected By profilePageSelector() {
+        return By.xpath("//div[@class='statusbar']/div[2]/div[1]/a[1]");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link DocspediaHandler}, there is a table with our passkey. We
      * find the {@literal <}{@code tr}{@literal >} {@link WebElement} which has a {@literal <}{@code td}{@literal >} {@link WebElement} with the text
      * value <b>Torrent Passkey</b>. From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs
      * its content redacted.
@@ -100,7 +110,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
     public int redactElements() {
         final int superRedactedElements = super.redactElements();
 
-        final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Torrent Passkey']]/td[2]"));
+        final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
 
         return superRedactedElements + 1;
@@ -115,6 +125,6 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
 
     @Override
     protected By logoutButtonSelector() {
-        return By.xpath("//span[@title='logout']");
+        return By.xpath("//a[contains(text(), 'Logout')]");
     }
 }
