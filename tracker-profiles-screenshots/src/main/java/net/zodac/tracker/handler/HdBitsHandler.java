@@ -136,6 +136,14 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        // Adding tag with definitely no data to redact, but needed for logging since we override the method otherwise
+        return List.of(
+            By.xpath("//div[@class='footer']")
+        );
+    }
+
+    @Override
     protected By logoutButtonSelector() {
         return By.xpath("//a[contains(text(), 'Logout')]");
     }

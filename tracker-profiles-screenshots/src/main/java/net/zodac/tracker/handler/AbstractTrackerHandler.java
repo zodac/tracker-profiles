@@ -21,6 +21,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.zodac.tracker.ProfileScreenshotter;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
@@ -158,7 +160,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require an input prior
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require an input prior
      * to clicking the login button.
      *
      * <p>
@@ -172,7 +174,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers which require a second input
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require a second input
      * after clicking the login button.
      *
      * <p>
@@ -189,7 +191,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Defines the {@link By} selector of the {@link WebElement} where the username is entered to log in to the tracker.
      *
      * <p>
-     * By default, we assume the username field has an <i>id</i> of <b>username</b>. Should be overridden otherwise.
+     * By default, we assume the username field has an {@link By#id(String)} of <b>username</b>. Should be overridden otherwise.
      *
      * @return the username field {@link By} selector
      */
@@ -201,7 +203,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Defines the {@link By} selector of the {@link WebElement} where the password is entered to log in to the tracker.
      *
      * <p>
-     * By default, we assume the password field has an <i>id</i> of <b>password</b>. Should be overridden otherwise.
+     * By default, we assume the password field has an {@link By#id(String)} of <b>password</b>. Should be overridden otherwise.
      *
      * @return the password field {@link By} selector
      */
@@ -294,7 +296,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Returns a {@link Collection} of {@link By} selectors which define all possible HTML elements which may contain sensitive data to be redacted.
+     * Returns a {@link Collection} of {@link By} selectors that define all possible HTML elements that may contain sensitive data to be redacted.
      *
      * <p>
      * By default, we assume that there are no elements to redact, so this method returns an empty {@link List}. Should be overridden
@@ -390,17 +392,29 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Checks if the {@link WebElement} contains an IP address to be redacted.
+     * Checks if the {@link WebElement} contains an IP address to be redacted. Also checks for a match of the first 2 octets of the IP address, for
+     * trackers that post a partial IP address.
      *
      * @param element the {@link WebElement} to check
      * @return {@code true} if it contains one of the specified IP addresses
      */
     protected static boolean doesElementContainIpAddress(final WebElement element) {
-        return doesElementContain(element, CONFIG.ipAddresses());
+        // Includes the defined IP addresses, and the first half of each IP address for partial matches
+        final Collection<String> expandedIpAddresses = CONFIG.ipAddresses()
+            .stream()
+            .flatMap(ip -> Stream.of(ip, getFirstHalfOfIp(ip)))
+            .collect(Collectors.toSet());
+
+        return doesElementContain(element, expandedIpAddresses);
     }
 
     private static boolean doesElementContain(final WebElement element, final Collection<String> stringsToFind) {
         return stringsToFind.stream()
             .anyMatch(stringToFind -> element.getText().contains(stringToFind));
+    }
+
+    private static String getFirstHalfOfIp(final String ip) {
+        final String[] parts = ip.split("\\.");
+        return (parts.length >= 2) ? parts[0] + "." + parts[1] + "." : ip;
     }
 }
