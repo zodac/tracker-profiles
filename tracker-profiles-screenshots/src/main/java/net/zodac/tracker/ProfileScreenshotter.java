@@ -119,12 +119,18 @@ public final class ProfileScreenshotter {
             }
         }
 
+        printResultSummary(successfulTrackers, unsuccessfulTrackers);
+    }
+
+    private static void printResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)
+        throws IOException {
         if (!successfulTrackers.isEmpty()) {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
             FileOpener.open(directory.toFile());
         }
 
         if (!unsuccessfulTrackers.isEmpty()) {
+            LOGGER.warn("");
             LOGGER.warn("Failures for following trackers:");
             for (final String unsuccessfulTracker : unsuccessfulTrackers) {
                 LOGGER.warn("\t- {}", unsuccessfulTracker);
