@@ -134,12 +134,12 @@ public final class TrackerHandlerFactory {
         chromeOptions.addArguments("--no-sandbox");
         chromeOptions.addArguments("--disable-dev-shm-usage");
 
-        // Disable password manager pop-ups
-        final Map<String, Object> passwordManagerPreferences = Map.of(
+        final Map<String, Object> driverPreferences = Map.of(
+            // Disable password manager pop-ups
             "credentials_enable_service", false,
             "profile.password_manager_enabled", false
         );
-        chromeOptions.setExperimentalOption("prefs", passwordManagerPreferences);
+        chromeOptions.setExperimentalOption("prefs", driverPreferences);
 
         // Additional flags to remove unnecessary information on browser
         chromeOptions.addArguments("--disable-gpu");

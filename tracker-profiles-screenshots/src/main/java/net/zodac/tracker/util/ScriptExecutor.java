@@ -17,10 +17,14 @@
 
 package net.zodac.tracker.util;
 
+import java.awt.AWTException;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
+import net.zodac.tracker.framework.exception.TranslationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Alert;
@@ -43,9 +47,12 @@ public final class ScriptExecutor {
      */
     public static final String DEFAULT_REDACTION_TEXT = "----";
 
-    private static final Duration DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
     private static final Duration DEFAULT_WAIT_FOR_ALERT = Duration.of(2L, ChronoUnit.SECONDS);
+    private static final Duration DEFAULT_WAIT_FOR_CONTEXT_MENU = Duration.of(500L, ChronoUnit.MILLIS);
+    private static final Duration DEFAULT_WAIT_FOR_KEY_PRESS = Duration.of(250L, ChronoUnit.MILLIS);
     private static final Duration DEFAULT_WAIT_FOR_MOUSE_MOVE = Duration.of(1L, ChronoUnit.SECONDS);
+    private static final Duration DEFAULT_WAIT_FOR_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
+    private static final Duration DEFAULT_WAIT_FOR_TRANSLATION = Duration.of(5000L, ChronoUnit.MILLIS);
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("\\r?\\n");
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -127,6 +134,45 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Translates the webpage into English. Performs the following actions:
+     * <ol>
+     *     <li>Loads a non-interactive element on the webpage</li>
+     *      <li>Performs a right-click</li>
+     *      <li>Using {@link Robot}, performs 3 'UP' keyboard presses to highlight the 'Translate to English' option</li>
+     *      <li>Presses 'ENTER'</li>
+     * </ol>
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void translatePage(final WebDriver driver) {
+        try {
+            // Find a non-interactive element to right-click
+            final WebElement bodyElement = driver.findElement(By.tagName("body"));
+
+            // Simulate right-click on the page, then wait for it to appear
+            final Actions actions = new Actions(driver);
+            actions.contextClick(bodyElement).perform();
+            explicitWait(DEFAULT_WAIT_FOR_CONTEXT_MENU);
+
+            // Press "Up" key 3 times  to select 'Translate to English' option from bottom of the menu
+            final Robot robot = new Robot();
+            for (int i = 0; i < 3; i++) {
+                robot.keyPress(KeyEvent.VK_UP);
+                robot.keyRelease(KeyEvent.VK_UP);
+                explicitWait(DEFAULT_WAIT_FOR_KEY_PRESS);
+            }
+
+            // Press "Enter" to select the "Translate to English" option
+            robot.keyPress(KeyEvent.VK_ENTER);
+            robot.keyRelease(KeyEvent.VK_ENTER);
+
+            explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
+        } catch (final AWTException e) {
+            throw new TranslationException(e);
+        }
+    }
+
+    /**
      * Moves the mouse cursor to the provided {@link WebElement}.
      *
      * @param driver  the {@link WebDriver} with the loaded web page
@@ -192,7 +238,7 @@ public final class ScriptExecutor {
      * @param timeout the maximum {@link Duration} to wait
      */
     public static void waitForPageToLoad(final WebDriver driver, final Duration timeout) {
-        explicitWait(DEFAULT_EXPLICIT_WAIT_FOR_PAGE_LOAD);
+        explicitWait(DEFAULT_WAIT_FOR_PAGE_LOAD);
         final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
         wait.until(_ -> "complete".equals(((JavascriptExecutor) driver).executeScript("return document.readyState")));
     }

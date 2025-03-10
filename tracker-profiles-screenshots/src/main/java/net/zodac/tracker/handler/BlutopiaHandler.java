@@ -70,7 +70,7 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public boolean canDisableFixedHeader() {
+    public boolean hasFixedHeader() {
         final WebElement stickyElement = driver.findElement(By.tagName("header"));
         ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
         return true;

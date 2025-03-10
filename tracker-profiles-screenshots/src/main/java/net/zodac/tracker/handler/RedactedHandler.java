@@ -67,7 +67,7 @@ public class RedactedHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a") // Not currently visible, kept just in case
+            By.tagName("a")
         );
     }
 

@@ -38,11 +38,13 @@ import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
+import net.zodac.tracker.framework.exception.TranslationException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import net.zodac.tracker.util.FileOpener;
 import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
@@ -178,7 +180,11 @@ public final class ProfileScreenshotter {
             LOGGER.debug("\t- User provided no manual input for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- User provided no manual input for tracker '{}'", trackerDefinition.name());
             return false;
-        } catch (final UnreachableBrowserException e) {
+        } catch (final TranslationException e) {
+            LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerDefinition.name(), e);
+            LOGGER.warn("\t- Unable to translate tracker '{}' to English: {}", trackerDefinition.name(), e.getMessage());
+            return false;
+        } catch (final NoSuchSessionException | UnreachableBrowserException e) {
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
             throw e;
         } catch (final Exception e) {
@@ -214,8 +220,12 @@ public final class ProfileScreenshotter {
             }
         }
 
-        if (trackerHandler.canDisableFixedHeader()) {
+        if (trackerHandler.hasFixedHeader()) {
             LOGGER.info("\t- Header has been updated to not be fixed");
+        }
+
+        if (trackerHandler.isNotEnglish()) {
+            LOGGER.info("\t- Profile page has been translated to English");
         }
 
         final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), trackerDefinition.name());

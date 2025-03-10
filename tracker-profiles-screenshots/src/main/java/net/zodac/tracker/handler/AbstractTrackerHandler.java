@@ -313,9 +313,21 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * <p>
      * By default, we assume there is no header to update, so this method returns {@code false}. Should be overridden otherwise.
      *
-     * @return {@code true} if there was a fixed header, and it was updated
+     * @return {@code true} if there was a fixed header, and it was successfully updated
      */
-    public boolean canDisableFixedHeader() {
+    public boolean hasFixedHeader() {
+        return false;
+    }
+
+    /**
+     * Checks if the web page is using a non-English language, and translates it to English.
+     *
+     * <p>
+     * By default, we assume there is no header to update, so this method returns {@code false}. Should be overridden otherwise.
+     *
+     * @return {@code true} if the site is not in English, and it was successfully translated
+     */
+    public boolean isNotEnglish() {
         return false;
     }
 
