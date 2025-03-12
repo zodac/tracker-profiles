@@ -27,10 +27,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Nebulance} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Libble} tracker.
  */
-@TrackerHandler(name = "Nebulance", needsManualInput = false, url = "https://nebulance.io/")
-public class NebulanceHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "Libble", needsManualInput = false, url = "https://libble.me/")
+public class LibbleHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";
 
@@ -40,13 +40,13 @@ public class NebulanceHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public NebulanceHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public LibbleHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
     @Override
     public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final By loginLinkSelector = By.xpath("//div[@id='menu']/a[text()='Login']");
         final WebElement loginLink = driver.findElement(loginLinkSelector);
         loginLink.click();
         ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -59,19 +59,19 @@ public class NebulanceHandler extends AbstractTrackerHandler {
 
     @Override
     protected By postLoginSelector() {
-        return By.id("candyfloss");
+        return By.id("userinfo_username");
     }
 
     @Override
     protected By profilePageSelector() {
-        return By.xpath("//a[contains(@class, 'username')]");
+        return By.xpath("//ul[@id='userinfo_username']/li[1]/a[1]");
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link NebulanceHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
+     * For {@link LibbleHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
      *
@@ -92,13 +92,12 @@ public class NebulanceHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a"),
-            By.tagName("span")
+            By.tagName("a")
         );
     }
 
     @Override
     protected By logoutButtonSelector() {
-        return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
+        return By.xpath("//a[contains(text(),'Logout')]");
     }
 }

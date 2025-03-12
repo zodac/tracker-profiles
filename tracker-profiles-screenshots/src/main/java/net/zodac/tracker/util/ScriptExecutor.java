@@ -203,6 +203,7 @@ public final class ScriptExecutor {
      */
     public static void scrollToTheTop(final JavascriptExecutor driver) {
         driver.executeScript("window.scrollTo(0, 0);");
+        explicitWait(Duration.ofSeconds(1L)); // Wait 1 second to scroll back to the top
     }
 
     /**
