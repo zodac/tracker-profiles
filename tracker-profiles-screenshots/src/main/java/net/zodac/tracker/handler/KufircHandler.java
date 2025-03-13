@@ -45,11 +45,8 @@ public class KufircHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//div[@id='logo']/ul[1]/li[2]/a[1]");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//div[@id='logo']/ul[1]/li[2]/a[1]");
     }
 
     @Override
@@ -108,8 +105,8 @@ public class KufircHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public boolean isNotEnglish() {
-        ScriptExecutor.translatePage(driver);
+    public boolean isNotEnglish(final String username) {
+        ScriptExecutor.translatePage(driver, username, null);
         return true;
     }
 
@@ -121,10 +118,5 @@ public class KufircHandler extends AbstractTrackerHandler {
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//li[@id='nav_logout']/a[1]");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//div[@id='logo']/ul[1]/li[2]/a[1]");
     }
 }

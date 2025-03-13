@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Lat-Team} tracker.
  */
-@TrackerHandler(name = "Lat-Team", needsManualInput = false, url = "https://lat-team.com/")
+@TrackerHandler(name = "Lat-Team", needsManualInput = true, url = "https://lat-team.com/")
 public class LatTeamHandler extends AbstractTrackerHandler {
 
     /**
@@ -84,6 +84,12 @@ public class LatTeamHandler extends AbstractTrackerHandler {
     public boolean hasFixedHeader() {
         final WebElement stickyElement = driver.findElement(By.tagName("header"));
         ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        return true;
+    }
+
+    @Override
+    public boolean isNotEnglish(final String username) {
+        ScriptExecutor.translatePage(driver, username, "give up");
         return true;
     }
 

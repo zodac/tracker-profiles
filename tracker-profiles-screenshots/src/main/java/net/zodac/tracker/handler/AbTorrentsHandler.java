@@ -77,7 +77,7 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
      * Manual user interactions:
      * <ol>
      *     <li>Select the correct image</li>
-     *     <li>Click the 'X'' button to log in</li>
+     *     <li>Click the 'X' button to log in</li>
      * </ol>
      */
     @Override

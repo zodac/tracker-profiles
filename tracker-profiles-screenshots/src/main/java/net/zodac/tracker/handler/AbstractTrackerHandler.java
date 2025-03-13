@@ -122,11 +122,29 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
+     * For some trackers the home page does not automatically redirect to the login page. In these cases, we define a {@link By} selector of the
+     * {@link WebElement} to navigate to the login page, for trackers. Is {@code null} by default as we assume this navigation is unnecessary. Should
+     * be overridden otherwise.
+     *
+     * @return the login page {@link By} selector
+     */
+    @Nullable
+    public By loginPageSelector() {
+        return null;
+    }
+
+    /**
      * For some trackers the home page does not automatically redirect to the login page. In these cases, we need to explicitly click on the login
-     * link to redirect.
+     * link to redirect. We'll only do this navigation if {@link #loginPageSelector()} is not {@code null}.
      */
     public void navigateToLoginPage() {
-        // Do nothing by default
+        final By loginLinkSelector = loginPageSelector();
+
+        if (loginLinkSelector != null) {
+            final WebElement loginLink = driver.findElement(loginLinkSelector);
+            loginLink.click();
+            ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        }
     }
 
     /**
@@ -255,7 +273,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.moveToOrigin(driver);
-        additionalWaitOnProfilePage();
+        additionalActionOnProfilePage();
     }
 
     /**
@@ -266,11 +284,15 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected abstract By profilePageSelector();
 
     /**
-     * For certain trackers, the page is considered 'loaded' by {@link ScriptExecutor#waitForPageToLoad(WebDriver, Duration)}, but the required
-     * elements are not all on the screen. This method can be overridden to include either explicit waits, or waiting for the wanted elements.
+     * For certain trackers, additional actions may need to be performed after opening the profile page, but prior to the page being redacted and
+     * screenshot. This might be that the page is considered 'loaded' by {@link ScriptExecutor#waitForPageToLoad(WebDriver, Duration)}, but the
+     * required {@link WebElement} are not all on the screen, or that some {@link WebElement}s may need to be interacted with prior to the screenshot.
+     *
+     * <p>
+     * This method can be overridden as required.
      */
-    protected void additionalWaitOnProfilePage() {
-        // Nothing by default
+    protected void additionalActionOnProfilePage() {
+        // Do nothing by default
     }
 
     /**
@@ -327,9 +349,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * <p>
      * By default, we assume there is no header to update, so this method returns {@code false}. Should be overridden otherwise.
      *
+     * @param username the username, to be re-applied to the webpage in case of accidental translation
      * @return {@code true} if the site is not in English, and it was successfully translated
      */
-    public boolean isNotEnglish() {
+    public boolean isNotEnglish(final String username) {
         return false;
     }
 
@@ -358,13 +381,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Defines the {@link By} selectors of the {@link WebElement} that signifies that the {@link #logout()} was successfully executed.
      *
      * <p>
-     * By default, we assume that we will be redirected to the login page, so this method returns {@link #usernameFieldSelector()}. Should be
-     * overridden otherwise.
+     * By default, we assume that we will be redirected to the login page, so this method returns {@link #usernameFieldSelector()}, or else the home
+     * page, and {@link #loginPageSelector()} will be returned. Should be overridden otherwise.
      *
      * @return the post-logout button {@link WebElement}
      */
     protected By postLogoutElementSelector() {
-        return usernameFieldSelector();
+        return loginPageSelector() == null ? usernameFieldSelector() : loginPageSelector();
     }
 
     @Override

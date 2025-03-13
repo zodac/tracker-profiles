@@ -42,11 +42,8 @@ public class RedactedHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Log in']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Log in']");
     }
 
     @Override

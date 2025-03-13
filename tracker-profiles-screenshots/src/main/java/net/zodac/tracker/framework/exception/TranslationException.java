@@ -20,7 +20,7 @@ package net.zodac.tracker.framework.exception;
 import java.io.Serial;
 
 /**
- * Exception used to indicate that a non-English webpage was not able to be translated correctly.
+ * Exception used to indicate that a non-English webpage was unable to be translated correctly.
  */
 public class TranslationException extends RuntimeException {
 

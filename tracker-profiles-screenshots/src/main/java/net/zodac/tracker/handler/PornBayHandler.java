@@ -45,11 +45,8 @@ public class PornBayHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Login']");
     }
 
     @Override
@@ -100,10 +97,5 @@ public class PornBayHandler extends AbstractTrackerHandler {
     @Override
     protected By logoutButtonSelector() {
         return By.xpath("//li[@id='nav_logout']/a[1]");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//a[text()='Login']");
     }
 }

@@ -104,7 +104,7 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
      * details table to be visible before proceeding.
      */
     @Override
-    protected void additionalWaitOnProfilePage() {
+    protected void additionalActionOnProfilePage() {
         final By selector = By.xpath("//div[@id='contentContainer']//table");
         ScriptExecutor.waitForElementToAppear(driver, selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }

@@ -20,17 +20,18 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code CGPeers} tracker.
  */
-@TrackerHandler(name = "CGPeers", needsManualInput = true, url = {"https://cgpeers.to", "https://cgpeers.com"})
+@TrackerHandler(name = "CGPeers", needsManualInput = true, url = {
+    "https://cgpeers.to",
+    "https://cgpeers.com"
+})
 public class CgPeersTrackerHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -46,11 +47,8 @@ public class CgPeersTrackerHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Login']");
     }
 
     @Override

@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -44,13 +45,9 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         super(driver, trackerUrls);
     }
 
-    // TODO: Extract to an abstract selector
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Login']");
     }
 
     @Override
@@ -78,6 +75,25 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         return By.xpath("//a[@class='username']");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link EmporniumHandler}, we close additional sections on the profile page prior to screenshotting. Continues if no section exists for the
+     * user's profile.
+     */
+    @Override
+    protected void additionalActionOnProfilePage() {
+        final By sectionSelector = By.id("collagesbutton");
+        try {
+            final WebElement section = driver.findElement(sectionSelector);
+            section.click();
+            ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
+        } catch (final NoSuchElementException _) {
+            // Do nothing
+        }
+    }
+
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
@@ -93,10 +109,5 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[1]");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//a[text()='Login']");
     }
 }

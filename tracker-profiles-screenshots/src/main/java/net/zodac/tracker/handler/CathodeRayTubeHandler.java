@@ -45,11 +45,8 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Login']");
     }
 
     @Override
@@ -115,10 +112,5 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//table[@id='maincontent']//a[text()='Login']");
     }
 }

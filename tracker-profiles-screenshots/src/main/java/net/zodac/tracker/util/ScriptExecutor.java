@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import net.zodac.tracker.framework.exception.TranslationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -122,7 +123,7 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Remove a HTML attribute from the {@link WebElement}.
+     * Remove an HTML attribute from the {@link WebElement}.
      *
      * @param driver        the {@link JavascriptExecutor} with the loaded web page
      * @param element       the {@link WebElement} to update
@@ -140,11 +141,14 @@ public final class ScriptExecutor {
      *      <li>Performs a right-click</li>
      *      <li>Using {@link Robot}, performs 3 'UP' keyboard presses to highlight the 'Translate to English' option</li>
      *      <li>Presses 'ENTER'</li>
+     *      <li>Optionally resets the username {@link WebElement} that may have been incorrectly translated</li>
      * </ol>
      *
-     * @param driver the {@link WebDriver} with the loaded web page
+     * @param driver                the {@link WebDriver} with the loaded web page
+     * @param username              the username
+     * @param mistranslatedUsername the text (can be partial text) that the username is incorrectly translated into, in order to find and replace it
      */
-    public static void translatePage(final WebDriver driver) {
+    public static void translatePage(final WebDriver driver, final String username, final @Nullable String mistranslatedUsername) {
         try {
             // Find a non-interactive element to right-click
             final WebElement bodyElement = driver.findElement(By.tagName("body"));
@@ -166,6 +170,14 @@ public final class ScriptExecutor {
             // Press "Enter" to select the "Translate to English" option
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
+
+            explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
+
+            // After translation, some username elements will have been incorrectly translated
+            final By mistranslatedElementSelector = By.xpath(String.format("//*[contains(text(), '%s')]", mistranslatedUsername));
+            for (final WebElement element : driver.findElements(mistranslatedElementSelector)) {
+                ((JavascriptExecutor) driver).executeScript(String.format("arguments[0].innerText = '%s'", username), element);
+            }
 
             explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
         } catch (final AWTException e) {

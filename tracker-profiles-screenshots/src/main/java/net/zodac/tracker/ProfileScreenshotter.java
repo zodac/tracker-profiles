@@ -45,6 +45,7 @@ import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.NoSuchSessionException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
@@ -100,7 +101,7 @@ public final class ProfileScreenshotter {
 
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
-            final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);
+            final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
             if (successfullyTakenScreenshot) {
                 successfulTrackers.add(trackerDefinition.name());
             } else {
@@ -112,7 +113,7 @@ public final class ProfileScreenshotter {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
             for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
-                final boolean successfullyTakenScreenshot = takeScreenshotPerTracker(trackerDefinition);
+                final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
                 if (successfullyTakenScreenshot) {
                     successfulTrackers.add(trackerDefinition.name());
                 }
@@ -173,7 +174,7 @@ public final class ProfileScreenshotter {
         return trackersByIsManual;
     }
 
-    private static boolean takeScreenshotPerTracker(final TrackerDefinition trackerDefinition) {
+    private static boolean isAbleToTakeScreenshot(final TrackerDefinition trackerDefinition) {
         LOGGER.info("");
         LOGGER.info("[{}]", trackerDefinition.name());
 
@@ -196,6 +197,10 @@ public final class ProfileScreenshotter {
             LOGGER.debug("\t- User provided no manual input for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- User provided no manual input for tracker '{}'", trackerDefinition.name());
             return false;
+        } catch (final TimeoutException e) {
+            LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), e.getMessage());
+            return false;
         } catch (final TranslationException e) {
             LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerDefinition.name(), e);
             LOGGER.warn("\t- Unable to translate tracker '{}' to English: {}", trackerDefinition.name(), e.getMessage());
@@ -205,7 +210,7 @@ public final class ProfileScreenshotter {
             throw e;
         } catch (final Exception e) {
             final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
-            LOGGER.debug("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage, e);
+            LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
             return false;
         }
@@ -240,7 +245,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Header has been updated to not be fixed");
         }
 
-        if (trackerHandler.isNotEnglish()) {
+        if (trackerHandler.isNotEnglish(trackerDefinition.username())) {
             LOGGER.info("\t- Profile page has been translated to English");
         }
 

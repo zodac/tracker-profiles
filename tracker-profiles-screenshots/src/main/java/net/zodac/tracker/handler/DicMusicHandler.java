@@ -42,11 +42,8 @@ public class DicMusicHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.id("login-a");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.id("login-a");
     }
 
     @Override
@@ -72,8 +69,8 @@ public class DicMusicHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public boolean isNotEnglish() {
-        ScriptExecutor.translatePage(driver);
+    public boolean isNotEnglish(final String username) {
+        ScriptExecutor.translatePage(driver, username, "give up");
         return true;
     }
 

@@ -45,11 +45,8 @@ public class LibbleHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//div[@id='menu']/a[text()='Login']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//div[@id='menu']/a[text()='Login']");
     }
 
     @Override
@@ -65,6 +62,14 @@ public class LibbleHandler extends AbstractTrackerHandler {
     @Override
     protected By profilePageSelector() {
         return By.xpath("//ul[@id='userinfo_username']/li[1]/a[1]");
+    }
+
+    @Override
+    public boolean hasFixedHeader() {
+        // Note: Only seems to work with headless browser, for some reason
+        final WebElement stickyElement = driver.findElement(By.id("header"));
+        ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        return true;
     }
 
     /**

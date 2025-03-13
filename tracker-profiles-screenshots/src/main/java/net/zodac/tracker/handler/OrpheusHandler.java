@@ -42,11 +42,8 @@ public class OrpheusHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Enter']");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.xpath("//a[text()='Enter']");
     }
 
     @Override
@@ -79,10 +76,5 @@ public class OrpheusHandler extends AbstractTrackerHandler {
         ScriptExecutor.moveTo(driver, logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.xpath("//a[text()='Enter']");
     }
 }

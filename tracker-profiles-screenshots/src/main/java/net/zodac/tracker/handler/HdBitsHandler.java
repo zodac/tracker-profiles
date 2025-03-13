@@ -98,7 +98,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected void additionalWaitOnProfilePage() {
+    protected void additionalActionOnProfilePage() {
         ScriptExecutor.explicitWait(Duration.ofSeconds(1L));
     }
 
@@ -106,7 +106,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      * For {@link HdBitsHandler}, there is a table with our IP address and passkey. We find the {@literal <}{@code tr}{@literal >} {@link WebElement}s
      * which have a {@literal <}{@code th}{@literal >} {@link WebElement} with the text value <b>Address</b> or <b>Passkey</b>.
      * From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted. There is
-     * also a table of IPs that have been used for login which needs to be traversed and redacted.
+     * also a table of IPs that have been used for login that needs to be traversed and redacted.
      *
      * <p>
      * We do <b>not</b> execute the super-method {@link AbstractTrackerHandler#redactElements()}, due to constant 'stale element reference' errors.

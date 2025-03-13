@@ -41,11 +41,8 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public void navigateToLoginPage() {
-        final By loginLinkSelector = By.id("nav_login");
-        final WebElement loginLink = driver.findElement(loginLinkSelector);
-        loginLink.click();
-        ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+    public By loginPageSelector() {
+        return By.id("nav_login");
     }
 
     @Override
@@ -88,10 +85,5 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
         logoutParent.click();
 
         return By.xpath("//li[@id='username_menu']//ul[contains(@class, 'subnav')]//a[text()='Logout']");
-    }
-
-    @Override
-    protected By postLogoutElementSelector() {
-        return By.id("nav_login");
     }
 }
