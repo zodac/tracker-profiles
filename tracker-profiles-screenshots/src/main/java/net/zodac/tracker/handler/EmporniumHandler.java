@@ -19,7 +19,6 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.NoSuchElementException;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -85,12 +84,11 @@ public class EmporniumHandler extends AbstractTrackerHandler {
     @Override
     protected void additionalActionOnProfilePage() {
         final By sectionSelector = By.id("collagesbutton");
-        try {
-            final WebElement section = driver.findElement(sectionSelector);
+
+        final Collection<WebElement> sections = driver.findElements(sectionSelector);
+        for (final WebElement section : sections) {
             section.click();
             ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
-        } catch (final NoSuchElementException _) {
-            // Do nothing
         }
     }
 
