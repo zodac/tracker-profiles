@@ -74,6 +74,19 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Some web pages may have 'overflow' set to 'hidden', which can disable scrolling. This function will override the configuration of the web page
+     * to enable scrolling again.
+     *
+     * @param driver            the {@link JavascriptExecutor} with the loaded web page
+     * @param elementToOverride the element that needs to be overridden to allow scrolling (usually 'body')
+     */
+    public static void enableScrolling(final JavascriptExecutor driver, final String elementToOverride) {
+        driver.executeScript("document.documentElement.style.height = 'auto';");
+        driver.executeScript(String.format("document.%s.style.height = 'auto';", elementToOverride));
+        driver.executeScript(String.format("document.%s.style.overflowY = 'visible';", elementToOverride));
+    }
+
+    /**
      * Performs a {@link Thread#sleep(Duration)} for the specified {@link Duration}.
      *
      * @param sleepTime the time to wait
@@ -135,9 +148,9 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Translates the webpage into English. Performs the following actions:
+     * Translates the web page into English. Performs the following actions:
      * <ol>
-     *     <li>Loads a non-interactive element on the webpage</li>
+     *     <li>Loads a non-interactive element on the web page</li>
      *      <li>Performs a right-click</li>
      *      <li>Using {@link Robot}, performs 3 'UP' keyboard presses to highlight the 'Translate to English' option</li>
      *      <li>Presses 'ENTER'</li>

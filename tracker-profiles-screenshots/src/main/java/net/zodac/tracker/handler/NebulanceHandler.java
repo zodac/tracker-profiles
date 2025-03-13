@@ -68,6 +68,20 @@ public class NebulanceHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
+     * For {@link NebulanceHandler}, the user's profile page cannot be scrolled by default. We override the 'body' tag to allow scrolling to occur
+     * when taking the screenshot.
+     *
+     * @see ScriptExecutor#enableScrolling(JavascriptExecutor, String)
+     */
+    @Override
+    protected void additionalActionOnProfilePage() {
+        ScriptExecutor.enableScrolling(driver, "body");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
      * For {@link NebulanceHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
      * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.

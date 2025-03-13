@@ -349,7 +349,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * <p>
      * By default, we assume there is no header to update, so this method returns {@code false}. Should be overridden otherwise.
      *
-     * @param username the username, to be re-applied to the webpage in case of accidental translation
+     * @param username the username, to be re-applied to the web page in case of accidental translation
      * @return {@code true} if the site is not in English, and it was successfully translated
      */
     public boolean isNotEnglish(final String username) {
