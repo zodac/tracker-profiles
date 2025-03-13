@@ -26,51 +26,37 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Orpheus} tracker.
  */
-@TrackerHandler(name = "Empornium", needsManualInput = false, url = {
-    "https://www.empornium.is/",
-    "https://www.empornium.sx/"
-})
-public class EmporniumHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "Orpheus", needsManualInput = false, url = "https://orpheus.network/")
+public class OrpheusHandler extends AbstractTrackerHandler {
 
     /**
-     * Constructs an instance of {@link EmporniumHandler}.
+     * Default constructor.
      *
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public EmporniumHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public OrpheusHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
-    // TODO: Extract to an abstract selector
     @Override
     public void navigateToLoginPage() {
-        final By loginLinkSelector = By.xpath("//a[text()='Login']");
+        final By loginLinkSelector = By.xpath("//a[text()='Enter']");
         final WebElement loginLink = driver.findElement(loginLinkSelector);
         loginLink.click();
         ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override
-    protected By usernameFieldSelector() {
-        return By.xpath("//div[@id='username']//input[@name='username']");
-    }
-
-    @Override
-    protected By passwordFieldSelector() {
-        return By.xpath("//div[@id='password']//input[@name='password']");
-    }
-
-    @Override
-    public By loginButtonSelector() {
-        return By.id("login_button");
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
     }
 
     @Override
     protected By postLoginSelector() {
-        return By.xpath("//table[contains(@class, 'userinfo_stats')]");
+        return By.id("userinfo");
     }
 
     @Override
@@ -87,16 +73,16 @@ public class EmporniumHandler extends AbstractTrackerHandler {
 
     @Override
     protected By logoutButtonSelector() {
-        // Highlight the nav bar to make the logout button interactable
+        // Highlight the profile menu to make the logout button interactable
         final By logoutParentSelector = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
         ScriptExecutor.moveTo(driver, logoutParent);
 
-        return By.xpath("//li[@id='nav_logout']//a[1]");
+        return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
     }
 
     @Override
     protected By postLogoutElementSelector() {
-        return By.xpath("//a[text()='Login']");
+        return By.xpath("//a[text()='Enter']");
     }
 }

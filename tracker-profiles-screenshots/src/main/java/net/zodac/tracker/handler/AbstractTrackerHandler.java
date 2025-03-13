@@ -334,6 +334,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
+     * Retrieves the {@link WebElement} of the logout button.
+     *
+     * @return the logout button {@link WebElement}
+     */
+    protected abstract By logoutButtonSelector();
+
+    /**
      * Logs out of the tracker, ending the user's session. Waits {@link #DEFAULT_WAIT_FOR_PAGE_LOAD} for the {@link #postLogoutElementSelector()} to
      * load, signifying that we have successfully logged out and been redirected to the login page.
      */
@@ -359,13 +366,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected By postLogoutElementSelector() {
         return usernameFieldSelector();
     }
-
-    /**
-     * Retrieves the {@link WebElement} of the logout button.
-     *
-     * @return the logout button {@link WebElement}
-     */
-    protected abstract By logoutButtonSelector();
 
     @Override
     public void close() {
