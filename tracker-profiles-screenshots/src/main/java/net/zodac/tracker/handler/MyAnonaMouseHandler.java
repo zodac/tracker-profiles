@@ -67,6 +67,7 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
         final By profileDropDownSelector = By.xpath("//li[@class='mmUserStats']//a[@tabindex='0']");
         final WebElement profileDropDown = driver.findElement(profileDropDownSelector);
         ScriptExecutor.moveTo(driver, profileDropDown);
+
         return By.xpath("//a[@class='myInfo']");
     }
 

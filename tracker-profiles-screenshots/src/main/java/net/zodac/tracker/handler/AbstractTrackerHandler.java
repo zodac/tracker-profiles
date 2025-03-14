@@ -413,6 +413,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @param buttonToClick the {@link WebElement} to {@link WebElement#click()}
      * @see ScriptExecutor#stopPageLoad(JavascriptExecutor)
      */
+    // TODO: User for all clicks?
     protected void clickButton(final WebElement buttonToClick) {
         try {
             driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LOGIN_RESOLUTION_TIME);
@@ -421,6 +422,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
             LOGGER.debug(e);
         }
         driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
+        ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
         ScriptExecutor.stopPageLoad(driver);
     }
 
