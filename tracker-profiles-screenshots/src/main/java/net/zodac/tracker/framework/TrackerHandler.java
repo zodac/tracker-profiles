@@ -42,6 +42,7 @@ public @interface TrackerHandler {
      */
     String name();
 
+    // TODO: Rename this to 'needsHeadlessMode' instead?
     /**
      * Whether the tracker requires some manual input (a Captcha or multiple-choice question) to get a screenshot.
      *

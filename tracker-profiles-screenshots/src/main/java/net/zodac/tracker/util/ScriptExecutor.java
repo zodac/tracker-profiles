@@ -41,6 +41,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 /**
  * Utility class used to execute scripts on a web page.
  */
+// TODO: Change to a class that takes in a driver, to avoid passing it in so much, and use in AbstractTrackerHandler?
 public final class ScriptExecutor {
 
     /**
@@ -229,6 +230,15 @@ public final class ScriptExecutor {
     public static void scrollToTheTop(final JavascriptExecutor driver) {
         driver.executeScript("window.scrollTo(0, 0);");
         explicitWait(Duration.ofSeconds(1L)); // Wait 1 second to scroll back to the top
+    }
+
+    /**
+     * Stops the loading of the current web page.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void stopPageLoad(final JavascriptExecutor driver) {
+        driver.executeScript("window.stop();");
     }
 
     /**

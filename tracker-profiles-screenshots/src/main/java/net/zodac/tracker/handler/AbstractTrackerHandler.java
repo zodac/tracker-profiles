@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -68,10 +69,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
-    /**
-     * The maximum wait {@link Duration} when waiting for a web page to resolve.
-     */
-    protected static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
+    private static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
+    private static final Duration MAXIMUM_LOGIN_RESOLUTION_TIME = Duration.of(10L, ChronoUnit.SECONDS);
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -169,40 +168,12 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         final By loginButtonSelector = loginButtonSelector();
         if (loginButtonSelector != null) {
             final WebElement loginButton = driver.findElement(loginButtonSelector);
-            loginButton.click();
+            clickButton(loginButton);
         }
         manualCheckAfterLoginClick(trackerName);
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
-
-    /**
-     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require an input prior
-     * to clicking the login button.
-     *
-     * <p>
-     * Where possible, the element to be interacted with will be highlighted in the browser.
-     *
-     * @param trackerName the name of the tracker
-     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
-     */
-    protected void manualCheckBeforeLoginClick(final String trackerName) {
-        // Do nothing by default
-    }
-
-    /**
-     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require a second input
-     * after clicking the login button.
-     *
-     * <p>
-     * Where possible, the element to be interacted with will be highlighted in the browser.
-     *
-     * @param trackerName the name of the tracker
-     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
-     */
-    protected void manualCheckAfterLoginClick(final String trackerName) {
-        // Do nothing by default
     }
 
     /**
@@ -230,6 +201,20 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require an input prior
+     * to clicking the login button.
+     *
+     * <p>
+     * Where possible, the element to be interacted with will be highlighted in the browser.
+     *
+     * @param trackerName the name of the tracker
+     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
+     */
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
+        // Do nothing by default
+    }
+
+    /**
      * Defines the {@link By} selector of the {@link WebElement} of the login button. Can be {@link Nullable} if there is no login button, and a user
      * interaction is required instead,
      *
@@ -238,6 +223,20 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     @Nullable
     protected By loginButtonSelector() {
         return By.id("login-button");
+    }
+
+    /**
+     * Pauses execution of the {@link AbstractTrackerHandler} prior after the first login attempt, generally for trackers that require a second input
+     * after clicking the login button.
+     *
+     * <p>
+     * Where possible, the element to be interacted with will be highlighted in the browser.
+     *
+     * @param trackerName the name of the tracker
+     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
+     */
+    protected void manualCheckAfterLoginClick(final String trackerName) {
+        // Do nothing by default
     }
 
     /**
@@ -269,7 +268,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         final WebElement profilePageLink = driver.findElement(profilePageSelector());
         ScriptExecutor.removeAttribute(driver, profilePageLink, "target"); // Removing 'target="_blank"', to ensure link opens in same tab
-        profilePageLink.click();
+        clickButton(profilePageLink);
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.moveToOrigin(driver);
@@ -371,7 +370,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         final By logoutButtonSelector = logoutButtonSelector();
         ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
-        logoutButton.click();
+        clickButton(logoutButton);
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_TRANSITIONS);
@@ -402,6 +401,27 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     public ChromeDriver driver() {
         return driver;
+    }
+
+    // Sometimes the login button won't load fully, but we'll continue anyway and ignore the timeout
+
+    /**
+     * Sometimes when clicking the login button or the profile page button, the page won't load correctly. This sets the
+     * {@link WebDriver.Timeouts#pageLoadTimeout(Duration)} to {@link #MAXIMUM_LOGIN_RESOLUTION_TIME}, and if a {@link TimeoutException} occurs, it is
+     * ignored. We then force the web page to stop loading before proceeding.
+     *
+     * @param buttonToClick the {@link WebElement} to {@link WebElement#click()}
+     * @see ScriptExecutor#stopPageLoad(JavascriptExecutor)
+     */
+    protected void clickButton(final WebElement buttonToClick) {
+        try {
+            driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LOGIN_RESOLUTION_TIME);
+            buttonToClick.click();
+        } catch (final TimeoutException e) {
+            LOGGER.debug(e);
+        }
+        driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
+        ScriptExecutor.stopPageLoad(driver);
     }
 
     /**
