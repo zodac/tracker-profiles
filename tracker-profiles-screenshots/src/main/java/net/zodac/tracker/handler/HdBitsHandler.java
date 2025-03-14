@@ -58,11 +58,6 @@ public class HdBitsHandler extends AbstractTrackerHandler {
         return By.xpath("//input[@name='password' and @type='password']");
     }
 
-    @Override
-    protected By loginButtonSelector() {
-        return By.xpath("//input[@type='submit' and @value='Log in!']");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -85,6 +80,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, String.format("Select the '%s' image", captchaTextElement.getText()));
+    }
+
+    @Override
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @value='Log in!']");
     }
 
     @Override

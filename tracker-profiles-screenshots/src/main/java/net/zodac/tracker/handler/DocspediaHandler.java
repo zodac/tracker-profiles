@@ -57,11 +57,6 @@ public class DocspediaHandler extends AbstractTrackerHandler {
         return By.xpath("//input[@name='password' and @type='password']");
     }
 
-    @Override
-    public By loginButtonSelector() {
-        return By.xpath("//input[@value='Login' and @type='submit']");
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -82,6 +77,11 @@ public class DocspediaHandler extends AbstractTrackerHandler {
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         ScriptExecutor.highlightElement(driver, captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
+    }
+
+    @Override
+    public By loginButtonSelector() {
+        return By.xpath("//input[@value='Login' and @type='submit']");
     }
 
     @Override

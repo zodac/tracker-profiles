@@ -17,8 +17,8 @@
 
 package net.zodac.tracker.handler;
 
+import java.time.Duration;
 import java.util.Collection;
-import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
@@ -29,95 +29,77 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code TheEmpire} tracker.
  */
-@TrackerHandler(name = "DigitalCore.Club", needsManualInput = true, url = {
-    "https://digitalcore.club/",
-    "https://prxy.digitalcore.club/"
-})
-public class DigitalCoreClubHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "TheEmpire", needsManualInput = true, url = "https://theempire.click/")
+public class TheEmpireHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * Constructs a new {@link DigitalCoreClubHandler}.
+     * Default constructor.
      *
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public DigitalCoreClubHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public TheEmpireHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
     @Override
     protected By usernameFieldSelector() {
-        return By.id("inputUsername");
+        return By.xpath("//input[@name='username' and @type='text']");
     }
 
     @Override
     protected By passwordFieldSelector() {
-        return By.id("inputPassword");
+        return By.xpath("//input[@name='password' and @type='password']");
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link DigitalCoreClubHandler}, prior to clicking the login button with a successful username/password there is another field where a
-     * Captcha needs to be entered. This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
+     * For {@link TheEmpireHandler}, prior to clicking the login button with a captcha that needs to be clicked (and verified if necessary). This must
+     * be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
      *
      * <p>
      * Manual user interaction:
      * <ol>
-     *     <li>Enter correct captcha value</li>
+     *     <li>Click and pass the captcha</li>
      * </ol>
      */
     @Override
     protected void manualCheckBeforeLoginClick(final String trackerName) {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to click the captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
-        final WebElement captchaElement = driver.findElement(By.id("captcha"));
+        final WebElement captchaElement = driver.findElement(By.xpath("//div[@class='h-captcha']"));
         ScriptExecutor.highlightElement(driver, captchaElement);
-        DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
+        DisplayUtils.userInputConfirmation(trackerName, "Click the captcha");
     }
 
     @Override
-    public By loginButtonSelector() {
-        return By.xpath("//button[text()='Login' and @type='submit']");
+    protected By loginButtonSelector() {
+        return By.xpath("//input[@type='submit' and @value='Log in!']");
     }
 
     @Override
     protected By postLoginSelector() {
-        return By.tagName("main-menu");
+        return By.xpath("//span[@class='statuslink']");
     }
 
     @Override
     protected By profilePageSelector() {
-        return By.xpath("//user//a[1]");
+        return By.xpath("//span[@class='statuslink']/b[1]/a[1]");
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * For {@link DigitalCoreClubHandler}, the page loads but the table with user details is not visible on the initial load. So we wait for the user
-     * details table to be visible before proceeding.
-     */
     @Override
     protected void additionalActionOnProfilePage() {
-        final By selector = By.xpath("//div[@id='contentContainer']//table");
-        ScriptExecutor.waitForElementToAppear(driver, selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
-    }
-
-    @Override
-    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of(
-            By.tagName("a")
-        );
+        ScriptExecutor.explicitWait(Duration.ofSeconds(1L));
     }
 
     @Override
     protected By logoutButtonSelector() {
-        return By.xpath("//span[@class='hidden-xs2' and text()='Sign out']");
+        return By.xpath("//span[@class='statuslink']/b[1]/a[2]");
     }
 }
