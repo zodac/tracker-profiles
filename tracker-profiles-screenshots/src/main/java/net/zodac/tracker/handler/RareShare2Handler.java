@@ -26,10 +26,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code RareShare2} tracker.
  */
-@TrackerHandler(name = "TVChaosUK", needsManualInput = false, url = "https://tvchaosuk.com/")
-public class TvChaosUkHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "RareShare2", needsManualInput = false, url = "https://rareshare2.me/")
+public class RareShare2Handler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
@@ -37,7 +37,7 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public TvChaosUkHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public RareShare2Handler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
@@ -70,12 +70,19 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    public boolean hasFixedHeader() {
+        final WebElement stickyElement = driver.findElement(By.xpath("//div[@class='hoe-right-header']"));
+        ScriptExecutor.removeAttribute(driver, stickyElement, "hoe-position-type");
+        return true;
+    }
+
+    @Override
     protected By logoutButtonSelector() {
         // Click the profile menu to make the logout button interactable
         final By logoutParentSelector = By.xpath("//ul[contains(@class, 'right-navbar')]//li[2]//a[contains(@class, 'dropdown-toggle')]");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
         logoutParent.click();
 
-        return By.xpath("//a[i[contains(@class, 'fa-sign-out')]]");
+        return By.xpath("//button[i[contains(@class, 'fa-sign-out')]]");
     }
 }
