@@ -141,7 +141,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         if (loginLinkSelector != null) {
             final WebElement loginLink = driver.findElement(loginLinkSelector);
-            loginLink.click();
+            clickButton(loginLink);
             ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
         }
     }
