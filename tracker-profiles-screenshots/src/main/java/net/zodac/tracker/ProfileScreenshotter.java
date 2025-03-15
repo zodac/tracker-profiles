@@ -123,10 +123,6 @@ public final class ProfileScreenshotter {
         }
 
         printResultSummary(successfulTrackers, unsuccessfulTrackers);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            // Perform any necessary cleanup or thread interruption
-        }));
     }
 
     private static void printResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)

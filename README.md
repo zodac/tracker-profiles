@@ -6,8 +6,9 @@ This is a tool used to log in to private torrent websites and take a screenshot 
 
 ## Requirements
 
-- Google Chrome
-- Java (JDK 23+)
+- [Apache Maven](https://maven.apache.org/download.cgi)
+- [Google Chrome](https://www.google.com/chrome/)
+- [Java (JDK 23+)](https://jdk.java.net/23/)
 
 ## Running Application
 
@@ -20,6 +21,7 @@ Open the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/jav
 method from your IDE.
 
 Alternatively it can be run from the CLI using `mvn` with the following command:
+
 ```bash
 mvn clean install -P execute
 ```
