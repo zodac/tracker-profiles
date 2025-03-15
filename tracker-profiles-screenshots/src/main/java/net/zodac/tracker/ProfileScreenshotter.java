@@ -116,6 +116,8 @@ public final class ProfileScreenshotter {
                 final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
                 if (successfullyTakenScreenshot) {
                     successfulTrackers.add(trackerDefinition.name());
+                } else {
+                    unsuccessfulTrackers.add(trackerDefinition.name());
                 }
             }
         }
@@ -199,7 +201,8 @@ public final class ProfileScreenshotter {
             return false;
         } catch (final TimeoutException e) {
             LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerDefinition.name(), e);
-            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), e.getMessage());
+            final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), errorMessage);
             return false;
         } catch (final TranslationException e) {
             LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerDefinition.name(), e);

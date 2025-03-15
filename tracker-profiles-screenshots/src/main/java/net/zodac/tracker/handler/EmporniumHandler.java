@@ -83,8 +83,11 @@ public class EmporniumHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void additionalActionOnProfilePage() {
-        final By sectionSelector = By.id("collagesbutton");
+        // Reload the page, to ensure the section closing works (JS may have been cancelled earlier)
+        driver.navigate().refresh();
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
 
+        final By sectionSelector = By.id("collagesbutton");
         final Collection<WebElement> sections = driver.findElements(sectionSelector);
         for (final WebElement section : sections) {
             section.click();

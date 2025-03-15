@@ -70,7 +70,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
     private static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
-    private static final Duration MAXIMUM_LOGIN_RESOLUTION_TIME = Duration.of(10L, ChronoUnit.SECONDS);
+    private static final Duration MAXIMUM_LOGIN_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -165,6 +165,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         manualCheckBeforeLoginClick(trackerName);
 
+        // TODO: Check if the webpage has changed (user clicked login during manual operation), and skip this
         final By loginButtonSelector = loginButtonSelector();
         if (loginButtonSelector != null) {
             final WebElement loginButton = driver.findElement(loginButtonSelector);
@@ -235,6 +236,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @param trackerName the name of the tracker
      * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
      */
+    // TODO: Remove this and just prompt user to click the button themselves?
     protected void manualCheckAfterLoginClick(final String trackerName) {
         // Do nothing by default
     }
@@ -284,8 +286,9 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
     /**
      * For certain trackers, additional actions may need to be performed after opening the profile page, but prior to the page being redacted and
-     * screenshot. This might be that the page is considered 'loaded' by {@link ScriptExecutor#waitForPageToLoad(WebDriver, Duration)}, but the
-     * required {@link WebElement} are not all on the screen, or that some {@link WebElement}s may need to be interacted with prior to the screenshot.
+     * screenshot. This might be that the page is considered 'loaded' by
+     * {@link ScriptExecutor#waitForPageToLoad(org.openqa.selenium.remote.RemoteWebDriver, Duration)}, but the required {@link WebElement} are not all
+     * on the screen, or that some {@link WebElement}s may need to be interacted with prior to the screenshot.
      *
      * <p>
      * This method can be overridden as required.
@@ -413,17 +416,18 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @param buttonToClick the {@link WebElement} to {@link WebElement#click()}
      * @see ScriptExecutor#stopPageLoad(JavascriptExecutor)
      */
-    // TODO: User for all clicks?
+    // TODO: Use for all clicks?
     protected void clickButton(final WebElement buttonToClick) {
         try {
             driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LOGIN_RESOLUTION_TIME);
             buttonToClick.click();
         } catch (final TimeoutException e) {
             LOGGER.debug(e);
+            ScriptExecutor.stopPageLoad(driver);
         }
+
         driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
-        ScriptExecutor.stopPageLoad(driver);
     }
 
     /**

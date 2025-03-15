@@ -24,8 +24,8 @@ import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
@@ -35,7 +35,7 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 public final class ScreenshotTaker {
 
     private static final ConfigurationProperties CONFIG = Configuration.get();
-    private static final int TIME_BETWEEN_SCROLLS_IN_MILLISECONDS = 100;
+    private static final int TIME_BETWEEN_SCROLLS_IN_MILLISECONDS = 500;
 
     private ScreenshotTaker() {
 
@@ -69,10 +69,14 @@ public final class ScreenshotTaker {
         return screenshot;
     }
 
-    private static BufferedImage takeScreenshotOfEntirePage(final WebDriver driver) {
-        return new AShot()
+    private static BufferedImage takeScreenshotOfEntirePage(final RemoteWebDriver driver) {
+        ScriptExecutor.disableScrolling(driver);
+        final BufferedImage screenshot = new AShot()
             .shootingStrategy(ShootingStrategies.viewportPasting(TIME_BETWEEN_SCROLLS_IN_MILLISECONDS))
             .takeScreenshot(driver)
             .getImage();
+
+        ScriptExecutor.enableScrolling(driver, "body");
+        return screenshot;
     }
 }

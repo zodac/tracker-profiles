@@ -31,9 +31,11 @@ import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -75,6 +77,15 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Disables scrolling on the current webpage, to remove the scrollbar from the screenshot.
+     *
+     * @param driver the {@link JavascriptExecutor} with the loaded web page
+     */
+    public static void disableScrolling(final JavascriptExecutor driver) {
+        driver.executeScript("document.body.style.overflow = 'hidden'");
+    }
+
+    /**
      * Some web pages may have 'overflow' set to 'hidden', which can disable scrolling. This function will override the configuration of the web page
      * to enable scrolling again.
      *
@@ -82,7 +93,6 @@ public final class ScriptExecutor {
      * @param elementToOverride the element that needs to be overridden to allow scrolling (usually 'body')
      */
     public static void enableScrolling(final JavascriptExecutor driver, final String elementToOverride) {
-        driver.executeScript("document.documentElement.style.height = 'auto';");
         driver.executeScript(String.format("document.%s.style.height = 'auto';", elementToOverride));
         driver.executeScript(String.format("document.%s.style.overflowY = 'visible';", elementToOverride));
     }
@@ -109,6 +119,29 @@ public final class ScriptExecutor {
      */
     public static void highlightElement(final JavascriptExecutor driver, final WebElement element) {
         updateCss(driver, element, "border", "3px solid red");
+    }
+
+    /**
+     * Moves the mouse cursor to the provided {@link WebElement}.
+     *
+     * @param driver  the {@link WebDriver} with the loaded web page
+     * @param element the {@link WebElement} to move to
+     */
+    public static void moveTo(final WebDriver driver, final WebElement element) {
+        final Actions actions = new Actions(driver);
+        actions.moveToElement(element).perform();
+        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+    }
+
+    /**
+     * Moves the mouse cursor the origin of the web page; the top-left corner.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void moveToOrigin(final WebDriver driver) {
+        final Actions actions = new Actions(driver);
+        actions.moveToLocation(0, 0).perform();
+        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
     }
 
     /**
@@ -149,6 +182,25 @@ public final class ScriptExecutor {
     }
 
     /**
+     * Scrolls the page back to the top of the screen.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void scrollToTheTop(final JavascriptExecutor driver) {
+        driver.executeScript("window.scrollTo(0, 0);");
+        explicitWait(Duration.ofSeconds(1L)); // Wait 1 second to scroll back to the top
+    }
+
+    /**
+     * Stops the loading of the current web page.
+     *
+     * @param driver the {@link WebDriver} with the loaded web page
+     */
+    public static void stopPageLoad(final JavascriptExecutor driver) {
+        driver.executeScript("window.stop();");
+    }
+
+    /**
      * Translates the web page into English. Performs the following actions:
      * <ol>
      *     <li>Loads a non-interactive element on the web page</li>
@@ -158,11 +210,11 @@ public final class ScriptExecutor {
      *      <li>Optionally resets the username {@link WebElement} that may have been incorrectly translated</li>
      * </ol>
      *
-     * @param driver                the {@link WebDriver} with the loaded web page
+     * @param driver                the {@link RemoteWebDriver} with the loaded web page
      * @param username              the username
      * @param mistranslatedUsername the text (can be partial text) that the username is incorrectly translated into, in order to find and replace it
      */
-    public static void translatePage(final WebDriver driver, final String username, final @Nullable String mistranslatedUsername) {
+    public static void translatePage(final RemoteWebDriver driver, final String username, final @Nullable String mistranslatedUsername) {
         try {
             // Find a non-interactive element to right-click
             final WebElement bodyElement = driver.findElement(By.tagName("body"));
@@ -190,55 +242,13 @@ public final class ScriptExecutor {
             // After translation, some username elements will have been incorrectly translated
             final By mistranslatedElementSelector = By.xpath(String.format("//*[contains(text(), '%s')]", mistranslatedUsername));
             for (final WebElement element : driver.findElements(mistranslatedElementSelector)) {
-                ((JavascriptExecutor) driver).executeScript(String.format("arguments[0].innerText = '%s'", username), element);
+                driver.executeScript(String.format("arguments[0].innerText = '%s'", username), element);
             }
 
             explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
         } catch (final AWTException e) {
             throw new TranslationException(e);
         }
-    }
-
-    /**
-     * Moves the mouse cursor to the provided {@link WebElement}.
-     *
-     * @param driver  the {@link WebDriver} with the loaded web page
-     * @param element the {@link WebElement} to move to
-     */
-    public static void moveTo(final WebDriver driver, final WebElement element) {
-        final Actions actions = new Actions(driver);
-        actions.moveToElement(element).perform();
-        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
-    }
-
-    /**
-     * Moves the mouse cursor the origin of the web page; the top-left corner.
-     *
-     * @param driver the {@link WebDriver} with the loaded web page
-     */
-    public static void moveToOrigin(final WebDriver driver) {
-        final Actions actions = new Actions(driver);
-        actions.moveToLocation(0, 0).perform();
-        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
-    }
-
-    /**
-     * Scrolls the page back to the top of the screen.
-     *
-     * @param driver the {@link WebDriver} with the loaded web page
-     */
-    public static void scrollToTheTop(final JavascriptExecutor driver) {
-        driver.executeScript("window.scrollTo(0, 0);");
-        explicitWait(Duration.ofSeconds(1L)); // Wait 1 second to scroll back to the top
-    }
-
-    /**
-     * Stops the loading of the current web page.
-     *
-     * @param driver the {@link WebDriver} with the loaded web page
-     */
-    public static void stopPageLoad(final JavascriptExecutor driver) {
-        driver.executeScript("window.stop();");
     }
 
     /**
@@ -263,20 +273,31 @@ public final class ScriptExecutor {
      * @param timeout  the maximum {@link Duration} to wait
      */
     public static void waitForElementToAppear(final WebDriver driver, final By selector, final Duration timeout) {
-        final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
-        wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(selector));
+        try {
+            final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
+            wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(selector));
+        } catch (final TimeoutException e) {
+            LOGGER.debug(driver.getPageSource());
+            throw e;
+        }
     }
 
     /**
-     * Waits for the page that the {@link WebDriver} is loading to completely load. If the {@code timeout} {@link Duration} is exceeded, the execution
-     * will continue.
+     * Waits for the page that the {@link RemoteWebDriver} is loading to completely load. If the {@code timeout} {@link Duration} is exceeded, the
+     * execution will continue.
      *
-     * @param driver  the {@link WebDriver} with the loaded web page
+     * @param driver  the {@link RemoteWebDriver} with the loaded web page
      * @param timeout the maximum {@link Duration} to wait
      */
-    public static void waitForPageToLoad(final WebDriver driver, final Duration timeout) {
+    public static void waitForPageToLoad(final RemoteWebDriver driver, final Duration timeout) {
         explicitWait(DEFAULT_WAIT_FOR_PAGE_LOAD);
-        final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
-        wait.until(_ -> "complete".equals(((JavascriptExecutor) driver).executeScript("return document.readyState")));
+
+        try {
+            final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
+            wait.until(_ -> "complete".equals(driver.executeScript("return document.readyState")));
+        } catch (final TimeoutException e) {
+            LOGGER.debug(driver.getPageSource());
+            throw e;
+        }
     }
 }

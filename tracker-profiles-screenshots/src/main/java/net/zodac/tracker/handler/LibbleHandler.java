@@ -66,9 +66,8 @@ public class LibbleHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean hasFixedHeader() {
-        // Note: Only seems to work with headless browser, for some reason
-        final WebElement stickyElement = driver.findElement(By.id("header"));
-        ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        final WebElement headerElement = driver.findElement(By.id("header"));
+        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
         return true;
     }
 

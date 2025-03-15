@@ -17,8 +17,10 @@
 
 package net.zodac.tracker.handler;
 
+import java.time.Duration;
 import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -48,6 +50,7 @@ public class FileListHandler extends AbstractTrackerHandler {
 
     @Override
     protected By postLoginSelector() {
+        ScriptExecutor.explicitWait(Duration.ofSeconds(2L));
         return By.id("maincolumn");
     }
 

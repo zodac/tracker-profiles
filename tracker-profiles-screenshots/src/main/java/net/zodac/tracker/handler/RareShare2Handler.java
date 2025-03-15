@@ -71,8 +71,8 @@ public class RareShare2Handler extends AbstractTrackerHandler {
 
     @Override
     public boolean hasFixedHeader() {
-        final WebElement stickyElement = driver.findElement(By.xpath("//div[@class='hoe-right-header']"));
-        ScriptExecutor.removeAttribute(driver, stickyElement, "hoe-position-type");
+        final WebElement headerElement = driver.findElement(By.xpath("//div[@class='hoe-right-header']"));
+        ScriptExecutor.removeAttribute(driver, headerElement, "hoe-position-type");
         return true;
     }
 

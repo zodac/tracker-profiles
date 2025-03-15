@@ -59,7 +59,7 @@ public final class DisplayUtils {
     // UI element constants
     private static final String TITLE_SUFFIX = " Manual Input";
     private static final String LABEL_SUFFIX = ", then click 'Continue'";
-    private static final String BUTTON_CONTINUE_TEXT = "Continue";
+    private static final String BUTTON_CONTINUE_TEXT = "Continue"; // TODO: Add another button to cancel
     private static final String REMAINING_TIME_PREFIX = "Time remaining: ";
     private static final int DIALOG_BOX_HEIGHT = 200;
     private static final int DIALOG_BOX_WIDTH = 500;
@@ -170,7 +170,9 @@ public final class DisplayUtils {
         final Dimension screenSize = toolkit.getScreenSize();
         final int screenWidth = screenSize.width;
         final int dialogWidth = dialog.getWidth();
-        final int xPosition = (screenWidth - dialogWidth) / 2 - (screenWidth / 4);  // Move halfway between center and left edge
+
+        final int horizontalOffset = (screenWidth / 4) + (screenWidth / 8);
+        final int xPosition = (screenWidth - dialogWidth) / 2 - horizontalOffset;  // Move halfway between center and left edge
         final int yPosition = (screenSize.height - dialog.getHeight()) / 2; // Center vertically
         dialog.setLocation(xPosition, yPosition);
     }

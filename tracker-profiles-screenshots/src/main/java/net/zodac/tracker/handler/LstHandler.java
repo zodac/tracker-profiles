@@ -82,8 +82,8 @@ public class LstHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean hasFixedHeader() {
-        final WebElement stickyElement = driver.findElement(By.tagName("header"));
-        ScriptExecutor.updateCss(driver, stickyElement, "position", "static");
+        final WebElement headerElement = driver.findElement(By.tagName("header"));
+        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
         return true;
     }
 
