@@ -105,6 +105,10 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void additionalActionOnProfilePage() {
+        // Reload the page
+        driver.navigate().refresh();
+        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+
         final By selector = By.xpath("//div[@id='contentContainer']//table");
         ScriptExecutor.waitForElementToAppear(driver, selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }

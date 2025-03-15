@@ -87,6 +87,8 @@ public class TeamOsHandler extends AbstractTrackerHandler {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
     }
 
+    // TODO: Have a before/after screenshot section, where this tracker's bespoke scrollbar can be explicitly hidden?
+
     /**
      * {@inheritDoc}
      *

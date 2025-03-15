@@ -172,7 +172,7 @@ public final class DisplayUtils {
         final int dialogWidth = dialog.getWidth();
 
         final int horizontalOffset = (screenWidth / 4) + (screenWidth / 8);
-        final int xPosition = (screenWidth - dialogWidth) / 2 - horizontalOffset;  // Move halfway between center and left edge
+        final int xPosition = (screenWidth - dialogWidth) / 2 - horizontalOffset;
         final int yPosition = (screenSize.height - dialog.getHeight()) / 2; // Center vertically
         dialog.setLocation(xPosition, yPosition);
     }

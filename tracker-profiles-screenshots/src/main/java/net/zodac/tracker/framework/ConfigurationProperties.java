@@ -44,6 +44,7 @@ import org.apache.logging.log4j.Logger;
  * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
  * @param useHeadlessBrowser       whether to use a headless browser or not
  */
+// TODO: Deprecate this config file, and rely on environment variables?
 public record ConfigurationProperties(
     String browserDataStoragePath,
     String browserDimensions,
