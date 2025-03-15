@@ -18,11 +18,12 @@
 package net.zodac.tracker.framework;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -50,14 +51,13 @@ public final class TrackerCsvReader {
      * Reads the input file {@value CSV_FILE_NAME}, and converts each row into a {@link TrackerDefinition}.
      *
      * @return the {@link List} of {@link TrackerDefinition}s
-     * @throws URISyntaxException thrown if the {@value #CSV_FILE_NAME} resource URL is malformed
-     * @throws IOException        throw if there is a problem reading the header or skipping the first record
+     * @throws IOException throw if there is a problem reading the header or skipping the first record
      * @see TrackerDefinition#fromCsv(CSVRecord)
      */
-    public static List<TrackerDefinition> readTrackerInfo() throws IOException, URISyntaxException {
-        try (
-            final Reader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(CSV_FILE_NAME).toURI()));
-            final CSVParser csvParser = CSVParser.builder().setReader(reader).setFormat(DEFAULT_FORMAT).get()
+    public static List<TrackerDefinition> readTrackerInfo() throws IOException {
+        try (final InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(CSV_FILE_NAME);
+             final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
+             final CSVParser csvParser = CSVParser.builder().setReader(reader).setFormat(DEFAULT_FORMAT).get()
         ) {
             return csvParser
                 .stream()

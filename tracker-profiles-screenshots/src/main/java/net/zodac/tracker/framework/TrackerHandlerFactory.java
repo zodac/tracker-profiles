@@ -152,16 +152,15 @@ public final class TrackerHandlerFactory {
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {
         final String packageLoader = PACKAGE_SEPARATOR.matcher(packageName).replaceAll("/");
-        try (
-            final InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(packageLoader);
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(stream), StandardCharsets.UTF_8))
+        try (final InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(packageLoader);
+             final BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8))
         ) {
             return reader.lines()
                 .filter(line -> line.endsWith(".class"))
                 .map(line -> getClass(line, packageName))
                 .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
                 .collect(Collectors.toSet());
-        } catch (final IllegalStateException | IOException ignored) {
+        } catch (final IOException _) {
             return Set.of();
         }
     }

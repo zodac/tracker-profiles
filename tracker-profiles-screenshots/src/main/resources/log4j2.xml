@@ -2,13 +2,18 @@
 <Configuration monitorInterval="60">
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-4level] %msg%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight{%-4level}{FATAL=red, ERROR=red, WARN=yellow, INFO=blue, DEBUG=green, TRACE=magenta}] %msg%n" />
         </Console>
     </Appenders>
 
     <Loggers>
+        <!-- Redirect java.util.logging to Log4j2 -->
+        <Logger name="java.util.logging" level="info" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+        </Logger>
+
         <root level="INFO">
-            <Appender-ref ref="CONSOLE"/>
+            <AppenderRef ref="CONSOLE"/>
         </root>
     </Loggers>
 </Configuration>

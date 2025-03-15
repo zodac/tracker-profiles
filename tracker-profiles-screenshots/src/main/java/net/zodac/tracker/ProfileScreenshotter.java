@@ -123,6 +123,10 @@ public final class ProfileScreenshotter {
         }
 
         printResultSummary(successfulTrackers, unsuccessfulTrackers);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // Perform any necessary cleanup or thread interruption
+        }));
     }
 
     private static void printResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)
@@ -156,7 +160,7 @@ public final class ProfileScreenshotter {
         }
     }
 
-    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() throws IOException, URISyntaxException {
+    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() throws IOException {
         final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
 

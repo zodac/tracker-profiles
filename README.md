@@ -19,6 +19,11 @@ each tracker is retrieved by the *trackerName* field within the CSV file.
 Open the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ProfileScreenshotter.java) and run the `main`
 method from your IDE.
 
+Alternatively it can be run from the CLI using `mvn` with the following command:
+```bash
+mvn clean install -P execute
+```
+
 ## Configuration
 
 Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/resources/config_example.properties) file and rename it to
