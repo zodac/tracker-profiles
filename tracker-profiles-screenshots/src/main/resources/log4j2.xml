@@ -2,7 +2,7 @@
 <Configuration monitorInterval="60">
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight{%-4level}{FATAL=red, ERROR=red, WARN=yellow, INFO=blue, DEBUG=green, TRACE=magenta}] %msg%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight{%-4level}{FATAL=red, ERROR=bold red, WARN=bold yellow, INFO=bold blue, DEBUG=bold green, TRACE=bold magenta}] %msg%n" />
         </Console>
     </Appenders>
 
