@@ -17,26 +17,27 @@
 
 package net.zodac.tracker.framework;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
@@ -45,7 +46,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
  */
 public final class TrackerHandlerFactory {
 
-    private static final Pattern PACKAGE_SEPARATOR = Pattern.compile("[.]");
     private static final ConfigurationProperties CONFIG = Configuration.get();
     private static final Set<Class<?>> TRACKER_HANDLER_CLASSES = findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName());
 
@@ -151,23 +151,52 @@ public final class TrackerHandlerFactory {
     }
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {
-        final String packageLoader = PACKAGE_SEPARATOR.matcher(packageName).replaceAll("/");
-        try (final InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(packageLoader);
-             final BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8))
-        ) {
-            return reader.lines()
-                .filter(line -> line.endsWith(".class"))
-                .map(line -> getClass(line, packageName))
-                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
-                .collect(Collectors.toSet());
-        } catch (final IOException _) {
-            return Set.of();
+        final String packagePath = packageName.replace('.', '/'); // Package path
+
+        try {
+            final URL resource = Thread.currentThread().getContextClassLoader().getResource(packagePath);
+            if (resource == null) {
+                throw new IllegalStateException(String.format("Unable to retrieve classes from package '%s'", packageName));
+            }
+
+            // If not running from a JAR, assume classes are available on the filesystem
+            return "jar".equals(resource.getProtocol()) ? getFromJar(resource, packagePath) : getFromFile(resource, packageName);
+        } catch (final IOException | URISyntaxException e) {
+            throw new IllegalStateException(String.format("Unable to retrieve classes from package '%s'", packageName), e);
         }
     }
 
-    private static Class<?> getClass(final String className, final String packageName) {
+    private static Set<Class<?>> getFromFile(final URL resource, final String packageName) throws URISyntaxException {
+        final File[] directoryFiles = new File(resource.toURI()).listFiles();
+        if (directoryFiles == null || directoryFiles.length == 0) {
+            throw new IllegalStateException(String.format("Unable to retrieve classes from resource '%s'", resource.toURI()));
+        }
+
+        return Arrays.stream(directoryFiles)
+            .map(File::getName)
+            .filter(fileName -> fileName.endsWith(".class"))
+            .map(fileName -> getClass(fileName, packageName))
+            .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
+            .collect(Collectors.toSet());
+    }
+
+    private static Set<Class<?>> getFromJar(final URL resource, final String packagePath) throws IOException {
+        final String jarFilePath = resource.getFile().substring(5, resource.getFile().indexOf('!'));
+
+        try (final JarFile jarFile = new JarFile(URLDecoder.decode(jarFilePath, StandardCharsets.UTF_8))) {
+            return jarFile.stream()
+                .map(ZipEntry::getName)
+                .filter(jarEntryName -> jarEntryName.startsWith(packagePath) && jarEntryName.endsWith(".class"))
+                .map(jarEntryName -> getClass(jarEntryName.replace('/', '.'), null))
+                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
+                .collect(Collectors.toSet());
+        }
+    }
+
+    private static Class<?> getClass(final String className, final @Nullable String packageName) {
         try {
-            return Class.forName(packageName + "." + className.substring(0, className.lastIndexOf('.')));
+            final String prefix = packageName == null ? "" : packageName + ".";
+            return Class.forName(prefix + className.substring(0, className.lastIndexOf('.')));
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(String.format("Unable to retrieve class '%s' from package '%s'", className, packageName), e);
         }
