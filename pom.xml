@@ -27,11 +27,11 @@
 
         <!-- 3PP Versions -->
         <ashot.version>1.5.4</ashot.version>
-        <commons-csv.version>1.13.0</commons-csv.version>
+        <commons-csv.version>1.14.0</commons-csv.version>
         <commons-io.version>2.18.0</commons-io.version>
         <jul-to-slf4j.version>2.0.17</jul-to-slf4j.version>
         <log4j.version>2.24.3</log4j.version>
-        <selenium-java.version>4.29.0</selenium-java.version>
+        <selenium-java.version>4.30.0</selenium-java.version>
 
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
@@ -49,15 +49,15 @@
         <error_prone_core.version>2.36.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
-        <pmd.version>7.11.0</pmd.version>
+        <pmd.version>7.12.0</pmd.version>
         <spotbugs.version>4.9.3</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
-        <license-maven-plugin.version>4.6</license-maven-plugin.version>
+        <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
         <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
-        <sonar-maven-plugin.version>5.0.0.4389</sonar-maven-plugin.version>
+        <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
         <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
 
         <!-- Linter Properties -->
@@ -197,7 +197,6 @@
                                 <version>${nullaway.version}</version>
                             </path>
                         </annotationProcessorPaths>
-                        <fork>true</fork>
                         <compilerArgs>
                             <arg>-Xlint:all</arg>
                             <arg>-Xdoclint:all</arg>
@@ -216,6 +215,7 @@
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
                         </compilerArgs>
+                        <fork>true</fork>
                     </configuration>
                 </plugin>
                 <plugin>

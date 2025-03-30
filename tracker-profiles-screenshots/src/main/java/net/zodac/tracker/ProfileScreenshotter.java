@@ -57,6 +57,11 @@ public final class ProfileScreenshotter {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ConfigurationProperties CONFIG = Configuration.get();
 
+    // Failure codes
+    private static final int FAILURE_CODE = 1;
+    private static final int SUCCESS_CODE = 0;
+    private static final int PARTIAL_FAILURE_CODE = 2;
+
     private ProfileScreenshotter() {
 
     }
@@ -86,12 +91,12 @@ public final class ProfileScreenshotter {
 
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
         if (trackersByIsManual.isEmpty()) {
-            LOGGER.warn("No trackers selected!");
+            LOGGER.error("No trackers selected!");
             return;
         }
 
         if (!CONFIG.includeManualTrackers() && trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).isEmpty()) {
-            LOGGER.warn("No automatic trackers selected, but manual trackers not enabled!");
+            LOGGER.error("No automatic trackers selected, but manual trackers not enabled!");
             return;
         }
 
@@ -122,22 +127,38 @@ public final class ProfileScreenshotter {
             }
         }
 
-        printResultSummary(successfulTrackers, unsuccessfulTrackers);
+        System.exit(returnResultSummary(successfulTrackers, unsuccessfulTrackers));
     }
 
-    private static void printResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)
+    private static int returnResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)
         throws IOException {
-        if (!successfulTrackers.isEmpty()) {
+        if (successfulTrackers.isEmpty()) {
+            final String trackersPlural = unsuccessfulTrackers.size() == 1 ? "" : "s";
+            LOGGER.error("");
+            LOGGER.error("All {} selected tracker{} failed:", unsuccessfulTrackers.size(), trackersPlural);
+            for (final String unsuccessfulTracker : unsuccessfulTrackers) {
+                LOGGER.error("\t- {}", unsuccessfulTracker);
+            }
+            return FAILURE_CODE;
+        } else {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
+            LOGGER.debug("Opening: {}", directory);
             FileOpener.open(directory.toFile());
         }
 
-        if (!unsuccessfulTrackers.isEmpty()) {
+        if (unsuccessfulTrackers.isEmpty()) {
+            final String trackersPlural = successfulTrackers.size() == 1 ? "" : "s";
+            LOGGER.info("");
+            LOGGER.info("{} tracker{} successfully screenshot", successfulTrackers.size(), trackersPlural);
+            return SUCCESS_CODE;
+        } else {
+            final String trackersPlural = unsuccessfulTrackers.size() == 1 ? "" : "s";
             LOGGER.warn("");
-            LOGGER.warn("Failures for following trackers:");
+            LOGGER.warn("Failures for following tracker{}:", trackersPlural);
             for (final String unsuccessfulTracker : unsuccessfulTrackers) {
                 LOGGER.warn("\t- {}", unsuccessfulTracker);
             }
+            return PARTIAL_FAILURE_CODE;
         }
     }
 

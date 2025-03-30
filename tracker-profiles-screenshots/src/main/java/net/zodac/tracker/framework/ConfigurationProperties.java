@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
  * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
  * @param useHeadlessBrowser       whether to use a headless browser or not
  */
-// TODO: Deprecate this config file, and rely on environment variables?
+// TODO: Deprecate the config file, and rely on environment variables?
 public record ConfigurationProperties(
     String browserDataStoragePath,
     String browserDimensions,
@@ -66,7 +66,7 @@ public record ConfigurationProperties(
     private static final String DEFAULT_BROWSER_HEIGHT = "1050";
     private static final String DEFAULT_CSV_COMMENT_SYMBOL = "#";
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
-    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "screenshots";
+    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = File.separator + "tmp" + File.separator + "screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
 
     /**
@@ -92,7 +92,7 @@ public record ConfigurationProperties(
                 getBooleanProperty(properties, "previewTrackerScreenshot"),
                 getBooleanProperty(properties, "useHeadlessBrowser")
             );
-            LOGGER.info("Loaded properties: {}", configurationProperties);
+            LOGGER.debug("Loaded properties: {}", configurationProperties);
             return configurationProperties;
         } catch (final Exception e) {
             throw new IllegalStateException(String.format("Unable to load properties from '%s'", PROPRTIES_FILE_NAME), e);

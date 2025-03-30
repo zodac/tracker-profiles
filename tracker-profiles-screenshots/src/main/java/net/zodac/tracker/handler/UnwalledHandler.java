@@ -43,7 +43,7 @@ public class UnwalledHandler extends AbstractTrackerHandler {
 
     @Override
     protected By loginButtonSelector() {
-        return By.xpath("//button[@class='auth-form__primary-button' and text()='Login']");
+        return By.xpath("//button[@class='auth-form__primary-button' and text()='sjzhfkajsfh']");
     }
 
     @Override

@@ -61,7 +61,6 @@ public final class TrackerHandlerFactory {
      */
     public static Optional<TrackerHandler> findMatchingHandler(final String trackerName) {
         return TRACKER_HANDLER_CLASSES.stream()
-            .filter(trackerHandler -> trackerHandler.isAnnotationPresent(TrackerHandler.class))
             .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandler.class))
             .filter(annotation -> annotation.name().equalsIgnoreCase(trackerName))
             .findAny();
@@ -86,7 +85,6 @@ public final class TrackerHandlerFactory {
      */
     public static AbstractTrackerHandler getHandler(final String trackerName) {
         final var matchingTrackerHandlerOptional = TRACKER_HANDLER_CLASSES.stream()
-            .filter(handler -> handler.isAnnotationPresent(TrackerHandler.class))
             .map(handler -> Map.entry(handler, handler.getAnnotation(TrackerHandler.class)))
             .filter(entry -> entry.getValue().name().equalsIgnoreCase(trackerName))
             .findFirst();

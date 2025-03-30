@@ -26,25 +26,46 @@ Alternatively it can be run from the CLI using `mvn` with the following command:
 mvn clean install -P execute
 ```
 
+Or from the JAR file directly:
+
+```bash
+mvn clean install && java -jar tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar
+```
+
+TODO: Define env vars instead of config file 
+
+To run through Docker, first enable local connections to the host display:
+
+```bash
+xhost +local:
+```
+
+Then build and run the docker image:
+
+```bash
+docker build -t profile-screenshotter .
+docker run --env "DISPLAY=${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix -v /tmp/screenshots:/tmp/screenshots --rm profile-screenshotter
+```
+
 ## Configuration
 
 Copy the [config_example.properties](./tracker-profiles-screenshots/src/main/resources/config_example.properties) file and rename it to
 **config.properties**. It is pre-configured with some default values that are described below, which you can adjust to your preference.
 
-| Configuration Property      | Description                                                                                            | Default Value |
-|-----------------------------|--------------------------------------------------------------------------------------------------------|---------------|
-| *browserDataStoragePath*    | The file path in which to store browser data (profiles, caches, etc.)                                  | /tmp/chrome   |
-| *browserHeight*             | The height (in pixels) of the web browser used to take screenshots                                     | 1050          |
-| *browserWidth*              | The width (in pixels) of the web browser used to take screenshots                                      | 1680          |
-| *csvCommentSymbol*          | If this character is the first in a CSV row, the CSV row is considered a comment and not processed     | #             |
-| *emailAddresses*            | A comma-separated list of the user's email addresses                                                   |               |
-| *includeManualTrackers*     | Whether to take screnshots of trackers that require manual user interaction                            | false         |
-| *ipAddresses*               | A comma-separated list of the user's IP addresses                                                      |               |
-| *outputDirectoryNameFormat* | The name of the output directory to be created for the of the screenshots                              | yyyy-MM-dd    |
-| *outputDirectoryParentPath* | The output location of for the new directory created for the screenshots, relative to the project root | screenshots   |
-| *previewTrackerScreenshot*  | Whether to provide a pop-up preview of the screenshot once it has been taken                           | false         |
-| *timeZone*                  | The local timezone, used to retrieve the current date to name the output directory                     | UTC           |
-| *useHeadlessBrowser*        | Whether to use a headless browser for screenshots, or a full browser                                   | false         |
+| Configuration Property      | Description                                                                                            | Default Value    |
+|-----------------------------|--------------------------------------------------------------------------------------------------------|------------------|
+| *browserDataStoragePath*    | The file path in which to store browser data (profiles, caches, etc.)                                  | /tmp/chrome      |
+| *browserHeight*             | The height (in pixels) of the web browser used to take screenshots                                     | 1050             |
+| *browserWidth*              | The width (in pixels) of the web browser used to take screenshots                                      | 1680             |
+| *csvCommentSymbol*          | If this character is the first in a CSV row, the CSV row is considered a comment and not processed     | #                |
+| *emailAddresses*            | A comma-separated list of the user's email addresses                                                   |                  |
+| *includeManualTrackers*     | Whether to take screnshots of trackers that require manual user interaction                            | false            |
+| *ipAddresses*               | A comma-separated list of the user's IP addresses                                                      |                  |
+| *outputDirectoryNameFormat* | The name of the output directory to be created for the of the screenshots                              | yyyy-MM-dd       |
+| *outputDirectoryParentPath* | The output location of for the new directory created for the screenshots, relative to the project root | /tmp/screenshots |
+| *previewTrackerScreenshot*  | Whether to provide a pop-up preview of the screenshot once it has been taken                           | false            |
+| *timeZone*                  | The local timezone, used to retrieve the current date to name the output directory                     | UTC              |
+| *useHeadlessBrowser*        | Whether to use a headless browser for screenshots, or a full browser                                   | false            |
 
 ## Implementing New Tracker Handlers
 

@@ -305,6 +305,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return the number of {@link WebElement}s where the text has been redacted
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
      */
+    // TODO: Rather than redacting the text, maybe put a solid red block over the content to hide it more explicitly?
     public int redactElements() {
         final Collection<WebElement> elementsToBeRedacted = getElementsPotentiallyContainingSensitiveInformation()
             .stream()
