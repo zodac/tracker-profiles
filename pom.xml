@@ -45,7 +45,7 @@
         <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <checkstyle.version>10.21.4</checkstyle.version>
+        <checkstyle.version>10.22.0</checkstyle.version>
         <error_prone_core.version>2.36.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
