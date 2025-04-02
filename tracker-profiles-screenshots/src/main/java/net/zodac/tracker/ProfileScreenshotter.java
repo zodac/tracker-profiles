@@ -19,7 +19,6 @@ package net.zodac.tracker;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,11 +78,13 @@ public final class ProfileScreenshotter {
      * debugging.
      *
      * @param args input arguments, unused
-     * @throws IOException        thrown on error parsing CSV input file
-     * @throws URISyntaxException thrown on error reading CSV input file
      * @see ScreenshotTaker
      */
-    public static void main(final String[] args) throws IOException, URISyntaxException {
+    public static void main(final String[] args) {
+        System.exit(executeProfileScreenshotter());
+    }
+
+    private static int executeProfileScreenshotter() {
         final File outputDirectory = CONFIG.outputDirectory().toFile();
         if (!outputDirectory.exists()) {
             outputDirectory.mkdirs();
@@ -92,12 +93,12 @@ public final class ProfileScreenshotter {
         final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
         if (trackersByIsManual.isEmpty()) {
             LOGGER.error("No trackers selected!");
-            return;
+            return FAILURE_CODE;
         }
 
         if (!CONFIG.includeManualTrackers() && trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).isEmpty()) {
             LOGGER.error("No automatic trackers selected, but manual trackers not enabled!");
-            return;
+            return FAILURE_CODE;
         }
 
         printTrackersInfo(trackersByIsManual);
@@ -127,11 +128,10 @@ public final class ProfileScreenshotter {
             }
         }
 
-        System.exit(returnResultSummary(successfulTrackers, unsuccessfulTrackers));
+        return returnResultSummary(successfulTrackers, unsuccessfulTrackers);
     }
 
-    private static int returnResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers)
-        throws IOException {
+    private static int returnResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers) {
         if (successfulTrackers.isEmpty()) {
             final String trackersPlural = unsuccessfulTrackers.size() == 1 ? "" : "s";
             LOGGER.error("");
@@ -142,8 +142,13 @@ public final class ProfileScreenshotter {
             return FAILURE_CODE;
         } else {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
-            LOGGER.debug("Opening: {}", directory);
-            FileOpener.open(directory.toFile());
+            LOGGER.debug("Opening: '{}'", directory);
+            try {
+                FileOpener.open(directory.toFile());
+            } catch (final IOException e) {
+                LOGGER.debug("Unable to open '{}'", directory, e);
+                LOGGER.warn("Unable to open '{}': {}", directory, e.getMessage());
+            }
         }
 
         if (unsuccessfulTrackers.isEmpty()) {
@@ -177,26 +182,32 @@ public final class ProfileScreenshotter {
         }
     }
 
-    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() throws IOException {
-        final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
-        final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
+    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() {
+        try {
+            final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
+            final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
 
-        for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
-            final Optional<TrackerHandler> trackerHandler = TrackerHandlerFactory.findMatchingHandler(trackerDefinition.name());
+            for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
+                final Optional<TrackerHandler> trackerHandler = TrackerHandlerFactory.findMatchingHandler(trackerDefinition.name());
 
-            if (trackerHandler.isPresent()) {
-                final boolean isManual = trackerHandler.get().needsManualInput();
-                final Set<TrackerDefinition> existingTrackerDefinitionsOfType = trackersByIsManual.getOrDefault(isManual, new TreeSet<>());
-                existingTrackerDefinitionsOfType.add(trackerDefinition);
-                trackersByIsManual.put(isManual, existingTrackerDefinitionsOfType);
-            } else {
-                LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
+                if (trackerHandler.isPresent()) {
+                    final boolean isManual = trackerHandler.get().needsManualInput();
+                    final Set<TrackerDefinition> existingTrackerDefinitionsOfType = trackersByIsManual.getOrDefault(isManual, new TreeSet<>());
+                    existingTrackerDefinitionsOfType.add(trackerDefinition);
+                    trackersByIsManual.put(isManual, existingTrackerDefinitionsOfType);
+                } else {
+                    LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
+                }
             }
-        }
 
-        return trackersByIsManual;
+            return trackersByIsManual;
+        } catch (final IOException e) {
+            LOGGER.warn("Unable to read CSV input file", e);
+            return Map.of();
+        }
     }
 
+    @SuppressWarnings("OverlyLongMethod")
     private static boolean isAbleToTakeScreenshot(final TrackerDefinition trackerDefinition) {
         LOGGER.info("");
         LOGGER.info("[{}]", trackerDefinition.name());
@@ -222,8 +233,14 @@ public final class ProfileScreenshotter {
             return false;
         } catch (final TimeoutException e) {
             LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerDefinition.name(), e);
-            final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
-            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), errorMessage);
+
+            if (e.getMessage() == null) {
+                LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}'", trackerDefinition.name());
+            } else {
+                final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+                LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), errorMessage);
+            }
+
             return false;
         } catch (final TranslationException e) {
             LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerDefinition.name(), e);
@@ -233,9 +250,15 @@ public final class ProfileScreenshotter {
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
             throw e;
         } catch (final Exception e) {
-            final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name(), e);
-            LOGGER.warn("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
+
+            if (e.getMessage() == null) {
+                LOGGER.warn("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name());
+            } else {
+                final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+                LOGGER.warn("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
+            }
+
             return false;
         }
     }

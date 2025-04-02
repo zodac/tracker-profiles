@@ -9,14 +9,14 @@ main() {
 
     # Run Java application
     java -jar /app/tracker-profiles.jar
-     JAVA_EXIT_CODE=$?
+    JAVA_EXIT_CODE=$?
 
-    if [[ ${JAVA_EXIT_CODE} -eq 0 ]]; then
-        echo "Success"
-    elif [[ ${JAVA_EXIT_CODE} -eq 2 ]]; then
-        echo "Partial failure"
+    if [[ ${JAVA_EXIT_CODE} -eq 0 ]] || [[ ${JAVA_EXIT_CODE} -eq 2 ]]; then
+        echo "Success/Partial failure"
+        # Open output dir
     else
         echo "Failure"
+        # Kill and cleanup
     fi
 
 

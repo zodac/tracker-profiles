@@ -193,7 +193,7 @@ public final class TrackerHandlerFactory {
 
     private static Class<?> getClass(final String className, final @Nullable String packageName) {
         try {
-            final String prefix = packageName == null ? "" : packageName + ".";
+            final String prefix = packageName == null ? "" : (packageName + ".");
             return Class.forName(prefix + className.substring(0, className.lastIndexOf('.')));
         } catch (final ClassNotFoundException e) {
             throw new IllegalStateException(String.format("Unable to retrieve class '%s' from package '%s'", className, packageName), e);

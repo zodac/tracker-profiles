@@ -11,8 +11,8 @@
     </parent>
 
     <artifactId>tracker-profiles-screenshots</artifactId>
-    <name>[${project.parent.artifactId}] Screenshots module</name>
     <packaging>jar</packaging>
+    <name>[${project.parent.artifactId}] Screenshots module</name>
 
     <dependencies>
         <!-- 3PP Dependencies -->
