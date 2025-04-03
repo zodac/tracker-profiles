@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
@@ -96,6 +97,13 @@ public class TheEmpireHandler extends AbstractTrackerHandler {
     @Override
     protected void additionalActionOnProfilePage() {
         ScriptExecutor.explicitWait(Duration.ofSeconds(1L));
+    }
+
+    @Override
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.xpath("//tbody/tr[td[1][contains(text(), 'IP Address')]]/td[2]") // IP address
+        );
     }
 
     @Override
