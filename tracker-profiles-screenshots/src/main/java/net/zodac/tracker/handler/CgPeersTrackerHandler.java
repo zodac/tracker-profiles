@@ -18,6 +18,7 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
+import net.zodac.tracker.framework.TrackerDisabled;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +33,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
     "https://cgpeers.to",
     "https://cgpeers.com"
 })
+@TrackerDisabled(date = "2025-04-04", reason = "Added Cloudflare check to 2FA flow")
 public class CgPeersTrackerHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

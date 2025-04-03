@@ -35,9 +35,16 @@ import net.zodac.tracker.handler.AbstractTrackerHandler;
 public @interface TrackerDisabled {
 
     /**
+     * The date the tracker was disabled.
+     *
+     * @return the disabled date
+     */
+    String date();
+
+    /**
      * The reason the tracker has been disabled.
      *
      * @return the annotation value
      */
-    String value() default "";
+    String reason() default "";
 }

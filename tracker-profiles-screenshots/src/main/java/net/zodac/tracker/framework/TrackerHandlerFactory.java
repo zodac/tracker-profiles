@@ -97,7 +97,7 @@ public final class TrackerHandlerFactory {
         final var matchingTrackerHandler = matchingTrackerHandlerOptional.get();
         final Class<?> trackerHandler = matchingTrackerHandler.getKey();
         if (trackerHandler.isAnnotationPresent(TrackerDisabled.class)) {
-            throw new DisabledTrackerException(trackerHandler.getAnnotation(TrackerDisabled.class).value());
+            throw new DisabledTrackerException(trackerHandler.getAnnotation(TrackerDisabled.class).reason());
         }
 
         final TrackerHandler annotation = matchingTrackerHandler.getValue();
