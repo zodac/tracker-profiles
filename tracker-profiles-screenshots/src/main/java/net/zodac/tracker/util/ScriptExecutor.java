@@ -24,6 +24,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
+import net.zodac.tracker.framework.Configuration;
+import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.exception.TranslationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -145,15 +147,29 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Updates the text of the provided {@link WebElement} and replaces the value with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when
-     * trying to hide/redact sensitive information like IP addresses.
+     * Reads the text of the provided {@link WebElement} and replaces the {@link ConfigurationProperties#ipAddresses()} and
+     * {@link ConfigurationProperties#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
+     * sensitive information like IP addresses. This will attempt to retain all other text in the provided {@link WebElement}.
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page
      * @param element the {@link WebElement} to redact
-     * @see #redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element) {
-        redactInnerTextOf(driver, element, DEFAULT_REDACTION_TEXT);
+        LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
+
+        final String substitutionText = createSubstitutionText(element);
+        driver.executeScript(String.format("arguments[0].innerText = '%s'", substitutionText), element);
+    }
+
+    private static String createSubstitutionText(final WebElement element) {
+        String substitutionText = element.getText();
+        for (final String ipAddress : Configuration.get().ipAddresses()) {
+            substitutionText = substitutionText.replace(ipAddress, DEFAULT_REDACTION_TEXT);
+        }
+        for (final String emailAddress : Configuration.get().emailAddresses()) {
+            substitutionText = substitutionText.replace(emailAddress, DEFAULT_REDACTION_TEXT);
+        }
+        return substitutionText;
     }
 
     /**

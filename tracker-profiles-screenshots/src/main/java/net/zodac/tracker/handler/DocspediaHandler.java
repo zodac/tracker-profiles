@@ -104,14 +104,14 @@ public class DocspediaHandler extends AbstractTrackerHandler {
      * its content redacted.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     @Override
     public int redactElements() {
         final int superRedactedElements = super.redactElements();
 
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
+        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
 
         return superRedactedElements + 1;
     }

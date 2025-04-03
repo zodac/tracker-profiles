@@ -237,7 +237,7 @@ public final class ProfileScreenshotter {
             if (e.getMessage() == null) {
                 LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}'", trackerDefinition.name());
             } else {
-                final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+                final String errorMessage = e.getMessage().split("\n")[0];
                 LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerDefinition.name(), errorMessage);
             }
 
@@ -255,7 +255,7 @@ public final class ProfileScreenshotter {
             if (e.getMessage() == null) {
                 LOGGER.warn("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name());
             } else {
-                final String errorMessage = e.getMessage() == null ? "" : e.getMessage().split("\n")[0];
+                final String errorMessage = e.getMessage().split("\n")[0];
                 LOGGER.warn("\t- Unexpected error taking screenshot of '{}': {}", trackerDefinition.name(), errorMessage);
             }
 

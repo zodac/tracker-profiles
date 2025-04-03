@@ -101,7 +101,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
         final int superRedactedElements = super.redactElements();
 
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Torrent Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
+        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
 
         return superRedactedElements + 1;
     }

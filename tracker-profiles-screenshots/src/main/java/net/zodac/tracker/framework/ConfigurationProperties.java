@@ -24,10 +24,12 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +41,7 @@ import org.apache.logging.log4j.Logger;
  * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
  * @param emailAddresses           a {@link Collection} of email addresses to be redacted from screenshots
  * @param includeManualTrackers    whether to include trackers that require a manual user interaction
- * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots
+ * @param ipAddresses              a {@link Collection} of IP addresses to be redacted from screenshots (including the first half of each address)
  * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
  * @param previewTrackerScreenshot whether the screenshot should be previewed during execution
  * @param useHeadlessBrowser       whether to use a headless browser or not
@@ -85,9 +87,9 @@ public record ConfigurationProperties(
                 properties.getProperty("browserDataStoragePath", DEFAULT_BROWSER_DATA_STORAGE_PATH),
                 getBrowserDimensions(properties),
                 getCsvCommentSymbol(properties),
-                getCommaSeparatedStringProperty(properties, "emailAddresses"),
+                getEmailAddresses(properties),
                 getBooleanProperty(properties, "includeManualTrackers"),
-                getCommaSeparatedStringProperty(properties, "ipAddresses"),
+                getIpAddresses(properties),
                 getOutputDirectory(properties),
                 getBooleanProperty(properties, "previewTrackerScreenshot"),
                 getBooleanProperty(properties, "useHeadlessBrowser")
@@ -123,8 +125,30 @@ public record ConfigurationProperties(
         return Boolean.parseBoolean(properties.getProperty(propertyName, "false"));
     }
 
-    private static Collection<String> getCommaSeparatedStringProperty(final Properties properties, final String propertyName) {
-        final String value = properties.getProperty(propertyName, "");
-        return Arrays.asList(value.split(","));
+    private static Collection<String> getEmailAddresses(final Properties properties) {
+        final String value = properties.getProperty("emailAddresses", "");
+        return List.of(value.split(","));
+    }
+
+    private static Collection<String> getIpAddresses(final Properties properties) {
+        final String value = properties.getProperty("ipAddresses", "");
+        final Collection<String> rawIpAddresses = List.of(value.split(","));
+
+        // Need to include half IP addresses for some tracker activity logs
+        final Collection<String> halfIpAddresses = rawIpAddresses
+            .stream()
+            .map(ConfigurationProperties::getFirstHalfOfIp)
+            .collect(Collectors.toSet());
+
+        // Adding to LinkedHashSet to ensure full IP addresses are checked first
+        final Collection<String> expandedIpAddresses = new LinkedHashSet<>(rawIpAddresses);
+        expandedIpAddresses.addAll(halfIpAddresses);
+
+        return expandedIpAddresses;
+    }
+
+    private static String getFirstHalfOfIp(final String ip) {
+        final String[] parts = ip.split("\\.");
+        return (parts.length >= 2) ? parts[0] + "." + parts[1] + "." : ip;
     }
 }

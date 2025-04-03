@@ -115,11 +115,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      */
     @Override
     public int redactElements() {
-        final WebElement addressValueElement = driver.findElement(By.xpath("//tr[td[text()='Address']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, addressValueElement);
+//        final WebElement addressValueElement = driver.findElement(By.xpath("//tr[td[text()='Address']]/td[2]"));
+//        ScriptExecutor.redactInnerTextOf(driver, addressValueElement);
 
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement);
+        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
         final int superRedactedElements = super.redactElements();
 
         final List<WebElement> securityLogPasswordElements = driver
@@ -137,9 +137,9 @@ public class HdBitsHandler extends AbstractTrackerHandler {
 
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        // Adding tag with definitely no data to redact, but needed for logging since we override the method otherwise
         return List.of(
-            By.xpath("//div[@class='footer']")
+            By.xpath("//tr[td[text()='Address']]/td[2]"),
+            By.xpath("//td[text()='Sec log']/following-sibling::td/table//td")
         );
     }
 

@@ -59,7 +59,8 @@ public class AnthelionHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a")
+            By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email:')]/a[1]"), // Email address
+            By.xpath("//div[@id='footer']/div[2]/a[1]/span[3]") // Footer with last-used IP address (not always visible)
         );
     }
 

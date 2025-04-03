@@ -21,8 +21,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.zodac.tracker.ProfileScreenshotter;
 import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.ConfigurationProperties;
@@ -313,6 +311,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
             .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
             .toList();
 
+        // TODO: If redacting text, keep all text but remove IP/email address only?
         for (final WebElement element : elementsToBeRedacted) {
             ScriptExecutor.redactInnerTextOf(driver, element);
         }
@@ -449,22 +448,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * @return {@code true} if it contains one of the specified IP addresses
      */
     protected static boolean doesElementContainIpAddress(final WebElement element) {
-        // Includes the defined IP addresses, and the first half of each IP address for partial matches
-        final Collection<String> expandedIpAddresses = CONFIG.ipAddresses()
-            .stream()
-            .flatMap(ip -> Stream.of(ip, getFirstHalfOfIp(ip)))
-            .collect(Collectors.toSet());
-
-        return doesElementContain(element, expandedIpAddresses);
+        return doesElementContain(element, CONFIG.ipAddresses());
     }
 
     private static boolean doesElementContain(final WebElement element, final Collection<String> stringsToFind) {
         return stringsToFind.stream()
             .anyMatch(stringToFind -> element.getText().contains(stringToFind));
-    }
-
-    private static String getFirstHalfOfIp(final String ip) {
-        final String[] parts = ip.split("\\.");
-        return (parts.length >= 2) ? parts[0] + "." + parts[1] + "." : ip;
     }
 }

@@ -105,7 +105,7 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("span")
+            By.xpath("//tr[td[1][contains(text(), 'Connectable')]]/td[2]//span") // Last connected IP address
         );
     }
 
