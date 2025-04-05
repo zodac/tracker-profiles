@@ -153,10 +153,23 @@ public final class ScriptExecutor {
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page
      * @param element the {@link WebElement} to redact
+     * @see #redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element) {
+        redactInnerTextOf(driver, element, createSubstitutionText(element));
+    }
+
+    /**
+     * Updates the text of the provided {@link WebElement} and replaces the value with {@code #redactionText}. This can be valuable when trying to
+     * hide/redact sensitive information like IP addresses.
+     *
+     * @param driver        the {@link JavascriptExecutor} with the loaded web page
+     * @param element       the {@link WebElement} to redact
+     * @param redactionText the text to replace the existing text in the {@link WebElement}
+     */
+    public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element, final String redactionText) {
         LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
-        driver.executeScript(String.format("arguments[0].innerText = '%s'", createSubstitutionText(element)), element);
+        driver.executeScript(String.format("arguments[0].innerText = '%s'", redactionText), element);
     }
 
     private static String createSubstitutionText(final WebElement element) {
@@ -181,19 +194,6 @@ public final class ScriptExecutor {
             .replace("\"", "\\\"")
             .replace("\r", "")
             .replace("\n", "\\n");
-    }
-
-    /**
-     * Updates the text of the provided {@link WebElement} and replaces the value with {@code #redactionText}. This can be valuable when trying to
-     * hide/redact sensitive information like IP addresses.
-     *
-     * @param driver        the {@link JavascriptExecutor} with the loaded web page
-     * @param element       the {@link WebElement} to redact
-     * @param redactionText the text to replace the existing text in the {@link WebElement}
-     */
-    public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element, final String redactionText) {
-        LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
-        driver.executeScript(String.format("arguments[0].innerText = '%s'", redactionText), element);
     }
 
     /**
