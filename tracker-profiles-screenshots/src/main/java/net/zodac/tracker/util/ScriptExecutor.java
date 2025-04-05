@@ -147,19 +147,6 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Reads the text of the provided {@link WebElement} and replaces the {@link ConfigurationProperties#ipAddresses()} and
-     * {@link ConfigurationProperties#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
-     * sensitive information like IP addresses. This will attempt to retain all other text in the provided {@link WebElement}.
-     *
-     * @param driver  the {@link JavascriptExecutor} with the loaded web page
-     * @param element the {@link WebElement} to redact
-     * @see #redactInnerTextOf(JavascriptExecutor, WebElement, String)
-     */
-    public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element) {
-        redactInnerTextOf(driver, element, createSubstitutionText(element));
-    }
-
-    /**
      * Updates the text of the provided {@link WebElement} and replaces the value with {@code #redactionText}. This can be valuable when trying to
      * hide/redact sensitive information like IP addresses.
      *
@@ -172,8 +159,28 @@ public final class ScriptExecutor {
         driver.executeScript(String.format("arguments[0].innerText = '%s'", redactionText), element);
     }
 
-    private static String createSubstitutionText(final WebElement element) {
-        String substitutionText = element.getDomProperty("textContent");
+    /**
+     * Reads the HTML of the provided {@link WebElement} and replaces the {@link ConfigurationProperties#ipAddresses()} and
+     * {@link ConfigurationProperties#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
+     * sensitive information like IP addresses. This will attempt to retain all other text and HTML elements in the provided {@link WebElement}.
+     *
+     * @param driver  the {@link JavascriptExecutor} with the loaded web page
+     * @param element the {@link WebElement} to redact
+     */
+    public static void redactHtmlOf(final JavascriptExecutor driver, final WebElement element) {
+        LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
+
+        String htmlContent = (String) driver.executeScript("return arguments[0].outerHTML", element);
+        if (htmlContent == null) {
+            htmlContent = "";
+        }
+
+        final String substitutionText = createSubstitutionText(htmlContent);
+        driver.executeScript(String.format("arguments[0].outerHTML = '%s'", substitutionText), element);
+    }
+
+    private static String createSubstitutionText(final String elementText) {
+        String substitutionText = elementText;
         if (substitutionText == null) {
             return "";
         }

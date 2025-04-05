@@ -18,17 +18,19 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
+import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeBytes} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Tasmanites} tracker.
  */
-@TrackerHandler(name = "AnimeBytes", needsManualInput = false, url = "https://animebytes.tv/")
-public class AnimeBytesHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "Tasmanites", needsManualInput = true, url = "https://tasmanit.es/")
+public class TasmanitesHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
@@ -36,35 +38,49 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public AnimeBytesHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public TasmanitesHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
     @Override
-    public By loginPageSelector() {
-        return By.id("nav_login");
+    protected By usernameFieldSelector() {
+        return By.xpath("//tbody[@id='collapseobj_loginbox']//input[@name='username' and @type='text']");
     }
 
     @Override
-    public By loginButtonSelector() {
-        return By.xpath("//input[@value='Log In!' and @type='submit']");
+    protected By passwordFieldSelector() {
+        return By.xpath("//tbody[@id='collapseobj_loginbox']//input[@name='password' and @type='password']");
+    }
+
+    @Nullable
+    @Override
+    protected By loginButtonSelector() {
+        return By.xpath("//tbody[@id='collapseobj_loginbox']//input[@value='LOGIN' and @type='submit']");
     }
 
     @Override
     protected By postLoginSelector() {
-        return By.id("content");
+        return By.id("collapseobj_loginbox");
     }
 
     @Override
     protected By profilePageSelector() {
-        return By.xpath("//a[@class='username']");
+        return By.xpath("//tbody[@id='collapseobj_loginbox']/tr[1]/td[1]/a[1]");
+    }
+
+    @Override
+    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
+        return List.of(
+            By.xpath("//tbody[@id='collapseobj_content2a']/tr[1]/td[1]"), // Email
+            By.xpath("//tbody[@id='collapseobj_content2c']/tr[1]/td[1]") // IP address
+        );
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>
-     * For {@link AnimeBytesHandler}, after clicking the logout button, another button appears to confirm logout, which must be clicked.
+     * For {@link TasmanitesHandler}, after clicking the logout button, a Javascript alert appears, which must be accepted.
      */
     @Override
     public void logout() {
@@ -73,11 +89,8 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         clickButton(logoutButton);
 
-        // After clicking logout, a confirmation box appears - find and click 'Yes'
-        final By logoutConfirmationSelector = By.xpath("//form[@id='tokenconfirm']//input[@name='yes' and @type='submit']");
-        ScriptExecutor.waitForElementToAppear(driver, logoutConfirmationSelector, DEFAULT_WAIT_FOR_TRANSITIONS);
-        final WebElement logoutConfirmation = driver.findElement(logoutConfirmationSelector);
-        clickButton(logoutConfirmation);
+        // After clicking logout, a Chrome alert appears - find and click 'Yes'
+        ScriptExecutor.acceptAlert(driver);
 
         ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
         ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
@@ -85,11 +98,6 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
 
     @Override
     protected By logoutButtonSelector() {
-        // Click the user dropdown menu bar to make the logout button interactable
-        final By logoutParentSelector = By.xpath("//li[@id='username_menu']//span[contains(@class, 'clickmenu')]");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        logoutParent.click();
-
-        return By.xpath("//li[@id='username_menu']//ul[contains(@class, 'subnav')]//a[text()='Logout']");
+        return By.xpath("//div[@id='top']/div[2]/span[1]/a[2]");
     }
 }

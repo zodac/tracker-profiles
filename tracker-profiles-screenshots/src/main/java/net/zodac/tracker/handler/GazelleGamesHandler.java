@@ -91,12 +91,18 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link GazelleGamesHandler}, after clicking the logout button, a Javascript alert appears, which must be accepted.
+     */
     @Override
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();
         ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
-        logoutButton.click();
+        clickButton(logoutButton);
 
         // After clicking logout, a Chrome alert appears - find and click 'Yes'
         ScriptExecutor.acceptAlert(driver);
