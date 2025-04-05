@@ -274,12 +274,13 @@ public final class ScriptExecutor {
             explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
 
             // After translation, some username elements will have been incorrectly translated
-            final By mistranslatedElementSelector = By.xpath(String.format("//*[contains(text(), '%s')]", mistranslatedUsername));
-            for (final WebElement element : driver.findElements(mistranslatedElementSelector)) {
-                driver.executeScript(String.format("arguments[0].innerText = '%s'", username), element);
+            if (mistranslatedUsername != null) {
+                final By mistranslatedElementSelector = By.xpath(String.format("//*[contains(text(), '%s')]", mistranslatedUsername));
+                for (final WebElement element : driver.findElements(mistranslatedElementSelector)) {
+                    driver.executeScript(String.format("arguments[0].innerText = '%s'", username), element);
+                }
+                explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
             }
-
-            explicitWait(DEFAULT_WAIT_FOR_TRANSLATION);
         } catch (final AWTException e) {
             throw new TranslationException(e);
         }
