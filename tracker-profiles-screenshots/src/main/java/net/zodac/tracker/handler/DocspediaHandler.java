@@ -108,18 +108,16 @@ public class DocspediaHandler extends AbstractTrackerHandler {
      */
     @Override
     public int redactElements() {
-        final int superRedactedElements = super.redactElements();
-
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
 
-        return superRedactedElements + 1;
+        return 1 + super.redactElements();
     }
 
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("td")
+            By.xpath("//table/tbody/tr[td[contains(text(), 'Address')]]/td[2]") // IP address
         );
     }
 

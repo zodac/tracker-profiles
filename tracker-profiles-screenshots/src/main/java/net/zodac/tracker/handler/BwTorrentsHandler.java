@@ -70,7 +70,7 @@ public class BwTorrentsHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a")
+            By.xpath("//div[@id='details_mail']/a[1]") // Email
         );
     }
 

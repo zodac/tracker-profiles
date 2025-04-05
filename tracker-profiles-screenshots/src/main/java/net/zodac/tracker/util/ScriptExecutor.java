@@ -156,20 +156,31 @@ public final class ScriptExecutor {
      */
     public static void redactInnerTextOf(final JavascriptExecutor driver, final WebElement element) {
         LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
-
-        final String substitutionText = createSubstitutionText(element);
-        driver.executeScript(String.format("arguments[0].innerText = '%s'", substitutionText), element);
+        driver.executeScript(String.format("arguments[0].innerText = '%s'", createSubstitutionText(element)), element);
     }
 
     private static String createSubstitutionText(final WebElement element) {
-        String substitutionText = element.getText();
+        String substitutionText = element.getDomProperty("textContent");
+        if (substitutionText == null) {
+            return "";
+        }
+
         for (final String ipAddress : Configuration.get().ipAddresses()) {
             substitutionText = substitutionText.replace(ipAddress, DEFAULT_REDACTION_TEXT);
         }
         for (final String emailAddress : Configuration.get().emailAddresses()) {
             substitutionText = substitutionText.replace(emailAddress, DEFAULT_REDACTION_TEXT);
         }
-        return substitutionText;
+        return escapeForJavaScriptString(substitutionText);
+    }
+
+    private static String escapeForJavaScriptString(final String input) {
+        return input
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\"", "\\\"")
+            .replace("\r", "")
+            .replace("\n", "\\n");
     }
 
     /**

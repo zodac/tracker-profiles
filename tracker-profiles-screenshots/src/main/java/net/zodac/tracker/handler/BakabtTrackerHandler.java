@@ -69,7 +69,7 @@ public class BakabtTrackerHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a")
+            By.xpath("//table[@class='userstats']/tbody/tr[td[1][contains(text(), 'E-mail')]]/td[2]/a[1]") // Email
         );
     }
 

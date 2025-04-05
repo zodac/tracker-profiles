@@ -65,7 +65,7 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("td")
+            By.xpath("//tr[td[contains(text(), 'E-mail')]]/td[2]")
         );
     }
 

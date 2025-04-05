@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
+import net.zodac.tracker.framework.TrackerDisabled;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -29,6 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code RareShare2} tracker.
  */
 @TrackerHandler(name = "RareShare2", needsManualInput = false, url = "https://rareshare2.me/")
+@TrackerDisabled(date = "2025-04-05", reason = "Website down")
 public class RareShare2Handler extends AbstractTrackerHandler {
 
     /**

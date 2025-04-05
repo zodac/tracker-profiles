@@ -305,13 +305,22 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     // TODO: Rather than redacting the text, maybe put a solid red block over the content to hide it more explicitly?
     public int redactElements() {
-        final Collection<WebElement> elementsToBeRedacted = getElementsPotentiallyContainingSensitiveInformation()
+        final Collection<By> selectors = getElementsPotentiallyContainingSensitiveInformation();
+        if (selectors.isEmpty()) {
+            return 0;
+        }
+
+        final Collection<WebElement> elementsToBeRedacted = selectors
             .stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
             .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
             .toList();
 
-        // TODO: If redacting text, keep all text but remove IP/email address only?
+        if (elementsToBeRedacted.isEmpty()) {
+            LOGGER.warn("\t\t- Unexpectedly found no elements to redact");
+            return 0;
+        }
+
         for (final WebElement element : elementsToBeRedacted) {
             ScriptExecutor.redactInnerTextOf(driver, element);
         }

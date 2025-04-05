@@ -62,7 +62,8 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a")
+            By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email:')]/a[1]"), // Email
+            By.xpath("//div[@id='footer']/p[2]/a[1]/span[3]") // Footer with last used IP address
         );
     }
 

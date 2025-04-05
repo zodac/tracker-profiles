@@ -103,43 +103,29 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     }
 
     /**
-     * For {@link HdBitsHandler}, there is a table with our IP address and passkey. We find the {@literal <}{@code tr}{@literal >} {@link WebElement}s
-     * which have a {@literal <}{@code th}{@literal >} {@link WebElement} with the text value <b>Address</b> or <b>Passkey</b>.
-     * From this {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted. There is
-     * also a table of IPs that have been used for login that needs to be traversed and redacted.
+     * {@inheritDoc}
      *
      * <p>
-     * We do <b>not</b> execute the super-method {@link AbstractTrackerHandler#redactElements()}, due to constant 'stale element reference' errors.
+     * For {@link HdBitsHandler}, there is also a table entry with our passkey. We find the {@literal <}{@code tr}{@literal >} {@link WebElement}s
+     * which has a {@literal <}{@code th}{@literal >} {@link WebElement} with the text value <b>Passkey</b>. From this
+     * {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted.
      *
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
+     * @see AbstractTrackerHandler#redactElements()
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     @Override
     public int redactElements() {
-//        final WebElement addressValueElement = driver.findElement(By.xpath("//tr[td[text()='Address']]/td[2]"));
-//        ScriptExecutor.redactInnerTextOf(driver, addressValueElement);
-
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
-        final int superRedactedElements = super.redactElements();
 
-        final List<WebElement> securityLogPasswordElements = driver
-            .findElements(By.xpath("//td[text()='Sec log']/following-sibling::td/table//td"))
-            .stream()
-            .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
-            .toList();
-
-        for (final WebElement element : securityLogPasswordElements) {
-            ScriptExecutor.redactInnerTextOf(driver, element);
-        }
-
-        return securityLogPasswordElements.size() + superRedactedElements;
+        return 1 + super.redactElements();
     }
 
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.xpath("//tr[td[text()='Address']]/td[2]"),
-            By.xpath("//td[text()='Sec log']/following-sibling::td/table//td")
+            By.xpath("//tr[td[text()='Address']]/td[2]"), // IP address
+            By.xpath("//td[text()='Sec log']/following-sibling::td/table//td") // IP address history
         );
     }
 

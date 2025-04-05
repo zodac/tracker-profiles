@@ -74,7 +74,7 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.xpath("//div[@class='blockBody']//table//tbody//td[@class='row1']")
+            By.xpath("//div[@class='blockBody']//table/tbody/tr[td[contains(text(), 'Address')]]/td[2]")
         );
     }
 

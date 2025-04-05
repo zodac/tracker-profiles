@@ -98,7 +98,7 @@ public class EmporniumHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a")
+            By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email')]/a[1]") // Email
         );
     }
 

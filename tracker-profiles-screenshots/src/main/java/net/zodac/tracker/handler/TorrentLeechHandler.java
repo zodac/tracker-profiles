@@ -94,22 +94,20 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
      * its content redacted.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement)
+     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
      */
     @Override
     public int redactElements() {
-        final int superRedactedElements = super.redactElements();
-
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Torrent Passkey']]/td[2]"));
         ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, ScriptExecutor.DEFAULT_REDACTION_TEXT);
 
-        return superRedactedElements + 1;
+        return 1 + super.redactElements();
     }
 
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("td")
+            By.xpath("//tr[td[contains(text(), 'Email')]]/td[2]")
         );
     }
 

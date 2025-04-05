@@ -77,20 +77,20 @@ public class PornBayHandler extends AbstractTrackerHandler {
      */
     @Override
     public int redactElements() {
-        final int superRedactedElements = super.redactElements();
-
+        final By passkeyElementSelector = By.xpath(String.format("//ul[contains(@class, 'stats')]/li[contains(text(), '%s')]", PASSKEY_PREFIX));
+        final WebElement passkeyElement = driver.findElement(passkeyElementSelector);
         final String passkeyRedactionText = PASSKEY_PREFIX + ScriptExecutor.DEFAULT_REDACTION_TEXT;
-        final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(),'%s')]", PASSKEY_PREFIX)));
         ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
 
-        return superRedactedElements + 1;
+        return 1 + super.redactElements();
     }
 
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.tagName("a"),
-            By.tagName("span")
+            By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email')]/a[1]"), // Email
+            By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Connectable')]/span[1]"), // IP address
+            By.xpath("//a[@title='Manage Sessions']") // Footer with last used IP address
         );
     }
 
