@@ -22,8 +22,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
+import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
-import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,8 +38,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Abstract class used to define a {@link AbstractTrackerHandler}. All implementations will be used by {@link ProfileScreenshotter},
- * if the tracker is included in the {@code trackers.csv} input file. This class lists the high-level methods required for
- * {@link ProfileScreenshotter} to be able to successfully generate a screenshot for a given tracker.
+ * if the tracker is included in the {@link ApplicationConfiguration#trackerInputFilePath()} file. This class lists the high-level methods required
+ * for {@link ProfileScreenshotter} to be able to successfully generate a screenshot for a given tracker.
  *
  * <p>
  * Since each tracker website has its own UI and own page structure, each implementation of {@link AbstractTrackerHandler} will contain the
@@ -48,9 +48,9 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public abstract class AbstractTrackerHandler implements AutoCloseable {
 
     /**
-     * The {@link ConfigurationProperties} for the application.
+     * The {@link ApplicationConfiguration} for the application.
      */
-    protected static final ConfigurationProperties CONFIG = Configuration.get();
+    protected static final ApplicationConfiguration CONFIG = Configuration.get();
 
     /**
      * The default wait {@link Duration} when waiting for a web page load.

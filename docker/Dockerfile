@@ -42,6 +42,6 @@ RUN apt-get update && \
 COPY --from=maven_build /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar tracker-profiles.jar
 
 ## Command to run the main function
-COPY start.sh /app/start.sh
+COPY ./docker/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 CMD ["/app/start.sh"]

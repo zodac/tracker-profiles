@@ -18,7 +18,7 @@
 package net.zodac.tracker.framework;
 
 /**
- * Singleton class used to create an instance of {@link ConfigurationProperties}.
+ * Singleton class used to create an instance of {@link ApplicationConfiguration}.
  */
 public final class Configuration {
 
@@ -27,15 +27,15 @@ public final class Configuration {
     }
 
     private static final class InstanceHolder {
-        private static final ConfigurationProperties INSTANCE = ConfigurationProperties.loadProperties();
+        private static final ApplicationConfiguration INSTANCE = ApplicationConfiguration.load();
     }
 
     /**
-     * Retrieve an instance of {@link ConfigurationProperties}.
+     * Retrieve an instance of {@link ApplicationConfiguration}.
      *
-     * @return the {@link ConfigurationProperties}.
+     * @return the {@link ApplicationConfiguration}.
      */
-    public static ConfigurationProperties get() {
+    public static ApplicationConfiguration get() {
         return InstanceHolder.INSTANCE;
     }
 }

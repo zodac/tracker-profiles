@@ -46,7 +46,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
  */
 public final class TrackerHandlerFactory {
 
-    private static final ConfigurationProperties CONFIG = Configuration.get();
+    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Set<Class<?>> TRACKER_HANDLER_CLASSES = findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName());
 
     private TrackerHandlerFactory() {

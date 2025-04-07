@@ -20,9 +20,10 @@ package net.zodac.tracker.util;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import javax.imageio.ImageIO;
+import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
-import net.zodac.tracker.framework.ConfigurationProperties;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -34,8 +35,8 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
  */
 public final class ScreenshotTaker {
 
-    private static final ConfigurationProperties CONFIG = Configuration.get();
-    private static final int TIME_BETWEEN_SCROLLS_IN_MILLISECONDS = 500;
+    private static final ApplicationConfiguration CONFIG = Configuration.get();
+    private static final Duration TIME_BETWEEN_SCROLLS = Duration.ofMillis(500L);
 
     private ScreenshotTaker() {
 
@@ -60,11 +61,6 @@ public final class ScreenshotTaker {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver);
         final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");
         ImageIO.write(screenshotImage, "PNG", screenshot);
-
-        if (CONFIG.previewTrackerScreenshot()) {
-            FileOpener.open(screenshot.getAbsoluteFile());
-        }
-
         ScriptExecutor.scrollToTheTop(driver);
         return screenshot;
     }
@@ -72,7 +68,7 @@ public final class ScreenshotTaker {
     private static BufferedImage takeScreenshotOfEntirePage(final RemoteWebDriver driver) {
         ScriptExecutor.disableScrolling(driver);
         final BufferedImage screenshot = new AShot()
-            .shootingStrategy(ShootingStrategies.viewportPasting(TIME_BETWEEN_SCROLLS_IN_MILLISECONDS))
+            .shootingStrategy(ShootingStrategies.viewportPasting(((Long) TIME_BETWEEN_SCROLLS.toMillis()).intValue()))
             .takeScreenshot(driver)
             .getImage();
 

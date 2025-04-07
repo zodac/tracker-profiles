@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration monitorInterval="60">
+    <Properties>
+        <!-- Use 'LOG_LEVEL' from environment, or default to INFO -->
+        <Property name="rootLevel">${env:LOG_LEVEL:-INFO}</Property>
+    </Properties>
+
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%highlight{%-4level}{FATAL=red, ERROR=bold red, WARN=bold yellow, INFO=bold blue, DEBUG=bold green, TRACE=bold magenta}] %msg%n" />
@@ -12,8 +17,8 @@
             <AppenderRef ref="CONSOLE"/>
         </Logger>
 
-        <root level="INFO">
+        <Root level="${rootLevel}">
             <AppenderRef ref="CONSOLE"/>
-        </root>
+        </Root>
     </Loggers>
 </Configuration>

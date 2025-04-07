@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.csv.CSVFormat;
@@ -29,12 +30,11 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 /**
- * Utility class to read the {@code trackers.csv} input file.
+ * Utility class to read the {@link ApplicationConfiguration#trackerInputFilePath()} file.
  */
 public final class TrackerCsvReader {
 
-    private static final ConfigurationProperties CONFIG = Configuration.get();
-    private static final String CSV_FILE_NAME = "trackers.csv";
+    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final String[] CSV_HEADERS = {"trackerName", "username", "password"};
     private static final CSVFormat DEFAULT_FORMAT = CSVFormat.DEFAULT
         .builder()
@@ -48,14 +48,14 @@ public final class TrackerCsvReader {
     }
 
     /**
-     * Reads the input file {@value CSV_FILE_NAME}, and converts each row into a {@link TrackerDefinition}.
+     * Reads the input file {@link ApplicationConfiguration#trackerInputFilePath()}, and converts each row into a {@link TrackerDefinition}.
      *
      * @return the {@link List} of {@link TrackerDefinition}s
-     * @throws IOException throw if there is a problem reading the header or skipping the first record
+     * @throws IOException thrown if there is a problem reading the header or skipping the first record
      * @see TrackerDefinition#fromCsv(CSVRecord)
      */
     public static List<TrackerDefinition> readTrackerInfo() throws IOException {
-        try (final InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(CSV_FILE_NAME);
+        try (final InputStream inputStream = Files.newInputStream(CONFIG.trackerInputFilePath());
              final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
              final CSVParser csvParser = CSVParser.builder().setReader(reader).setFormat(DEFAULT_FORMAT).get()
         ) {

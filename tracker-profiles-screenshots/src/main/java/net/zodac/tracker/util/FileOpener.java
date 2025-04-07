@@ -38,6 +38,9 @@ public final class FileOpener {
      *     <li>Linux: {@code xdg-open}</li>
      * </ul>
      *
+     * <p>
+     * <b>NOTE:</b> This will not work if the application is executed through docker. Sorry. :(
+     *
      * @param fileToOpen the {@link File} to be opened
      * @throws IOException thrown if there is any error opening the {@link File}
      */

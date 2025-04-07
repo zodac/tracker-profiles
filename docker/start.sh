@@ -5,25 +5,17 @@ main() {
 
     # Start Google Chrome in the background with suppressed output
     google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
-    CHROME_PID=$!
 
     # Run Java application
     java -jar /app/tracker-profiles.jar
     JAVA_EXIT_CODE=$?
 
-    if [[ ${JAVA_EXIT_CODE} -eq 0 ]] || [[ ${JAVA_EXIT_CODE} -eq 2 ]]; then
-        echo "Success/Partial failure"
-        # Open output dir
-    else
-        echo "Failure"
-        # Kill and cleanup
+    if [[ ${JAVA_EXIT_CODE} -eq 1 ]]; then
+        echo -e "\e[31mFailed to take screenshots, please review logs\e[0m"
+        kill $$
     fi
 
-
-    echo "Backup complete in $(get_execution_time "${start_time}")"
-
-    # Keep script alive indefinitely
-    while true; do sleep 1; done
+    echo -e "\e[32mScreenshots complete in $(get_execution_time "${start_time}")\e[0m"
 }
 
 get_execution_time() {
@@ -56,13 +48,4 @@ _convert_to_natural_time() {
     echo "${natural_time}"
 }
 
-# Function to handle termination signals
-cleanup() {
-    echo "Stopping Chrome and exiting..."
-    kill -SIGTERM "${CHROME_PID}" 2>/dev/null
-    wait "${CHROME_PID}"
-    exit 0
-}
-
-trap cleanup SIGINT SIGTERM
 main

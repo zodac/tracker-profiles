@@ -24,8 +24,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
+import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
-import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.exception.TranslationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,8 +160,8 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Reads the HTML of the provided {@link WebElement} and replaces the {@link ConfigurationProperties#ipAddresses()} and
-     * {@link ConfigurationProperties#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
+     * Reads the HTML of the provided {@link WebElement} and replaces the {@link ApplicationConfiguration#ipAddresses()} and
+     * {@link ApplicationConfiguration#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
      * sensitive information like IP addresses. This will attempt to retain all other text and HTML elements in the provided {@link WebElement}.
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page

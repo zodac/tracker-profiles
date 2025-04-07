@@ -28,8 +28,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
-import net.zodac.tracker.framework.ConfigurationProperties;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
@@ -49,12 +49,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
 /**
- * Main driver class, which takes a screenshot of the profile page of each tracker listed in the {@code trackers.csv} input file.
+ * Main driver class, which takes a screenshot of the profile page of each tracker listed in the
+ * {@link ApplicationConfiguration#trackerInputFilePath()} file.
  */
 public final class ProfileScreenshotter {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ConfigurationProperties CONFIG = Configuration.get();
+    private static final ApplicationConfiguration CONFIG = Configuration.get();
 
     // Failure codes
     private static final int FAILURE_CODE = 1;
@@ -66,14 +67,14 @@ public final class ProfileScreenshotter {
     }
 
     /**
-     * Parses the {@code trackers.csv} input file using {@link TrackerCsvReader}, then iterates through each {@link TrackerDefinition}. For each
-     * tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page (after logging in and any other
-     * required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by {@link ScreenshotTaker}, then saved
-     * in the {@link ConfigurationProperties#outputDirectory()}.
+     * Parses the {@link ApplicationConfiguration#trackerInputFilePath()} file using {@link TrackerCsvReader}, then iterates through each
+     * {@link TrackerDefinition}. For each tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page
+     * (after logging in and any other required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by
+     * {@link ScreenshotTaker}, then saved in the {@link ApplicationConfiguration#outputDirectory()}.
      *
      * <p>
      * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
-     * {@link ConfigurationProperties#browserDimensions()}. If {@link ConfigurationProperties#useHeadlessBrowser()} is {@code true}, then the
+     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#useHeadlessBrowser()} is {@code true}, then the
      * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
      * debugging.
      *
@@ -140,7 +141,9 @@ public final class ProfileScreenshotter {
                 LOGGER.error("\t- {}", unsuccessfulTracker);
             }
             return FAILURE_CODE;
-        } else {
+        }
+
+        if (CONFIG.openOutputDirectory()) {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
             LOGGER.debug("Opening: '{}'", directory);
             try {

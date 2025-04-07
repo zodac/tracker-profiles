@@ -59,7 +59,7 @@ public final class DisplayUtils {
     // UI element constants
     private static final String TITLE_SUFFIX = " Manual Input";
     private static final String LABEL_SUFFIX = ", then click 'Continue'";
-    private static final String BUTTON_CONTINUE_TEXT = "Continue"; // TODO: Add another button to cancel
+    private static final String BUTTON_CONTINUE_TEXT = "Continue"; // TODO: Add another button to cancel?
     private static final String REMAINING_TIME_PREFIX = "Time remaining: ";
     private static final int DIALOG_BOX_HEIGHT = 200;
     private static final int DIALOG_BOX_WIDTH = 500;

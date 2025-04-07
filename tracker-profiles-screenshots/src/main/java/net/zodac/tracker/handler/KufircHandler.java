@@ -90,7 +90,7 @@ public class KufircHandler extends AbstractTrackerHandler {
         final int superRedactedElements = super.redactElements();
 
         final String passkeyRedactionText = PASSKEY_PREFIX + ScriptExecutor.DEFAULT_REDACTION_TEXT;
-        final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(),'%s')]", PASSKEY_PREFIX)));
+        final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(), '%s')]", PASSKEY_PREFIX)));
         ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
 
         return superRedactedElements + 1;
