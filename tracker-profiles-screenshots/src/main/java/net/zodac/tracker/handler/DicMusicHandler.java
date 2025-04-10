@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -28,8 +30,10 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DICMusic} tracker.
  */
-@TrackerHandler(name = "DICMusic", needsManualInput = true, url = "https://dicmusic.com/")
+@TrackerHandler(name = "DICMusic", needsManualInput = false, url = "https://dicmusic.com/")
 public class DicMusicHandler extends AbstractTrackerHandler {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.
@@ -71,8 +75,8 @@ public class DicMusicHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean isNotEnglish(final String username) {
-        ScriptExecutor.translatePage(driver, username, "give up");
-        return true;
+        LOGGER.debug("Not translating, there is an option in the user settings to translate DIC to English");
+        return false;
     }
 
     @Override

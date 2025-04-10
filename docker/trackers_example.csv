@@ -9,6 +9,7 @@ BakaBT,username,password
 Blutopia,username,password
 BwTorrents,username,password
 Cathode-Ray.Tube,username,password
+DICMusic,username,password
 Empornium,username,password
 FearNoPeer,username,password
 FileList,username,password
@@ -43,7 +44,6 @@ PassThePopcorn,username,password
 TheEmpire,username,password
 TheGeeks,username,password
 # Non-english trackers (require non-headless mode)
-DICMusic,username,password
 Kufirc,username,password
 Lat-Team,username,password
 RUTracker,username,password
