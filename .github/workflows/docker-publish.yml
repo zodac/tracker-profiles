@@ -23,6 +23,11 @@ jobs:
         with:
           fetch-depth: 0  # Needed for pushing tags
 
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
       - name: Read current version
         id: version
         run: |
@@ -31,18 +36,11 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
 
       # Set up Java & Maven to execute tests
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          cache: 'maven'
-          distribution: 'temurin'
-          java-version: '23'
-
       - name: Cache local .m2
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**.pom.xml') }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
@@ -56,7 +54,7 @@ jobs:
 
       - name: Set Maven version from VERSION file
         run: |
-          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
+          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false -DprocessAllModules
 
       - name: Run lints and test with Maven
         env:
@@ -77,6 +75,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v5
         with:
+          cache-from: type=registry,ref=zodac/tracker-profiles:cache
+          cache-to: type=registry,ref=zodac/tracker-profiles:cache,mode=max
           context: .
           file: ./docker/Dockerfile
           push: true
@@ -86,10 +86,7 @@ jobs:
 
       - name: Tag current version in git (only if Docker build succeeds)
         if: success()
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ steps.version.outputs.version }}
+        run: git tag ${{ steps.version.outputs.version }}
 
       - name: Bump patch version in VERSION file
         run: |
@@ -101,13 +98,10 @@ jobs:
           echo "$next_version" > VERSION
           
           # Set Maven project version to next development SNAPSHOT version
-          mvn versions:set -DnewVersion="$next_version-SNAPSHOT" -DgenerateBackupPoms=false
+          mvn versions:set -DnewVersion="$next_version-SNAPSHOT" -DgenerateBackupPoms=false -DprocessAllModules
 
           # Push changes
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add VERSION
-          git add pom.xml */pom.xml
+          git add VERSION pom.xml */pom.xml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
