@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
  */
-@TrackerHandler(name = "Blutopia", needsManualInput = false, url = "https://blutopia.cc/")
+@TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/")
 public class BlutopiaHandler extends AbstractTrackerHandler {
 
     /**

@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PornBay} tracker.
  */
-@TrackerHandler(name = "PornBay", needsManualInput = false, url = "https://pornbay.org/")
+@TrackerHandler(name = "PornBay", url = "https://pornbay.org/")
 public class PornBayHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";

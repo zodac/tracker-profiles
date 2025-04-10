@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code SeedPool} tracker.
  */
-@TrackerHandler(name = "SeedPool", needsManualInput = false, url = "https://seedpool.org/")
+@TrackerHandler(name = "SeedPool", url = "https://seedpool.org/")
 public class SeedPoolHandler extends AbstractTrackerHandler {
 
     /**

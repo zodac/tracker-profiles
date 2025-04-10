@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code LST} tracker.
  */
-@TrackerHandler(name = "LST", needsManualInput = false, url = "https://lst.gg/")
+@TrackerHandler(name = "LST", url = "https://lst.gg/")
 public class LstHandler extends AbstractTrackerHandler {
 
     /**

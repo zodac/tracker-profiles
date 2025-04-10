@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
  */
-@TrackerHandler(name = "Empornium", needsManualInput = false, url = {
+@TrackerHandler(name = "Empornium", url = {
     "https://www.empornium.is/",
     "https://www.empornium.sx/"
 })

@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Tasmanites} tracker.
  */
-@TrackerHandler(name = "Tasmanites", needsManualInput = false, url = "https://tasmanit.es/")
+@TrackerHandler(name = "Tasmanites", url = "https://tasmanit.es/")
 public class TasmanitesHandler extends AbstractTrackerHandler {
 
     /**

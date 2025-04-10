@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -26,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code RUTracker} tracker.
  */
-@TrackerHandler(name = "RUTracker", needsManualInput = true, url = {
+@TrackerHandler(name = "RUTracker", type = TrackerType.NON_ENGLISH, url = {
     "https://rutracker.org/",
     "https://rutracker.net/"
 })

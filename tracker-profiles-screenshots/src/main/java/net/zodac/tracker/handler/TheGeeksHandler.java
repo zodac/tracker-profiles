@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +34,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code TheGeeks} tracker.
  */
 // TODO: Update annotation to easily combine similar trackers (like this and TheEmpire)
-@TrackerHandler(name = "TheGeeks", needsManualInput = true, url = "https://thegeeks.click/")
+@TrackerHandler(name = "TheGeeks", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://thegeeks.click/")
 public class TheGeeksHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

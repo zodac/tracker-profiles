@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BakaBT} tracker.
  */
-@TrackerHandler(name = "BakaBT", needsManualInput = false, url = "https://bakabt.me/")
+@TrackerHandler(name = "BakaBT", url = "https://bakabt.me/")
 public class BakabtTrackerHandler extends AbstractTrackerHandler {
 
     /**

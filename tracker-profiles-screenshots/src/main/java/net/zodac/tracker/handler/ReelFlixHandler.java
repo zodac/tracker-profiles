@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ReelFlix} tracker.
  */
-@TrackerHandler(name = "ReelFlix", needsManualInput = false, url = "https://reelflix.xyz/")
+@TrackerHandler(name = "ReelFlix", url = "https://reelflix.xyz/")
 public class ReelFlixHandler extends AbstractTrackerHandler {
 
     /**

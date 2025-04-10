@@ -27,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FileList} tracker.
  */
-@TrackerHandler(name = "FileList", needsManualInput = false, url = {
+@TrackerHandler(name = "FileList", url = {
     "https://filelist.io/",
     "https://thefl.org/"
 })

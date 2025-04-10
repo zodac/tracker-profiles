@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import net.zodac.tracker.framework.TrackerDisabled;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code CGPeers} tracker.
  */
-@TrackerHandler(name = "CGPeers", needsManualInput = true, url = {
+@TrackerHandler(name = "CGPeers", type = TrackerType.MANUAL_INPUT_NEEDED, url = {
     "https://cgpeers.to",
     "https://cgpeers.com"
 })

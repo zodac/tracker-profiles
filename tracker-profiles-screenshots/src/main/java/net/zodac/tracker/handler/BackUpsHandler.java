@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BackUps} tracker.
  */
-@TrackerHandler(name = "BackUps", needsManualInput = false, url = "https://back-ups.me/")
+@TrackerHandler(name = "BackUps", url = "https://back-ups.me/")
 public class BackUpsHandler extends AbstractTrackerHandler {
 
     /**

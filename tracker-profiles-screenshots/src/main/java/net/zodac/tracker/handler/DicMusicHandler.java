@@ -29,8 +29,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DICMusic} tracker.
+ *
+ * <p>
+ * While the site is not English by default, there is an option in the user settings to set the language. This avoids the need for the tracker to be
+ * translated explicitly.
  */
-@TrackerHandler(name = "DICMusic", needsManualInput = false, url = "https://dicmusic.com/")
+@TrackerHandler(name = "DICMusic", url = "https://dicmusic.com/")
 public class DicMusicHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -75,7 +79,7 @@ public class DicMusicHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean isNotEnglish(final String username) {
-        LOGGER.debug("Not translating, there is an option in the user settings to translate DIC to English");
+        LOGGER.debug("- Not translating, there is an option in the user settings to translate DIC to English");
         return false;
     }
 

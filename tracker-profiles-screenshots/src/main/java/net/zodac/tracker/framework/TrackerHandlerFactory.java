@@ -39,14 +39,12 @@ import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
- * Utility class used to retrieve an instance of a {@link AbstractTrackerHandler}.
+ * Factory class used to create an instance of a {@link AbstractTrackerHandler}.
  */
 public final class TrackerHandlerFactory {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Set<Class<?>> TRACKER_HANDLER_CLASSES = findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName());
 
     private TrackerHandlerFactory() {
@@ -101,51 +99,17 @@ public final class TrackerHandlerFactory {
         }
 
         final TrackerHandler annotation = matchingTrackerHandler.getValue();
-        return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.needsManualInput());
+        return makeNewInstance(trackerHandler, Arrays.asList(annotation.url()), annotation.type());
     }
 
-    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final List<String> urls, final boolean isManualTracker) {
+    private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final List<String> urls, final TrackerType trackerType) {
         try {
             final Constructor<?> constructorWithChromeDriverAndUrls = trackerHandler.getDeclaredConstructor(ChromeDriver.class, Collection.class);
-            final ChromeDriver driver = createDriver(isManualTracker);
+            final ChromeDriver driver = WebDriverFactory.createChromeDriver(trackerType);
             return (AbstractTrackerHandler) constructorWithChromeDriverAndUrls.newInstance(driver, urls);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException(String.format("Error instantiating an instance of '%s'", trackerHandler), e);
         }
-    }
-
-    private static ChromeDriver createDriver(final boolean isManualTracker) {
-        final ChromeOptions chromeOptions = new ChromeOptions();
-
-        // User-defined options
-        chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
-        if (!isManualTracker && CONFIG.useHeadlessBrowser()) {
-            chromeOptions.addArguments("--headless=new");
-            chromeOptions.addArguments("--start-maximized");
-        }
-
-        // Cache to avoid reloading data on subsequent runs
-        chromeOptions.addArguments("--disk-cache-dir=" + CONFIG.browserDataStoragePath() + File.separator + "selenium");
-
-        // Following 3 options are to ensure there are no conflicting issues running the browser on Linux
-        chromeOptions.addArguments("--user-data-dir=" + CONFIG.browserDataStoragePath() + File.separator + System.nanoTime());
-        chromeOptions.addArguments("--no-sandbox");
-        chromeOptions.addArguments("--disable-dev-shm-usage");
-
-        final Map<String, Object> driverPreferences = Map.of(
-            // Disable password manager pop-ups
-            "credentials_enable_service", false,
-            "profile.password_manager_enabled", false
-        );
-        chromeOptions.setExperimentalOption("prefs", driverPreferences);
-
-        // Additional flags to remove unnecessary information on browser
-        chromeOptions.addArguments("--disable-gpu");
-        chromeOptions.addArguments("--disable-notifications");
-        chromeOptions.addArguments("disable-infobars");
-        chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
-
-        return new ChromeDriver(chromeOptions);
     }
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {

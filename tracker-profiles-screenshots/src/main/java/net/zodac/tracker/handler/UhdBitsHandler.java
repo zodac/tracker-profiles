@@ -26,7 +26,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code UHDBits} tracker.
  */
-@TrackerHandler(name = "UHDBits", needsManualInput = false, url = "https://uhdbits.org/")
+@TrackerHandler(name = "UHDBits", url = "https://uhdbits.org/")
 public class UhdBitsHandler extends AbstractTrackerHandler {
 
     /**

@@ -31,7 +31,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * <p>
  * Note that the URL is set to the login page in order to bypass the site's Cloudflare check
  */
-@TrackerHandler(name = "FearNoPeer", needsManualInput = false, url = "https://fearnopeer.com/login")
+@TrackerHandler(name = "FearNoPeer", url = "https://fearnopeer.com/login")
 public class FearNoPeerHandler extends AbstractTrackerHandler {
 
     /**

@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
-@TrackerHandler(name = "TVChaosUK", needsManualInput = false, url = "https://tvchaosuk.com/")
+@TrackerHandler(name = "TVChaosUK", url = "https://tvchaosuk.com/")
 public class TvChaosUkHandler extends AbstractTrackerHandler {
 
     /**

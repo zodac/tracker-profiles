@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +34,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
  */
-@TrackerHandler(name = "PassThePopcorn", needsManualInput = true, url = "https://passthepopcorn.me/")
+@TrackerHandler(name = "PassThePopcorn", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://passthepopcorn.me/")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

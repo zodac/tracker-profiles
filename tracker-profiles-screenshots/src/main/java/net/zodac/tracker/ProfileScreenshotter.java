@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -34,6 +34,7 @@ import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
@@ -52,6 +53,7 @@ import org.openqa.selenium.remote.UnreachableBrowserException;
  * Main driver class, which takes a screenshot of the profile page of each tracker listed in the
  * {@link ApplicationConfiguration#trackerInputFilePath()} file.
  */
+@SuppressWarnings("OverlyLongMethod")
 public final class ProfileScreenshotter {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -88,26 +90,27 @@ public final class ProfileScreenshotter {
     private static int executeProfileScreenshotter() {
         final File outputDirectory = CONFIG.outputDirectory().toFile();
         if (!outputDirectory.exists()) {
+            LOGGER.trace("Creating output directory: '{}'", outputDirectory);
             outputDirectory.mkdirs();
         }
 
-        final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = getTrackers();
-        if (trackersByIsManual.isEmpty()) {
+        final Map<TrackerType, Set<TrackerDefinition>> trackersByType = getTrackers();
+        if (trackersByType.isEmpty()) {
             LOGGER.error("No trackers selected!");
             return FAILURE_CODE;
         }
 
-        if (!CONFIG.includeManualTrackers() && trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).isEmpty()) {
-            LOGGER.error("No automatic trackers selected, but manual trackers not enabled!");
+        if (!CONFIG.includeTrackersNeedingUi() && trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).isEmpty()) {
+            LOGGER.error("No headless trackers selected, but manual trackers not enabled!");
             return FAILURE_CODE;
         }
 
-        printTrackersInfo(trackersByIsManual);
+        printTrackersInfo(trackersByType);
         final Collection<String> successfulTrackers = new TreeSet<>();
         final Collection<String> unsuccessfulTrackers = new TreeSet<>();
 
         // Non-manual trackers
-        for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of())) {
+        for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of())) {
             final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
             if (successfullyTakenScreenshot) {
                 successfulTrackers.add(trackerDefinition.name());
@@ -116,10 +119,23 @@ public final class ProfileScreenshotter {
             }
         }
 
-        if (CONFIG.includeManualTrackers() && trackersByIsManual.containsKey(Boolean.TRUE)) {
+        if (CONFIG.translateToEnglish() && trackersByType.containsKey(TrackerType.NON_ENGLISH)) {
+            LOGGER.warn("");
+            LOGGER.warn(">>> Executing non-English trackers <<<");
+            for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of())) {
+                final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
+                if (successfullyTakenScreenshot) {
+                    successfulTrackers.add(trackerDefinition.name());
+                } else {
+                    unsuccessfulTrackers.add(trackerDefinition.name());
+                }
+            }
+        }
+
+        if (CONFIG.includeTrackersNeedingUi() && trackersByType.containsKey(TrackerType.MANUAL_INPUT_NEEDED)) {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
-            for (final TrackerDefinition trackerDefinition : trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of())) {
+            for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of())) {
                 final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
                 if (successfullyTakenScreenshot) {
                     successfulTrackers.add(trackerDefinition.name());
@@ -145,7 +161,7 @@ public final class ProfileScreenshotter {
 
         if (CONFIG.openOutputDirectory()) {
             final Path directory = CONFIG.outputDirectory().toAbsolutePath();
-            LOGGER.debug("Opening: '{}'", directory);
+            LOGGER.trace("Opening: '{}'", directory);
             try {
                 FileOpener.open(directory.toFile());
             } catch (final IOException e) {
@@ -170,47 +186,55 @@ public final class ProfileScreenshotter {
         }
     }
 
-    private static void printTrackersInfo(final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual) {
-        final int numberOfTrackers = trackersByIsManual.values().stream()
+    private static void printTrackersInfo(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
+        final int numberOfTrackers = trackersByType.values().stream()
             .mapToInt(Set::size)
             .sum();
         final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
-        if (CONFIG.includeManualTrackers()) {
-            LOGGER.info("Screenshotting {} tracker{} ({} manual), saving to: [{}]", numberOfTrackers, trackersPlural,
-                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
-        } else {
-            LOGGER.info("Screenshotting {} tracker{} (ignoring {} manual), saving to: [{}]",
-                trackersByIsManual.getOrDefault(Boolean.FALSE, Set.of()).size(), trackersPlural,
-                trackersByIsManual.getOrDefault(Boolean.TRUE, Set.of()).size(), CONFIG.outputDirectory().toAbsolutePath());
+
+        final int numberOfHeadlessTrackers = trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).size();
+        final int numberOfManualTrackers = trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of()).size();
+        final int numberOfNonEnglishTrackers = trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of()).size();
+
+        LOGGER.info("Screenshotting {} tracker{}:", numberOfTrackers, trackersPlural);
+        if (numberOfHeadlessTrackers != 0) {
+            LOGGER.info(String.format("- %-10s %d", "Headless:", numberOfHeadlessTrackers));
+        }
+
+        if (numberOfManualTrackers != 0) {
+            LOGGER.info(String.format("- %-10s %d", "Manual:", numberOfManualTrackers));
+        }
+
+        if (numberOfNonEnglishTrackers != 0) {
+            LOGGER.info(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
         }
     }
 
-    private static Map<Boolean, Set<TrackerDefinition>> getTrackers() {
+    private static Map<TrackerType, Set<TrackerDefinition>> getTrackers() {
         try {
             final List<TrackerDefinition> trackerDefinitions = TrackerCsvReader.readTrackerInfo();
-            final Map<Boolean, Set<TrackerDefinition>> trackersByIsManual = new HashMap<>();
+            final Map<TrackerType, Set<TrackerDefinition>> trackersByType = new EnumMap<>(TrackerType.class);
 
             for (final TrackerDefinition trackerDefinition : trackerDefinitions) {
                 final Optional<TrackerHandler> trackerHandler = TrackerHandlerFactory.findMatchingHandler(trackerDefinition.name());
 
                 if (trackerHandler.isPresent()) {
-                    final boolean isManual = trackerHandler.get().needsManualInput();
-                    final Set<TrackerDefinition> existingTrackerDefinitionsOfType = trackersByIsManual.getOrDefault(isManual, new TreeSet<>());
+                    final TrackerType trackerType = trackerHandler.get().type();
+                    final Set<TrackerDefinition> existingTrackerDefinitionsOfType = trackersByType.getOrDefault(trackerType, new TreeSet<>());
                     existingTrackerDefinitionsOfType.add(trackerDefinition);
-                    trackersByIsManual.put(isManual, existingTrackerDefinitionsOfType);
+                    trackersByType.put(trackerType, existingTrackerDefinitionsOfType);
                 } else {
                     LOGGER.warn("No {} implemented for tracker '{}'", AbstractTrackerHandler.class.getSimpleName(), trackerDefinition.name());
                 }
             }
 
-            return trackersByIsManual;
+            return trackersByType;
         } catch (final IOException e) {
             LOGGER.warn("Unable to read CSV input file", e);
             return Map.of();
         }
     }
 
-    @SuppressWarnings("OverlyLongMethod")
     private static boolean isAbleToTakeScreenshot(final TrackerDefinition trackerDefinition) {
         LOGGER.info("");
         LOGGER.info("[{}]", trackerDefinition.name());
@@ -295,7 +319,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Header has been updated to not be fixed");
         }
 
-        if (trackerHandler.isNotEnglish(trackerDefinition.username())) {
+        if (CONFIG.translateToEnglish() && trackerHandler.isNotEnglish(trackerDefinition.username())) {
             LOGGER.info("\t- Profile page has been translated to English");
         }
 

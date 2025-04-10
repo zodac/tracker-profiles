@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Orpheus} tracker.
  */
-@TrackerHandler(name = "Orpheus", needsManualInput = false, url = "https://orpheus.network/")
+@TrackerHandler(name = "Orpheus", url = "https://orpheus.network/")
 public class OrpheusHandler extends AbstractTrackerHandler {
 
     /**

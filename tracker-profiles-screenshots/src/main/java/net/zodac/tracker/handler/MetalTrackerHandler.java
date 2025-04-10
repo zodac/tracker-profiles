@@ -25,7 +25,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Metal-Tracker} tracker.
  */
-@TrackerHandler(name = "Metal-Tracker", needsManualInput = false, url = "https://en.metal-tracker.com/")
+@TrackerHandler(name = "Metal-Tracker", url = "https://en.metal-tracker.com/")
 public class MetalTrackerHandler extends AbstractTrackerHandler {
 
     /**

@@ -27,7 +27,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeBytes} tracker.
  */
-@TrackerHandler(name = "AnimeBytes", needsManualInput = false, url = "https://animebytes.tv/")
+@TrackerHandler(name = "AnimeBytes", url = "https://animebytes.tv/")
 public class AnimeBytesHandler extends AbstractTrackerHandler {
 
     /**

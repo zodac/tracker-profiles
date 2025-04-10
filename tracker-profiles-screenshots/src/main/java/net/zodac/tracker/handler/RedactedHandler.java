@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Redacted} tracker.
  */
-@TrackerHandler(name = "Redacted", needsManualInput = false, url = "https://redacted.sh/")
+@TrackerHandler(name = "Redacted", url = "https://redacted.sh/")
 public class RedactedHandler extends AbstractTrackerHandler {
 
     /**

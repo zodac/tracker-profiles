@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Aither} tracker.
  */
-@TrackerHandler(name = "Aither", needsManualInput = false, url = "https://aither.cc/")
+@TrackerHandler(name = "Aither", url = "https://aither.cc/")
 public class AitherHandler extends AbstractTrackerHandler {
 
     /**

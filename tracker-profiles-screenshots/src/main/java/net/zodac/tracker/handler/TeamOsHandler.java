@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * <p>
  * Note that the URL is set to the login page in order to bypass the site redirecting to an advertisement.
  */
-@TrackerHandler(name = "TeamOS", needsManualInput = false, url = "https://teamos.xyz/login")
+@TrackerHandler(name = "TeamOS", url = "https://teamos.xyz/login")
 public class TeamOsHandler extends AbstractTrackerHandler {
 
     /**

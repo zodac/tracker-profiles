@@ -7,16 +7,17 @@ This is a tool used to log in to private torrent websites and take a screenshot 
 ## Tracker Defintions
 
 First, copy the [trackers_example.csv](./docker/trackers_example.csv) file and rename it to **trackers.csv**.
-This file needs to be updated with your user's information for each tracker. The
-[AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation for
-each tracker is retrieved by the *trackerName* field within the CSV file. The file can be saved
-anywhere, and it will be referenced when running the application.
+This file needs to be updated with your user's information for each tracker. Any unwanted trackers can be deleted, or prefixed by the
+`CSV_COMMENT_SYMBOL` environment variable so they are excluded.
+The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation
+for each tracker is retrieved by the *trackerName* field within the CSV file. The file can be saved anywhere, and it will be referenced when running
+the application.
 
 ## Running Application
 
-The application is run using Docker. There are two ways to execute the application - with a UI and without. A UI is needed for trackers that require
-some user input during login (like a Captcha or 2FA), or for a non-English tracker that needs to be translated. Running without a UI is possible, but
-those specific trackers will be excluded.
+The application is run using Docker. There are two ways to execute the application - with a UI and without. By default the application is configured
+to only screenshot trackers that do not require a UI. A UI is needed for trackers that require some user input during login (like a Captcha or 2FA),
+or for a non-English tracker that needs to be translated.
 
 To run through Docker with a UI, local connections to the host display must be enabled. Please note this will be reset upon reboot and may need to be
 reapplied:
@@ -28,15 +29,15 @@ xhost +local:
 Then build and run the docker image:
 
 ```bash
-docker build -f ./docker/Dockerfile -t profile-screenshotter .
+docker build -f ./docker/Dockerfile -t tracker-profiles .
 docker run \
-    --env "DISPLAY=${DISPLAY}" \
+    --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
     --env EMAIL_ADDRESSES= \
-    --env INCLUDE_MANUAL_TRACKERS=false \
+    --env INCLUDE_UI_TRACKERS=true \
     --env IP_ADDRESSES= \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
@@ -44,11 +45,12 @@ docker run \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
+    --env TRANSLATE_TO_ENGLISH=true \
     --env USE_HEADLESS_BROWSER=true \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/screenshots:/tmp/screenshots \
     -v /tmp/chrome:/tmp/chrome \
-    --rm profile-screenshotter
+    --rm tracker-profiles
 ```
 
 ## Configuration Options
@@ -62,7 +64,7 @@ The following are all possible configuration options, defined as environment var
 | *BROWSER_WIDTH*                | The width (in pixels) of the web browser used to take screenshots                                              | 1680                          |
 | *CSV_COMMENT_SYMBOL*           | If this character is the first in a CSV row, the CSV row is considered a comment and not processed             | #                             |
 | *EMAIL_ADDRESSES*              | A comma-separated list of the user's email addresses                                                           |                               |
-| *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require manual user interaction                                    | false                         |
+| *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require a browser with a UI (overrides `TRANSLATE_TO_ENGLISH`)     | false                         |
 | *IP_ADDRESSES*                 | A comma-separated list of the user's IP addresses                                                              |                               |
 | *LOG_LEVEL*                    | The logging level for console output                                                                           | INFO                          |
 | *OPEN_OUTPUT_DIRECTORY*        | Whether to open the output screenshot directory when execution is complete (not working in Docker, debug only) | false                         |
@@ -70,7 +72,8 @@ The following are all possible configuration options, defined as environment var
 | *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of for the new directory created for the screenshots, relative to the project root         | /tmp/screenshots              |
 | *TIMEZONE*                     | The local timezone, used to retrieve the current date to name the output directory                             | UTC                           |
 | *TRACKER_INPUT_FILE_PATH*      | The path to the input tracker definition CSV file                                                              | /tmp/screenshots/trackers.csv |
-| *USE_HEADLESS_BROWSER*         | Whether to use a headless browser for screenshots, or a full browser                                           | false                         |
+| *TRANSLATE_TO_ENGLISH*         | Whether to translate non-English trackers to English (only if the tracker has no English option)               | false                         |
+| *USE_HEADLESS_BROWSER*         | Whether to use a headless browser for screenshots, or a browser with UI                                        | false                         |
 
 ## Contributing
 
@@ -86,8 +89,8 @@ Using IntelliJ, and click on **Run**> **Edit Configurations** and add the enviro
 the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ProfileScreenshotter.java) and run the `main`
 method from the IDE.
 
-[Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the host's installed Google Chrome browser to take
-screenshots. While we usually run in headless mode, this can be changed by updating the `USE_HEADLESS_BROWSER` value in
+[Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to take screenshots. While the
+application usually run in headless mode, this can be changed by updating the `USE_HEADLESS_BROWSER` value in
 the [configuration](#configuration-options). This will cause a new browser instance to launch when taking a screenshot, and can be used for debugging
 a new implementation.
 

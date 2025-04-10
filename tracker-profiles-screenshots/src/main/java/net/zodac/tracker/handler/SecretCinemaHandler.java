@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code SecretCinema} tracker.
  */
-@TrackerHandler(name = "SecretCinema", needsManualInput = false, url = "https://secret-cinema.pw/")
+@TrackerHandler(name = "SecretCinema", url = "https://secret-cinema.pw/")
 public class SecretCinemaHandler extends AbstractTrackerHandler {
 
     /**

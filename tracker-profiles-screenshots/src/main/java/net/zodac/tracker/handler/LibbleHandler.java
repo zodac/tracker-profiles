@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Libble} tracker.
  */
-@TrackerHandler(name = "Libble", needsManualInput = false, url = "https://libble.me/")
+@TrackerHandler(name = "Libble", url = "https://libble.me/")
 public class LibbleHandler extends AbstractTrackerHandler {
 
     private static final String PASSKEY_PREFIX = "Passkey: ";

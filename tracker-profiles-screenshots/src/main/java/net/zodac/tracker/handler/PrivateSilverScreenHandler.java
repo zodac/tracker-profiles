@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PrivateSilverScreen} tracker.
  */
-@TrackerHandler(name = "PrivateSilverScreen", needsManualInput = false, url = "https://privatesilverscreen.cc/")
+@TrackerHandler(name = "PrivateSilverScreen", url = "https://privatesilverscreen.cc/")
 public class PrivateSilverScreenHandler extends AbstractTrackerHandler {
 
     /**

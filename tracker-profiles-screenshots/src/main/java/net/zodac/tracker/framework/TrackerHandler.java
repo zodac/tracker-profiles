@@ -42,13 +42,12 @@ public @interface TrackerHandler {
      */
     String name();
 
-    // TODO: Rename this to 'needsHeadlessMode' instead?
     /**
-     * Whether the tracker requires some manual input (a Captcha or multiple-choice question) to get a screenshot.
+     * Defines how the tracker is executed - whether a UI is needed or not.
      *
-     * @return {@code true} if the tracker needs some manual input
+     * @return the {@link TrackerType}
      */
-    boolean needsManualInput();
+    TrackerType type() default TrackerType.HEADLESS;
 
     /**
      * The URLs of the tracker website. Multiple can be included for sites with backups, but will be executed in order until one successfully loads.

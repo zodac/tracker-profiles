@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -33,7 +34,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
  */
-@TrackerHandler(name = "ABTorrents", needsManualInput = true, url = "https://abtorrents.me/")
+@TrackerHandler(name = "ABTorrents", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://abtorrents.me/")
 public class AbTorrentsHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

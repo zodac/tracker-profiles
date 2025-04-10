@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +32,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
  */
-@TrackerHandler(name = "DigitalCore.Club", needsManualInput = true, url = {
+@TrackerHandler(name = "DigitalCore.Club", type = TrackerType.MANUAL_INPUT_NEEDED, url = {
     "https://digitalcore.club/",
     "https://prxy.digitalcore.club/"
 })

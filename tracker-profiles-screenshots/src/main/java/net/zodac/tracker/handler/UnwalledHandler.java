@@ -28,7 +28,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Unwalled} tracker.
  */
-@TrackerHandler(name = "Unwalled", needsManualInput = false, url = "https://unwalled.cc/")
+@TrackerHandler(name = "Unwalled", url = "https://unwalled.cc/")
 public class UnwalledHandler extends AbstractTrackerHandler {
 
     /**
