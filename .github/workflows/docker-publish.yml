@@ -106,7 +106,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Prepare next development version: $next_version"
+            git commit -m "[CI] Prepare next version: $next_version"
             echo "has_changes=true" >> $GITHUB_ENV
           fi
 

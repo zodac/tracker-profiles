@@ -5,6 +5,7 @@ main() {
 
     # Start Google Chrome in the background with suppressed output
     google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
+    CHROME_PID=$!
 
     # Run Java application
     java -jar /app/tracker-profiles.jar
@@ -48,4 +49,12 @@ _convert_to_natural_time() {
     echo "${natural_time}"
 }
 
+# Function to handle termination signals
+cleanup() {
+    kill -SIGTERM "${CHROME_PID}" 2>/dev/null
+    wait "${CHROME_PID}"
+    exit 130
+}
+
+trap cleanup SIGINT
 main

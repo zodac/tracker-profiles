@@ -47,6 +47,7 @@ docker run \
     --env USE_HEADLESS_BROWSER=true \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/chrome:/tmp/chrome \
     --rm profile-screenshotter
 ```
 
