@@ -23,6 +23,17 @@ jobs:
         with:
           fetch-depth: 0  # Needed for pushing tags
 
+      - name: Read current version
+        id: version
+        run: |
+          version=$(cat VERSION)
+          echo "Using version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Set Maven version from VERSION file
+        run: |
+          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
+
       # Set up Java & Maven to execute tests
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -62,18 +73,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Read current version
-        id: version
-        run: |
-          version=$(cat VERSION)
-          echo "Using version: $version"
-          echo "version=$version" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
         id: docker_build
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./docker/Dockerfile
           push: true
           tags: |
             zodac/tracker-profiles:${{ steps.version.outputs.version }}
@@ -94,15 +99,20 @@ jobs:
           next_version="$major.$minor.$new_patch"
           echo "Bumping version to $next_version"
           echo "$next_version" > VERSION
+          
+          # Set Maven project version to next development SNAPSHOT version
+          mvn versions:set -DnewVersion="$next_version-SNAPSHOT" -DgenerateBackupPoms=false
 
+          # Push changes
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add VERSION
+          git add pom.xml */pom.xml
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Prepare next Docker version: $next_version"
+            git commit -m "Prepare next development version: $next_version"
             echo "has_changes=true" >> $GITHUB_ENV
           fi
 
