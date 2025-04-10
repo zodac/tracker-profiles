@@ -65,7 +65,7 @@ public class DicMusicHandler extends AbstractTrackerHandler {
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.xpath("//ul[contains(@class, 'stats')]/li[3]/a[1]"), // Email
-            By.xpath("//div[@id='footer']/p[2]/a[1]/span[3]") // Footer with last used IP address
+            By.xpath("//div[@id='footer']//p[2]//a[1]/span[3]") // Footer with last used IP address
         );
     }
 

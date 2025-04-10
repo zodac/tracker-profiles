@@ -2,8 +2,7 @@ name: Build and Publish Docker Image
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
     paths:
       - '.github/workflows/docker-publish.yml'
       - 'docker/**'
