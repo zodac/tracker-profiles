@@ -5,11 +5,16 @@ on:
     branches: [ master ]
     paths-ignore:
       - '.github/workflows/doc.yml'
+      - '.github/workflows/docker.yml'
+      - '.github/workflows/docker-publish.yml'
       - '.github/workflows/license_update.yml'
       - '.github/workflows/version_update.yml'
       - 'ci/doc/**'
+      - 'ci/docker/**'
+      - 'docker/**'
       - 'LICENSE'
       - 'README.md'
+      - 'VERSION'
 
 jobs:
   build:

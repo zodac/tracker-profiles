@@ -54,22 +54,22 @@ docker run \
 
 The following are all possible configuration options, defined as environment variables for the docker image:
 
-| Environment Variable           | Description                                                                                                    | Default Value    |
-|--------------------------------|----------------------------------------------------------------------------------------------------------------|------------------|
-| *BROWSER_DATA_STORAGE_PATH*    | The file path in which to store browser data (profiles, caches, etc.)                                          | /tmp/chrome      |
-| *BROWSER_HEIGHT*               | The height (in pixels) of the web browser used to take screenshots                                             | 1050             |
-| *BROWSER_WIDTH*                | The width (in pixels) of the web browser used to take screenshots                                              | 1680             |
-| *CSV_COMMENT_SYMBOL*           | If this character is the first in a CSV row, the CSV row is considered a comment and not processed             | #                |
-| *EMAIL_ADDRESSES*              | A comma-separated list of the user's email addresses                                                           |                  |
-| *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require manual user interaction                                    | false            |
-| *IP_ADDRESSES*                 | A comma-separated list of the user's IP addresses                                                              |                  |
-| *LOG_LEVEL*                    | The logging level for console output                                                                           | INFO             |
-| *OPEN_OUTPUT_DIRECTORY*        | Whether to open the output screenshot directory when execution is complete (not working in Docker, debug only) | false            |
-| *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots                                      | yyyy-MM-dd       |
-| *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of for the new directory created for the screenshots, relative to the project root         | /tmp/screenshots |
-| *TIMEZONE*                     | The local timezone, used to retrieve the current date to name the output directory                             | UTC              |
-| *TRACKER_INPUT_FILE_PATH*      | The path to the input tracker definition CSV file                                                              | UTC              |
-| *USE_HEADLESS_BROWSER*         | Whether to use a headless browser for screenshots, or a full browser                                           | false            |
+| Environment Variable           | Description                                                                                                    | Default Value                 |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------|
+| *BROWSER_DATA_STORAGE_PATH*    | The file path in which to store browser data (profiles, caches, etc.)                                          | /tmp/chrome                   |
+| *BROWSER_HEIGHT*               | The height (in pixels) of the web browser used to take screenshots                                             | 1050                          |
+| *BROWSER_WIDTH*                | The width (in pixels) of the web browser used to take screenshots                                              | 1680                          |
+| *CSV_COMMENT_SYMBOL*           | If this character is the first in a CSV row, the CSV row is considered a comment and not processed             | #                             |
+| *EMAIL_ADDRESSES*              | A comma-separated list of the user's email addresses                                                           |                               |
+| *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require manual user interaction                                    | false                         |
+| *IP_ADDRESSES*                 | A comma-separated list of the user's IP addresses                                                              |                               |
+| *LOG_LEVEL*                    | The logging level for console output                                                                           | INFO                          |
+| *OPEN_OUTPUT_DIRECTORY*        | Whether to open the output screenshot directory when execution is complete (not working in Docker, debug only) | false                         |
+| *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots                                      | yyyy-MM-dd                    |
+| *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of for the new directory created for the screenshots, relative to the project root         | /tmp/screenshots              |
+| *TIMEZONE*                     | The local timezone, used to retrieve the current date to name the output directory                             | UTC                           |
+| *TRACKER_INPUT_FILE_PATH*      | The path to the input tracker definition CSV file                                                              | /tmp/screenshots/trackers.csv |
+| *USE_HEADLESS_BROWSER*         | Whether to use a headless browser for screenshots, or a full browser                                           | false                         |
 
 ## Contributing
 

@@ -1,0 +1,33 @@
+name: Other CI
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'ci/docker/.hadolint.yaml'
+      - 'docker/Dockerfile'
+      - 'docker/start.sh'
+
+jobs:
+  analyze:
+    name: Docker Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Additional Docker Analysis
+      - name: Run Hadolint and generate report
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          config: ./ci/docker/.hadolint.yaml
+          dockerfile: Dockerfile
+          output-file: hadolint-report.json
+          recursive: true
