@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Install Chrome
 # Add Google Chrome repository key and source list
-ARG CHROME_VERSION="135.0.7049.52-1"
+ARG CHROME_VERSION="135.0.7049.84-1"
 RUN apt-get update && \
         apt-get install -yqq --no-install-recommends \
           gpg \
