@@ -5,10 +5,11 @@ on:
     branches:
       - master
     paths:
-      - 'VERSION'
-      - 'pom.xml'
+      - '.github/workflows/docker-publish.yml'
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
+      - 'pom.xml'
+      - 'VERSION'
 
 jobs:
   build-and-publish:
