@@ -30,10 +30,6 @@ jobs:
           echo "Using version: $version"
           echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Set Maven version from VERSION file
-        run: |
-          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
-
       # Set up Java & Maven to execute tests
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -57,6 +53,10 @@ jobs:
           java-distribution: 'temurin'
           java-version: '23'
           maven-version: '3.9.9'
+
+      - name: Set Maven version from VERSION file
+        run: |
+          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false
 
       - name: Run lints and test with Maven
         env:
