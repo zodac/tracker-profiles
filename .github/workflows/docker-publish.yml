@@ -1,0 +1,114 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'VERSION'
+      - 'pom.xml'
+      - 'docker/**'
+      - 'tracker-profiles-screenshots/**'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      has_changes: 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for pushing tags
+
+      # Set up Java & Maven to execute tests
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          cache: 'maven'
+          distribution: 'temurin'
+          java-version: '23'
+
+      - name: Cache local .m2
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**.pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Setup Maven Action
+        uses: s4u/setup-maven-action@v1.18.0
+        with:
+          checkout-fetch-depth: 0
+          java-distribution: 'temurin'
+          java-version: '23'
+          maven-version: '3.9.9'
+
+      - name: Run lints and test with Maven
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
+        run: mvn clean install -Dall
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Read current version
+        id: version
+        run: |
+          version=$(cat VERSION)
+          echo "Using version: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            zodac/tracker-profiles:${{ steps.version.outputs.version }}
+            zodac/tracker-profiles:latest
+
+      - name: Tag current version in git (only if Docker build succeeds)
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.version.outputs.version }}
+
+      - name: Bump patch version in VERSION file
+        run: |
+          current_version="${{ steps.version.outputs.version }}"
+          IFS='.' read -r major minor patch <<< "$current_version"
+          new_patch=$((patch + 1))
+          next_version="$major.$minor.$new_patch"
+          echo "Bumping version to $next_version"
+          echo "$next_version" > VERSION
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add VERSION
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Prepare next Docker version: $next_version"
+            echo "has_changes=true" >> $GITHUB_ENV
+          fi
+
+      - name: Push commit and tag if there were changes
+        if: env.has_changes == 'true'
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+          tags: "true"
