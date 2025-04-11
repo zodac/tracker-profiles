@@ -23,8 +23,8 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
 import net.zodac.tracker.framework.ApplicationConfiguration;
-import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.util.ScriptExecutor;
+import net.zodac.tracker.util.PatternMatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -46,11 +46,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * tracker-specific {@code selenium} logic to perform the UI actions.
  */
 public abstract class AbstractTrackerHandler implements AutoCloseable {
-
-    /**
-     * The {@link ApplicationConfiguration} for the application.
-     */
-    protected static final ApplicationConfiguration CONFIG = Configuration.get();
 
     /**
      * The default wait {@link Duration} when waiting for a web page load.
@@ -313,7 +308,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         final Collection<WebElement> elementsToBeRedacted = selectors
             .stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
-            .filter(element -> doesElementContainEmailAddress(element) || doesElementContainIpAddress(element))
+            .filter(element -> PatternMatcher.containsEmailAddress(element.getText()) || PatternMatcher.containsIpAddress(element.getText()))
             .toList();
 
         if (elementsToBeRedacted.isEmpty()) {
@@ -437,31 +432,5 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
         driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
         ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
-    }
-
-    /**
-     * Checks if the {@link WebElement} contains an email address to be redacted.
-     *
-     * @param element the {@link WebElement} to check
-     * @return {@code true} if it contains one of the specified email addresses
-     */
-    protected static boolean doesElementContainEmailAddress(final WebElement element) {
-        return doesElementContain(element, CONFIG.emailAddresses());
-    }
-
-    /**
-     * Checks if the {@link WebElement} contains an IP address to be redacted. Also checks for a match of the first 2 octets of the IP address, for
-     * trackers that post a partial IP address.
-     *
-     * @param element the {@link WebElement} to check
-     * @return {@code true} if it contains one of the specified IP addresses
-     */
-    protected static boolean doesElementContainIpAddress(final WebElement element) {
-        return doesElementContain(element, CONFIG.ipAddresses());
-    }
-
-    private static boolean doesElementContain(final WebElement element, final Collection<String> stringsToFind) {
-        return stringsToFind.stream()
-            .anyMatch(stringToFind -> element.getText().contains(stringToFind));
     }
 }

@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -84,7 +85,7 @@ public class NebulanceHandler extends AbstractTrackerHandler {
      * <p>
      * For {@link NebulanceHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
-     * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
+     * prefix and {@value PatternMatcher#DEFAULT_REDACTION_TEXT}.
      *
      * @see AbstractTrackerHandler#redactElements()
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
@@ -93,7 +94,7 @@ public class NebulanceHandler extends AbstractTrackerHandler {
     public int redactElements() {
         final By passkeyElementSelector = By.xpath(String.format("//ul[contains(@class, 'stats')]/li[contains(text(), '%s')]", PASSKEY_PREFIX));
         final WebElement passkeyElement = driver.findElement(passkeyElementSelector);
-        final String passkeyRedactionText = PASSKEY_PREFIX + ScriptExecutor.DEFAULT_REDACTION_TEXT;
+        final String passkeyRedactionText = PASSKEY_PREFIX + PatternMatcher.DEFAULT_REDACTION_TEXT;
         ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
 
         return 1 + super.redactElements();

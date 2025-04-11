@@ -36,9 +36,7 @@ docker run \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env EMAIL_ADDRESSES= \
     --env INCLUDE_UI_TRACKERS=true \
-    --env IP_ADDRESSES= \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
@@ -63,9 +61,7 @@ The following are all possible configuration options, defined as environment var
 | *BROWSER_HEIGHT*               | The height (in pixels) of the web browser used to take screenshots                                             | 1050                          |
 | *BROWSER_WIDTH*                | The width (in pixels) of the web browser used to take screenshots                                              | 1680                          |
 | *CSV_COMMENT_SYMBOL*           | If this character is the first in a CSV row, the CSV row is considered a comment and not processed             | #                             |
-| *EMAIL_ADDRESSES*              | A comma-separated list of the user's email addresses                                                           |                               |
 | *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require a browser with a UI (overrides `TRANSLATE_TO_ENGLISH`)     | false                         |
-| *IP_ADDRESSES*                 | A comma-separated list of the user's IP addresses                                                              |                               |
 | *LOG_LEVEL*                    | The logging level for console output                                                                           | INFO                          |
 | *OPEN_OUTPUT_DIRECTORY*        | Whether to open the output screenshot directory when execution is complete (not working in Docker, debug only) | false                         |
 | *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots                                      | yyyy-MM-dd                    |

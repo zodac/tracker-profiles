@@ -23,37 +23,28 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * Utility file that loads the application configuration from environment variables.
  *
- * @param browserDataStoragePath the file path in which to store browser data (profiles, caches, etc.)
- * @param browserDimensions      the dimensions in the format {@code width,height} for the {@code Selenium} web browser
- * @param csvCommentSymbol       the {@code char} defining a comment row in the CSV file
- * @param emailAddresses         a {@link Collection} of email addresses to be redacted from screenshots
- * @param includeTrackersNeedingUi      whether to include trackers that require a UI for manual user interaction or translation
- * @param ipAddresses            a {@link Collection} of IP addresses to be redacted from screenshots (including the first half of each address)
- * @param openOutputDirectory    whether to open the screenshot directory when execution is completed
- * @param outputDirectory        the output {@link Path} to the directory within which the screenshots will be saved
- * @param trackerInputFilePath   the {@link Path} to the input tracker CSV file
- * @param translateToEnglish     whether to translate non-English trackers to English
- * @param useHeadlessBrowser     whether to use a headless browser or not
+ * @param browserDataStoragePath   the file path in which to store browser data (profiles, caches, etc.)
+ * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
+ * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
+ * @param includeTrackersNeedingUi whether to include trackers that require a UI for manual user interaction or translation
+ * @param openOutputDirectory      whether to open the screenshot directory when execution is completed
+ * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
+ * @param trackerInputFilePath     the {@link Path} to the input tracker CSV file
+ * @param translateToEnglish       whether to translate non-English trackers to English
+ * @param useHeadlessBrowser       whether to use a headless browser or not
  */
-// TODO: Possible to remove need for email/IP addresses, and just redact the full element by XPath? Could do regex to IP/email, or just paint it?
 public record ApplicationConfiguration(
     String browserDataStoragePath,
     String browserDimensions,
     char csvCommentSymbol,
-    Collection<String> emailAddresses,
     boolean includeTrackersNeedingUi,
-    Collection<String> ipAddresses,
     boolean openOutputDirectory,
     Path outputDirectory,
     Path trackerInputFilePath,
@@ -83,9 +74,7 @@ public record ApplicationConfiguration(
             getBrowserDataStoragePath(),
             getBrowserDimensions(),
             getCsvCommentSymbol(),
-            getEmailAddresses(),
             getBooleanEnvironmentVariable("INCLUDE_MANUAL_TRACKERS", false),
-            getIpAddresses(),
             getBooleanEnvironmentVariable("OPEN_OUTPUT_DIRECTORY", false),
             getOutputDirectory(),
             getInputFilePath(),
@@ -108,33 +97,6 @@ public record ApplicationConfiguration(
 
     private static char getCsvCommentSymbol() {
         return getOrDefault("CSV_COMMENT_SYMBOL", DEFAULT_CSV_COMMENT_SYMBOL).charAt(0);
-    }
-
-    private static Collection<String> getEmailAddresses() {
-        final String value = getOrDefault("EMAIL_ADDRESSES", "");
-        return List.of(value.split(","));
-    }
-
-    private static Collection<String> getIpAddresses() {
-        final String value = getOrDefault("IP_ADDRESSES", "");
-        final Collection<String> rawIpAddresses = List.of(value.split(","));
-
-        // Need to include half IP addresses for some tracker activity logs (like HDBits)
-        final Collection<String> halfIpAddresses = rawIpAddresses
-            .stream()
-            .map(ApplicationConfiguration::getFirstHalfOfIp)
-            .collect(Collectors.toSet());
-
-        // Adding to LinkedHashSet to ensure full IP addresses are checked first
-        final Collection<String> expandedIpAddresses = new LinkedHashSet<>(rawIpAddresses);
-        expandedIpAddresses.addAll(halfIpAddresses);
-
-        return expandedIpAddresses;
-    }
-
-    private static String getFirstHalfOfIp(final String ip) {
-        final String[] parts = ip.split("\\.");
-        return (parts.length >= 2) ? parts[0] + "." + parts[1] + "." : ip;
     }
 
     private static Path getOutputDirectory() {

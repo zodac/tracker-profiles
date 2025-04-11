@@ -73,7 +73,10 @@ public final class TrackerHandlerFactory {
      * If the {@link AbstractTrackerHandler} also has the annotation {@link TrackerDisabled}, it will be skipped.
      *
      * <p>
-     * A {@link ChromeDriver} will also be created and used to instantiate the {@link AbstractTrackerHandler}.
+     * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
+     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#useHeadlessBrowser()} is {@code true}, then the
+     * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
+     * debugging.
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}

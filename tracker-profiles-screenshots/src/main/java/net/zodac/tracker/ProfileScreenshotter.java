@@ -46,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.UnreachableBrowserException;
 
 /**
@@ -73,12 +72,6 @@ public final class ProfileScreenshotter {
      * {@link TrackerDefinition}. For each tracker a {@link AbstractTrackerHandler} is retrieved and used to navigate to the tracker's profile page
      * (after logging in and any other required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by
      * {@link ScreenshotTaker}, then saved in the {@link ApplicationConfiguration#outputDirectory()}.
-     *
-     * <p>
-     * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
-     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#useHeadlessBrowser()} is {@code true}, then the
-     * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
-     * debugging.
      *
      * @param args input arguments, unused
      * @see ScreenshotTaker
@@ -187,14 +180,12 @@ public final class ProfileScreenshotter {
     }
 
     private static void printTrackersInfo(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
-        final int numberOfTrackers = trackersByType.values().stream()
-            .mapToInt(Set::size)
-            .sum();
-        final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
+        final int numberOfHeadlessTrackers = countTrackers(trackersByType, TrackerType.HEADLESS, true);
+        final int numberOfManualTrackers = countTrackers(trackersByType, TrackerType.MANUAL_INPUT_NEEDED, CONFIG.includeTrackersNeedingUi());
+        final int numberOfNonEnglishTrackers = countTrackers(trackersByType, TrackerType.NON_ENGLISH, CONFIG.translateToEnglish());
 
-        final int numberOfHeadlessTrackers = trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).size();
-        final int numberOfManualTrackers = trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of()).size();
-        final int numberOfNonEnglishTrackers = trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of()).size();
+        final int numberOfTrackers = numberOfHeadlessTrackers + numberOfManualTrackers + numberOfNonEnglishTrackers;
+        final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
 
         LOGGER.info("Screenshotting {} tracker{}:", numberOfTrackers, trackersPlural);
         if (numberOfHeadlessTrackers != 0) {
@@ -208,6 +199,10 @@ public final class ProfileScreenshotter {
         if (numberOfNonEnglishTrackers != 0) {
             LOGGER.info(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
         }
+    }
+
+    private static int countTrackers(final Map<TrackerType, Set<TrackerDefinition>> trackersByType, final TrackerType key, final boolean enabled) {
+        return enabled ? trackersByType.getOrDefault(key, Set.of()).size() : 0;
     }
 
     private static Map<TrackerType, Set<TrackerDefinition>> getTrackers() {

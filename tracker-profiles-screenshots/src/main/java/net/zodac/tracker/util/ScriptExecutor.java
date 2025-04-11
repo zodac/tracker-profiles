@@ -24,8 +24,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
-import net.zodac.tracker.framework.ApplicationConfiguration;
-import net.zodac.tracker.framework.Configuration;
 import net.zodac.tracker.framework.exception.TranslationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,12 +158,13 @@ public final class ScriptExecutor {
     }
 
     /**
-     * Reads the HTML of the provided {@link WebElement} and replaces the {@link ApplicationConfiguration#ipAddresses()} and
-     * {@link ApplicationConfiguration#emailAddresses()} with {@value #DEFAULT_REDACTION_TEXT}. This can be valuable when trying to hide/redact
-     * sensitive information like IP addresses. This will attempt to retain all other text and HTML elements in the provided {@link WebElement}.
+     * Reads the HTML of the provided {@link WebElement} and replaces the email and IP addresses using
+     * {@link PatternMatcher#replaceEmailAndIpAddresses(String)}. This can be valuable when trying to hide/redact sensitive information. This will
+     * attempt to retain all other text and HTML elements in the provided {@link WebElement}.
      *
      * @param driver  the {@link JavascriptExecutor} with the loaded web page
      * @param element the {@link WebElement} to redact
+     * @see PatternMatcher#replaceEmailAndIpAddresses(String)
      */
     public static void redactHtmlOf(final JavascriptExecutor driver, final WebElement element) {
         LOGGER.info("\t\t- Found: '{}' in <{}>", NEWLINE_PATTERN.matcher(element.getText()).replaceAll(""), element.getTagName());
@@ -180,18 +179,11 @@ public final class ScriptExecutor {
     }
 
     private static String createSubstitutionText(final String elementText) {
-        String substitutionText = elementText;
-        if (substitutionText == null) {
+        if (elementText == null) {
             return "";
         }
 
-        for (final String ipAddress : Configuration.get().ipAddresses()) {
-            substitutionText = substitutionText.replace(ipAddress, DEFAULT_REDACTION_TEXT);
-        }
-        for (final String emailAddress : Configuration.get().emailAddresses()) {
-            substitutionText = substitutionText.replace(emailAddress, DEFAULT_REDACTION_TEXT);
-        }
-        return escapeForJavaScriptString(substitutionText);
+        return escapeForJavaScriptString(PatternMatcher.replaceEmailAndIpAddresses(elementText));
     }
 
     private static String escapeForJavaScriptString(final String input) {

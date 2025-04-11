@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -81,7 +82,7 @@ public class KufircHandler extends AbstractTrackerHandler {
      * <p>
      * For {@link KufircHandler}, we also need to redact a passkey {@link WebElement}. We find an element with text that is prefixed by
      * {@value #PASSKEY_PREFIX}, signifying a {@link WebElement} with a sensitive passkey. We redact this element by replacing all text with the
-     * prefix and {@value ScriptExecutor#DEFAULT_REDACTION_TEXT}.
+     * prefix and {@value PatternMatcher#DEFAULT_REDACTION_TEXT}.
      *
      * @see AbstractTrackerHandler#redactElements()
      * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
@@ -90,7 +91,7 @@ public class KufircHandler extends AbstractTrackerHandler {
     public int redactElements() {
         final int superRedactedElements = super.redactElements();
 
-        final String passkeyRedactionText = PASSKEY_PREFIX + ScriptExecutor.DEFAULT_REDACTION_TEXT;
+        final String passkeyRedactionText = PASSKEY_PREFIX + PatternMatcher.DEFAULT_REDACTION_TEXT;
         final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(), '%s')]", PASSKEY_PREFIX)));
         ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
 
