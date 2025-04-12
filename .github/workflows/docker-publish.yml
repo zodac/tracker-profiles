@@ -5,10 +5,14 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/docker-publish.yml'
+      - 'ci/**'
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
+      - '.gitignore'
       - 'pom.xml'
       - 'VERSION'
+    paths-ignore:
+      - 'ci/doc/**'
 
 jobs:
   build-and-publish:
@@ -55,11 +59,11 @@ jobs:
         run: |
           mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false -DprocessAllModules
 
-      - name: Run lints and test with Maven
+      - name: Run lints and test with Maven (including SonarQube)
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
-        run: mvn clean install -Dall
+        run: mvn clean install -Dall -Dsonarqube
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

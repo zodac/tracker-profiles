@@ -15,7 +15,7 @@ the application.
 
 ## Running Application
 
-The application is run using Docker. There are two ways to execute the application - with a UI and without. By default the application is configured
+The application is run using Docker. There are two ways to execute the application - with a UI and without. By default, the application is configured
 to only screenshot trackers that do not require a UI. A UI is needed for trackers that require some user input during login (like a Captcha or 2FA),
 or for a non-English tracker that needs to be translated.
 
