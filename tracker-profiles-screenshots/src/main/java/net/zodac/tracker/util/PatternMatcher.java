@@ -56,7 +56,7 @@ public final class PatternMatcher {
      * @return {@code true} if it contains one of the specified IP addresses
      */
     public static boolean containsIpAddress(final String input) {
-       return IPV4.matcher(input).find()
+        return IPV4.matcher(input).find()
             || IPV4_MASKED.matcher(input).find()
             || IPV6.matcher(input).find();
     }
