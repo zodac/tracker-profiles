@@ -13,9 +13,14 @@ on:
       - '.gitignore'
       - 'pom.xml'
       - 'VERSION'
+  workflow_run:
+    workflows: [ 'License Year Update', 'Versions Update' ]
+    types:
+      - completed
 
 jobs:
   build-and-publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       has_changes: 'false'

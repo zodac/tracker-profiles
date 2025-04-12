@@ -24,10 +24,6 @@ import java.util.regex.Pattern;
  */
 public final class PatternMatcher {
 
-    private PatternMatcher() {
-
-    }
-
     /**
      * Default {@link String} used to redact sensitive text.
      */
@@ -38,6 +34,10 @@ public final class PatternMatcher {
     private static final Pattern IPV4_MASKED = Pattern.compile("\\d{1,3}\\.\\d{1,3}\\.x\\.x"); // Needed for HDBits only currently
     private static final Pattern IPV6 = Pattern.compile("([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}");
 
+    private PatternMatcher() {
+
+    }
+
     /**
      * Checks if the {@link String} contains an email address to be redacted.
      *
@@ -45,9 +45,6 @@ public final class PatternMatcher {
      * @return {@code true} if it contains an email address
      */
     public static boolean containsEmailAddress(final String input) {
-        if (input.isEmpty()) {
-            return false;
-        }
         return EMAIL.matcher(input).find();
     }
 
@@ -59,11 +56,7 @@ public final class PatternMatcher {
      * @return {@code true} if it contains one of the specified IP addresses
      */
     public static boolean containsIpAddress(final String input) {
-        if (input.isEmpty()) {
-            return false;
-        }
-
-        return IPV4.matcher(input).find()
+       return IPV4.matcher(input).find()
             || IPV4_MASKED.matcher(input).find()
             || IPV6.matcher(input).find();
     }
