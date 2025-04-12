@@ -6,13 +6,13 @@ on:
     paths:
       - '.github/workflows/docker-publish.yml'
       - 'ci/**'
+      - '!ci/doc/**'
+      - '!ci/docker/**'
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
       - '.gitignore'
       - 'pom.xml'
       - 'VERSION'
-    paths-ignore:
-      - 'ci/doc/**'
 
 jobs:
   build-and-publish:
