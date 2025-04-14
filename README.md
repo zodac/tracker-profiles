@@ -22,54 +22,54 @@ The available trackers come in three types:
 - Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
 - Non-English: If the tracker is not in English, a UI browser is required to translate the page
 
-| Tracker Name        | Support       |
-|---------------------|---------------|
-| ABTorrents          | Headless      |
-| Aither              | Headless      |
-| AlphaRatio          | Headless      |
-| AnimeBytes          | Headless      |
-| Anthelion           | Headless      |
-| BackUps             | Headless      |
-| BakaBT              | Headless      |
-| BeyondHD            | _Manual_      |
-| Blutopia            | Headless      |
-| BwTorrents          | Headless      |
-| Cathode-Ray.Tube    | Headless      |
-| CGPeers             | _Manual_      |
-| DICMusic            | Headless      |
-| DigitalCore.Club    | _Manual_      |
-| DocsPedia           | _Manual_      |
-| Empornium           | Headless      |
-| FearNoPeer          | Headless      |
-| FileList            | Headless      |
-| GazelleGames        | _Manual_      |
-| HDBits              | _Manual_      |
-| Kufirc              | _Non-English_ |
-| Lat-Team            | _Non-English_ |
-| Libble              | Headless      |
-| LST                 | Headless      |
-| Metal-Tracker       | Headless      |
-| MoreThanTV          | Headless      |
-| MyAnonaMouse        | Headless      |
-| Nebulance           | Headless      |
-| Orpheus             | Headless      |
-| PassThePopcorn      | _Manual_      |
-| PixelCove           | Headless      |
-| PornBay             | Headless      |
-| PrivateSilverScreen | Headless      |
-| Redacted            | Headless      |
-| ReelFlix            | Headless      |
-| RUTracker           | _Non-English_ |
-| SecretCinema        | Headless      |
-| SeedPool            | Headless      |
-| Tasmanites          | Headless      |
-| TeamOS              | Headless      |
-| TheEmpire           | _Manual_      |
-| TheGeeks            | _Manual_      |
-| TorrentLeech        | Headless      |
-| TVChaosUK           | Headless      |
-| UHDBits             | Headless      |
-| Unwalled            | Headless      |
+| Tracker Name        | Support         |
+|---------------------|-----------------|
+| ABTorrents          | Headless        |
+| Aither              | Headless        |
+| AlphaRatio          | Headless        |
+| AnimeBytes          | Headless        |
+| Anthelion           | Headless        |
+| BackUps             | Headless        |
+| BakaBT              | Headless        |
+| BeyondHD            | **Manual**      |
+| Blutopia            | Headless        |
+| BwTorrents          | Headless        |
+| Cathode-Ray.Tube    | Headless        |
+| CGPeers             | **Manual**      |
+| DICMusic            | Headless        |
+| DigitalCore.Club    | **Manual**      |
+| DocsPedia           | **Manual**      |
+| Empornium           | Headless        |
+| FearNoPeer          | Headless        |
+| FileList            | Headless        |
+| GazelleGames        | **Manual**      |
+| HDBits              | **Manual**      |
+| Kufirc              | **Non-English** |
+| Lat-Team            | **Non-English** |
+| Libble              | Headless        |
+| LST                 | Headless        |
+| Metal-Tracker       | Headless        |
+| MoreThanTV          | Headless        |
+| MyAnonaMouse        | Headless        |
+| Nebulance           | Headless        |
+| Orpheus             | Headless        |
+| PassThePopcorn      | **Manual**      |
+| PixelCove           | Headless        |
+| PornBay             | Headless        |
+| PrivateSilverScreen | Headless        |
+| Redacted            | Headless        |
+| ReelFlix            | Headless        |
+| RUTracker           | **Non-English** |
+| SecretCinema        | Headless        |
+| SeedPool            | Headless        |
+| Tasmanites          | Headless        |
+| TeamOS              | Headless        |
+| TheEmpire           | **Manual**      |
+| TheGeeks            | **Manual**      |
+| TorrentLeech        | Headless        |
+| TVChaosUK           | Headless        |
+| UHDBits             | Headless        |
+| Unwalled            | Headless        |
 
 ### Unsupported Trackers
 
@@ -112,14 +112,15 @@ reapplied:
 xhost +local:
 ```
 
-Below is the command to run the `latest` docker image. The final environment variable and volume bind are required only if a UI is needed, for either
-of the following configurations:
+Below is the command to run the `latest` docker image. `--env DISPLAY="${DISPLAY}"` and `-v /tmp/.X11-unix:/tmp/.X11-unix` are only required if a UI
+is needed, for either of the following configurations:
 
 - `ENABLE_MANUAL_TRACKERS` is **true** (setting this to **false** will override setting `ENABLE_TRANSLATION_TO_ENGLISH` to **true**)
 - `ENABLE_HEADLESS_BROWSER` is **false**.
 
 ```bash
-docker run --rm zodac/tracker-profiles:latest \ 
+docker run \
+    --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
@@ -133,9 +134,10 @@ docker run --rm zodac/tracker-profiles:latest \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
-    --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required
+    -v /tmp/screenshots:/tmp/screenshots \
+    --rm zodac/tracker-profiles:latest
 ```
 
 ### Configuration Options
@@ -184,8 +186,9 @@ a new implementation.
 Below is the command to build and run the development docker image:
 
 ```bash
-docker build -f ./docker/Dockerfile -t tracker-profiles . && \
-docker run --rm tracker-profiles \ 
+docker build -f ./docker/Dockerfile -t tracker-profiles . &&
+docker run \
+    --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
@@ -199,9 +202,10 @@ docker run --rm tracker-profiles \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
-    --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required
+    -v /tmp/screenshots:/tmp/screenshots \
+    --rm tracker-profiles
 ```
 
 ### Implementing New Tracker Handlers
