@@ -31,7 +31,7 @@ public final class PatternMatcher {
 
     private static final Pattern EMAIL = Pattern.compile("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
     private static final Pattern IPV4 = Pattern.compile("((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)");
-    private static final Pattern IPV4_MASKED = Pattern.compile("\\d{1,3}\\.\\d{1,3}\\.x\\.x"); // Needed for HDBits only currently
+    private static final Pattern IPV4_MASKED = Pattern.compile("((25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){2}x\\.x"); // Only for HDBits
     private static final Pattern IPV6 = Pattern.compile("([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}");
 
     private PatternMatcher() {
