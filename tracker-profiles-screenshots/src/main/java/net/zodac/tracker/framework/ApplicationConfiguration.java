@@ -81,7 +81,8 @@ public record ApplicationConfiguration(
             getOutputDirectory(),
             getTrackerInputFilePath()
         );
-        LOGGER.debug("Loaded application configuration: {}", applicationConfiguration);
+
+        applicationConfiguration.print();
         return applicationConfiguration;
     }
 
@@ -123,5 +124,18 @@ public record ApplicationConfiguration(
             return environmentVariable;
         }
         return defaultValue;
+    }
+
+    private void print() {
+        LOGGER.debug("Loaded application configuration:");
+        LOGGER.debug("\t- browserDataStoragePath={}", browserDataStoragePath);
+        LOGGER.debug("\t- browserDimensions={}", browserDimensions);
+        LOGGER.debug("\t- csvCommentSymbol={}", csvCommentSymbol);
+        LOGGER.debug("\t- enableHeadlessBrowser={}", enableHeadlessBrowser);
+        LOGGER.debug("\t- enableManualTrackers={}", enableManualTrackers);
+        LOGGER.debug("\t- enableTranslationToEnglish={}", enableTranslationToEnglish);
+        LOGGER.debug("\t- openOutputDirectory={}", openOutputDirectory);
+        LOGGER.debug("\t- outputDirectory={}", outputDirectory);
+        LOGGER.debug("\t- trackerInputFilePath={}", trackerInputFilePath);
     }
 }
