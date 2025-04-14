@@ -78,7 +78,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
     public boolean canBannerBeCleared() {
         // IP address warning banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'close') and @title='Dismiss']"));
-        cookieButton.click();
+        clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         ScriptExecutor.moveToOrigin(driver);

@@ -86,7 +86,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
             final By loginButtonSelector = loginButtonSelector();
             if (loginButtonSelector != null) {
                 final WebElement loginButton = driver.findElement(loginButtonSelector);
-                loginButton.click();
+                clickButton(loginButton);
             }
         }
     }

@@ -55,7 +55,7 @@ public class PrivateSilverScreenHandler extends AbstractTrackerHandler {
     public boolean canBannerBeCleared() {
         // Cookie banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
-        cookieButton.click();
+        clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         ScriptExecutor.moveToOrigin(driver);

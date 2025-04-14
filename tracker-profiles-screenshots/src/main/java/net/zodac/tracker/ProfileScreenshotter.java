@@ -102,6 +102,7 @@ public final class ProfileScreenshotter {
         final Collection<String> successfulTrackers = new TreeSet<>();
         final Collection<String> unsuccessfulTrackers = new TreeSet<>();
 
+        // TODO: Parameterise the order of these being executed
         // Non-manual trackers
         for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of())) {
             final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
@@ -187,17 +188,17 @@ public final class ProfileScreenshotter {
         final int numberOfTrackers = numberOfHeadlessTrackers + numberOfManualTrackers + numberOfNonEnglishTrackers;
         final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
 
-        LOGGER.info("Screenshotting {} tracker{}:", numberOfTrackers, trackersPlural);
+        LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, trackersPlural);
         if (numberOfHeadlessTrackers != 0) {
-            LOGGER.info(String.format("- %-10s %d", "Headless:", numberOfHeadlessTrackers));
+            LOGGER.debug(String.format("- %-10s %d", "Headless:", numberOfHeadlessTrackers));
         }
 
         if (numberOfManualTrackers != 0) {
-            LOGGER.info(String.format("- %-10s %d", "Manual:", numberOfManualTrackers));
+            LOGGER.debug(String.format("- %-10s %d", "Manual:", numberOfManualTrackers));
         }
 
         if (numberOfNonEnglishTrackers != 0) {
-            LOGGER.info(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
+            LOGGER.debug(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
         }
     }
 

@@ -55,7 +55,7 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
     public boolean canBannerBeCleared() {
         // Cookie banner
         final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(text(), 'Allow cookies')]"));
-        cookieButton.click();
+        clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         ScriptExecutor.moveToOrigin(driver);
@@ -74,7 +74,7 @@ public class TvChaosUkHandler extends AbstractTrackerHandler {
         // Click the profile menu to make the logout button interactable
         final By logoutParentSelector = By.xpath("//ul[contains(@class, 'right-navbar')]//li[2]//a[contains(@class, 'dropdown-toggle')]");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        logoutParent.click();
+        clickButton(logoutParent);
 
         return By.xpath("//a[i[contains(@class, 'fa-sign-out')]]");
     }

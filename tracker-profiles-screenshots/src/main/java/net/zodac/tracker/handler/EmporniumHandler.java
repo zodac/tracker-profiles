@@ -90,7 +90,7 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         final By sectionSelector = By.id("collagesbutton");
         final Collection<WebElement> sections = driver.findElements(sectionSelector);
         for (final WebElement section : sections) {
-            section.click();
+            clickButton(section);
             ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
         }
     }

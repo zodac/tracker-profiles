@@ -73,7 +73,7 @@ public class BackUpsHandler extends AbstractTrackerHandler {
         // Click the user dropdown menu bar to make the profile button interactable
         final By profileParentSelector = By.id("quickprofileview");
         final WebElement profileParent = driver.findElement(profileParentSelector);
-        profileParent.click();
+        clickButton(profileParent);
 
         return By.xpath("//div[@class='qactions']/a[1]");
     }
@@ -111,7 +111,7 @@ public class BackUpsHandler extends AbstractTrackerHandler {
         // Click the user dropdown menu bar to make the logout button interactable
         final By logoutParentSelector = By.id("quickprofileview");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        logoutParent.click();
+        clickButton(logoutParent);
 
         return By.xpath("//div[@class='qactions']/a[2]");
     }

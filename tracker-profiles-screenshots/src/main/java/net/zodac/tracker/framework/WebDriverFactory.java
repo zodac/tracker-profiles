@@ -75,8 +75,8 @@ final class WebDriverFactory {
     }
 
     private static boolean canTrackerUseHeadlessBrowser(final TrackerType trackerType) {
-        return trackerType == TrackerType.HEADLESS && CONFIG.enableHeadlessBrowser()
-            || trackerType == TrackerType.NON_ENGLISH && !CONFIG.enableTranslationToEnglish()
-            || trackerType == TrackerType.MANUAL_INPUT_NEEDED && !CONFIG.enableManualTrackers();
+        return (trackerType == TrackerType.HEADLESS && CONFIG.enableHeadlessBrowser())
+            || (trackerType == TrackerType.NON_ENGLISH && !CONFIG.enableTranslationToEnglish())
+            || (trackerType == TrackerType.MANUAL_INPUT_NEEDED && !CONFIG.enableManualTrackers());
     }
 }
