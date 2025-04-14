@@ -74,7 +74,7 @@ public final class TrackerHandlerFactory {
      *
      * <p>
      * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
-     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#useHeadlessBrowser()} is {@code true}, then the
+     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#enableHeadlessBrowser()} is {@code true}, then the
      * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
      * debugging.
      *

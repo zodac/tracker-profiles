@@ -12,7 +12,9 @@ otherwise unavailable.
 - Redacts the user's email address and IP address (replacing the text with "----")
 - Takes a full-page screenshot of the redacted user profile
 
-## Available Trackers
+## Trackers
+
+### Supported Trackers
 
 The available trackers come in three types:
 
@@ -20,64 +22,81 @@ The available trackers come in three types:
 - Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
 - Non-English: If the tracker is not in English, a UI browser is required to translate the page
 
-| Tracker Name        | Support     |
-|---------------------|-------------|
-| ABTorrents          | Headless    |
-| Aither              | Headless    |
-| AlphaRatio          | Headless    |
-| AnimeBytes          | Headless    |
-| Anthelion           | Headless    |
-| BackUps             | Headless    |
-| BakaBT              | Headless    |
-| BeyondHD            | Manual      |
-| Blutopia            | Headless    |
-| BwTorrents          | Headless    |
-| Cathode-Ray.Tube    | Headless    |
-| CGPeers             | Manual      |
-| DICMusic            | Headless    |
-| DigitalCore.Club    | Manual      |
-| DocsPedia           | Manual      |
-| Empornium           | Headless    |
-| FearNoPeer          | Headless    |
-| FileList            | Headless    |
-| GazelleGames        | Manual      |
-| HDBits              | Manual      |
-| Kufirc              | Non-English |
-| Lat-Team            | Non-English |
-| Libble              | Headless    |
-| LST                 | Headless    |
-| Metal-Tracker       | Headless    |
-| MoreThanTV          | Headless    |
-| MyAnonaMouse        | Headless    |
-| Nebulance           | Headless    |
-| Orpheus             | Headless    |
-| PassThePopcorn      | Manual      |
-| PixelCove           | Headless    |
-| PornBay             | Headless    |
-| PrivateSilverScreen | Headless    |
-| Redacted            | Headless    |
-| ReelFlix            | Headless    |
-| RUTracker           | Non-English |
-| SecretCinema        | Headless    |
-| SeedPool            | Headless    |
-| Tasmanites          | Headless    |
-| TeamOS              | Headless    |
-| TheEmpire           | Manual      |
-| TheGeeks            | Manual      |
-| TorrentLeech        | Headless    |
-| TVChaosUK           | Headless    |
-| UHDBits             | Headless    |
-| Unwalled            | Headless    |
+| Tracker Name        | Support       |
+|---------------------|---------------|
+| ABTorrents          | Headless      |
+| Aither              | Headless      |
+| AlphaRatio          | Headless      |
+| AnimeBytes          | Headless      |
+| Anthelion           | Headless      |
+| BackUps             | Headless      |
+| BakaBT              | Headless      |
+| BeyondHD            | _Manual_      |
+| Blutopia            | Headless      |
+| BwTorrents          | Headless      |
+| Cathode-Ray.Tube    | Headless      |
+| CGPeers             | _Manual_      |
+| DICMusic            | Headless      |
+| DigitalCore.Club    | _Manual_      |
+| DocsPedia           | _Manual_      |
+| Empornium           | Headless      |
+| FearNoPeer          | Headless      |
+| FileList            | Headless      |
+| GazelleGames        | _Manual_      |
+| HDBits              | _Manual_      |
+| Kufirc              | _Non-English_ |
+| Lat-Team            | _Non-English_ |
+| Libble              | Headless      |
+| LST                 | Headless      |
+| Metal-Tracker       | Headless      |
+| MoreThanTV          | Headless      |
+| MyAnonaMouse        | Headless      |
+| Nebulance           | Headless      |
+| Orpheus             | Headless      |
+| PassThePopcorn      | _Manual_      |
+| PixelCove           | Headless      |
+| PornBay             | Headless      |
+| PrivateSilverScreen | Headless      |
+| Redacted            | Headless      |
+| ReelFlix            | Headless      |
+| RUTracker           | _Non-English_ |
+| SecretCinema        | Headless      |
+| SeedPool            | Headless      |
+| Tasmanites          | Headless      |
+| TeamOS              | Headless      |
+| TheEmpire           | _Manual_      |
+| TheGeeks            | _Manual_      |
+| TorrentLeech        | Headless      |
+| TVChaosUK           | Headless      |
+| UHDBits             | Headless      |
+| Unwalled            | Headless      |
+
+### Unsupported Trackers
+
+The following trackers are not currently supported:
+
+| Tracker Name    | Reason                  |
+|-----------------|-------------------------|
+| AnimeTorrents   | Cloudflare verification |
+| AvistaZ         | Cloudflare verification |
+| BroadcasThe.Net | Cloudflare verification |
+| CinemaZ         | Cloudflare verification |
+| ExoticaZ        | Cloudflare verification |
+| Hawke-Uno       | Cloudflare verification |
+| IPTorrents      | Cloudflare verification |
+| PrivateHD       | Cloudflare verification |
+| SceneTime       | Cloudflare verification |
+| Speed.CD        | Cloudflare verification |
+| SportsCult      | Cloudflare verification |
+| ULCX            | Cloudflare verification |
 
 ## How To Use
 
 ### Tracker Defintions
 
 First, copy the [trackers_example.csv](./docker/trackers_example.csv) file and rename it to **trackers.csv**.
-This file needs to be updated with your user's information for each tracker. Any unwanted trackers can be deleted, or prefixed by the
-`CSV_COMMENT_SYMBOL` environment variable so they are excluded.
-The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation
-for each tracker is retrieved by the *trackerName* field within the CSV file. The file can be saved anywhere, and it will be referenced when running
+This file needs to be updated with your user's login information for each tracker. Any unwanted trackers can be deleted, or prefixed by the
+`CSV_COMMENT_SYMBOL` environment variable so they are excluded. The file can be saved anywhere, and it will be referenced when running
 the application.
 
 ### Running Application
@@ -96,8 +115,8 @@ xhost +local:
 Below is the command to run the `latest` docker image. The final environment variable and volume bind are required only if a UI is needed, for either
 of the following configurations:
 
-- `INCLUDE_MANUAL_TRACKERS` is **true** (`INCLUDE_MANUAL_TRACKERS` beign set to **false** will override `TRANSLATE_TO_ENGLISH` being set to **true**)
-- `USE_HEADLESS_BROWSER` is **false**.
+- `ENABLE_MANUAL_TRACKERS` is **true** (setting this to **false** will override setting `ENABLE_TRANSLATION_TO_ENGLISH` to **true**)
+- `ENABLE_HEADLESS_BROWSER` is **false**.
 
 ```bash
 docker run --rm zodac/tracker-profiles:latest \ 
@@ -105,15 +124,15 @@ docker run --rm zodac/tracker-profiles:latest \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env INCLUDE_MANUAL_TRACKERS=false \
+    --env ENABLE_HEADLESS_BROWSER=true \
+    --env ENABLE_MANUAL_TRACKERS=false \
+    --env ENABLE_TRANSLATION_TO_ENGLISH=false \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    --env TRANSLATE_TO_ENGLISH=false \
-    --env USE_HEADLESS_BROWSER=true \
     -v /tmp/screenshots:/tmp/screenshots \
     -v /tmp/chrome:/tmp/chrome \
     --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required
@@ -123,21 +142,21 @@ docker run --rm zodac/tracker-profiles:latest \
 
 The following are all possible configuration options, defined as environment variables for the docker image:
 
-| Environment Variable           | Description                                                                                                    | Default Value                 |
-|--------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------|
-| *BROWSER_DATA_STORAGE_PATH*    | The file path in which to store browser data (profiles, caches, etc.)                                          | /tmp/chrome                   |
-| *BROWSER_HEIGHT*               | The height (in pixels) of the web browser used to take screenshots                                             | 1050                          |
-| *BROWSER_WIDTH*                | The width (in pixels) of the web browser used to take screenshots                                              | 1680                          |
-| *CSV_COMMENT_SYMBOL*           | If this character is the first in a CSV row, the CSV row is considered a comment and not processed             | #                             |
-| *INCLUDE_MANUAL_TRACKERS*      | Whether to take screnshots of trackers that require a browser with a UI (overrides `TRANSLATE_TO_ENGLISH`)     | false                         |
-| *LOG_LEVEL*                    | The logging level for console output                                                                           | INFO                          |
-| *OPEN_OUTPUT_DIRECTORY*        | Whether to open the output screenshot directory when execution is complete (not working in Docker, debug only) | false                         |
-| *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots                                      | yyyy-MM-dd                    |
-| *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of for the new directory created for the screenshots, relative to the project root         | /tmp/screenshots              |
-| *TIMEZONE*                     | The local timezone, used to retrieve the current date to name the output directory                             | UTC                           |
-| *TRACKER_INPUT_FILE_PATH*      | The path to the input tracker definition CSV file                                                              | /tmp/screenshots/trackers.csv |
-| *TRANSLATE_TO_ENGLISH*         | Whether to translate non-English trackers to English (only if the tracker has no English option)               | false                         |
-| *USE_HEADLESS_BROWSER*         | Whether to use a headless browser for screenshots, or a browser with UI                                        | false                         |
+| Environment Variable            | Description                                                                                                         | Default Value                 |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                               | /tmp/chrome                   |
+| *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                  | 1050                          |
+| *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                   | 1680                          |
+| *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                  | #                             |
+| *ENABLE_HEADLESS_BROWSER*       | Enables a headless browser for screenshots (otherwise uses a browser with UI)                                       | true                          |
+| *ENABLE_MANUAL_TRACKERS*        | Whether to take screnshots of trackers that require a browser with a UI (overrides `ENABLE_TRANSLATION_TO_ENGLISH`) | false                         |
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English (only if the tracker has no English option)                    | false                         |
+| *LOG_LEVEL*                     | The logging level for console output                                                                                | INFO                          |
+| *OPEN_OUTPUT_DIRECTORY*         | Whether to open the output directory when execution is complete (not supported in Docker, debug only)               | false                         |
+| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                           | yyyy-MM-dd                    |
+| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root              | /tmp/screenshots              |
+| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                  | UTC                           |
+| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file                                                                   | /tmp/screenshots/trackers.csv |
 
 ## Contributing
 
@@ -152,9 +171,11 @@ The following are all possible configuration options, defined as environment var
 Using IntelliJ, and click on **Run**> **Edit Configurations** and add the environment variables for the application. Once done, open
 the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ProfileScreenshotter.java) and run the `main`
 method from the IDE.
+The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation
+for each tracker is retrieved by the *trackerName* field within the CSV file.
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to take screenshots. While the
-application usually run in headless mode, this can be changed by updating the `USE_HEADLESS_BROWSER` value in
+application usually run in headless mode, this can be changed by updating the `ENABLE_HEADLESS_BROWSER` value in
 the [configuration](#configuration-options). This will cause a new browser instance to launch when taking a screenshot, and can be used for debugging
 a new implementation.
 
@@ -169,15 +190,15 @@ docker run --rm tracker-profiles \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env INCLUDE_MANUAL_TRACKERS=false \
+    --env ENABLE_HEADLESS_BROWSER=true \
+    --env ENABLE_MANUAL_TRACKERS=false \
+    --env ENABLE_TRANSLATION_TO_ENGLISH=false \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    --env TRANSLATE_TO_ENGLISH=false \
-    --env USE_HEADLESS_BROWSER=true \
     -v /tmp/screenshots:/tmp/screenshots \
     -v /tmp/chrome:/tmp/chrome \
     --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required

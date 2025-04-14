@@ -30,26 +30,26 @@ import org.apache.logging.log4j.Logger;
 /**
  * Utility file that loads the application configuration from environment variables.
  *
- * @param browserDataStoragePath   the file path in which to store browser data (profiles, caches, etc.)
- * @param browserDimensions        the dimensions in the format {@code width,height} for the {@code Selenium} web browser
- * @param csvCommentSymbol         the {@code char} defining a comment row in the CSV file
- * @param includeTrackersNeedingUi whether to include trackers that require a UI for manual user interaction or translation
- * @param openOutputDirectory      whether to open the screenshot directory when execution is completed
- * @param outputDirectory          the output {@link Path} to the directory within which the screenshots will be saved
- * @param trackerInputFilePath     the {@link Path} to the input tracker CSV file
- * @param translateToEnglish       whether to translate non-English trackers to English
- * @param useHeadlessBrowser       whether to use a headless browser or not
+ * @param browserDataStoragePath     the file path in which to store browser data (profiles, caches, etc.)
+ * @param browserDimensions          the dimensions in the format {@code width,height} for the {@code Selenium} web browser
+ * @param csvCommentSymbol           the {@code char} defining a comment row in the CSV file
+ * @param enableManualTrackers       whether to include trackers that require a UI for manual user interaction or translation
+ * @param openOutputDirectory        whether to open the screenshot directory when execution is completed
+ * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
+ * @param trackerInputFilePath       the {@link Path} to the input tracker CSV file
+ * @param enableTranslationToEnglish whether to translate non-English trackers to English
+ * @param enableHeadlessBrowser      whether to use a headless browser or not
  */
 public record ApplicationConfiguration(
     String browserDataStoragePath,
     String browserDimensions,
     char csvCommentSymbol,
-    boolean includeTrackersNeedingUi,
+    boolean enableHeadlessBrowser,
+    boolean enableManualTrackers,
+    boolean enableTranslationToEnglish,
     boolean openOutputDirectory,
     Path outputDirectory,
-    Path trackerInputFilePath,
-    boolean translateToEnglish,
-    boolean useHeadlessBrowser
+    Path trackerInputFilePath
 ) {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -74,12 +74,12 @@ public record ApplicationConfiguration(
             getBrowserDataStoragePath(),
             getBrowserDimensions(),
             getCsvCommentSymbol(),
-            getBooleanEnvironmentVariable("INCLUDE_MANUAL_TRACKERS", false),
+            getBooleanEnvironmentVariable("ENABLE_HEADLESS_BROWSER", true),
+            getBooleanEnvironmentVariable("ENABLE_MANUAL_TRACKERS", false),
+            getBooleanEnvironmentVariable("ENABLE_TRANSLATION_TO_ENGLISH", false),
             getBooleanEnvironmentVariable("OPEN_OUTPUT_DIRECTORY", false),
             getOutputDirectory(),
-            getInputFilePath(),
-            getBooleanEnvironmentVariable("TRANSLATE_TO_ENGLISH", false),
-            getBooleanEnvironmentVariable("USE_HEADLESS_BROWSER", true)
+            getTrackerInputFilePath()
         );
         LOGGER.debug("Loaded application configuration: {}", applicationConfiguration);
         return applicationConfiguration;
@@ -109,7 +109,7 @@ public record ApplicationConfiguration(
         return Paths.get(outputDirectoryParentPath, outputDirectoryName);
     }
 
-    private static Path getInputFilePath() {
+    private static Path getTrackerInputFilePath() {
         return Paths.get(getOrDefault("TRACKER_INPUT_FILE_PATH", DEFAULT_TRACKER_INPUT_FILE_PATH));
     }
 

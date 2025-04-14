@@ -93,7 +93,7 @@ public final class ProfileScreenshotter {
             return FAILURE_CODE;
         }
 
-        if (!CONFIG.includeTrackersNeedingUi() && trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).isEmpty()) {
+        if (!CONFIG.enableManualTrackers() && trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).isEmpty()) {
             LOGGER.error("No headless trackers selected, but manual trackers not enabled!");
             return FAILURE_CODE;
         }
@@ -112,7 +112,7 @@ public final class ProfileScreenshotter {
             }
         }
 
-        if (CONFIG.translateToEnglish() && trackersByType.containsKey(TrackerType.NON_ENGLISH)) {
+        if (CONFIG.enableTranslationToEnglish() && trackersByType.containsKey(TrackerType.NON_ENGLISH)) {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing non-English trackers <<<");
             for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of())) {
@@ -125,7 +125,7 @@ public final class ProfileScreenshotter {
             }
         }
 
-        if (CONFIG.includeTrackersNeedingUi() && trackersByType.containsKey(TrackerType.MANUAL_INPUT_NEEDED)) {
+        if (CONFIG.enableManualTrackers() && trackersByType.containsKey(TrackerType.MANUAL_INPUT_NEEDED)) {
             LOGGER.warn("");
             LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
             for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of())) {
@@ -181,8 +181,8 @@ public final class ProfileScreenshotter {
 
     private static void printTrackersInfo(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
         final int numberOfHeadlessTrackers = countTrackers(trackersByType, TrackerType.HEADLESS, true);
-        final int numberOfManualTrackers = countTrackers(trackersByType, TrackerType.MANUAL_INPUT_NEEDED, CONFIG.includeTrackersNeedingUi());
-        final int numberOfNonEnglishTrackers = countTrackers(trackersByType, TrackerType.NON_ENGLISH, CONFIG.translateToEnglish());
+        final int numberOfManualTrackers = countTrackers(trackersByType, TrackerType.MANUAL_INPUT_NEEDED, CONFIG.enableManualTrackers());
+        final int numberOfNonEnglishTrackers = countTrackers(trackersByType, TrackerType.NON_ENGLISH, CONFIG.enableTranslationToEnglish());
 
         final int numberOfTrackers = numberOfHeadlessTrackers + numberOfManualTrackers + numberOfNonEnglishTrackers;
         final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
@@ -314,7 +314,7 @@ public final class ProfileScreenshotter {
             LOGGER.info("\t- Header has been updated to not be fixed");
         }
 
-        if (CONFIG.translateToEnglish() && trackerHandler.isNotEnglish(trackerDefinition.username())) {
+        if (CONFIG.enableTranslationToEnglish() && trackerHandler.isNotEnglish(trackerDefinition.username())) {
             LOGGER.info("\t- Profile page has been translated to English");
         }
 

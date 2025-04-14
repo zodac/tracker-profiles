@@ -33,7 +33,11 @@ TorrentLeech,username,password
 TVChaosUK,username,password
 UHDBits,username,password
 Unwalled,username,password
-# Manual trackers
+# Non-english trackers (UI required to translate)
+Kufirc,username,password
+Lat-Team,username,password
+RUTracker,username,password
+# Manual trackers (UI required for user input)
 BeyondHD,username,password
 CGPeers,username,password
 DigitalCore.Club,username,password
@@ -43,7 +47,3 @@ HDBits,username,password
 PassThePopcorn,username,password
 TheEmpire,username,password
 TheGeeks,username,password
-# Non-english trackers (require non-headless mode)
-Kufirc,username,password
-Lat-Team,username,password
-RUTracker,username,password
