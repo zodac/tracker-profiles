@@ -84,6 +84,13 @@ public class FearNoPeerHandler extends AbstractTrackerHandler {
     }
 
     @Override
+    public boolean hasFixedHeader() {
+        final WebElement headerElement = driver.findElement(By.tagName("header"));
+        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
+        return true;
+    }
+
+    @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
