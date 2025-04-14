@@ -2,9 +2,76 @@
 
 ## Overview
 
-This is a tool used to log in to private torrent websites and take a screenshot of the user's profile page.
+This is a tool used to log in to private torrent websites and take a screenshot of the user's profile page. This can be used to showcase stats on your
+current tracker as part of an application to another site. Or used as a historical record of your stats on a tracker in case it goes down or becomes
+otherwise unavailable.
 
-## Tracker Defintions
+## Features
+
+- Opens the selected trackers and logs in, navigating to the user's profile page
+- Redacts the user's email address and IP address (replacing the text with "----")
+- Takes a full-page screenshot of the redacted user profile
+
+## Available Trackers
+
+The available trackers come in three types:
+
+- Headless: Can run with the browser in headless mode, meaning no UI browser is needed
+- Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
+- Non-English: If the tracker is not in English, a UI browser is required to translate the page
+
+| Tracker Name        | Support     |
+|---------------------|-------------|
+| ABTorrents          | Headless    |
+| Aither              | Headless    |
+| AlphaRatio          | Headless    |
+| AnimeBytes          | Headless    |
+| Anthelion           | Headless    |
+| BackUps             | Headless    |
+| BakaBT              | Headless    |
+| BeyondHD            | Manual      |
+| Blutopia            | Headless    |
+| BwTorrents          | Headless    |
+| Cathode-Ray.Tube    | Headless    |
+| CGPeers             | Manual      |
+| DICMusic            | Headless    |
+| DigitalCore.Club    | Manual      |
+| DocsPedia           | Manual      |
+| Empornium           | Headless    |
+| FearNoPeer          | Headless    |
+| FileList            | Headless    |
+| GazelleGames        | Manual      |
+| HDBits              | Manual      |
+| Kufirc              | Non-English |
+| Lat-Team            | Non-English |
+| Libble              | Headless    |
+| LST                 | Headless    |
+| Metal-Tracker       | Headless    |
+| MoreThanTV          | Headless    |
+| MyAnonaMouse        | Headless    |
+| Nebulance           | Headless    |
+| Orpheus             | Headless    |
+| PassThePopcorn      | Manual      |
+| PixelCove           | Headless    |
+| PornBay             | Headless    |
+| PrivateSilverScreen | Headless    |
+| Redacted            | Headless    |
+| ReelFlix            | Headless    |
+| RUTracker           | Non-English |
+| SecretCinema        | Headless    |
+| SeedPool            | Headless    |
+| Tasmanites          | Headless    |
+| TeamOS              | Headless    |
+| TheEmpire           | Manual      |
+| TheGeeks            | Manual      |
+| TorrentLeech        | Headless    |
+| TVChaosUK           | Headless    |
+| UHDBits             | Headless    |
+| Unwalled            | Headless    |
+
+## How To Use
+
+### Tracker Defintions
 
 First, copy the [trackers_example.csv](./docker/trackers_example.csv) file and rename it to **trackers.csv**.
 This file needs to be updated with your user's information for each tracker. Any unwanted trackers can be deleted, or prefixed by the
@@ -13,7 +80,7 @@ The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/n
 for each tracker is retrieved by the *trackerName* field within the CSV file. The file can be saved anywhere, and it will be referenced when running
 the application.
 
-## Running Application
+### Running Application
 
 The application is run using Docker. There are two ways to execute the application - with a UI and without. By default, the application is configured
 to only screenshot trackers that do not require a UI. A UI is needed for trackers that require some user input during login (like a Captcha or 2FA),
@@ -26,32 +93,33 @@ reapplied:
 xhost +local:
 ```
 
-Then build and run the docker image:
+Below is the command to run the `latest` docker image. The final environment variable and volume bind are required only if a UI is needed, for either
+of the following configurations:
+
+- `INCLUDE_MANUAL_TRACKERS` is **true** (`INCLUDE_MANUAL_TRACKERS` beign set to **false** will override `TRANSLATE_TO_ENGLISH` being set to **true**)
+- `USE_HEADLESS_BROWSER` is **false**.
 
 ```bash
-docker build -f ./docker/Dockerfile -t tracker-profiles .
-docker run \
-    --env DISPLAY="${DISPLAY}" \
+docker run --rm zodac/tracker-profiles:latest \ 
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env INCLUDE_UI_TRACKERS=true \
+    --env INCLUDE_MANUAL_TRACKERS=false \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    --env TRANSLATE_TO_ENGLISH=true \
+    --env TRANSLATE_TO_ENGLISH=false \
     --env USE_HEADLESS_BROWSER=true \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/screenshots:/tmp/screenshots \
     -v /tmp/chrome:/tmp/chrome \
-    --rm tracker-profiles
+    --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required
 ```
 
-## Configuration Options
+### Configuration Options
 
 The following are all possible configuration options, defined as environment variables for the docker image:
 
@@ -90,10 +158,35 @@ application usually run in headless mode, this can be changed by updating the `U
 the [configuration](#configuration-options). This will cause a new browser instance to launch when taking a screenshot, and can be used for debugging
 a new implementation.
 
+### Building and Running In Docker
+
+Below is the command to build and run the development docker image:
+
+```bash
+docker build -f ./docker/Dockerfile -t tracker-profiles . && \
+docker run --rm tracker-profiles \ 
+    --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
+    --env BROWSER_HEIGHT=1050 \
+    --env BROWSER_WIDTH=1680 \
+    --env CSV_COMMENT_SYMBOL='#' \
+    --env INCLUDE_MANUAL_TRACKERS=false \
+    --env LOG_LEVEL=INFO \
+    --env OPEN_OUTPUT_DIRECTORY=false \
+    --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
+    --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
+    --env TIMEZONE=UTC \
+    --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
+    --env TRANSLATE_TO_ENGLISH=false \
+    --env USE_HEADLESS_BROWSER=true \
+    -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/chrome:/tmp/chrome \
+    --env DISPLAY="${DISPLAY}" -v /tmp/.X11-unix:/tmp/.X11-unix # Only add these two if a UI is required
+```
+
 ### Implementing New Tracker Handlers
 
 All supported private trackers have an implementation found in the [handler](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler)
 package. To add a new one,
 extend [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java), following
-the convention from an existing implementation,
+the convention from an existing implementation
 like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AitherHandler.java).
