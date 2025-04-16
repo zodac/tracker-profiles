@@ -3,8 +3,8 @@
 ## Overview
 
 This is a tool used to log in to private torrent websites and take a screenshot of the user's profile page. This can be used to showcase stats on your
-current tracker as part of an application to another site. Or used as a historical record of your stats on a tracker in case it goes down or becomes
-otherwise unavailable.
+current tracker as part of an application to another site. It can also be used as a historical record of your stats on a tracker in case it goes down
+or becomes otherwise unavailable.
 
 ## Features
 
@@ -44,6 +44,7 @@ The available trackers come in three types:
 | FileList            | Headless        |
 | GazelleGames        | **Manual**      |
 | HDBits              | **Manual**      |
+| HDUnited            | Headless        |
 | Kufirc              | **Non-English** |
 | Lat-Team            | **Non-English** |
 | Libble              | Headless        |
