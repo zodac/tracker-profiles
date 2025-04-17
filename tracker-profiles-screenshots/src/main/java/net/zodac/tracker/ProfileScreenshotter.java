@@ -35,6 +35,7 @@ import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.exception.BrowserClosedException;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
@@ -77,7 +78,12 @@ public final class ProfileScreenshotter {
      * @see ScreenshotTaker
      */
     public static void main(final String[] args) {
-        System.exit(executeProfileScreenshotter());
+        try {
+            System.exit(executeProfileScreenshotter());
+        } catch (final Exception e) {
+            LOGGER.debug("Error abruptly ended execution", e);
+            LOGGER.error("Error abruptly ended execution: {}", e.getMessage());
+        }
     }
 
     private static int executeProfileScreenshotter() {
@@ -278,8 +284,8 @@ public final class ProfileScreenshotter {
             LOGGER.warn("\t- Unable to translate tracker '{}' to English: {}", trackerDefinition.name(), e.getMessage());
             return false;
         } catch (final NoSuchSessionException | UnreachableBrowserException e) {
-            LOGGER.warn("Browser unavailable, most likely user-cancelled");
-            throw e;
+            LOGGER.debug("Browser unavailable, most likely user-cancelled", e);
+            throw new BrowserClosedException();
         } catch (final Exception e) {
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name(), e);
 
