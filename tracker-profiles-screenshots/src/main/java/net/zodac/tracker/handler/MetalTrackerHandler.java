@@ -18,7 +18,7 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 

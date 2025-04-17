@@ -27,14 +27,19 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
+import net.zodac.tracker.framework.annotation.TrackerDisabled;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandlers;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import org.jspecify.annotations.Nullable;
@@ -59,14 +64,14 @@ public final class TrackerHandlerFactory {
      */
     public static Optional<TrackerHandler> findMatchingHandler(final String trackerName) {
         return TRACKER_HANDLER_CLASSES.stream()
-            .map(trackerHandler -> trackerHandler.getAnnotation(TrackerHandler.class))
+            .flatMap(handler -> Arrays.stream(handler.getAnnotationsByType(TrackerHandler.class)))
             .filter(annotation -> annotation.name().equalsIgnoreCase(trackerName))
             .findAny();
     }
 
     /**
      * Finds an implementation of {@link AbstractTrackerHandler} that matches the wanted {@code trackerName}, and returns an instance of it.
-     * Implementations of {@link AbstractTrackerHandler} should be annotated by {@link TrackerHandler}, which contains a
+     * Implementations of {@link AbstractTrackerHandler} should be annotated by at least one {@link TrackerHandler}, which contains a
      * {@link TrackerHandler#name()}, which should match the input (the match is case-insensitive).
      *
      * <p>
@@ -80,15 +85,17 @@ public final class TrackerHandlerFactory {
      *
      * @param trackerName the name of the tracker for which we want a {@link AbstractTrackerHandler}
      * @return an instance of the matching {@link AbstractTrackerHandler}
-     * @throws DisabledTrackerException thrown is a {@link AbstractTrackerHandler} exists but is annotated by {@link TrackerDisabled}
+     * @throws DisabledTrackerException thrown if a {@link AbstractTrackerHandler} exists but is annotated by {@link TrackerDisabled}
      * @throws IllegalStateException    thrown if an error occurred when instantiating the {@link AbstractTrackerHandler}
      * @throws NoSuchElementException   thrown if no valid {@link AbstractTrackerHandler} implementation could be found
      */
     public static AbstractTrackerHandler getHandler(final String trackerName) {
         final var matchingTrackerHandlerOptional = TRACKER_HANDLER_CLASSES.stream()
-            .map(handler -> Map.entry(handler, handler.getAnnotation(TrackerHandler.class)))
+            .flatMap(handler -> Arrays.stream(handler.getAnnotationsByType(TrackerHandler.class))
+                .map(annotation -> Map.entry(handler, annotation))
+            )
             .filter(entry -> entry.getValue().name().equalsIgnoreCase(trackerName))
-            .findFirst();
+            .findAny();
 
         if (matchingTrackerHandlerOptional.isEmpty()) {
             final String errorMessage = String.format("Unable to find %s with name '%s'", AbstractTrackerHandler.class.getSimpleName(), trackerName);
@@ -141,8 +148,8 @@ public final class TrackerHandlerFactory {
             .map(File::getName)
             .filter(fileName -> fileName.endsWith(".class"))
             .map(fileName -> getClass(fileName, packageName))
-            .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
-            .collect(Collectors.toSet());
+            .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class) || aClass.isAnnotationPresent(TrackerHandlers.class))
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
     }
 
     private static Set<Class<?>> getFromJar(final URL resource, final String packagePath) throws IOException {
@@ -153,8 +160,8 @@ public final class TrackerHandlerFactory {
                 .map(ZipEntry::getName)
                 .filter(jarEntryName -> jarEntryName.startsWith(packagePath) && jarEntryName.endsWith(".class"))
                 .map(jarEntryName -> getClass(jarEntryName.replace('/', '.'), null))
-                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class))
-                .collect(Collectors.toSet());
+                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class) || aClass.isAnnotationPresent(TrackerHandlers.class))
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
         }
     }
 

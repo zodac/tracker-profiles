@@ -21,8 +21,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +50,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public By loginButtonSelector() {
+    protected By loginButtonSelector() {
         ScriptExecutor.explicitWait(Duration.of(1L, ChronoUnit.SECONDS)); // Wait for the hidden captcha to load
         return By.id("login-button");
     }

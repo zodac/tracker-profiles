@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -60,7 +60,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public By loginButtonSelector() {
+    protected By loginButtonSelector() {
         return By.xpath("//button[contains(text(), 'Log in')]");
     }
 

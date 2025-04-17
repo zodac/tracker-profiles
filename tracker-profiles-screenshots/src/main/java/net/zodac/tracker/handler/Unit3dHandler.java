@@ -19,17 +19,24 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code SeedPool} tracker.
+ * Common implementation of {@link AbstractTrackerHandler} for {@code UNIT3D}-based trackers.
  */
+@TrackerHandler(name = "Aither", url = "https://aither.cc/")
+@TrackerHandler(name = "FearNoPeer", url = "https://fearnopeer.com/login") // URL set to login page to bypass Cloudflare verification
+@TrackerHandler(name = "HDUnited", url = "https://hd-united.vn/")
+@TrackerHandler(name = "LST", url = "https://lst.gg/")
+@TrackerHandler(name = "PrivateSilverScreen", url = "https://privatesilverscreen.cc/")
+@TrackerHandler(name = "ReelFlix", url = "https://reelflix.xyz/")
 @TrackerHandler(name = "SeedPool", url = "https://seedpool.org/")
-public class SeedPoolHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "Unwalled", url = "https://unwalled.cc/")
+public class Unit3dHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
@@ -37,13 +44,13 @@ public class SeedPoolHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public SeedPoolHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public Unit3dHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
     @Override
     protected By loginButtonSelector() {
-        return By.xpath("//button[@class='auth-form__primary-button' and text()='Login']");
+        return By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
     }
 
     @Override
@@ -51,6 +58,14 @@ public class SeedPoolHandler extends AbstractTrackerHandler {
         return By.xpath("//main[@class='page__home']");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link Unit3dHandler}-based trackers, there is a cookie banner on first log-in.
+     *
+     * @return {@code true} once the banner is cleared
+     */
     @Override
     public boolean canBannerBeCleared() {
         // Cookie banner

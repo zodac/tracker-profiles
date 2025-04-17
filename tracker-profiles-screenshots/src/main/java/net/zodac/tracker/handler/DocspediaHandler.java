@@ -19,8 +19,8 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
@@ -82,7 +82,7 @@ public class DocspediaHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public By loginButtonSelector() {
+    protected By loginButtonSelector() {
         return By.xpath("//input[@value='Login' and @type='submit']");
     }
 

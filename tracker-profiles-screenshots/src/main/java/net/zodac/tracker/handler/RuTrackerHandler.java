@@ -18,8 +18,8 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;

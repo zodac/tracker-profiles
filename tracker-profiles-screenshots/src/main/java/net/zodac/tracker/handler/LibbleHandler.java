@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
@@ -97,7 +97,7 @@ public class LibbleHandler extends AbstractTrackerHandler {
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email')]/a[1]"), // Email
-            By.xpath("//a[@title='Manage Sessions']") // Footer with last-used IP address (not always visible)
+            By.xpath("//a[@title='Manage Sessions']") // Footer with last used IP address
         );
     }
 

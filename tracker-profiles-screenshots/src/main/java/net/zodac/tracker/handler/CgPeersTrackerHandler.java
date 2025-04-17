@@ -18,9 +18,9 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import net.zodac.tracker.framework.TrackerDisabled;
-import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.annotation.TrackerDisabled;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

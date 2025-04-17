@@ -18,18 +18,14 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Blutopia} tracker.
+ * Extension of the {@link Unit3dHandler} the {@code Blutopia} tracker.
  */
 @TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/")
-public class BlutopiaHandler extends AbstractTrackerHandler {
+public class BlutopiaHandler extends Unit3dHandler {
 
     /**
      * Default constructor.
@@ -41,48 +37,16 @@ public class BlutopiaHandler extends AbstractTrackerHandler {
         super(driver, trackerUrls);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link BlutopiaHandler}, unlike most other {@code UNIT3D}-based trackers, there is no cookie banner.
+     *
+     * @return {@code false} as there is no banner to be cleared
+     */
     @Override
-    public By loginButtonSelector() {
-        return By.xpath("//button[text()='Login' and @class='auth-form__primary-button']");
-    }
-
-    @Override
-    protected By postLoginSelector() {
-        return By.xpath("//main[@class='page__home']");
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        // Highlight the nav bar to make the profile button interactable
-        final By profileParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement profileParent = driver.findElement(profileParentSelector);
-        ScriptExecutor.moveTo(driver, profileParent);
-
-        return By.xpath("//a[@class='top-nav__username']");
-    }
-
-    @Override
-    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of(
-            By.xpath("//table[@class='data-table']/tbody/tr/td[2]"), // IP address, potentially multiple entries
-            By.xpath("//div[dt[text()='E-mail']]/dd[1]") // Email
-        );
-    }
-
-    @Override
-    public boolean hasFixedHeader() {
-        final WebElement headerElement = driver.findElement(By.tagName("header"));
-        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
-        return true;
-    }
-
-    @Override
-    protected By logoutButtonSelector() {
-        // Highlight the nav bar to make the logout button interactable
-        final By logoutParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
-
-        return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
+    public boolean canBannerBeCleared() {
+        return false;
     }
 }

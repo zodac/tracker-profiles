@@ -15,7 +15,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.framework;
+package net.zodac.tracker.framework.annotation;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -25,35 +25,18 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
 
 /**
- * Annotation used to mark an implementation of {@link AbstractTrackerHandler} to be used to generate screenshots for specific websites.
+ * Wrapper annotation for {@link TrackerHandler} to allow for multiple values.
  */
 @Retention(RUNTIME)
 @Target({TYPE, METHOD, FIELD, PARAMETER})
-public @interface TrackerHandler {
+public @interface TrackerHandlers {
 
     /**
-     * The name of the tracker website, which should link to an implementation of {@link AbstractTrackerHandler}.
+     * The {@link TrackerHandler} annotations defined for the {@link net.zodac.tracker.handler.AbstractTrackerHandler} implementation.
      *
-     * @return the name of the tracker
-     * @see TrackerHandlerFactory
+     * @return the {@link TrackerHandler}s
      */
-    String name();
-
-    /**
-     * Defines how the tracker is executed - whether a UI is needed or not.
-     *
-     * @return the {@link TrackerType}
-     */
-    TrackerType type() default TrackerType.HEADLESS;
-
-    /**
-     * The URLs of the tracker website. Multiple can be included for sites with backups, but will be executed in order until one successfully loads.
-     * This URL should load the login page of the tracker.
-     *
-     * @return the URLs of the tracker
-     */
-    String[] url();
+    TrackerHandler[] value();
 }

@@ -19,7 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -60,7 +60,7 @@ public class AnthelionHandler extends AbstractTrackerHandler {
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email:')]/a[1]"), // Email
-            By.xpath("//div[@id='footer']/div[2]/a[1]/span[3]") // Footer with last-used IP address (not always visible)
+            By.xpath("//div[@id='footer']/div[2]/a[1]/span[3]") // Footer with last used IP address
         );
     }
 

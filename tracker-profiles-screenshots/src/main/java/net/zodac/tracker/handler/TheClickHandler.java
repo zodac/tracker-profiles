@@ -20,8 +20,8 @@ package net.zodac.tracker.handler;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -31,10 +31,11 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code TheEmpire} tracker.
+ * Common implementation of {@link AbstractTrackerHandler} for {@code .click} family of trackers.
  */
 @TrackerHandler(name = "TheEmpire", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://theempire.click/")
-public class TheEmpireHandler extends AbstractTrackerHandler {
+@TrackerHandler(name = "TheGeeks", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://thegeeks.click/")
+public class TheClickHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -44,7 +45,7 @@ public class TheEmpireHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public TheEmpireHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public TheClickHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
@@ -62,7 +63,7 @@ public class TheEmpireHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link TheEmpireHandler}, prior to clicking the login button with a captcha that needs to be clicked (and verified if necessary). This must
+     * For {@link TheClickHandler}, prior to clicking the login button with a captcha that needs to be clicked (and verified if necessary). This must
      * be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
      *
      * <p>
@@ -73,11 +74,11 @@ public class TheEmpireHandler extends AbstractTrackerHandler {
      */
     @Override
     protected void manualCheckBeforeLoginClick(final String trackerName) {
-        LOGGER.info("\t\t >>> Waiting for user to click the captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
+        LOGGER.info("\t\t >>> Waiting for user to solve the captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.xpath("//div[@class='h-captcha']"));
         ScriptExecutor.highlightElement(driver, captchaElement);
-        DisplayUtils.userInputConfirmation(trackerName, "Click the captcha");
+        DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 
     @Override

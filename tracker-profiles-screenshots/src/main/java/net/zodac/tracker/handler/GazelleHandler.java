@@ -19,15 +19,20 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerHandler;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code UHDBits} tracker.
+ * Common implementation of {@link AbstractTrackerHandler} for {@code Gazelle}-based trackers.
  */
+@TrackerHandler(name = "Orpheus", url = "https://orpheus.network/")
+@TrackerHandler(name = "Redacted", url = "https://redacted.sh/")
+@TrackerHandler(name = "SecretCinema", url = "https://secret-cinema.pw/")
 @TrackerHandler(name = "UHDBits", url = "https://uhdbits.org/")
-public class UhdBitsHandler extends AbstractTrackerHandler {
+public class GazelleHandler extends AbstractTrackerHandler {
 
     /**
      * Default constructor.
@@ -35,17 +40,17 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
      * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public UhdBitsHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public GazelleHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
     @Override
     public By loginPageSelector() {
-        return By.xpath("//a[text()='Log in']");
+        return By.xpath("//a[contains(@href, 'login.php')]");
     }
 
     @Override
-    public By loginButtonSelector() {
+    protected By loginButtonSelector() {
         return By.xpath("//input[@type='submit' and @name='login' and @value='Log in' and @class='submit']");
     }
 
@@ -63,12 +68,27 @@ public class UhdBitsHandler extends AbstractTrackerHandler {
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
             By.xpath("//ul[contains(@class, 'stats')]/li[contains(text(), 'Email:')]/a[1]"), // Email
-            By.xpath("//div[@id='footer']/p[2]/a[1]/span[3]") // Footer with last used IP address
+            By.xpath("//div[@id='footer']/p[1]/a[1]/span") // Footer with last used IP address
         );
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link GazelleHandler}-based trackers, sometimes the logout button is not visible until the link to the user's profile is hovered over.
+     * This is not required for all trackers, but since it is a simple mouse move, we can execute it for all trackers and then return the appropriate
+     * {@link By} selector.
+     *
+     * @return the {@link By} selector for the logout button
+     */
     @Override
     protected By logoutButtonSelector() {
-        return By.xpath("//li[@id='nav_logout']//a[text()='Logout']");
+        // Highlight the profile menu to make the logout button interactable
+        final By logoutParentSelector = By.id("userinfo_username");
+        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        ScriptExecutor.moveTo(driver, logoutParent);
+
+        return By.xpath("//li[@id='nav_logout']//a[1]");
     }
 }
