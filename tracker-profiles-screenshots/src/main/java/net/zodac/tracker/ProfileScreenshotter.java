@@ -181,9 +181,12 @@ public final class ProfileScreenshotter {
     }
 
     private static void printTrackersInfo(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
-        final int numberOfHeadlessTrackers = countTrackers(trackersByType, TrackerType.HEADLESS, true);
-        final int numberOfManualTrackers = countTrackers(trackersByType, TrackerType.MANUAL_INPUT_NEEDED, CONFIG.enableManualTrackers());
-        final int numberOfNonEnglishTrackers = countTrackers(trackersByType, TrackerType.NON_ENGLISH, CONFIG.enableTranslationToEnglish());
+        final Set<TrackerDefinition> headlessTrackers = trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of());
+        final Set<TrackerDefinition> manualTrackers = trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of());
+        final Set<TrackerDefinition> nonEnglishTrackers = trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of());
+        final int numberOfHeadlessTrackers = headlessTrackers.size();
+        final int numberOfManualTrackers = CONFIG.enableManualTrackers() ? manualTrackers.size() : 0;
+        final int numberOfNonEnglishTrackers = CONFIG.enableTranslationToEnglish() ? nonEnglishTrackers.size() : 0;
 
         final int numberOfTrackers = numberOfHeadlessTrackers + numberOfManualTrackers + numberOfNonEnglishTrackers;
         final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
@@ -191,19 +194,24 @@ public final class ProfileScreenshotter {
         LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, trackersPlural);
         if (numberOfHeadlessTrackers != 0) {
             LOGGER.debug(String.format("- %-10s %d", "Headless:", numberOfHeadlessTrackers));
+            for (final TrackerDefinition trackerDefinition : headlessTrackers) {
+                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
+            }
         }
 
         if (numberOfManualTrackers != 0) {
             LOGGER.debug(String.format("- %-10s %d", "Manual:", numberOfManualTrackers));
+            for (final TrackerDefinition trackerDefinition : manualTrackers) {
+                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
+            }
         }
 
         if (numberOfNonEnglishTrackers != 0) {
             LOGGER.debug(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
+            for (final TrackerDefinition trackerDefinition : nonEnglishTrackers) {
+                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
+            }
         }
-    }
-
-    private static int countTrackers(final Map<TrackerType, Set<TrackerDefinition>> trackersByType, final TrackerType key, final boolean enabled) {
-        return enabled ? trackersByType.getOrDefault(key, Set.of()).size() : 0;
     }
 
     private static Map<TrackerType, Set<TrackerDefinition>> getTrackers() {
