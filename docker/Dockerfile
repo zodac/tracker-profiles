@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM maven:3.9.9-eclipse-temurin-23-alpine AS maven_build
+FROM maven:3.9.9-eclipse-temurin-24-alpine AS maven_build
 
 # Set the working directory
 WORKDIR /app
@@ -14,7 +14,7 @@ COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
 # Stage 2: Run the application
-FROM openjdk:23-jdk-slim
+FROM openjdk:24-jdk-slim
 
 # Set the working directory
 WORKDIR /app

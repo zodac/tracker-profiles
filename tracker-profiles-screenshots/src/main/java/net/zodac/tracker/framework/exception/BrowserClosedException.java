@@ -28,9 +28,11 @@ public class BrowserClosedException extends RuntimeException {
     private static final long serialVersionUID = -7709321931682250614L;
 
     /**
-     * Default constructor.
+     * Constructor that takes a cause {@link Throwable}.
+     *
+     * @param cause the cause {@link Throwable}
      */
-    public BrowserClosedException() {
-        super("Browser unavailable, most likely user-cancelled");
+    public BrowserClosedException(final Throwable cause) {
+        super("Browser unavailable, most likely user-cancelled", cause);
     }
 }

@@ -159,15 +159,15 @@ The following are all possible configuration options, defined as environment var
 | *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                           | yyyy-MM-dd                    |
 | *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root              | /tmp/screenshots              |
 | *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                  | UTC                           |
-| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file                                                                   | /tmp/screenshots/trackers.csv |
+| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file (inside the docker container)                                     | /tmp/screenshots/trackers.csv |
 
 ## Contributing
 
 ### Requirements
 
-- [Apache Maven](https://maven.apache.org/download.cgi)
-- [Google Chrome](https://www.google.com/chrome/)
-- [Java (JDK 23+)](https://jdk.java.net/23/)
+- [Apache Maven (v3.9.9)](https://maven.apache.org/download.cgi)
+- [Google Chrome](https://www.google.com/chrome/) (only if not using Docker)
+- [Java (JDK 24)](https://jdk.java.net/24/)
 
 ### Debugging Application
 
@@ -184,7 +184,7 @@ a new implementation.
 
 ### Building and Running In Docker
 
-Below is the command to build and run the development docker image:
+Below is the command to build and run the development docker image with everything enabled (requires the UI to be defined):
 
 ```bash
 docker build -f ./docker/Dockerfile -t tracker-profiles . &&
@@ -195,8 +195,8 @@ docker run \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
     --env ENABLE_HEADLESS_BROWSER=true \
-    --env ENABLE_MANUAL_TRACKERS=false \
-    --env ENABLE_TRANSLATION_TO_ENGLISH=false \
+    --env ENABLE_MANUAL_TRACKERS=true \
+    --env ENABLE_TRANSLATION_TO_ENGLISH=true \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
@@ -215,4 +215,4 @@ All supported private trackers have an implementation found in the [handler](./t
 package. To add a new one,
 extend [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java), following
 the convention from an existing implementation
-like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AitherHandler.java).
+like [AitherHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbTorrentsHandler.java).

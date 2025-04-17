@@ -285,7 +285,7 @@ public final class ProfileScreenshotter {
             return false;
         } catch (final NoSuchSessionException | UnreachableBrowserException e) {
             LOGGER.debug("Browser unavailable, most likely user-cancelled", e);
-            throw new BrowserClosedException();
+            throw new BrowserClosedException(e);
         } catch (final Exception e) {
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerDefinition.name(), e);
 
