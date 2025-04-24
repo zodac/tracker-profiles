@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
-      - '.github/workflows/docker-publish.yml'
+      - '.github/workflows/docker_publish.yml'
       - 'ci/**'
       - '!ci/doc/**'
       - '!ci/docker/**'
@@ -60,15 +60,19 @@ jobs:
           java-version: '24'
           maven-version: '3.9.9'
 
-      - name: Set Maven version from VERSION file
-        run: |
-          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false -DprocessAllModules
-
       - name: Run lints and test with Maven (including SonarQube)
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
         run: mvn clean install -Dall -Dsonarqube
+
+      - name: Set Maven version from VERSION file
+        run: |
+          mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false -DprocessAllModules
+
+      # Output is not used in Docker image, this step is only used to smoke-test the version update
+      - name: Build source with updated versions
+        run: mvn clean install
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -99,14 +103,14 @@ jobs:
       - name: Bump patch version in VERSION file
         run: |
           current_version="${{ steps.version.outputs.version }}"
-          IFS='.' read -r major minor patch <<< "$current_version"
+          IFS='.' read -r major minor patch <<< "${current_version}"
           new_patch=$((patch + 1))
-          next_version="$major.$minor.$new_patch"
-          echo "Bumping version to $next_version"
-          echo "$next_version" > VERSION
+          next_version="${major}.${minor}.${new_patch}"
+          echo "Bumping version to ${next_version}"
+          echo "${next_version}" > VERSION
           
           # Set Maven project version to next development SNAPSHOT version
-          mvn versions:set -DnewVersion="$next_version-SNAPSHOT" -DgenerateBackupPoms=false -DprocessAllModules
+          mvn versions:set -DnewVersion="${next_version}-SNAPSHOT" -DgenerateBackupPoms=false -DprocessAllModules
 
           # Push changes
           git add VERSION pom.xml */pom.xml
@@ -114,7 +118,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "[CI] Prepare next version: $next_version"
+            git commit -m "[CI] Prepare next version: ${next_version}"
             echo "has_changes=true" >> $GITHUB_ENV
           fi
 
