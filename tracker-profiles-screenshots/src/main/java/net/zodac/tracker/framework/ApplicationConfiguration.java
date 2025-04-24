@@ -23,6 +23,10 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,22 +37,22 @@ import org.apache.logging.log4j.Logger;
  * @param browserDataStoragePath     the file path in which to store browser data (profiles, caches, etc.)
  * @param browserDimensions          the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param csvCommentSymbol           the {@code char} defining a comment row in the CSV file
- * @param enableManualTrackers       whether to include trackers that require a UI for manual user interaction or translation
+ * @param forceUiBrowser             whether to use a UI-based browser or not
+ * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
  * @param openOutputDirectory        whether to open the screenshot directory when execution is completed
  * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
+ * @param trackerExecutionOrder      the execution order of the different {@link TrackerType}s
  * @param trackerInputFilePath       the {@link Path} to the input tracker CSV file
- * @param enableTranslationToEnglish whether to translate non-English trackers to English
- * @param enableHeadlessBrowser      whether to use a headless browser or not
  */
 public record ApplicationConfiguration(
     String browserDataStoragePath,
     String browserDimensions,
     char csvCommentSymbol,
-    boolean enableHeadlessBrowser,
-    boolean enableManualTrackers,
     boolean enableTranslationToEnglish,
+    boolean forceUiBrowser,
     boolean openOutputDirectory,
     Path outputDirectory,
+    List<TrackerType> trackerExecutionOrder,
     Path trackerInputFilePath
 ) {
 
@@ -62,6 +66,7 @@ public record ApplicationConfiguration(
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = File.separator + "tmp" + File.separator + "screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
+    private static final String DEFAULT_TRACKER_EXECUTION_ORDER = "headless,manual,non-english";
     private static final String DEFAULT_TRACKER_INPUT_FILE_PATH = DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH + File.separator + "trackers.csv";
 
     /**
@@ -74,11 +79,11 @@ public record ApplicationConfiguration(
             getBrowserDataStoragePath(),
             getBrowserDimensions(),
             getCsvCommentSymbol(),
-            getBooleanEnvironmentVariable("ENABLE_HEADLESS_BROWSER", true),
-            getBooleanEnvironmentVariable("ENABLE_MANUAL_TRACKERS", false),
-            getBooleanEnvironmentVariable("ENABLE_TRANSLATION_TO_ENGLISH", false),
+            getBooleanEnvironmentVariable("ENABLE_TRANSLATION_TO_ENGLISH", true),
+            getBooleanEnvironmentVariable("FORCE_UI_BROWSER", false),
             getBooleanEnvironmentVariable("OPEN_OUTPUT_DIRECTORY", false),
             getOutputDirectory(),
+            getTrackerExecutionOrder(),
             getTrackerInputFilePath()
         );
 
@@ -98,6 +103,30 @@ public record ApplicationConfiguration(
 
     private static char getCsvCommentSymbol() {
         return getOrDefault("CSV_COMMENT_SYMBOL", DEFAULT_CSV_COMMENT_SYMBOL).charAt(0);
+    }
+
+    private static List<TrackerType> getTrackerExecutionOrder() {
+        final String executionOrderRaw = getOrDefault("TRACKER_EXECUTION_ORDER", DEFAULT_TRACKER_EXECUTION_ORDER);
+        final String[] executionOrderTokens = executionOrderRaw.split(",");
+        if (executionOrderTokens.length == 0 || executionOrderTokens.length > TrackerType.ALL_VALUES.size()) {
+            throw new IllegalArgumentException(
+                String.format("Require 1-%d tracker types for EXECUTION_ORDER, found: %s", TrackerType.ALL_VALUES.size(),
+                    Arrays.toString(executionOrderTokens)));
+        }
+
+        final Collection<TrackerType> trackerExecutionOrder = new LinkedHashSet<>();
+        for (final String executionOrderToken : executionOrderTokens) {
+            final TrackerType trackerType = TrackerType.find(executionOrderToken);
+            if (trackerType == null) {
+                throw new IllegalArgumentException(String.format("Invalid tracker found: '%s'", executionOrderToken));
+            }
+
+            if (!trackerExecutionOrder.add(trackerType)) {
+                throw new IllegalArgumentException(String.format("Duplicate tracker found: '%s'", executionOrderToken));
+            }
+        }
+
+        return List.copyOf(trackerExecutionOrder);
     }
 
     private static Path getOutputDirectory() {
@@ -131,11 +160,11 @@ public record ApplicationConfiguration(
         LOGGER.debug("\t- browserDataStoragePath={}", browserDataStoragePath);
         LOGGER.debug("\t- browserDimensions={}", browserDimensions);
         LOGGER.debug("\t- csvCommentSymbol={}", csvCommentSymbol);
-        LOGGER.debug("\t- enableHeadlessBrowser={}", enableHeadlessBrowser);
-        LOGGER.debug("\t- enableManualTrackers={}", enableManualTrackers);
         LOGGER.debug("\t- enableTranslationToEnglish={}", enableTranslationToEnglish);
+        LOGGER.debug("\t- forceUiBrowser={}", forceUiBrowser);
         LOGGER.debug("\t- openOutputDirectory={}", openOutputDirectory);
         LOGGER.debug("\t- outputDirectory={}", outputDirectory);
+        LOGGER.debug("\t- trackerExecutionOrder={}", trackerExecutionOrder);
         LOGGER.debug("\t- trackerInputFilePath={}", trackerInputFilePath);
     }
 }

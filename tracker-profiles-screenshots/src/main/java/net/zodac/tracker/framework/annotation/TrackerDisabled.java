@@ -17,21 +17,17 @@
 
 package net.zodac.tracker.framework.annotation;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
 
 /**
- * Annotation used to mark an implementation of {@link AbstractTrackerHandler} that has been implemented, but has been disabled for screenshots.
+ * Annotation used to mark an implementation of {@link net.zodac.tracker.handler.AbstractTrackerHandler} that has been implemented, but has been
+ * disabled for screenshots.
  */
-@Retention(RUNTIME)
-@Target({TYPE, METHOD, FIELD, PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
 public @interface TrackerDisabled {
 
     /**

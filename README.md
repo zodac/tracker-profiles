@@ -9,6 +9,7 @@ or becomes otherwise unavailable.
 ## Features
 
 - Opens the selected trackers and logs in, navigating to the user's profile page
+- Requests user input for trackers with manual inputs (like Captchas, 2FA, etc.)
 - Redacts the user's email address and IP address (replacing the text with "----")
 - Takes a full-page screenshot of the redacted user profile
 
@@ -102,22 +103,7 @@ the application.
 
 ### Running Application
 
-The application is run using Docker. There are two ways to execute the application - with a UI and without. By default, the application is configured
-to only screenshot trackers that do not require a UI. A UI is needed for trackers that require some user input during login (like a Captcha or 2FA),
-or for a non-English tracker that needs to be translated.
-
-To run through Docker with a UI, local connections to the host display must be enabled. Please note this will be reset upon reboot and may need to be
-reapplied:
-
-```bash
-xhost +local:
-```
-
-Below is the command to run the `latest` docker image. `--env DISPLAY="${DISPLAY}"` and `-v /tmp/.X11-unix:/tmp/.X11-unix` are only required if a UI
-is needed, for either of the following configurations:
-
-- `ENABLE_MANUAL_TRACKERS` is **true** (setting this to **false** will override setting `ENABLE_TRANSLATION_TO_ENGLISH` to **true**)
-- `ENABLE_HEADLESS_BROWSER` is **false**.
+The application is run using Docker. Below is the command to run the `latest` docker image.
 
 ```bash
 docker run \
@@ -126,14 +112,14 @@ docker run \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env ENABLE_HEADLESS_BROWSER=true \
-    --env ENABLE_MANUAL_TRACKERS=false \
-    --env ENABLE_TRANSLATION_TO_ENGLISH=false \
+    --env ENABLE_TRANSLATION_TO_ENGLISH=true \
+    --env FORCE_UI_BROWSER=false \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
+    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
@@ -141,25 +127,40 @@ docker run \
     --rm zodac/tracker-profiles:latest
 ```
 
+### Browser UI
+
+There are two ways to execute the application - with a UI browser and without. By default, the application is configured
+to screenshot all trackers. A UI browser is needed for trackers that require some user input during login (like a Captcha or 2FA),
+or for a non-English tracker that needs to be translated (if `ENABLE_TRANSLATION_TO_ENGLISH` is set to **true**). To run through Docker with a UI,
+local connections to the host display must be enabled. Please note this will be reset upon reboot and may need to be reapplied:
+
+```bash
+xhost +local:
+```
+
+To disable the UI and run the browser in headless mode only, ensure `FORCE_UI_BROWSER` and `ENABLE_TRANSLATION_TO_ENGLISH` are set to **false**, and
+exclude **manual** and **non-english** from `TRACKER_EXECUTION_ORDER`. You can also remove `-v /tmp/.X11-unix:/tmp/.X11-unix` and
+`--env DISPLAY="${DISPLAY}"` from the docker command.
+
 ### Configuration Options
 
 The following are all possible configuration options, defined as environment variables for the docker image:
 
-| Environment Variable            | Description                                                                                                         | Default Value                 |
-|---------------------------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                               | /tmp/chrome                   |
-| *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                  | 1050                          |
-| *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                   | 1680                          |
-| *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                  | #                             |
-| *ENABLE_HEADLESS_BROWSER*       | Enables a headless browser for screenshots (otherwise uses a browser with UI)                                       | true                          |
-| *ENABLE_MANUAL_TRACKERS*        | Whether to take screnshots of trackers that require a browser with a UI (overrides `ENABLE_TRANSLATION_TO_ENGLISH`) | false                         |
-| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English (only if the tracker has no English option)                    | false                         |
-| *LOG_LEVEL*                     | The logging level for console output                                                                                | INFO                          |
-| *OPEN_OUTPUT_DIRECTORY*         | Whether to open the output directory when execution is complete (not supported in Docker, debug only)               | false                         |
-| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                           | yyyy-MM-dd                    |
-| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root              | /tmp/screenshots              |
-| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                  | UTC                           |
-| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file (inside the docker container)                                     | /tmp/screenshots/trackers.csv |
+| Environment Variable            | Description                                                                                                                | Default Value                 |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                                      | /tmp/chrome                   |
+| *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                         | 1050                          |
+| *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                          | 1680                          |
+| *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                         | #                             |
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English (only if the tracker has no English option)                           | true                          |
+| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker (even for headless trackers)                                                     | false                         |
+| *LOG_LEVEL*                     | The logging level for console output                                                                                       | INFO                          |
+| *OPEN_OUTPUT_DIRECTORY*         | Whether to open the output directory when execution is complete (not supported in Docker, debug only)                      | false                         |
+| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                                  | yyyy-MM-dd                    |
+| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root                     | /tmp/screenshots              |
+| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                         | UTC                           |
+| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed. Unwanted execution types can be excluded. Case-insensitive. | headless,manual,non-english   |
+| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file (inside the docker container)                                            | /tmp/screenshots/trackers.csv |
 
 ## Contributing
 
@@ -178,7 +179,7 @@ The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/n
 for each tracker is retrieved by the *trackerName* field within the CSV file.
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to take screenshots. While the
-application usually run in headless mode, this can be changed by updating the `ENABLE_HEADLESS_BROWSER` value in
+application usually runs in headless mode, this can be changed by updating the `FORCE_UI_BROWSER` value in
 the [configuration](#configuration-options). This will cause a new browser instance to launch when taking a screenshot, and can be used for debugging
 a new implementation.
 
@@ -187,26 +188,26 @@ a new implementation.
 Below is the command to build and run the development docker image with everything enabled (requires the UI to be defined):
 
 ```bash
-docker build -f ./docker/Dockerfile -t tracker-profiles . &&
+docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
 docker run \
     --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
-    --env ENABLE_HEADLESS_BROWSER=true \
-    --env ENABLE_MANUAL_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
+    --env FORCE_UI_BROWSER=true \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
+    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
     -v /tmp/screenshots:/tmp/screenshots \
-    --rm tracker-profiles
+    --rm tracker-profiles-dev
 ```
 
 ### Implementing New Tracker Handlers

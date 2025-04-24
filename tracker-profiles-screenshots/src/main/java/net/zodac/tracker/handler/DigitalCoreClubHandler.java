@@ -32,7 +32,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
  */
-@TrackerHandler(name = "DigitalCore.Club", type = TrackerType.MANUAL_INPUT_NEEDED, url = {
+@TrackerHandler(name = "DigitalCore.Club", type = TrackerType.MANUAL, url = {
     "https://digitalcore.club/",
     "https://prxy.digitalcore.club/"
 })

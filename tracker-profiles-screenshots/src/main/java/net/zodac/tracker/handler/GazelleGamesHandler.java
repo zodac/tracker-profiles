@@ -32,7 +32,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
  */
-@TrackerHandler(name = "GazelleGames", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://gazellegames.net/")
+@TrackerHandler(name = "GazelleGames", type = TrackerType.MANUAL, url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

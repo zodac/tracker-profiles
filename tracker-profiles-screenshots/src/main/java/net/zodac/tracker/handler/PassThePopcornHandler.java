@@ -34,7 +34,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
  */
-@TrackerHandler(name = "PassThePopcorn", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://passthepopcorn.me/")
+@TrackerHandler(name = "PassThePopcorn", type = TrackerType.MANUAL, url = "https://passthepopcorn.me/")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

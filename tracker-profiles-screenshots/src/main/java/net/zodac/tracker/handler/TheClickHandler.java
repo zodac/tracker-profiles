@@ -33,8 +33,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Common implementation of {@link AbstractTrackerHandler} for {@code .click} family of trackers.
  */
-@TrackerHandler(name = "TheEmpire", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://theempire.click/")
-@TrackerHandler(name = "TheGeeks", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://thegeeks.click/")
+@TrackerHandler(name = "TheEmpire", type = TrackerType.MANUAL, url = "https://theempire.click/")
+@TrackerHandler(name = "TheGeeks", type = TrackerType.MANUAL, url = "https://thegeeks.click/")
 public class TheClickHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

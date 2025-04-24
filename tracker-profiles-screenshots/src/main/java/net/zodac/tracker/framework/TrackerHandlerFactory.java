@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -79,7 +80,7 @@ public final class TrackerHandlerFactory {
      *
      * <p>
      * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
-     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#enableHeadlessBrowser()} is {@code true}, then the
+     * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#forceUiBrowser()} is {@code false}, then the
      * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
      * debugging.
      *
@@ -105,7 +106,7 @@ public final class TrackerHandlerFactory {
         final var matchingTrackerHandler = matchingTrackerHandlerOptional.get();
         final Class<?> trackerHandler = matchingTrackerHandler.getKey();
         if (trackerHandler.isAnnotationPresent(TrackerDisabled.class)) {
-            throw new DisabledTrackerException(trackerHandler.getAnnotation(TrackerDisabled.class).reason());
+            throw new DisabledTrackerException(Objects.requireNonNull(trackerHandler.getAnnotation(TrackerDisabled.class)).reason());
         }
 
         final TrackerHandler annotation = matchingTrackerHandler.getValue();

@@ -22,7 +22,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
- * Extension of the {@link Unit3dHandler} the {@code Blutopia} tracker.
+ * Extension of the {@link Unit3dHandler} for the {@code Blutopia} tracker.
  */
 @TrackerHandler(name = "Blutopia", url = "https://blutopia.cc/")
 public class BlutopiaHandler extends Unit3dHandler {

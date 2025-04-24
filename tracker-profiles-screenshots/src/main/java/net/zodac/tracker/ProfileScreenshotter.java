@@ -99,48 +99,22 @@ public final class ProfileScreenshotter {
             return FAILURE_CODE;
         }
 
-        if (!CONFIG.enableManualTrackers() && trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of()).isEmpty()) {
-            LOGGER.error("No headless trackers selected, but manual trackers not enabled!");
-            return FAILURE_CODE;
-        }
-
         printTrackersInfo(trackersByType);
         final Collection<String> successfulTrackers = new TreeSet<>();
         final Collection<String> unsuccessfulTrackers = new TreeSet<>();
 
-        // TODO: Parameterise the order of these being executed
-        // Non-manual trackers
-        for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of())) {
-            final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
-            if (successfullyTakenScreenshot) {
-                successfulTrackers.add(trackerDefinition.name());
-            } else {
-                unsuccessfulTrackers.add(trackerDefinition.name());
-            }
-        }
+        // Execute in the order specified
+        for (final TrackerType trackerType : CONFIG.trackerExecutionOrder()) {
+            if (trackerType.isEnabled(trackersByType, CONFIG)) {
+                trackerType.log();
 
-        if (CONFIG.enableTranslationToEnglish() && trackersByType.containsKey(TrackerType.NON_ENGLISH)) {
-            LOGGER.warn("");
-            LOGGER.warn(">>> Executing non-English trackers <<<");
-            for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of())) {
-                final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
-                if (successfullyTakenScreenshot) {
-                    successfulTrackers.add(trackerDefinition.name());
-                } else {
-                    unsuccessfulTrackers.add(trackerDefinition.name());
-                }
-            }
-        }
-
-        if (CONFIG.enableManualTrackers() && trackersByType.containsKey(TrackerType.MANUAL_INPUT_NEEDED)) {
-            LOGGER.warn("");
-            LOGGER.warn(">>> Executing manual trackers, will require user interaction <<<");
-            for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of())) {
-                final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
-                if (successfullyTakenScreenshot) {
-                    successfulTrackers.add(trackerDefinition.name());
-                } else {
-                    unsuccessfulTrackers.add(trackerDefinition.name());
+                for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(trackerType, Set.of())) {
+                    final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
+                    if (successfullyTakenScreenshot) {
+                        successfulTrackers.add(trackerDefinition.name());
+                    } else {
+                        unsuccessfulTrackers.add(trackerDefinition.name());
+                    }
                 }
             }
         }
@@ -187,37 +161,24 @@ public final class ProfileScreenshotter {
     }
 
     private static void printTrackersInfo(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
-        final Set<TrackerDefinition> headlessTrackers = trackersByType.getOrDefault(TrackerType.HEADLESS, Set.of());
-        final Set<TrackerDefinition> manualTrackers = trackersByType.getOrDefault(TrackerType.MANUAL_INPUT_NEEDED, Set.of());
-        final Set<TrackerDefinition> nonEnglishTrackers = trackersByType.getOrDefault(TrackerType.NON_ENGLISH, Set.of());
-        final int numberOfHeadlessTrackers = headlessTrackers.size();
-        final int numberOfManualTrackers = CONFIG.enableManualTrackers() ? manualTrackers.size() : 0;
-        final int numberOfNonEnglishTrackers = CONFIG.enableTranslationToEnglish() ? nonEnglishTrackers.size() : 0;
-
-        final int numberOfTrackers = numberOfHeadlessTrackers + numberOfManualTrackers + numberOfNonEnglishTrackers;
+        final int numberOfTrackers = countAllEnabled(trackersByType);
         final String trackersPlural = numberOfTrackers == 1 ? "" : "s";
 
         LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, trackersPlural);
-        if (numberOfHeadlessTrackers != 0) {
-            LOGGER.debug(String.format("- %-10s %d", "Headless:", numberOfHeadlessTrackers));
-            for (final TrackerDefinition trackerDefinition : headlessTrackers) {
-                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
-            }
-        }
 
-        if (numberOfManualTrackers != 0) {
-            LOGGER.debug(String.format("- %-10s %d", "Manual:", numberOfManualTrackers));
-            for (final TrackerDefinition trackerDefinition : manualTrackers) {
-                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
+        if (LOGGER.isDebugEnabled()) {
+            for (final TrackerType trackerType : CONFIG.trackerExecutionOrder()) {
+                trackerType.printSummary(trackersByType, CONFIG);
             }
         }
+    }
 
-        if (numberOfNonEnglishTrackers != 0) {
-            LOGGER.debug(String.format("- %-10s %d", "Non-English:", numberOfNonEnglishTrackers));
-            for (final TrackerDefinition trackerDefinition : nonEnglishTrackers) {
-                LOGGER.debug(String.format("\t- %-16s", trackerDefinition.name()));
-            }
-        }
+    private static int countAllEnabled(final Map<TrackerType, Set<TrackerDefinition>> trackersByType) {
+        return TrackerType.ALL_VALUES
+            .stream()
+            .filter(trackerType -> trackerType.isEnabled(trackersByType, CONFIG))
+            .mapToInt(trackerType -> trackersByType.getOrDefault(trackerType, Set.of()).size())
+            .sum();
     }
 
     private static Map<TrackerType, Set<TrackerDefinition>> getTrackers() {

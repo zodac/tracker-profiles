@@ -17,32 +17,27 @@
 
 package net.zodac.tracker.framework.annotation;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
-import net.zodac.tracker.handler.AbstractTrackerHandler;
 
 /**
- * Annotation used to mark an implementation of {@link AbstractTrackerHandler} to be used to generate screenshots for specific websites.
+ * Annotation used to mark an implementation of {@link net.zodac.tracker.handler.AbstractTrackerHandler} to be used to generate screenshots for
+ * specific websites.
  */
 @Repeatable(TrackerHandlers.class)
-@Retention(RUNTIME)
-@Target({TYPE, METHOD, FIELD, PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
 public @interface TrackerHandler {
 
     /**
-     * The name of the tracker website, which should link to an implementation of {@link AbstractTrackerHandler}.
+     * The name of the tracker website, which should link to an implementation of {@link net.zodac.tracker.handler.AbstractTrackerHandler}.
      *
      * @return the name of the tracker
-     * @see TrackerHandlerFactory
+     * @see net.zodac.tracker.framework.TrackerHandlerFactory
      */
     String name();
 

@@ -31,7 +31,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BeyondHD} tracker.
  */
-@TrackerHandler(name = "BeyondHD", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://beyond-hd.me/")
+@TrackerHandler(name = "BeyondHD", type = TrackerType.MANUAL, url = "https://beyond-hd.me/")
 public class BeyondHdHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

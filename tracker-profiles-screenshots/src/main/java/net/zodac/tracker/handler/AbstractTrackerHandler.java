@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
-import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -38,8 +37,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 /**
  * Abstract class used to define a {@link AbstractTrackerHandler}. All implementations will be used by {@link ProfileScreenshotter},
- * if the tracker is included in the {@link ApplicationConfiguration#trackerInputFilePath()} file. This class lists the high-level methods required
- * for {@link ProfileScreenshotter} to be able to successfully generate a screenshot for a given tracker.
+ * if the tracker is included in the tracker input file. This class lists the high-level methods required for {@link ProfileScreenshotter} to be able
+ * to successfully generate a screenshot for a given tracker.
  *
  * <p>
  * Since each tracker website has its own UI and own page structure, each implementation of {@link AbstractTrackerHandler} will contain the

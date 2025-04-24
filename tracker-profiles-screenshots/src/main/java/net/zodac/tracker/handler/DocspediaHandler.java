@@ -34,7 +34,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Docspedia} tracker.
  */
-@TrackerHandler(name = "Docspedia", type = TrackerType.MANUAL_INPUT_NEEDED, url = "https://docspedia.world/")
+@TrackerHandler(name = "Docspedia", type = TrackerType.MANUAL, url = "https://docspedia.world/")
 public class DocspediaHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();

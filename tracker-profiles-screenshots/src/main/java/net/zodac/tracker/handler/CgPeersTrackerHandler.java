@@ -30,7 +30,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code CGPeers} tracker.
  */
-@TrackerHandler(name = "CGPeers", type = TrackerType.MANUAL_INPUT_NEEDED, url = {
+@TrackerHandler(name = "CGPeers", type = TrackerType.MANUAL, url = {
     "https://cgpeers.to",
     "https://cgpeers.com"
 })
