@@ -27,7 +27,6 @@ import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -77,7 +76,7 @@ public class DocspediaHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
-        ScriptExecutor.highlightElement(driver, captchaElement);
+        scriptExecutor.highlightElement(captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 
@@ -106,12 +105,12 @@ public class DocspediaHandler extends AbstractTrackerHandler {
      * its content redacted.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
+        scriptExecutor.redactInnerTextOf(passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
 
         return 1 + super.redactElements();
     }

@@ -28,7 +28,6 @@ import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -80,7 +79,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
             DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
-        ScriptExecutor.highlightElement(driver, captchaElement);
+        scriptExecutor.highlightElement(captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, String.format("Select the '%s' image", captchaTextElement.getText()));
     }
 
@@ -113,12 +112,12 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      * {@literal <}{@code tr}{@literal >}, we find the child {@literal <}{@code td}{@literal >}, which needs its content redacted.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
+        scriptExecutor.redactInnerTextOf(passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
 
         return 1 + super.redactElements();
     }

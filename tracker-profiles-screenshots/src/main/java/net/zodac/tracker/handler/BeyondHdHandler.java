@@ -21,7 +21,6 @@ import java.util.Collection;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
@@ -64,7 +63,7 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.xpath("//*[@id='captcha']/ancestor::div[1]"));
-        ScriptExecutor.highlightElement(driver, captchaElement);
+        scriptExecutor.highlightElement(captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 
@@ -81,7 +80,7 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
     @Override
     public boolean hasFixedHeader() {
         final WebElement headerElement = driver.findElement(By.id("stickyBar"));
-        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
+        scriptExecutor.updateCss(headerElement, "position", "static");
         return true;
     }
 
@@ -90,7 +89,7 @@ public class BeyondHdHandler extends AbstractTrackerHandler {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = By.xpath("//div[contains(@class, 'bhd-td')]//div[contains(@class, 'dropmenu')]");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//a[contains(text(), 'Logout')]");
     }

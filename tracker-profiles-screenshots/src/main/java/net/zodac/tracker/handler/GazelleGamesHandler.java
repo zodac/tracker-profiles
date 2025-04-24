@@ -22,7 +22,6 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
@@ -65,7 +64,7 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to select correct game title, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='tdwrap']/form[1]/table[1]"));
-        ScriptExecutor.highlightElement(driver, selectionElement);
+        scriptExecutor.highlightElement(selectionElement);
         DisplayUtils.userInputConfirmation(trackerName, "Select the correct game");
     }
 
@@ -101,15 +100,15 @@ public class GazelleGamesHandler extends AbstractTrackerHandler {
     @Override
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();
-        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         clickButton(logoutButton);
 
         // After clicking logout, a Chrome alert appears - find and click 'Yes'
-        ScriptExecutor.acceptAlert(driver);
+        scriptExecutor.acceptAlert();
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

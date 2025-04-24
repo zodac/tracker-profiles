@@ -105,16 +105,18 @@ public final class ProfileScreenshotter {
 
         // Execute in the order specified
         for (final TrackerType trackerType : CONFIG.trackerExecutionOrder()) {
-            if (trackerType.isEnabled(trackersByType, CONFIG)) {
-                trackerType.log();
+            if (!trackerType.isEnabled(trackersByType, CONFIG)) {
+                continue;
+            }
 
-                for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(trackerType, Set.of())) {
-                    final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
-                    if (successfullyTakenScreenshot) {
-                        successfulTrackers.add(trackerDefinition.name());
-                    } else {
-                        unsuccessfulTrackers.add(trackerDefinition.name());
-                    }
+            LOGGER.info("");
+            LOGGER.info(">>> Executing {} trackers <<<", trackerType.toCapitalised());
+            for (final TrackerDefinition trackerDefinition : trackersByType.getOrDefault(trackerType, Set.of())) {
+                final boolean successfullyTakenScreenshot = isAbleToTakeScreenshot(trackerDefinition);
+                if (successfullyTakenScreenshot) {
+                    successfulTrackers.add(trackerDefinition.name());
+                } else {
+                    unsuccessfulTrackers.add(trackerDefinition.name());
                 }
             }
         }

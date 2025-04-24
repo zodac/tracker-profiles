@@ -23,7 +23,6 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -84,14 +83,14 @@ public class MoreThanTvHandler extends AbstractTrackerHandler {
      * prefix and {@value PatternMatcher#DEFAULT_REDACTION_TEXT}.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
         final By passkeyElementSelector = By.xpath(String.format("//ul[contains(@class, 'stats')]/li[contains(text(), '%s')]", PASSKEY_PREFIX));
         final WebElement passkeyElement = driver.findElement(passkeyElementSelector);
         final String passkeyRedactionText = PASSKEY_PREFIX + PatternMatcher.DEFAULT_REDACTION_TEXT;
-        ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
+        scriptExecutor.redactInnerTextOf(passkeyElement, passkeyRedactionText);
 
         return 1 + super.redactElements();
     }
@@ -107,7 +106,7 @@ public class MoreThanTvHandler extends AbstractTrackerHandler {
     @Override
     public boolean hasFixedHeader() {
         final WebElement headerElement = driver.findElement(By.cssSelector("#menu, .main-menu"));
-        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
+        scriptExecutor.updateCss(headerElement, "position", "static");
         return true;
     }
 
@@ -116,7 +115,7 @@ public class MoreThanTvHandler extends AbstractTrackerHandler {
         // Highlight the profile menu to make the logout button interactable
         final By logoutParentSelector = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[1]");
     }

@@ -20,7 +20,6 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
@@ -88,7 +87,7 @@ public class DicMusicHandler extends AbstractTrackerHandler {
         // Highlight the profile menu to make the logout button interactable
         final By logoutParentSelector = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//li[@id='nav_logout']/a[1]");
     }

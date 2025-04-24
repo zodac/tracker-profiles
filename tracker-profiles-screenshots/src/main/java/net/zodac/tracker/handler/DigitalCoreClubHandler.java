@@ -22,7 +22,6 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
@@ -78,7 +77,7 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
-        ScriptExecutor.highlightElement(driver, captchaElement);
+        scriptExecutor.highlightElement(captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 
@@ -108,10 +107,10 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
     protected void additionalActionOnProfilePage() {
         // Reload the page
         driver.navigate().refresh();
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
 
         final By selector = By.xpath("//div[@id='contentContainer']//table");
-        ScriptExecutor.waitForElementToAppear(driver, selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(selector, DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

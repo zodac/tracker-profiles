@@ -20,7 +20,6 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -73,7 +72,7 @@ public class Unit3dHandler extends AbstractTrackerHandler {
         clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        ScriptExecutor.moveToOrigin(driver);
+        scriptExecutor.moveToOrigin();
         return true;
     }
 
@@ -82,7 +81,7 @@ public class Unit3dHandler extends AbstractTrackerHandler {
         // Highlight the nav bar to make the profile button interactable
         final By profileParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement profileParent = driver.findElement(profileParentSelector);
-        ScriptExecutor.moveTo(driver, profileParent);
+        scriptExecutor.moveTo(profileParent);
 
         return By.xpath("//a[@class='top-nav__username']");
     }
@@ -98,7 +97,7 @@ public class Unit3dHandler extends AbstractTrackerHandler {
     @Override
     public boolean hasFixedHeader() {
         final WebElement headerElement = driver.findElement(By.tagName("header"));
-        ScriptExecutor.updateCss(driver, headerElement, "position", "static");
+        scriptExecutor.updateCss(headerElement, "position", "static");
         return true;
     }
 
@@ -107,7 +106,7 @@ public class Unit3dHandler extends AbstractTrackerHandler {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
     }

@@ -20,7 +20,6 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -66,7 +65,7 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
         // Highlight the profile menu to make the logout button interactable
         final By profileDropDownSelector = By.xpath("//li[@class='mmUserStats']//a[@tabindex='0']");
         final WebElement profileDropDown = driver.findElement(profileDropDownSelector);
-        ScriptExecutor.moveTo(driver, profileDropDown);
+        scriptExecutor.moveTo(profileDropDown);
 
         return By.xpath("//a[@class='myInfo']");
     }
@@ -83,7 +82,7 @@ public class MyAnonaMouseHandler extends AbstractTrackerHandler {
         // Highlight the profile menu to make the logout button interactable
         final By logoutParentSelector = By.id("userMenu");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//a[text()='Log Out']");
     }

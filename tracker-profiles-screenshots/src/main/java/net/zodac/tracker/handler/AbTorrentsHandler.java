@@ -87,8 +87,8 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to select the '{}' image and click the 'X' button to log in, for {} seconds",
             captchaTextElement.getText(), DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
-        ScriptExecutor.highlightElement(driver, driver.findElement(By.id("captcha")));
-        ScriptExecutor.highlightElement(driver, driver.findElement(By.xpath("//table[count(.//tr) >= 6]/tbody/tr[6]/td[1]")));
+        scriptExecutor.highlightElement(driver.findElement(By.id("captcha")));
+        scriptExecutor.highlightElement(driver.findElement(By.xpath("//table[count(.//tr) >= 6]/tbody/tr[6]/td[1]")));
         DisplayUtils.userInputConfirmation(trackerName,
             String.format("Select the '%s' image and click the 'X' button to log in", captchaTextElement.getText()));
     }

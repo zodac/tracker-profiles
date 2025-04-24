@@ -23,7 +23,6 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -81,7 +80,7 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
         clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        ScriptExecutor.moveToOrigin(driver);
+        scriptExecutor.moveToOrigin();
         return true;
     }
 
@@ -95,12 +94,12 @@ public class TorrentLeechHandler extends AbstractTrackerHandler {
      * its content redacted.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
         final WebElement passkeyValueElement = driver.findElement(By.xpath("//tr[td[text()='Torrent Passkey']]/td[2]"));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
+        scriptExecutor.redactInnerTextOf(passkeyValueElement, PatternMatcher.DEFAULT_REDACTION_TEXT);
 
         return 1 + super.redactElements();
     }

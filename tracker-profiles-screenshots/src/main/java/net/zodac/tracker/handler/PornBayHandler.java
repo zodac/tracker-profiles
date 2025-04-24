@@ -23,7 +23,6 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -74,14 +73,14 @@ public class PornBayHandler extends AbstractTrackerHandler {
      * prefix and {@value PatternMatcher#DEFAULT_REDACTION_TEXT}.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
         final By passkeyElementSelector = By.xpath(String.format("//ul[contains(@class, 'stats')]/li[contains(text(), '%s')]", PASSKEY_PREFIX));
         final WebElement passkeyElement = driver.findElement(passkeyElementSelector);
         final String passkeyRedactionText = PASSKEY_PREFIX + PatternMatcher.DEFAULT_REDACTION_TEXT;
-        ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
+        scriptExecutor.redactInnerTextOf(passkeyElement, passkeyRedactionText);
 
         return 1 + super.redactElements();
     }

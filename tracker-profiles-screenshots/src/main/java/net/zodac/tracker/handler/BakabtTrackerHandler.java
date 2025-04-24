@@ -20,7 +20,6 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -77,7 +76,7 @@ public class BakabtTrackerHandler extends AbstractTrackerHandler {
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final WebElement logoutParent = driver.findElement(profilePageSelector());
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//a[text()='Logout']");
     }

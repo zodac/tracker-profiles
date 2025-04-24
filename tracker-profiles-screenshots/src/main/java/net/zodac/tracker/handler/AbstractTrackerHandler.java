@@ -28,7 +28,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
@@ -70,6 +69,12 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
      */
     protected final ChromeDriver driver;
+
+    /**
+     * The {@link ScriptExecutor} instance to perform specific actions for each {@link AbstractTrackerHandler} implementation.
+     */
+    protected final ScriptExecutor scriptExecutor;
+
     private final List<String> trackerUrls;
 
     /**
@@ -81,6 +86,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected AbstractTrackerHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
         this.driver = driver;
         this.trackerUrls = List.copyOf(trackerUrls);
+        scriptExecutor = new ScriptExecutor(driver);
     }
 
     /**
@@ -94,7 +100,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
                 driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
                 driver.navigate().to(trackerUrl);
                 unableToConnect = false;
-                ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+                scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
                 break; // No need to load another page
             } catch (final WebDriverException e) {
                 // If website can't be resolved, assume the site is down and attempt the next URL (if any), else rethrow exception
@@ -134,7 +140,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         if (loginLinkSelector != null) {
             final WebElement loginLink = driver.findElement(loginLinkSelector);
             clickButton(loginLink);
-            ScriptExecutor.waitForElementToAppear(driver, usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+            scriptExecutor.waitForElementToAppear(usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
         }
     }
 
@@ -166,7 +172,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         manualCheckAfterLoginClick(trackerName);
 
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
-        ScriptExecutor.waitForElementToAppear(driver, postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(postLoginSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     /**
@@ -201,7 +207,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Where possible, the element to be interacted with will be highlighted in the browser.
      *
      * @param trackerName the name of the tracker
-     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
+     * @see ScriptExecutor#highlightElement(WebElement)
      */
     protected void manualCheckBeforeLoginClick(final String trackerName) {
         // Do nothing by default
@@ -226,7 +232,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * Where possible, the element to be interacted with will be highlighted in the browser.
      *
      * @param trackerName the name of the tracker
-     * @see ScriptExecutor#highlightElement(JavascriptExecutor, WebElement)
+     * @see ScriptExecutor#highlightElement(WebElement)
      */
     // TODO: Remove this and just prompt user to click the button themselves?
     protected void manualCheckAfterLoginClick(final String trackerName) {
@@ -261,11 +267,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
 
         final WebElement profilePageLink = driver.findElement(profilePageSelector());
-        ScriptExecutor.removeAttribute(driver, profilePageLink, "target"); // Removing 'target="_blank"', to ensure link opens in same tab
+        scriptExecutor.removeAttribute(profilePageLink, "target"); // Removing 'target="_blank"', to ensure link opens in same tab
         clickButton(profilePageLink);
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        ScriptExecutor.moveToOrigin(driver);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.moveToOrigin();
         additionalActionOnProfilePage();
     }
 
@@ -279,7 +285,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * For certain trackers, additional actions may need to be performed after opening the profile page, but prior to the page being redacted and
      * screenshot. This might be that the page is considered 'loaded' by
-     * {@link ScriptExecutor#waitForPageToLoad(org.openqa.selenium.remote.RemoteWebDriver, Duration)}, but the required {@link WebElement} are not all
+     * {@link ScriptExecutor#waitForPageToLoad(Duration)}, but the required {@link WebElement} are not all
      * on the screen, or that some {@link WebElement}s may need to be interacted with prior to the screenshot.
      *
      * <p>
@@ -295,7 +301,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * in the {@link WebElement}s is redacted.
      *
      * @return the number of {@link WebElement}s where the text has been redacted
-     * @see ScriptExecutor#redactHtmlOf(JavascriptExecutor, WebElement)
+     * @see ScriptExecutor#redactHtmlOf(WebElement)
      */
     // TODO: Rather than redacting the text, maybe put a solid red block over the content to hide it more explicitly?
     public int redactElements() {
@@ -316,7 +322,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
         }
 
         for (final WebElement element : elementsToBeRedacted) {
-            ScriptExecutor.redactHtmlOf(driver, element);
+            scriptExecutor.redactHtmlOf(element);
         }
 
         return elementsToBeRedacted.size();
@@ -374,12 +380,12 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();
-        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         clickButton(logoutButton);
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_TRANSITIONS);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(postLogoutElementSelector(), DEFAULT_WAIT_FOR_TRANSITIONS);
     }
 
     /**
@@ -417,7 +423,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * ignored. We then force the web page to stop loading before proceeding.
      *
      * @param buttonToClick the {@link WebElement} to {@link WebElement#click()}
-     * @see ScriptExecutor#stopPageLoad(JavascriptExecutor)
+     * @see ScriptExecutor#stopPageLoad()
      */
     protected void clickButton(final WebElement buttonToClick) {
         try {
@@ -425,7 +431,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
             buttonToClick.click();
         } catch (final TimeoutException e) {
             LOGGER.debug(e);
-            ScriptExecutor.stopPageLoad(driver);
+            scriptExecutor.stopPageLoad();
         }
 
         driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);

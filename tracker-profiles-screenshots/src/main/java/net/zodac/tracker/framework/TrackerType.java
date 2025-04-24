@@ -84,14 +84,6 @@ public enum TrackerType {
     }
 
     /**
-     * Log a message before the execution of the {@link TrackerType}.
-     */
-    public void log() {
-        LOGGER.info("");
-        LOGGER.info(">>> Executing {} trackers <<<", toCapitalised());
-    }
-
-    /**
      * Prints the information on the user-defined trackers for this {@link TrackerType}.
      *
      * @param trackersByType all user-defined trackers by the {@link TrackerType}
@@ -109,9 +101,15 @@ public enum TrackerType {
         }
     }
 
-    private String toCapitalised() {
+    /**
+     * Capitalises the {@link TrackerType}. Also replaces and {@code _} characters with a {@code -}. Note that the first letter after any {@code -}
+     * will also be capitalised.
+     *
+     * @return the capitalised form of the {@link TrackerType}
+     */
+    public String toCapitalised() {
         final String[] parts = name().toLowerCase(Locale.getDefault()).split("_");
-        final StringBuilder result = new StringBuilder();
+        final StringBuilder result = new StringBuilder(name().length());
 
         for (int i = 0; i < parts.length; i++) {
             if (i > 0) {

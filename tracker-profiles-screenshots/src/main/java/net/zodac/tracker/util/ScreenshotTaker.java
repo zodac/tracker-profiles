@@ -24,9 +24,8 @@ import java.time.Duration;
 import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
-import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
@@ -55,24 +54,25 @@ public final class ScreenshotTaker {
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
      * @see FileOpener#open(File)
-     * @see ScriptExecutor#scrollToTheTop(JavascriptExecutor)
+     * @see ScriptExecutor#scrollToTheTop()
      */
     public static File takeScreenshot(final ChromeDriver driver, final String trackerName) throws IOException {
-        final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver);
+        final ScriptExecutor scriptExecutor = new ScriptExecutor(driver);
+        final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scriptExecutor);
         final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");
         ImageIO.write(screenshotImage, "PNG", screenshot);
-        ScriptExecutor.scrollToTheTop(driver);
+        scriptExecutor.scrollToTheTop();
         return screenshot;
     }
 
-    private static BufferedImage takeScreenshotOfEntirePage(final RemoteWebDriver driver) {
-        ScriptExecutor.disableScrolling(driver);
+    private static BufferedImage takeScreenshotOfEntirePage(final WebDriver driver, final ScriptExecutor scriptExecutor) {
+        scriptExecutor.disableScrolling();
         final BufferedImage screenshot = new AShot()
             .shootingStrategy(ShootingStrategies.viewportPasting(((Long) TIME_BETWEEN_SCROLLS.toMillis()).intValue()))
             .takeScreenshot(driver)
             .getImage();
 
-        ScriptExecutor.enableScrolling(driver, "body");
+        scriptExecutor.enableScrolling("body");
         return screenshot;
     }
 }

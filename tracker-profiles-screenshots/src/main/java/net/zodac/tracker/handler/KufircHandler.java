@@ -24,7 +24,6 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
@@ -85,7 +84,7 @@ public class KufircHandler extends AbstractTrackerHandler {
      * prefix and {@value PatternMatcher#DEFAULT_REDACTION_TEXT}.
      *
      * @see AbstractTrackerHandler#redactElements()
-     * @see ScriptExecutor#redactInnerTextOf(JavascriptExecutor, WebElement, String)
+     * @see ScriptExecutor#redactInnerTextOf(WebElement, String)
      */
     @Override
     public int redactElements() {
@@ -93,7 +92,7 @@ public class KufircHandler extends AbstractTrackerHandler {
 
         final String passkeyRedactionText = PASSKEY_PREFIX + PatternMatcher.DEFAULT_REDACTION_TEXT;
         final WebElement passkeyElement = driver.findElement(By.xpath(String.format("//li[contains(text(), '%s')]", PASSKEY_PREFIX)));
-        ScriptExecutor.redactInnerTextOf(driver, passkeyElement, passkeyRedactionText);
+        scriptExecutor.redactInnerTextOf(passkeyElement, passkeyRedactionText);
 
         return superRedactedElements + 1;
     }
@@ -108,7 +107,7 @@ public class KufircHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean isNotEnglish(final String username) {
-        ScriptExecutor.translatePage(driver, username, null);
+        scriptExecutor.translatePage(username, null);
         return true;
     }
 
@@ -117,7 +116,7 @@ public class KufircHandler extends AbstractTrackerHandler {
         // Highlight the profile menu to make the logout button interactable
         final By logoutParentSelector = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//li[@id='nav_logout']/a[1]");
     }

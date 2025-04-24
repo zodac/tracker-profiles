@@ -19,7 +19,6 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -69,18 +68,18 @@ public class AnimeBytesHandler extends AbstractTrackerHandler {
     @Override
     public void logout() {
         final By logoutButtonSelector = logoutButtonSelector();
-        ScriptExecutor.waitForElementToAppear(driver, logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(logoutButtonSelector, DEFAULT_WAIT_FOR_PAGE_LOAD);
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         clickButton(logoutButton);
 
         // After clicking logout, a confirmation box appears - find and click 'Yes'
         final By logoutConfirmationSelector = By.xpath("//form[@id='tokenconfirm']//input[@name='yes' and @type='submit']");
-        ScriptExecutor.waitForElementToAppear(driver, logoutConfirmationSelector, DEFAULT_WAIT_FOR_TRANSITIONS);
+        scriptExecutor.waitForElementToAppear(logoutConfirmationSelector, DEFAULT_WAIT_FOR_TRANSITIONS);
         final WebElement logoutConfirmation = driver.findElement(logoutConfirmationSelector);
         clickButton(logoutConfirmation);
 
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
-        ScriptExecutor.waitForElementToAppear(driver, postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForElementToAppear(postLogoutElementSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
     }
 
     @Override

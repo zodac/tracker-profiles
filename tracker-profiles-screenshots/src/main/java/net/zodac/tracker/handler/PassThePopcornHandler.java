@@ -77,7 +77,7 @@ public class PassThePopcornHandler extends AbstractTrackerHandler {
             DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement selectionElement = driver.findElement(By.xpath("//div[@id='captcha_container']"));
-        ScriptExecutor.highlightElement(driver, selectionElement);
+        scriptExecutor.highlightElement(selectionElement);
         DisplayUtils.userInputConfirmation(trackerName, "Select the correct movie and click the login button");
 
         // If the user didn't click 'login', do it for them

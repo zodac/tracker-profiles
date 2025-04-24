@@ -77,7 +77,7 @@ public class TheClickHandler extends AbstractTrackerHandler {
         LOGGER.info("\t\t >>> Waiting for user to solve the captcha, for {} seconds", DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
 
         final WebElement captchaElement = driver.findElement(By.xpath("//div[@class='h-captcha']"));
-        ScriptExecutor.highlightElement(driver, captchaElement);
+        scriptExecutor.highlightElement(captchaElement);
         DisplayUtils.userInputConfirmation(trackerName, "Solve the captcha");
     }
 

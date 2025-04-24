@@ -85,7 +85,7 @@ public class EmporniumHandler extends AbstractTrackerHandler {
     protected void additionalActionOnProfilePage() {
         // Reload the page, to ensure the section closing works (JS may have been cancelled earlier)
         driver.navigate().refresh();
-        ScriptExecutor.waitForPageToLoad(driver, DEFAULT_WAIT_FOR_PAGE_LOAD);
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
 
         final By sectionSelector = By.id("collagesbutton");
         final Collection<WebElement> sections = driver.findElements(sectionSelector);
@@ -107,7 +107,7 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = By.id("userinfo_username");
         final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        ScriptExecutor.moveTo(driver, logoutParent);
+        scriptExecutor.moveTo(logoutParent);
 
         return By.xpath("//li[@id='nav_logout']//a[1]");
     }
