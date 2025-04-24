@@ -34,7 +34,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import net.zodac.tracker.framework.exception.CancelledInputException;
@@ -52,16 +51,13 @@ public final class DisplayUtils {
      */
     public static final Duration INPUT_WAIT_DURATION = Duration.ofMinutes(5L);
 
-    private static final Duration COUNTDOWN_INCREMENT_INTERVAL = Duration.ofSeconds(1L);
-    private static final long SECONDS_IN_MINUTE = Duration.ofMinutes(1L).toSeconds();
     private static final Logger LOGGER = LogManager.getLogger();
 
     // UI element constants
     private static final String TITLE_SUFFIX = " Manual Input";
     private static final String LABEL_SUFFIX = ", then click 'Continue'";
     private static final String BUTTON_CONTINUE_TEXT = "Continue"; // TODO: Add another button to cancel?
-    private static final String REMAINING_TIME_PREFIX = "Time remaining: ";
-    private static final int DIALOG_BOX_HEIGHT = 200;
+    private static final int DIALOG_BOX_HEIGHT = 125;
     private static final int DIALOG_BOX_WIDTH = 500;
 
     private DisplayUtils() {
@@ -78,27 +74,19 @@ public final class DisplayUtils {
         setStyleToSystemTheme();
 
         final boolean[] userInputs = {false};
-        final String countdownText = getFormattedCountdownText(INPUT_WAIT_DURATION.getSeconds());
-        final JLabel countdownLabel = new JLabel(countdownText, SwingConstants.CENTER);
-        final JDialog dialog = createDialog(titlePrefix, labelPrefix, countdownLabel, userInputs);
+        final JDialog dialog = createDialog(titlePrefix, labelPrefix, userInputs);
 
-        // Timer for countdown update
-        final Timer timer = createTimer(countdownLabel);
-        timer.setInitialDelay(0);
-        timer.start();
-
-        showDialogWithTimer(dialog, timer, userInputs);
+        showDialog(dialog, userInputs);
     }
 
-    private static JDialog createDialog(final String titlePrefix, final String labelPrefix, final JLabel countdownLabel, final boolean[] userInputs) {
+    private static JDialog createDialog(final String titlePrefix, final String labelPrefix, final boolean[] userInputs) {
         // Create a dialog box with a 'Continue' button and countdown label
         final JDialog dialog = new JDialog((Frame) null, titlePrefix + TITLE_SUFFIX, true);
         dialog.setLayout(new BorderLayout());
         dialog.setAlwaysOnTop(true);  // Ensure the dialog remains on top of all windows when interacting with browser
 
         final JPanel panel = new JPanel(new GridLayout(2, 1));
-        panel.add(new JLabel(labelPrefix + LABEL_SUFFIX, SwingConstants.CENTER));
-        panel.add(countdownLabel);
+        panel.add(new JLabel(labelPrefix + LABEL_SUFFIX, SwingConstants.CENTER)); // TODO: Make this multiline if too longs
 
         final JButton continueButton = new JButton(BUTTON_CONTINUE_TEXT);
         continueButton.addActionListener(_ -> {
@@ -113,40 +101,7 @@ public final class DisplayUtils {
         return dialog;
     }
 
-    private static Timer createTimer(final JLabel countdownLabel) {
-        return new Timer(((Long) COUNTDOWN_INCREMENT_INTERVAL.toMillis()).intValue(), _ -> {
-            final long remainingTime = parseRemainingSeconds(countdownLabel.getText());
-            final long updatedTime = Math.max(0, remainingTime - COUNTDOWN_INCREMENT_INTERVAL.getSeconds());
-            countdownLabel.setText(getFormattedCountdownText(updatedTime));
-        });
-    }
-
-    private static long parseRemainingSeconds(final String text) {
-        final String timeText = text.replace(REMAINING_TIME_PREFIX, "").trim();
-
-        if (timeText.contains(":")) {
-            // Parse mm:ss format
-            final String[] parts = timeText.split(":");
-            final long minutes = Long.parseLong(parts[0]);
-            final long seconds = Long.parseLong(parts[1]);
-            return minutes * SECONDS_IN_MINUTE + seconds;
-        } else {
-            // Parse "ss seconds" format
-            return Long.parseLong(timeText.replace(" seconds", ""));
-        }
-    }
-
-    private static String getFormattedCountdownText(final long remainingTime) {
-        if (remainingTime < SECONDS_IN_MINUTE) {
-            return String.format("%s%d seconds", REMAINING_TIME_PREFIX, remainingTime);
-        }
-
-        final long minutes = remainingTime / SECONDS_IN_MINUTE;
-        final long seconds = remainingTime % SECONDS_IN_MINUTE;
-        return String.format("%s%02d:%02d", REMAINING_TIME_PREFIX, minutes, seconds);
-    }
-
-    private static void showDialogWithTimer(final JDialog dialog, final Timer timer, final boolean[] userInputs) {
+    private static void showDialog(final JDialog dialog, final boolean[] userInputs) {
         try (final ExecutorService executor = Executors.newSingleThreadExecutor()) {
             final Future<?> future = executor.submit(() -> dialog.setVisible(true));
             executor.shutdown();
@@ -160,7 +115,6 @@ public final class DisplayUtils {
             throw new NoUserInputException(INPUT_WAIT_DURATION, e);
         } finally {
             dialog.dispose();
-            timer.stop();
         }
     }
 
