@@ -5,9 +5,11 @@ set -euo pipefail
 PREV_TAG="${1}"
 OUTPUT_ENV="${2}"
 
+# Get commit messages
 COMMITS=$(git log "${PREV_TAG}"..HEAD --pretty=format:"%s")
 declare -A categories
 
+# Process commits and categorize them
 while IFS= read -r line; do
   if [[ "$line" =~ \[([A-Za-z0-9_-]+)\]\ (.+) ]]; then
     category="${BASH_REMATCH[1]}"
@@ -16,12 +18,16 @@ while IFS= read -r line; do
   fi
 done <<< "${COMMITS}"
 
+# Generate changelog content
+CHANGELOG_CONTENT=$(mktemp)
+
 {
   echo "$OUTPUT_ENV<<EOF"
 
   preferred=("ci" "docs" "framework")
   declare -A printed
 
+  # Print preferred categories
   for key in $(printf "%s\n" "${preferred[@]}" | sort); do
     for cat in "${!categories[@]}"; do
       norm_cat=$(echo "${cat}" | tr '[:upper:]' '[:lower:]')
@@ -34,6 +40,7 @@ done <<< "${COMMITS}"
     done
   done
 
+  # Print other categories
   other_cats=()
   for cat in "${!categories[@]}"; do
     if [[ -z "${printed[${cat}]}" ]]; then
@@ -52,4 +59,14 @@ done <<< "${COMMITS}"
   fi
 
   echo "EOF"
+} >> "${CHANGELOG_CONTENT}"
+
+# Set output as an environment variable using grouped redirection
+{
+  echo "changelog_output<<EOF"
+  cat "${CHANGELOG_CONTENT}"
+  echo "EOF"
 } >> "${GITHUB_ENV}"
+
+# Clean up the temporary file
+rm "${CHANGELOG_CONTENT}"
