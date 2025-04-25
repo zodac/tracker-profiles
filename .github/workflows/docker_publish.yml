@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
+      - '.github/scripts/**'
       - '.github/workflows/docker_publish.yml'
       - 'ci/**'
       - '!ci/doc/**'
