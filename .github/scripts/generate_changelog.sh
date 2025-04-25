@@ -22,8 +22,6 @@ done <<< "${COMMITS}"
 CHANGELOG_CONTENT=$(mktemp)
 
 {
-  echo "$OUTPUT_ENV<<EOF"
-
   preferred=("ci" "docs" "framework")
   declare -A printed
 
@@ -57,16 +55,7 @@ CHANGELOG_CONTENT=$(mktemp)
       echo ""
     done
   fi
-
-  echo "EOF"
 } >> "${CHANGELOG_CONTENT}"
 
-# Set output as an environment variable using grouped redirection
-{
-  echo "changelog_output<<EOF"
-  cat "${CHANGELOG_CONTENT}"
-  echo "EOF"
-} >> "${GITHUB_ENV}"
-
-# Clean up the temporary file
-rm "${CHANGELOG_CONTENT}"
+# Output changelog content
+echo "${CHANGELOG_CONTENT}"

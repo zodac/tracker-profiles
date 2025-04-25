@@ -110,10 +110,7 @@ jobs:
         id: changelog
         run: |
           .github/scripts/generate_changelog.sh ${{ steps.prev_tag.outputs.prev_tag }} changelog_output
-          echo "changelog_output<<EOF" >> "${GITHUB_ENV}"
-          cat changelog_output >> "${GITHUB_ENV}"
-          echo "EOF" >> "${GITHUB_ENV}"
-          rm changelog_output
+          echo "changelog_output=$(<changelog_output)" >> "${GITHUB_ENV}"
 
       # TODO: Only increment if there have been changes to the image/source code - not CI
       - name: Bump patch version in VERSION file
