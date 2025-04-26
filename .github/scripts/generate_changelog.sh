@@ -57,4 +57,4 @@ CHANGELOG_CONTENT=$(mktemp)
 } >> "${CHANGELOG_CONTENT}"
 
 # Output changelog content
-echo "changelog_content=${CHANGELOG_CONTENT}" >> "${GITHUB_ENV}"
+echo "changelog_content=$(cat "$CHANGELOG_CONTENT")" >> "${GITHUB_ENV}"
