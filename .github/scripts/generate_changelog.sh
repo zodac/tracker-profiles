@@ -3,7 +3,6 @@
 set -euo pipefail
 
 PREV_TAG="${1}"
-OUTPUT_ENV="${2}"
 
 # Get commit messages
 COMMITS=$(git log "${PREV_TAG}"..HEAD --pretty=format:"%s")
@@ -58,4 +57,4 @@ CHANGELOG_CONTENT=$(mktemp)
 } >> "${CHANGELOG_CONTENT}"
 
 # Output changelog content
-echo "${CHANGELOG_CONTENT}"
+echo "changelog_content=${CHANGELOG_CONTENT}" >> "${GITHUB_ENV}"

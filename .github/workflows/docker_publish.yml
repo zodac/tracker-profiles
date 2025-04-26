@@ -108,9 +108,7 @@ jobs:
 
       - name: Generate categorized changelog
         id: changelog
-        run: |
-          .github/scripts/generate_changelog.sh ${{ steps.prev_tag.outputs.prev_tag }} changelog_output
-          echo "changelog_output=$(<changelog_output)" >> "${GITHUB_ENV}"
+        run: .github/scripts/generate_changelog.sh ${{ steps.prev_tag.outputs.prev_tag }} changelog_output
 
       # TODO: Only increment if there have been changes to the image/source code - not CI
       - name: Bump patch version in VERSION file
@@ -142,7 +140,7 @@ jobs:
             
             ## Changes since ${{ steps.prev_tag.outputs.prev_tag }}:
             
-            ${{ env.changelog_output }}
+            ${{ env.changelog_content }}
 
       - name: Summary
         if: env.has_changes == 'true'
