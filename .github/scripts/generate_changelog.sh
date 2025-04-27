@@ -42,7 +42,7 @@ CHANGELOG_CONTENT=$(mktemp)
   # Print other categories
   other_cats=()
   for cat in "${!categories[@]}"; do
-    if [[ -z "${printed[${cat}]}" ]]; then
+    if [[ -z "${printed[${cat}]+x}" ]]; then
       other_cats+=("${cat}")
     fi
   done
