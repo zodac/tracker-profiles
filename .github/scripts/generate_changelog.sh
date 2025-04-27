@@ -3,17 +3,19 @@
 set -euo pipefail
 
 PREV_TAG="${1}"
+GIT_REPO_URL="${2}"
 
 # Get commit messages
-COMMITS=$(git log "${PREV_TAG}"..HEAD --pretty=format:"%s")
+COMMITS=$(git log "${PREV_TAG}"..HEAD --pretty=format:"[%h] %s")
 declare -A categories
 
 # Process commits and categorize them
 while IFS= read -r line; do
-  if [[ "$line" =~ \[([A-Za-z0-9_-]+)\]\ (.+) ]]; then
-    category="${BASH_REMATCH[1]}"
-    message="${BASH_REMATCH[2]}"
-    categories["${category}"]+="- ${message}"$'\n'
+  if [[ "$line" =~ ^\[([a-f0-9]+)\]\ \[([A-Za-z0-9_-]+)\]\ (.+) ]]; then
+    commit_hash="${BASH_REMATCH[1]}"
+    category="${BASH_REMATCH[2]}"
+    message="${BASH_REMATCH[3]}"
+    categories["${category}"]+="- [${commit_hash}](${GIT_REPO_URL}/commit/${commit_hash}) ${message}"$'\n'
   fi
 done <<< "${COMMITS}"
 
