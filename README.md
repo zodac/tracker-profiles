@@ -170,6 +170,14 @@ The following are all possible configuration options, defined as environment var
 - [Google Chrome](https://www.google.com/chrome/) (only if not using Docker)
 - [Java (JDK 24)](https://jdk.java.net/24/)
 
+### Install Git Hooks
+
+Run the following command to run git hooks for the project:
+
+```bash
+bash ./ci/scripts/setup-hooks.sh
+```
+
 ### Debugging Application
 
 Using IntelliJ, and click on **Run**> **Edit Configurations** and add the environment variables for the application. Once done, open
