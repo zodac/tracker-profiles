@@ -15,7 +15,7 @@ while IFS= read -r line; do
     commit_hash="${BASH_REMATCH[1]}"
     category="${BASH_REMATCH[2]}"
     message="${BASH_REMATCH[3]}"
-    categories["${category}"]+="- [[${commit_hash}]](${GIT_REPO_URL}/commit/${commit_hash}) ${message}"$'\n'
+    categories["${category}"]+="- [[${commit_hash}](${GIT_REPO_URL}/commit/${commit_hash})] ${message}"$'\n'
   fi
 done <<< "${COMMITS}"
 
