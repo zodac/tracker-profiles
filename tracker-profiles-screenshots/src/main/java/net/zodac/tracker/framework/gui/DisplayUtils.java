@@ -54,9 +54,10 @@ public final class DisplayUtils {
     private static final Logger LOGGER = LogManager.getLogger();
 
     // UI element constants
+    private static final String BUTTON_CONTINUE_TEXT = "Continue";
+    private static final String BUTTON_EXIT_TEXT = "Exit";
+    private static final String LABEL_SUFFIX = String.format(", then click '%s' below", BUTTON_CONTINUE_TEXT);
     private static final String TITLE_SUFFIX = " Manual Input";
-    private static final String LABEL_SUFFIX = ", then click 'Continue'";
-    private static final String BUTTON_CONTINUE_TEXT = "Continue"; // TODO: Add another button to cancel?
     private static final int DIALOG_BOX_HEIGHT = 125;
     private static final int DIALOG_BOX_WIDTH = 500;
 
@@ -86,19 +87,35 @@ public final class DisplayUtils {
         dialog.setAlwaysOnTop(true);  // Ensure the dialog remains on top of all windows when interacting with browser
 
         final JPanel panel = new JPanel(new GridLayout(2, 1));
-        panel.add(new JLabel(labelPrefix + LABEL_SUFFIX, SwingConstants.CENTER)); // TODO: Make this multiline if too longs
+        final String labelText = "<html>" + labelPrefix + LABEL_SUFFIX + "</html>"; // Wrap text as HTML so .pack() can resize dynamically
+        panel.add(new JLabel(labelText, SwingConstants.CENTER));
 
+        dialog.add(panel, BorderLayout.CENTER);
+        dialog.add(createButtons(userInputs, dialog), BorderLayout.PAGE_END);
+
+        dialog.setPreferredSize(new Dimension(DIALOG_BOX_WIDTH, DIALOG_BOX_HEIGHT));
+        dialog.pack(); // Respects preferredSize but allows it to be larger if needed based on the text
+
+        setDialogPosition(dialog);
+        return dialog;
+    }
+
+    private static JPanel createButtons(final boolean[] userInputs, final JDialog dialog) {
         final JButton continueButton = new JButton(BUTTON_CONTINUE_TEXT);
         continueButton.addActionListener(_ -> {
             dialog.dispose();
             userInputs[0] = true;
         });
+        final JButton closedButton = new JButton(BUTTON_EXIT_TEXT);
+        closedButton.addActionListener(_ -> {
+            dialog.dispose();
+            userInputs[0] = false; // Assumes there was no user input, even if some action was taken on the webpage
+        });
 
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(continueButton, BorderLayout.PAGE_END);
-        dialog.setSize(DIALOG_BOX_WIDTH, DIALOG_BOX_HEIGHT);
-        setDialogPosition(dialog);
-        return dialog;
+        final JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+        buttonPanel.add(continueButton);
+        buttonPanel.add(closedButton);
+        return buttonPanel;
     }
 
     private static void showDialog(final JDialog dialog, final boolean[] userInputs) {
