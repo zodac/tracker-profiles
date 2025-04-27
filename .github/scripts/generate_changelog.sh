@@ -23,7 +23,7 @@ done <<< "${COMMITS}"
 CHANGELOG_CONTENT=$(mktemp)
 
 {
-  preferred=("ci" "docs" "framework")
+  preferred=("ci" "doc" "framework")
   declare -A printed
 
   # Print preferred categories
