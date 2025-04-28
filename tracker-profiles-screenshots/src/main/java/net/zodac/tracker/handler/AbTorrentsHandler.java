@@ -59,6 +59,12 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
         return By.xpath("//input[@name='password' and @type='password']");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link AbTorrentsHandler}, there is no login button to click. The output of {@link #manualCheckBeforeLoginClick(String)} should log in.
+     */
     @Nullable
     @Override
     protected By loginButtonSelector() {
@@ -82,7 +88,7 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
      * </ol>
      */
     @Override
-    protected void manualCheckAfterLoginClick(final String trackerName) {
+    protected void manualCheckBeforeLoginClick(final String trackerName) {
         final WebElement captchaTextElement = driver.findElement(By.xpath("//span[@class='captchaText']"));
         LOGGER.info("\t\t >>> Waiting for user to select the '{}' image and click the 'X' button to log in, for {} seconds",
             captchaTextElement.getText(), DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
