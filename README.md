@@ -36,7 +36,6 @@ The available trackers come in three types:
 | Blutopia            | Headless        |
 | BwTorrents          | Headless        |
 | Cathode-Ray.Tube    | Headless        |
-| CGPeers             | **Manual**      |
 | DICMusic            | Headless        |
 | DigitalCore.Club    | **Manual**      |
 | DocsPedia           | **Manual**      |
@@ -82,6 +81,7 @@ The following trackers are not currently supported:
 | AnimeTorrents   | Cloudflare verification |
 | AvistaZ         | Cloudflare verification |
 | BroadcasThe.Net | Cloudflare verification |
+| CGPeers         | Cloudflare verification |
 | CinemaZ         | Cloudflare verification |
 | ExoticaZ        | Cloudflare verification |
 | Hawke-Uno       | Cloudflare verification |
