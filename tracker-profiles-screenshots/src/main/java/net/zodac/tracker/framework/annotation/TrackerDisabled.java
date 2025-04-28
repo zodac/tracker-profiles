@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * disabled for screenshots.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface TrackerDisabled {
 
     /**
@@ -35,6 +35,7 @@ public @interface TrackerDisabled {
      *
      * @return the disabled date
      */
+    @SuppressWarnings("unused") // Only used for info on the TrackerHandler, will never be used
     String date();
 
     /**

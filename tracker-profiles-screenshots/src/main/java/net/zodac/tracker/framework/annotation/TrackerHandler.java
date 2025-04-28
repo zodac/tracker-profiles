@@ -30,7 +30,7 @@ import net.zodac.tracker.framework.TrackerType;
  */
 @Repeatable(TrackerHandlers.class)
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface TrackerHandler {
 
     /**

@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * Wrapper annotation for {@link TrackerHandler} to allow for multiple values.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface TrackerHandlers {
 
     /**
