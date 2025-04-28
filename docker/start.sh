@@ -14,9 +14,9 @@ main() {
     if [[ ${JAVA_EXIT_CODE} -eq 1 ]]; then
         echo -e "\e[31mFailed to take screenshots, please review logs\e[0m"
         kill $$
+    else
+        echo -e "\e[32mScreenshots complete in $(get_execution_time "${start_time}")\e[0m"
     fi
-
-    echo -e "\e[32mScreenshots complete in $(get_execution_time "${start_time}")\e[0m"
 }
 
 get_execution_time() {
