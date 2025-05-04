@@ -102,8 +102,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
 
                 // Explicit check for Cloudflare Error 523 if a site is unavailable
                 final String bodyText = driver.findElement(By.tagName("body")).getText();
-                if (bodyText.contains("HTTP ERROR 523")) {
-                    LOGGER.warn("\t\t- Unable to connect: Cloudflare Error 523: Origin is unreachable");
+                if (bodyText.contains("HTTP ERROR 523") || bodyText.contains("Error code 523")) {
+                    LOGGER.warn("\t\t- Unable to connect: Cloudflare Error 523 (Origin is unreachable)");
                     continue;
                 }
 
@@ -121,8 +121,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
             }
         }
 
+        // If all possible URLs have been attempted but no connection occurred, assume the website is down
         if (unableToConnect) {
-            throw new IllegalStateException(String.format("Unable to connect to any URL for '%s': %s", getClass().getSimpleName(), trackerUrls));
+            throw new IllegalStateException(
+                String.format("Tracker unavailable, unable to connect to any URL for '%s': %s", getClass().getSimpleName(), trackerUrls));
         }
     }
 
