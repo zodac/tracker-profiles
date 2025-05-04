@@ -18,7 +18,6 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;

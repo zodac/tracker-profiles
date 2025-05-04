@@ -10,7 +10,7 @@ or becomes otherwise unavailable.
 
 - Opens the selected trackers and logs in, navigating to the user's profile page
 - Requests user input for trackers with manual inputs (like Captchas, 2FA, etc.)
-- Redacts the user's email address and IP address (replacing the text with "----")
+- Redacts the user's email address, IP address or passkey (replacing the text with "----")
 - Takes a full-page screenshot of the redacted user profile
 
 ## Trackers
