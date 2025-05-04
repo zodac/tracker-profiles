@@ -1,4 +1,32 @@
 #!/bin/bash
+# ------------------------------------------------------------------------------
+# Script Name:     start.sh
+#
+# Description:     Launches a headless instance of Google Chrome and runs a Java
+#                  application (`tracker-profiles.jar`) that performs screenshot
+#                  capture via Chrome's remote debugging protocol.
+#
+# Usage:           ./start.sh
+#
+# Requirements:    - Google Chrome/Chromium installed and accessible as `google-chrome-stable`
+#                  - Java installed and available on the system PATH
+#                  - `tracker-profiles.jar` available at /app/tracker-profiles.jar
+#                  - X display server running and accessible at DISPLAY=:0
+#
+# Behavior:
+#   - Starts Chrome in headless remote debugging mode on port 9222
+#   - Executes the Java JAR file
+#   - Outputs a colored success or error message based on Java's exit code
+#   - Tracks and prints total execution time in a natural format
+#   - Ensures Chrome is terminated on SIGINT (Ctrl+C)
+#
+# Exit Codes:
+#   - 0: Success
+#   - 1: Java application signaled failure (e.g., screenshots not captured)
+#   - 130: Script terminated via SIGINT (manual interruption)
+# ------------------------------------------------------------------------------
+
+set -euo pipefail
 
 main() {
     start_time=$(date +%s%3N)

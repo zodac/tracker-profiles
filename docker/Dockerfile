@@ -24,10 +24,10 @@ WORKDIR /app
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
-ARG CHROME_VERSION="135.0.7049.84-1"
+ARG CHROME_VERSION="136.0.7103.59-2~deb12u2"
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-      chromium \
+      chromium="${CHROME_VERSION}" \
       fonts-arphic-ukai \
       gosu \
       x11-apps \

@@ -266,6 +266,8 @@ public final class ProfileScreenshotter {
 
     private static void takeScreenshotOfProfilePage(final AbstractTrackerHandler trackerHandler, final TrackerDefinition trackerDefinition)
         throws IOException {
+        // TODO: If screenshot already exists, skip tracker (based on env var)
+
         LOGGER.info("\t- Opening tracker");
         trackerHandler.openTracker();
         trackerHandler.navigateToLoginPage();
