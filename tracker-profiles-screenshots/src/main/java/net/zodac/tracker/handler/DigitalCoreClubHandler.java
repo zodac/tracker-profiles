@@ -114,13 +114,6 @@ public class DigitalCoreClubHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of(
-            By.tagName("a")
-        );
-    }
-
-    @Override
     protected By logoutButtonSelector() {
         return By.xpath("//span[@class='hidden-xs2' and text()='Sign out']");
     }
