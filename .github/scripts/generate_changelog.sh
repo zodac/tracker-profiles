@@ -11,7 +11,7 @@ declare -A categories
 
 # Process commits and categorize them
 while IFS= read -r line; do
-  if [[ "$line" =~ ^\[([a-f0-9]+)\]\ \[([A-Za-z0-9_-]+)\]\ (.+) ]]; then
+  if [[ "$line" =~ ^\[([a-f0-9]+)\]\ \[([A-Za-z0-9_.-]+)\]\ (.+) ]]; then
     commit_hash="${BASH_REMATCH[1]}"
     category="${BASH_REMATCH[2]}"
     message="${BASH_REMATCH[3]}"
