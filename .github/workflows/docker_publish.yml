@@ -7,14 +7,9 @@ on:
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
       - 'pom.xml'
-  workflow_run:
-    workflows: [ 'License Year Update', 'Versions Update' ]
-    types:
-      - completed
 
 jobs:
   build-and-publish:
-    if: github.event_name != 'workflow_run' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     env:
       has_changes: 'false'
