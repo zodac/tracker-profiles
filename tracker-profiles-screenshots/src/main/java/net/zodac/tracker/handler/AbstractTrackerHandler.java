@@ -99,6 +99,14 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
                 LOGGER.info("\t\t- '{}'", trackerUrl);
                 driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LINK_RESOLUTION_TIME);
                 driver.navigate().to(trackerUrl);
+
+                // Explicit check for Cloudflare Error 523 if a site is unavailable
+                final String bodyText = driver.findElement(By.tagName("body")).getText();
+                if (bodyText.contains("HTTP ERROR 523")) {
+                    LOGGER.warn("\t\t- Unable to connect: Cloudflare Error 523: Origin is unreachable");
+                    continue;
+                }
+
                 unableToConnect = false;
                 scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
                 break; // No need to load another page
