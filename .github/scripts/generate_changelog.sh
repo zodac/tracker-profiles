@@ -23,7 +23,7 @@ done <<< "${COMMITS}"
 CHANGELOG_CONTENT=$(mktemp)
 
 {
-  preferred=("ci" "doc" "framework")
+  preferred=("ci" "deployment" "doc" "framework")
   declare -A printed
 
   # Print preferred categories
@@ -48,7 +48,7 @@ CHANGELOG_CONTENT=$(mktemp)
   done
 
   if [ ${#other_cats[@]} -gt 0 ]; then
-    echo "**[Trackers]**"
+    echo "*Trackers:*"
     IFS=$'\n' && mapfile -t sorted < <(printf "%s\n" "${other_cats[@]}" | sort) && unset IFS
     for cat in "${sorted[@]}"; do
       echo "**[${cat}]**"

@@ -19,12 +19,17 @@ FROM openjdk:24-jdk-slim
 # Set the working directory
 WORKDIR /app
 
-# Install Chrome
+# Install required applications:
+# - chromium (web browser)
+# - fonts-arphic-ukai (font for Chinese language characters)
+# - gosu (dynamic PGID/PUID to run application)
+# - x11-apps (UI browser)
 ARG CHROME_VERSION="135.0.7049.84-1"
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
       chromium \
       fonts-arphic-ukai \
+      gosu \
       x11-apps \
     && \
     apt-get autoremove && \
@@ -35,14 +40,17 @@ RUN apt-get update && \
 COPY --from=maven_build /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar tracker-profiles.jar
 
 # Command to run the main function
-COPY ./docker/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Switch to non-root user
-RUN useradd -ms /bin/bash nonroot
-USER nonroot
+COPY ./docker/scripts/start.sh /app/start.sh
+COPY ./docker/scripts/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/start.sh && chmod +x /app/entrypoint.sh
 
 # Needed to avoid 'dbind-WARNING' error
 ENV NO_AT_BRIDGE=1
+# Switch to non-root user
+ENV PUID=1000
+ENV PGID=1000
 
+# Use entrypoint for dynamic user creation
+ENTRYPOINT ["/app/entrypoint.sh"]
+# Start application
 CMD ["/app/start.sh"]

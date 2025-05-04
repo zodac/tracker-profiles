@@ -98,10 +98,11 @@ The following trackers are not currently supported:
 
 ### Tracker Defintions
 
-First, copy the [trackers_example.csv](./docker/trackers_example.csv) file and rename it to **trackers.csv**.
-This file needs to be updated with your user's login information for each tracker. Any unwanted trackers can be deleted, or prefixed by the
-`CSV_COMMENT_SYMBOL` environment variable so they are excluded. The file can be saved anywhere, and it will be referenced when running
-the application.
+First, copy the [trackers_example.csv](./docker/trackers_example.csv) file. This file needs to be updated with your user's login information for each
+tracker. Any unwanted trackers can be deleted, or prefixed by the `CSV_COMMENT_SYMBOL` environment variable so they are excluded.
+
+The file can be saved anywhere, and it will be referenced by the `TRACKER_INPUT_FILE_PATH` environment variable when running the application, so
+remember where it is saved and what it is named.
 
 ### Running Application
 
@@ -109,6 +110,8 @@ The application is run using Docker. Below is the command to run the `latest` do
 
 ```bash
 docker run \
+    --env PUID=$(id -u) \
+    --env PGID=$(id -g) \
     --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
@@ -200,6 +203,8 @@ Below is the command to build and run the development docker image with everythi
 ```bash
 docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
 docker run \
+    --env PUID=$(id -u) \
+    --env PGID=$(id -g) \
     --env DISPLAY="${DISPLAY}" \
     --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
