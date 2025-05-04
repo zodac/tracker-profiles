@@ -15,13 +15,15 @@ or becomes otherwise unavailable.
 
 ## Trackers
 
-### Supported Trackers
-
 The available trackers come in three types:
 
 - Headless: Can run with the browser in headless mode, meaning no UI browser is needed
 - Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
 - Non-English: If the tracker is not in English, a UI browser is required to translate the page
+
+**Note:** Any tracker not listed in either section below has not been tested (most likely due to lack of an account).
+
+### Supported Trackers
 
 | Tracker Name        | Support         |
 |---------------------|-----------------|
