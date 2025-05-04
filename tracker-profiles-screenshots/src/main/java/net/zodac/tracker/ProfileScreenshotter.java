@@ -212,6 +212,7 @@ public final class ProfileScreenshotter {
         LOGGER.info("");
         LOGGER.info("[{}]", trackerDefinition.name());
 
+        // TODO: On failure, take a screenshot and add to a subdirectory
         try (final AbstractTrackerHandler trackerHandler = TrackerHandlerFactory.getHandler(trackerDefinition.name())) {
             takeScreenshotOfProfilePage(trackerHandler, trackerDefinition);
             return true;

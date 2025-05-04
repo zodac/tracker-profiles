@@ -75,7 +75,7 @@ final class WebDriverFactory {
     }
 
     private static boolean canTrackerUseHeadlessBrowser(final TrackerType trackerType) {
-        if (CONFIG.forceUiBrowser()) {
+        if (CONFIG.forceUiBrowser() || trackerType == TrackerType.MANUAL) {
             return false;
         }
 
