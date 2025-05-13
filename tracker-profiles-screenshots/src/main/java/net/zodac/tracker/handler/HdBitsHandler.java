@@ -34,7 +34,10 @@ import org.openqa.selenium.chrome.ChromeDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code HDBits} tracker.
  */
-@TrackerHandler(name = "HDBits", type = TrackerType.MANUAL, url = "https://hdbits.org/")
+@TrackerHandler(name = "HDBits", type = TrackerType.MANUAL, url = {
+    "https://hdbits.org/",
+    "https://backup.hdbits.org/"
+})
 public class HdBitsHandler extends AbstractTrackerHandler {
 
     private static final Logger LOGGER = LogManager.getLogger();
