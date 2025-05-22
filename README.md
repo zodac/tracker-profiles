@@ -47,6 +47,7 @@ The available trackers come in three types:
 | GazelleGames        | **Manual**      |
 | HDBits              | **Manual**      |
 | HDUnited            | Headless        |
+| ItaTorrents         | Headless        |
 | Kufirc              | **Non-English** |
 | Lat-Team            | **Non-English** |
 | Libble              | Headless        |

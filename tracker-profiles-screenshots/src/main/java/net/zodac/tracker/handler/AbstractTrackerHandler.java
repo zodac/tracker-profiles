@@ -63,6 +63,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     private static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
     private static final Duration MAXIMUM_LOGIN_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
 
+    // TODO: Make this protected?
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
