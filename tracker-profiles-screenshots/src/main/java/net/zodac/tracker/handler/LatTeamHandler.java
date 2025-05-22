@@ -29,7 +29,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Lat-Team} tracker.
  */
 @TrackerHandler(name = "Lat-Team", type = TrackerType.NON_ENGLISH, url = "https://lat-team.com/")
-public class LatTeamHandler extends AbstractTrackerHandler {
+public class LatTeamHandler extends Unit3dHandler {
 
     /**
      * Default constructor.
@@ -42,64 +42,8 @@ public class LatTeamHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected By loginButtonSelector() {
-        return By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
-    }
-
-    @Override
-    protected By postLoginSelector() {
-        return By.xpath("//main[@class='page__home']");
-    }
-
-    @Override
-    public boolean canBannerBeCleared() {
-        // Cookie banner
-        final WebElement cookieButton = driver.findElement(By.xpath("//button[contains(@class, 'cookie-consent__agree')]"));
-        clickButton(cookieButton);
-
-        // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        scriptExecutor.moveToOrigin();
-        return true;
-    }
-
-    @Override
-    protected By profilePageSelector() {
-        // Highlight the nav bar to make the profile button interactable
-        final By profileParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement profileParent = driver.findElement(profileParentSelector);
-        scriptExecutor.moveTo(profileParent);
-
-        return By.xpath("//a[@class='top-nav__username']");
-    }
-
-    @Override
-    public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
-        return List.of(
-            By.xpath("//table[@class='data-table']/tbody/tr/td[2]"), // IP address, potentially multiple entries
-            By.xpath("//div[dt[text()='E-mail']]/dd[1]") // Email
-        );
-    }
-
-    @Override
-    public boolean hasFixedHeader() {
-        final WebElement headerElement = driver.findElement(By.tagName("header"));
-        scriptExecutor.updateCss(headerElement, "position", "static");
-        return true;
-    }
-
-    @Override
     public boolean isNotEnglish(final String username) {
         scriptExecutor.translatePage(username, "give up");
         return true;
-    }
-
-    @Override
-    protected By logoutButtonSelector() {
-        // Highlight the nav bar to make the logout button interactable
-        final By logoutParentSelector = By.xpath("//div[contains(@class, 'top-nav__right')]//li[contains(@class, 'top-nav__dropdown')]");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        scriptExecutor.moveTo(logoutParent);
-
-        return By.xpath("//form[@role='form' and @method='POST']//button[@type='submit']");
     }
 }
