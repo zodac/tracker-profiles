@@ -78,8 +78,14 @@ public class EmporniumHandler extends AbstractTrackerHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link EmporniumHandler}, we close additional sections on the profile page prior to screenshotting. Continues if no section exists for the
-     * user's profile.
+     * For {@link EmporniumHandler}, we close additional sections on the profile page prior to screenshotting. Continues if the section does not
+     * exist for the user's profile. The sections to close are:
+     *
+     * <ul>
+     *     <li>Recent snatches</li>
+     *     <li>Collages</li>
+     *     <li>Uploaded torrents</li>
+     * </ul>
      */
     @Override
     protected void additionalActionOnProfilePage() {
@@ -87,11 +93,21 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         driver.navigate().refresh();
         scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
 
-        final By sectionSelector = By.id("collagesbutton");
-        final Collection<WebElement> sections = driver.findElements(sectionSelector);
-        for (final WebElement section : sections) {
-            clickButton(section);
-            ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
+        final List<By> toggleSelectors = List.of(
+            By.id("recentsnatchesbutton"), // Recent snatches
+            By.id("collagesbutton"), // Collages
+            By.id("submitbutton") // Uploaded torrents
+        );
+
+        for (final By toggleSelector : toggleSelectors) {
+            final Collection<WebElement> sectionToggles = driver.findElements(toggleSelector);
+            for (final WebElement sectionToggle : sectionToggles) {
+                // Only click the toggle if it is already open
+                if (sectionToggle.getText().contains("Hide")) {
+                    clickButton(sectionToggle);
+                    ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
+                }
+            }
         }
     }
 
