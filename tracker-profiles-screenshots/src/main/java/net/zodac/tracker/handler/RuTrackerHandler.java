@@ -21,7 +21,7 @@ import java.util.Collection;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.By;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code RUTracker} tracker.
@@ -35,10 +35,10 @@ public class RuTrackerHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public RuTrackerHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public RuTrackerHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 

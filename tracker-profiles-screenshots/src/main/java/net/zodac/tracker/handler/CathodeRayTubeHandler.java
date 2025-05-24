@@ -24,7 +24,7 @@ import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Cathode-Ray.Tube} tracker.
@@ -37,10 +37,10 @@ public class CathodeRayTubeHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public CathodeRayTubeHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public CathodeRayTubeHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 

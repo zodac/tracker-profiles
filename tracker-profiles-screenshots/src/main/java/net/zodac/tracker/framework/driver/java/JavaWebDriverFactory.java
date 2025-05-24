@@ -15,32 +15,50 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.framework;
+package net.zodac.tracker.framework.driver;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import net.zodac.tracker.framework.ApplicationConfiguration;
+import net.zodac.tracker.framework.Configuration;
+import net.zodac.tracker.framework.TrackerType;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
- * Factory class used to create an instance of a {@link org.openqa.selenium.WebDriver}.
+ * Factory class used to create an instance of a {@link RemoteWebDriver}.
  */
-final class WebDriverFactory {
+public final class JavaWebDriverFactory {
 
     private static final ApplicationConfiguration CONFIG = Configuration.get();
 
-    private WebDriverFactory() {
+    private JavaWebDriverFactory() {
 
     }
 
     /**
-     * Create an instance of {@link ChromeDriver} to be used by the {@link net.zodac.tracker.handler.AbstractTrackerHandler}.
+     * Creates an instance of {@link RemoteWebDriver} to be used by the {@link net.zodac.tracker.handler.AbstractTrackerHandler}. This is a standard
+     * Java Selenium {@link RemoteWebDriver}, with some arguments to configure it for simpler automation.
+     *
+     * <p>
+     * This {@link RemoteWebDriver} may run in headless mode, if the following conditions are met:
+     *
+     * <ul>
+     *     <li>{@link ApplicationConfiguration#forceUiBrowser()} is not {@code true}</li>
+     *     <li>{@link TrackerType} is not {@link TrackerType#MANUAL}</li>
+     *     <li>{@link TrackerType} is not {@link TrackerType#NON_ENGLISH} <b>or</b>
+     *     {@link ApplicationConfiguration#enableTranslationToEnglish()} is {@code false}</li>
+     * </ul>
+     *
+     * <p>
+     * Otherwise it will run in full UI mode.
      *
      * @param trackerType whether {@link TrackerType} defining the execution method for this tracker.
-     * @return the {@link ChromeDriver} instance
+     * @return the {@link RemoteWebDriver} instance
      */
-    static ChromeDriver createChromeDriver(final TrackerType trackerType) {
+    public static RemoteWebDriver createDriver(final TrackerType trackerType) {
         final ChromeOptions chromeOptions = new ChromeOptions();
 
         // User-defined options

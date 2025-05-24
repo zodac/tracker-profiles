@@ -29,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
@@ -42,10 +42,10 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public AbTorrentsHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public AbTorrentsHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 

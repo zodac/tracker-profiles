@@ -28,7 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Common implementation of {@link AbstractTrackerHandler} for {@code .click} family of trackers.
@@ -42,10 +42,10 @@ public class TheClickHandler extends AbstractTrackerHandler {
     /**
      * Default constructor.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public TheClickHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public TheClickHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 

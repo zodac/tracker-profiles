@@ -23,7 +23,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Empornium} tracker.
@@ -35,12 +35,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 public class EmporniumHandler extends AbstractTrackerHandler {
 
     /**
-     * Constructs an instance of {@link EmporniumHandler}.
+     *  Default constructor.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls the URLs to the tracker
      */
-    public EmporniumHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    public EmporniumHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
     }
 
