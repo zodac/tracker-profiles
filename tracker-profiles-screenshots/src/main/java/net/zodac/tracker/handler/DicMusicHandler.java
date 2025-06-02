@@ -20,8 +20,6 @@ package net.zodac.tracker.handler;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -35,8 +33,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 @TrackerHandler(name = "DICMusic", url = "https://dicmusic.com/")
 public class DicMusicHandler extends AbstractTrackerHandler {
-
-    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.

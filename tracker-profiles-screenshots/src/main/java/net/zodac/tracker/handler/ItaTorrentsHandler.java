@@ -19,8 +19,6 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -29,8 +27,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 @TrackerHandler(name = "ItaTorrents", url = "https://itatorrents.xyz/")
 public class ItaTorrentsHandler extends Unit3dHandler {
-
-    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.

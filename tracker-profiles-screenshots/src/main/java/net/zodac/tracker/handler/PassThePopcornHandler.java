@@ -25,8 +25,6 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.ScriptExecutor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -36,8 +34,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 @TrackerHandler(name = "PassThePopcorn", type = TrackerType.MANUAL, url = "https://passthepopcorn.me/")
 public class PassThePopcornHandler extends AbstractTrackerHandler {
-
-    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.

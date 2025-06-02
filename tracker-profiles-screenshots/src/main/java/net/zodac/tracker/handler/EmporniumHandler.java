@@ -104,6 +104,7 @@ public class EmporniumHandler extends AbstractTrackerHandler {
             for (final WebElement sectionToggle : sectionToggles) {
                 // Only click the toggle if it is already open
                 if (sectionToggle.getText().contains("Hide")) {
+                    LOGGER.debug("\t\t- Closing section {}", toggleSelector);
                     clickButton(sectionToggle);
                     ScriptExecutor.explicitWait(DEFAULT_WAIT_FOR_TRANSITIONS);
                 }

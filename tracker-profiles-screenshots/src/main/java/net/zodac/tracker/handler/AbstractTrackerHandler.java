@@ -61,11 +61,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
+    /**
+     * The logger instance.
+     */
+    protected static final Logger LOGGER = LogManager.getLogger();
+
     private static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
     private static final Duration MAXIMUM_CLICK_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
-
-    // TODO: Make this protected?
-    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * The {@link RemoteWebDriver} instance used to load web pages and perform UI actions.

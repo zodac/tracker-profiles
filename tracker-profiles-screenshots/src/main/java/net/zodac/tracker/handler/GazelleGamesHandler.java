@@ -22,8 +22,6 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DisplayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -33,8 +31,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 @TrackerHandler(name = "GazelleGames", type = TrackerType.MANUAL, url = "https://gazellegames.net/")
 public class GazelleGamesHandler extends AbstractTrackerHandler {
-
-    private static final Logger LOGGER = LogManager.getLogger();
 
     /**
      * Default constructor.
