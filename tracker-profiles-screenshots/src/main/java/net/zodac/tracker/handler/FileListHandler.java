@@ -22,7 +22,6 @@ import java.util.Collection;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.openqa.selenium.By;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**

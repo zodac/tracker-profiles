@@ -21,6 +21,10 @@
             <artifactId>ashot</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
         </dependency>
@@ -81,7 +85,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>net.zodac.tracker.ProfileScreenshotter</mainClass>
+                            <mainClass>net.zodac.tracker.ApplicationLauncher</mainClass>
                         </manifest>
                         <manifestEntries>
                             <Multi-Release>true</Multi-Release>
@@ -121,7 +125,7 @@
                     <transformers>
                         <!-- Ensure the manifest file has the correct main class -->
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>net.zodac.tracker.ProfileScreenshotter</mainClass>
+                            <mainClass>net.zodac.tracker.ApplicationLauncher</mainClass>
                         </transformer>
 
                         <!-- Merge Log4j service provider files -->

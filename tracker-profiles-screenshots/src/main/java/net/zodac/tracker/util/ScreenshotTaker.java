@@ -25,7 +25,7 @@ import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
@@ -42,21 +42,21 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Takes a screenshot of the current web page loaded by the {@link ChromeDriver}. The browser viewport is then saved as a {@code .png} file in the
-     * provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
+     * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The browser viewport is then saved as a {@code .png} file in
+     * the provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
      *
      * <p>
      * Once the screenshot is saved, the page is scrolled back to the top. This is to ensure that any elements at the top of the page are clickable
      * after scrolling.
      *
-     * @param driver      the {@link ChromeDriver} with the loaded web page
+     * @param driver      the {@link RemoteWebDriver} with the loaded web page
      * @param trackerName the name of the tracker having a screenshot taken (used as the file name)
      * @return the {@link File} instance of the saved screenshot
      * @throws IOException thrown if an error occurs saving the screenshot to the file system
      * @see FileOpener#open(File)
      * @see ScriptExecutor#scrollToTheTop()
      */
-    public static File takeScreenshot(final ChromeDriver driver, final String trackerName) throws IOException {
+    public static File takeScreenshot(final RemoteWebDriver driver, final String trackerName) throws IOException {
         final ScriptExecutor scriptExecutor = new ScriptExecutor(driver);
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scriptExecutor);
         final File screenshot = new File(CONFIG.outputDirectory().toAbsolutePath() + File.separator + trackerName + ".png");

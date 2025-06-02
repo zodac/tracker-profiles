@@ -66,7 +66,7 @@ public record ApplicationConfiguration(
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = File.separator + "tmp" + File.separator + "screenshots";
     private static final String DEFAULT_TIMEZONE = "UTC";
-    private static final String DEFAULT_TRACKER_EXECUTION_ORDER = "headless,manual,non-english";
+    private static final String DEFAULT_TRACKER_EXECUTION_ORDER = "headless,manual,non-english,cloudflare-check";
     private static final String DEFAULT_TRACKER_INPUT_FILE_PATH = DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH + File.separator + "trackers.csv";
 
     /**

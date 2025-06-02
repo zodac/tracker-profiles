@@ -125,7 +125,7 @@ docker run \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
-    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english \
+    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
@@ -152,21 +152,21 @@ exclude **manual** and **non-english** from `TRACKER_EXECUTION_ORDER`. You can a
 
 The following are all possible configuration options, defined as environment variables for the docker image:
 
-| Environment Variable            | Description                                                                                                                | Default Value                 |
-|---------------------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                                      | /tmp/chrome                   |
-| *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                         | 1050                          |
-| *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                          | 1680                          |
-| *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                         | #                             |
-| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English (only if the tracker has no English option)                           | true                          |
-| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker (even for headless trackers)                                                     | false                         |
-| *LOG_LEVEL*                     | The logging level for console output                                                                                       | INFO                          |
-| *OPEN_OUTPUT_DIRECTORY*         | Whether to open the output directory when execution is complete (not supported in Docker, debug only)                      | false                         |
-| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                                  | yyyy-MM-dd                    |
-| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root                     | /tmp/screenshots              |
-| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                         | UTC                           |
-| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed. Unwanted execution types can be excluded. Case-insensitive. | headless,manual,non-english   |
-| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file (inside the docker container)                                            | /tmp/screenshots/trackers.csv |
+| Environment Variable            | Description                                                                                                                | Default Value                                |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
+| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                                      | /tmp/chrome                                  |
+| *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                         | 1050                                         |
+| *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                          | 1680                                         |
+| *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                         | #                                            |
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English (only if the tracker has no English option)                           | true                                         |
+| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker (even for headless trackers)                                                     | false                                        |
+| *LOG_LEVEL*                     | The logging level for console output                                                                                       | INFO                                         |
+| *OPEN_OUTPUT_DIRECTORY*         | Whether to open the output directory when execution is complete (not supported in Docker, debug only)                      | false                                        |
+| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots                                                  | yyyy-MM-dd                                   |
+| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of for the new directory created for the screenshots, relative to the project root                     | /tmp/screenshots                             |
+| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                         | UTC                                          |
+| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed. Unwanted execution types can be excluded. Case-insensitive. | headless,manual,non-english,cloudflare-check |
+| *TRACKER_INPUT_FILE_PATH*       | The path to the input tracker definition CSV file (inside the docker container)                                            | /tmp/screenshots/trackers.csv                |
 
 ## Contributing
 
@@ -175,6 +175,7 @@ The following are all possible configuration options, defined as environment var
 - [Apache Maven (v3.9.9)](https://maven.apache.org/download.cgi)
 - [Google Chrome](https://www.google.com/chrome/) (only if not using Docker)
 - [Java (JDK 24)](https://jdk.java.net/24/)
+- [Python (3.11.2+)](https://www.python.org/downloads/release/python-3112/) (only if testing trackers with Cloudflare verification)
 
 ### Install Git Hooks
 
@@ -186,8 +187,17 @@ bash ./ci/scripts/setup-hooks.sh
 
 ### Debugging Application
 
+If `TRACKER_EXECUTION_ORDER` contains **cloudflare-check**, the Python must be configured for your environment. From the root directory, execute the
+following:
+
+```bash
+source venv/bin/activate
+pip install -r docker/python/requirements.txt
+./venv/bin/python docker/python/selenium_manager.py
+```
+
 Using IntelliJ, and click on **Run**> **Edit Configurations** and add the environment variables for the application. Once done, open
-the [ProfileScreenshotter.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ProfileScreenshotter.java) and run the `main`
+the [ApplicationLauncher.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ApplicationLauncher.java) and run the `main`
 method from the IDE.
 The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation
 for each tracker is retrieved by the *trackerName* field within the CSV file.
@@ -213,12 +223,12 @@ docker run \
     --env CSV_COMMENT_SYMBOL='#' \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
     --env FORCE_UI_BROWSER=true \
-    --env LOG_LEVEL=INFO \
+    --env LOG_LEVEL=TRACE \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     --env TIMEZONE=UTC \
-    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english \
+    --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
     --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/chrome:/tmp/chrome \
@@ -233,3 +243,20 @@ package. To add a new one,
 extend [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java), following
 the convention from an existing implementation
 like [AbTorrentsHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbTorrentsHandler.java).
+
+Ensure the [TrackerType](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/TrackerType.java) is set correctly for your tracker.
+
+### Cloudflare Trackers
+
+The `cloudflare-check` trackers listed in [Supported Trackers](#supported-trackers) are implemented differently from the trackers, since this
+verification check cannot be passed using stock Selenium. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) is
+used to create a web browser that is capable of bypassing Cloudflare detection.
+
+Unfortunately, this is a Python-only package. While a _reasonable_
+person would migrate the project to Python, I'd prefer to keep writing this in Java. So a [Python web-server](./docker/python/selenium_manager.py) is
+spun up that exposes endpoints to open/close a Selenium web browser that can bypass detection. There is an implementation of the
+[Selenium WebDriver class](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/driver/python/AttachedRemoteWebDriver.java) which
+can attach to the Selenium browser that was launched by Python.
+
+This is all handled by the framework, so an implementation of a tracker can be done following like
+[any other tracker](#implementing-new-tracker-handlers), without needing to worry about whether the browser is launched by Java or Python.

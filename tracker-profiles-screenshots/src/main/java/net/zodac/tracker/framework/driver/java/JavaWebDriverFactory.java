@@ -15,10 +15,9 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.framework.driver;
+package net.zodac.tracker.framework.driver.java;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
@@ -62,7 +61,7 @@ public final class JavaWebDriverFactory {
         final ChromeOptions chromeOptions = new ChromeOptions();
 
         // User-defined options
-        chromeOptions.addArguments("window-size=" + CONFIG.browserDimensions());
+        chromeOptions.addArguments("--window-size=" + CONFIG.browserDimensions());
         if (canTrackerUseHeadlessBrowser(trackerType)) {
             chromeOptions.addArguments("--headless=new");
             chromeOptions.addArguments("--start-maximized");
@@ -84,10 +83,9 @@ public final class JavaWebDriverFactory {
         chromeOptions.setExperimentalOption("prefs", driverPreferences);
 
         // Additional flags to remove unnecessary information on browser
+        chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
         chromeOptions.addArguments("--disable-gpu");
         chromeOptions.addArguments("--disable-notifications");
-        chromeOptions.addArguments("disable-infobars");
-        chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
 
         return new ChromeDriver(chromeOptions);
     }

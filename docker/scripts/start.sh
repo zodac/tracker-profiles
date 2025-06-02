@@ -8,17 +8,23 @@
 #
 # Usage:           ./start.sh
 #
-# Requirements:    - Google Chrome/Chromium installed and accessible as `google-chrome-stable`
-#                  - Java installed and available on the system PATH
-#                  - `tracker-profiles.jar` available at /app/tracker-profiles.jar
-#                  - X display server running and accessible at DISPLAY=:0
+# Requirements:
+#   - Google Chrome/Chromium installed and accessible as `google-chrome-stable`
+#   - Java installed and available on the system PATH
+#   - `tracker-profiles.jar` available at /app/tracker-profiles.jar
+#   - X display server running and accessible at DISPLAY=:0
+#   - Python 3.11+ installed and available on the system PATH and requirements.txt installed
+#   - `selenium_manager.py` present in the working directory
 #
 # Behavior:
+#   - If the environment variable TRACKER_EXECUTION_ORDER contains the string
+#     "cloudflare-check":
+#       - Starts `selenium_manager.py` in the background
 #   - Starts Chrome in headless remote debugging mode on port 9222
 #   - Executes the Java JAR file
 #   - Outputs a colored success or error message based on Java's exit code
 #   - Tracks and prints total execution time in a natural format
-#   - Ensures Chrome is terminated on SIGINT (Ctrl+C)
+#   - On SIGINT (Ctrl+C), gracefully terminates Chrome and the Python process (if started)
 #
 # Exit Codes:
 #   - 0: Success
@@ -30,6 +36,13 @@ set -euo pipefail
 
 main() {
     start_time=$(date +%s%3N)
+
+    # If TRACKER_EXECUTION_ORDER contains "cloudflare-check", launch Python service
+    if [[ "${TRACKER_EXECUTION_ORDER:-}" == *cloudflare-check* ]]; then
+        # Run Python script in background
+        /app/venv/bin/python /app/selenium_manager.py &
+        PYTHON_PID=$!
+    fi
 
     # Start Google Chrome in the background with suppressed output
     google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
@@ -79,8 +92,15 @@ _convert_to_natural_time() {
 
 # Function to handle termination signals
 cleanup() {
-    kill -SIGTERM "${CHROME_PID}" 2>/dev/null
-    wait "${CHROME_PID}"
+    echo -e "\n\e[33mCleaning up...\e[0m"
+    kill -SIGTERM "${CHROME_PID}" 2>/dev/null || true
+    wait "${CHROME_PID}" 2>/dev/null || true
+
+    if [[ -n "${PYTHON_PID:-}" ]]; then
+        kill -SIGTERM "${PYTHON_PID}" 2>/dev/null || true
+        wait "${PYTHON_PID}" 2>/dev/null || true
+    fi
+
     exit 130
 }
 

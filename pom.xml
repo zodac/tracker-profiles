@@ -29,6 +29,7 @@
         <ashot.version>1.5.4</ashot.version>
         <commons-csv.version>1.14.0</commons-csv.version>
         <commons-io.version>2.19.0</commons-io.version>
+        <gson.version>2.13.1</gson.version>
         <jul-to-slf4j.version>2.0.17</jul-to-slf4j.version>
         <log4j.version>2.24.3</log4j.version>
         <selenium-java.version>4.33.0</selenium-java.version>
@@ -46,7 +47,7 @@
 
         <!-- Linter 3PP Versions -->
         <checkstyle.version>10.25.0</checkstyle.version>
-        <error_prone_core.version>2.36.0</error_prone_core.version>
+        <error_prone_core.version>2.38.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
         <pmd.version>7.14.0</pmd.version>
@@ -116,6 +117,25 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+            <!-- Included so the dependency is picked up by 'mvn versions:update-properties', not actually used directly -->
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_core</artifactId>
+                <version>${error_prone_core.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+                <exclusions>
+                    <!-- Conflicts with version in org.seleniumhq.selenium:selenium-java -->
+                    <exclusion>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_annotations</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- JUL to SLF4J Bridge, used to control Selenium logging output -->
             <dependency>

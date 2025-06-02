@@ -11,6 +11,10 @@ dependency-reduced-pom.xml
 pom.xml.versionsBackup
 target/
 
+# Python
+venv/
+downloaded_files/
+
 # Tracker details
 config.properties
 screenshots/

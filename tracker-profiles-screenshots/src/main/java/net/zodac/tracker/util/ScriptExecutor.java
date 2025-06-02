@@ -132,12 +132,22 @@ public class ScriptExecutor {
     }
 
     /**
+     * Moves the mouse cursor to the provided {@link WebElement}.
+     *
+     * @param x positive pixel value along horizontal axis in viewport (numbers increase going right)
+     * @param y positive pixel value along vertical axis in viewport (numbers increase going down)
+     */
+    public void moveTo(final int x, final int y) {
+        final Actions actions = new Actions(driver);
+        actions.moveToLocation(x, y).perform();
+        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+    }
+
+    /**
      * Moves the mouse cursor the origin of the web page; the top-left corner.
      */
     public void moveToOrigin() {
-        final Actions actions = new Actions(driver);
-        actions.moveToLocation(0, 0).perform();
-        explicitWait(DEFAULT_WAIT_FOR_MOUSE_MOVE);
+        moveTo(0, 0);
     }
 
     /**
@@ -290,7 +300,8 @@ public class ScriptExecutor {
             final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
             wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(selector));
         } catch (final TimeoutException e) {
-            LOGGER.debug(driver.getPageSource());
+            // TODO: Pretty-print this HTML
+            LOGGER.trace("Page source: {}", driver.getPageSource());
             throw e;
         }
     }

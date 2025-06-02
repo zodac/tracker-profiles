@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.ProfileScreenshotter;
+import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.util.PatternMatcher;
 import net.zodac.tracker.util.ScriptExecutor;
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +33,7 @@ import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Abstract class used to define a {@link AbstractTrackerHandler}. All implementations will be used by {@link ProfileScreenshotter},
@@ -61,15 +62,15 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     protected static final Duration WAIT_FOR_LOGIN_PAGE_LOAD = Duration.of(1L, ChronoUnit.SECONDS);
 
     private static final Duration MAXIMUM_LINK_RESOLUTION_TIME = Duration.of(2L, ChronoUnit.MINUTES);
-    private static final Duration MAXIMUM_LOGIN_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
+    private static final Duration MAXIMUM_CLICK_RESOLUTION_TIME = Duration.of(30L, ChronoUnit.SECONDS);
 
     // TODO: Make this protected?
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * The {@link ChromeDriver} instance used to load web pages and perform UI actions.
+     * The {@link RemoteWebDriver} instance used to load web pages and perform UI actions.
      */
-    protected final ChromeDriver driver;
+    protected final RemoteWebDriver driver;
 
     /**
      * The {@link ScriptExecutor} instance to perform specific actions for each {@link AbstractTrackerHandler} implementation.
@@ -81,10 +82,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * Default constructor, only for implementation classes.
      *
-     * @param driver      a {@link ChromeDriver} used to load web pages and perform UI actions
+     * @param driver      a {@link RemoteWebDriver} used to load web pages and perform UI actions
      * @param trackerUrls all possible URLs to connect to the tracker home page
      */
-    protected AbstractTrackerHandler(final ChromeDriver driver, final Collection<String> trackerUrls) {
+    protected AbstractTrackerHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         this.driver = driver;
         this.trackerUrls = List.copyOf(trackerUrls);
         scriptExecutor = new ScriptExecutor(driver);
@@ -144,15 +145,60 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     /**
      * For some trackers the home page does not automatically redirect to the login page. In these cases, we need to explicitly click on the login
      * link to redirect. We'll only do this navigation if {@link #loginPageSelector()} is not {@code null}.
+     *
+     * @param trackerName the name of the tracker
      */
-    public void navigateToLoginPage() {
+    public void navigateToLoginPage(final String trackerName) {
         final By loginLinkSelector = loginPageSelector();
 
         if (loginLinkSelector != null) {
             final WebElement loginLink = driver.findElement(loginLinkSelector);
             clickButton(loginLink);
+            cloudflareCheck(trackerName);
             scriptExecutor.waitForElementToAppear(usernameFieldSelector(), DEFAULT_WAIT_FOR_PAGE_LOAD);
+        } else {
+            cloudflareCheck(trackerName);
         }
+    }
+
+    /**
+     * For this {@link AbstractTrackerHandler} implementation, there is a Cloudflare check protecting the login page. This verification check must be
+     * passed to proceed. This must be done within {@link DisplayUtils#INPUT_WAIT_DURATION}.
+     *
+     * <p>
+     * Manual user interactions:
+     * <ol>
+     *     <li>Pass the Cloudflare verification check</li>
+     * </ol>
+     *
+     * @param trackerName the name of the tracker
+     */
+    // TODO: Can this button be automatically clicked? If the box is always in the same place, move the mouse and click?
+    private void cloudflareCheck(final String trackerName) {
+        if (!hasCloudflareCheck()) {
+            return;
+        }
+
+        scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
+        LOGGER.info("\t\t >>> Waiting for user to pass the Cloudflare verification, for {} seconds",
+            DisplayUtils.INPUT_WAIT_DURATION.getSeconds());
+
+        final WebElement cloudflareElement = driver.findElement(By.xpath("//div[@class='main-wrapper']//div[1]"));
+        scriptExecutor.highlightElement(cloudflareElement);
+        DisplayUtils.userInputConfirmation(trackerName, "Pass the Cloudflare verification");
+    }
+
+    /**
+     * Checks if the tracker has a Cloudflare verification check.
+     *
+     * <p>
+     * By default, we assume there is Cloudflare check, so this method returns {@code false}. Should be overridden otherwise, but only return to
+     * {@code true}. The common implementation to bypass the check is performed by {@link #cloudflareCheck(String)}.
+     *
+     * @return {@code true} if there is a cloudflare check
+     */
+    protected boolean hasCloudflareCheck() {
+        return false;
     }
 
     /**
@@ -418,19 +464,17 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
     }
 
     /**
-     * Retrieves the {@link ChromeDriver}.
+     * Retrieves the {@link RemoteWebDriver}.
      *
-     * @return the {@link ChromeDriver}
+     * @return the {@link RemoteWebDriver}
      */
-    public ChromeDriver driver() {
+    public RemoteWebDriver driver() {
         return driver;
     }
 
-    // Sometimes the login button won't load fully, but we'll continue anyway and ignore the timeout
-
     /**
      * Sometimes when clicking the login button or the profile page button, the page won't load correctly. This sets the
-     * {@link WebDriver.Timeouts#pageLoadTimeout(Duration)} to {@link #MAXIMUM_LOGIN_RESOLUTION_TIME}, and if a {@link TimeoutException} occurs, it is
+     * {@link WebDriver.Timeouts#pageLoadTimeout(Duration)} to {@link #MAXIMUM_CLICK_RESOLUTION_TIME}, and if a {@link TimeoutException} occurs, it is
      * ignored. We then force the web page to stop loading before proceeding.
      *
      * @param buttonToClick the {@link WebElement} to {@link WebElement#click()}
@@ -438,10 +482,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      */
     protected void clickButton(final WebElement buttonToClick) {
         try {
-            driver.manage().timeouts().pageLoadTimeout(MAXIMUM_LOGIN_RESOLUTION_TIME);
+            driver.manage().timeouts().pageLoadTimeout(MAXIMUM_CLICK_RESOLUTION_TIME);
             buttonToClick.click();
         } catch (final TimeoutException e) {
-            LOGGER.debug(e);
+            LOGGER.debug("Page still loading after {}, force stopping page load", MAXIMUM_CLICK_RESOLUTION_TIME);
+            LOGGER.trace(e);
             scriptExecutor.stopPageLoad();
         }
 

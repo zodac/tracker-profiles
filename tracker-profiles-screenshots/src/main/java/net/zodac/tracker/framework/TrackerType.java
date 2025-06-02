@@ -32,6 +32,11 @@ import org.jspecify.annotations.Nullable;
 public enum TrackerType {
 
     /**
+     * The tracker has a Cloudflare verification check on login (overrides {@link #MANUAL} and {@link #NON_ENGLISH}).
+     */
+    CLOUDFLARE_CHECK,
+
+    /**
      * The tracker can be run in headless mode (with no UI).
      */
     HEADLESS,

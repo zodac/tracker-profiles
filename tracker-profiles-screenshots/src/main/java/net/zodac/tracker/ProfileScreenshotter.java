@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import net.zodac.tracker.framework.ApplicationConfiguration;
 import net.zodac.tracker.framework.Configuration;
+import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
@@ -38,6 +39,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.exception.BrowserClosedException;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
+import net.zodac.tracker.framework.exception.DriverAttachException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.framework.exception.TranslationException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
@@ -59,11 +61,6 @@ public final class ProfileScreenshotter {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ApplicationConfiguration CONFIG = Configuration.get();
 
-    // Failure codes
-    private static final int FAILURE_CODE = 1;
-    private static final int SUCCESS_CODE = 0;
-    private static final int PARTIAL_FAILURE_CODE = 2;
-
     private ProfileScreenshotter() {
 
     }
@@ -74,19 +71,10 @@ public final class ProfileScreenshotter {
      * (after logging in and any other required actions). At this point, any sensitive information is redacted, and then a screenshot is taken by
      * {@link ScreenshotTaker}, then saved in the {@link ApplicationConfiguration#outputDirectory()}.
      *
-     * @param args input arguments, unused
+     * @return the exit code
      * @see ScreenshotTaker
      */
-    public static void main(final String[] args) {
-        try {
-            System.exit(executeProfileScreenshotter());
-        } catch (final Exception e) {
-            LOGGER.debug("Error abruptly ended execution", e);
-            LOGGER.error("Error abruptly ended execution: {}", e.getMessage());
-        }
-    }
-
-    private static int executeProfileScreenshotter() {
+    public static ExitState executeProfileScreenshotter() {
         final File outputDirectory = CONFIG.outputDirectory().toFile();
         if (!outputDirectory.exists()) {
             LOGGER.trace("Creating output directory: '{}'", outputDirectory);
@@ -94,9 +82,10 @@ public final class ProfileScreenshotter {
         }
 
         final Map<TrackerType, Set<TrackerDefinition>> trackersByType = getTrackers();
+        // TODO: If a tracker is listed in the CSV, but the category is disabled, it's possible to execute 0 trackers and skip this early exit
         if (trackersByType.isEmpty()) {
             LOGGER.error("No trackers selected!");
-            return FAILURE_CODE;
+            return ExitState.FAILURE;
         }
 
         printTrackersInfo(trackersByType);
@@ -124,7 +113,7 @@ public final class ProfileScreenshotter {
         return returnResultSummary(successfulTrackers, unsuccessfulTrackers);
     }
 
-    private static int returnResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers) {
+    private static ExitState returnResultSummary(final Collection<String> successfulTrackers, final Collection<String> unsuccessfulTrackers) {
         if (successfulTrackers.isEmpty()) {
             final String trackersPlural = unsuccessfulTrackers.size() == 1 ? "" : "s";
             LOGGER.error("");
@@ -132,7 +121,7 @@ public final class ProfileScreenshotter {
             for (final String unsuccessfulTracker : unsuccessfulTrackers) {
                 LOGGER.error("\t- {}", unsuccessfulTracker);
             }
-            return FAILURE_CODE;
+            return ExitState.FAILURE;
         }
 
         if (CONFIG.openOutputDirectory()) {
@@ -150,7 +139,7 @@ public final class ProfileScreenshotter {
             final String trackersPlural = successfulTrackers.size() == 1 ? "" : "s";
             LOGGER.info("");
             LOGGER.info("{} tracker{} successfully screenshot", successfulTrackers.size(), trackersPlural);
-            return SUCCESS_CODE;
+            return ExitState.SUCCESS;
         } else {
             final String trackersPlural = unsuccessfulTrackers.size() == 1 ? "" : "s";
             LOGGER.warn("");
@@ -158,7 +147,7 @@ public final class ProfileScreenshotter {
             for (final String unsuccessfulTracker : unsuccessfulTrackers) {
                 LOGGER.warn("\t- {}", unsuccessfulTracker);
             }
-            return PARTIAL_FAILURE_CODE;
+            return ExitState.PARTIAL_FAILURE;
         }
     }
 
@@ -224,6 +213,10 @@ public final class ProfileScreenshotter {
             LOGGER.debug("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage(), e);
             LOGGER.warn("\t- Tracker '{}' is disabled: [{}]", trackerDefinition.name(), e.getMessage());
             return false;
+        } catch (final DriverAttachException e) {
+            LOGGER.debug("\t- Unable to attach to Python Selenium web browser for tracker '{}'", trackerDefinition.name(), e);
+            LOGGER.warn("\t- Unable to attach to Python Selenium web browser for tracker '{}'", trackerDefinition.name());
+            return false;
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerDefinition.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerDefinition.name());
@@ -270,7 +263,7 @@ public final class ProfileScreenshotter {
 
         LOGGER.info("\t- Opening tracker");
         trackerHandler.openTracker();
-        trackerHandler.navigateToLoginPage();
+        trackerHandler.navigateToLoginPage(trackerDefinition.name());
 
         LOGGER.info("\t- Logging in as '{}'", trackerDefinition.username());
         trackerHandler.login(trackerDefinition.username(), trackerDefinition.password(), trackerDefinition.name());

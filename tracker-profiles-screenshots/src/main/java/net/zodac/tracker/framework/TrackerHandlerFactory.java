@@ -41,10 +41,13 @@ import java.util.zip.ZipEntry;
 import net.zodac.tracker.framework.annotation.TrackerDisabled;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandlers;
+import net.zodac.tracker.framework.driver.java.JavaWebDriverFactory;
+import net.zodac.tracker.framework.driver.python.PythonWebDriverFactory;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Factory class used to create an instance of a {@link AbstractTrackerHandler}.
@@ -115,12 +118,17 @@ public final class TrackerHandlerFactory {
 
     private static AbstractTrackerHandler makeNewInstance(final Class<?> trackerHandler, final List<String> urls, final TrackerType trackerType) {
         try {
-            final Constructor<?> constructorWithChromeDriverAndUrls = trackerHandler.getDeclaredConstructor(ChromeDriver.class, Collection.class);
-            final ChromeDriver driver = WebDriverFactory.createChromeDriver(trackerType);
-            return (AbstractTrackerHandler) constructorWithChromeDriverAndUrls.newInstance(driver, urls);
+            // TODO: Should the constructor handle the creation of a driver instead of here?
+            final Constructor<?> constructorWithDriverAndUrls = trackerHandler.getDeclaredConstructor(RemoteWebDriver.class, Collection.class);
+            final RemoteWebDriver driver = getRemoteWebDriver(trackerType);
+            return (AbstractTrackerHandler) constructorWithDriverAndUrls.newInstance(driver, urls);
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException(String.format("Error instantiating an instance of '%s'", trackerHandler), e);
         }
+    }
+
+    private static RemoteWebDriver getRemoteWebDriver(final TrackerType trackerType) {
+        return trackerType == TrackerType.CLOUDFLARE_CHECK ? PythonWebDriverFactory.createDriver() : JavaWebDriverFactory.createDriver(trackerType);
     }
 
     private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {
