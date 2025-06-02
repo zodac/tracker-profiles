@@ -93,7 +93,10 @@ final class PythonHttpServerHandler {
             final SeleniumSession seleniumSession = GSON.fromJson(response.body(), SeleniumSession.class);
             LOGGER.trace("Session details: {}", seleniumSession);
             return seleniumSession;
-        } catch (final IOException | InterruptedException e) {
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DriverAttachException(e);
+        } catch (final IOException e) {
             throw new DriverAttachException(e);
         }
     }
@@ -120,9 +123,16 @@ final class PythonHttpServerHandler {
                     response.body());
             }
             LOGGER.trace("Request to close session successfully completed");
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.debug("Error closing Python browser session", e);
+            LOGGER.warn("Error closing Python browser session: {}", e.getMessage());
+        } catch (final IOException e) {
+            LOGGER.debug("Error closing Python browser session", e);
+            LOGGER.warn("Error closing Python browser session: {}", e.getMessage());
         } catch (final Exception e) {
             LOGGER.debug("Unexpected error closing Python browser session", e);
-            LOGGER.warn("Unexpected error closing Python browser session");
+            LOGGER.warn("Unexpected error closing Python browser session: {}", e.getMessage());
         }
     }
 }

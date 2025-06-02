@@ -58,33 +58,37 @@ public final class AttachedRemoteWebDriver extends RemoteWebDriver {
 
             // Inject session ID into instance
             final Field sessionIdField = RemoteWebDriver.class.getDeclaredField("sessionId");
-            setAccessible(sessionIdField);
-            sessionIdField.set(instance, new SessionId(seleniumSession.sessionId()));
+            makeAccessible(sessionIdField);
+            setField(sessionIdField, instance, new SessionId(seleniumSession.sessionId()));
 
             return instance;
-        } catch (final Exception e) {
+        } catch (final IllegalAccessException | MalformedURLException | NoSuchFieldException e) {
             throw new DriverAttachException(e);
         }
     }
 
     private static HttpCommandExecutor createCommandExecutor(final SeleniumSession seleniumSession)
-        throws MalformedURLException, NoSuchFieldException, IllegalAccessException {
+        throws IllegalAccessException, MalformedURLException, NoSuchFieldException {
         final URL remoteAddress = URI.create(seleniumSession.sessionUrl()).toURL();
         final HttpCommandExecutor executor = new HttpCommandExecutor(Map.of(), remoteAddress);
 
         // Inject command & response codecs
         final Field commandCodecField = HttpCommandExecutor.class.getDeclaredField("commandCodec");
-        setAccessible(commandCodecField);
-        commandCodecField.set(executor, new W3CHttpCommandCodec());
+        makeAccessible(commandCodecField);
+        setField(commandCodecField, executor, new W3CHttpCommandCodec());
 
         final Field responseCodecField = HttpCommandExecutor.class.getDeclaredField("responseCodec");
-        setAccessible(responseCodecField);
-        responseCodecField.set(executor, new W3CHttpResponseCodec());
+        makeAccessible(responseCodecField);
+        setField(responseCodecField, executor, new W3CHttpResponseCodec());
         return executor;
     }
 
-    private static void setAccessible(final Field field) {
+    private static void makeAccessible(final Field field) {
         field.setAccessible(true); // NOPMD: AvoidAccessibilityAlteration - Needed to override functionality of the driver
+    }
+
+    private static void setField(final Field field, final Object fieldOwner, final Object newValue) throws IllegalAccessException {
+        field.set(fieldOwner, newValue);
     }
 
     @Override
