@@ -15,11 +15,12 @@ or becomes otherwise unavailable.
 
 ## Trackers
 
-The available trackers come in three types:
+The available trackers come in the following types:
 
 - Headless: Can run with the browser in headless mode, meaning no UI browser is needed
 - Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
 - Non-English: If the tracker is not in English, a UI browser is required to translate the page
+- Cloudflare-Check: The tracker has a Cloudflare verification check this will need a UI browser to bypass (overrides **Manual** and **Non-English**)
 
 **Note:** Any tracker not listed in either section below has not been tested (most likely due to lack of an account).
 
@@ -136,17 +137,22 @@ docker run \
 ### Browser UI
 
 There are two ways to execute the application - with a UI browser and without. By default, the application is configured
-to screenshot all trackers. A UI browser is needed for trackers that require some user input during login (like a Captcha or 2FA),
-or for a non-English tracker that needs to be translated (if `ENABLE_TRANSLATION_TO_ENGLISH` is set to **true**). To run through Docker with a UI,
-local connections to the host display must be enabled. Please note this will be reset upon reboot and may need to be reapplied:
+to screenshot all trackers. A UI browser is needed for trackers that:
+
+- Require some user input during login, like a Captcha or 2FA (if `TRACKER_EXECUTION_ORDER` includes **manual**)
+- Need to be translated (if `ENABLE_TRANSLATION_TO_ENGLISH` is set to **true** and `TRACKER_EXECUTION_ORDER` includes **non-english**)
+- Have a Cloudflare verification check (if `TRACKER_EXECUTION_ORDER` includes **cloudflare-check**)
+
+To run through Docker with a UI, local connections to the host display must be enabled (I have only tested this on Debian so far):
 
 ```bash
+# Please note this will be reset upon reboot and may need to be reapplied
 xhost +local:
 ```
 
 To disable the UI and run the browser in headless mode only, ensure `FORCE_UI_BROWSER` and `ENABLE_TRANSLATION_TO_ENGLISH` are set to **false**, and
-exclude **manual** and **non-english** from `TRACKER_EXECUTION_ORDER`. You can also remove `-v /tmp/.X11-unix:/tmp/.X11-unix` and
-`--env DISPLAY="${DISPLAY}"` from the docker command.
+exclude **manual**, **non-english** and **cloudflare-check** from `TRACKER_EXECUTION_ORDER`. You can also remove `-v /tmp/.X11-unix:/tmp/.X11-unix`
+and `--env DISPLAY="${DISPLAY}"` from the `docker run` command.
 
 ### Configuration Options
 
@@ -187,7 +193,7 @@ bash ./ci/scripts/setup-hooks.sh
 
 ### Debugging Application
 
-If `TRACKER_EXECUTION_ORDER` contains **cloudflare-check**, the Python must be configured for your environment. From the root directory, execute the
+If `TRACKER_EXECUTION_ORDER` contains **cloudflare-check**, then Python must be configured for your environment. From the root directory, execute the
 following:
 
 ```bash
@@ -248,7 +254,7 @@ Ensure the [TrackerType](./tracker-profiles-screenshots/src/main/java/net/zodac/
 
 ### Cloudflare Trackers
 
-The `cloudflare-check` trackers listed in [Supported Trackers](#supported-trackers) are implemented differently from the trackers, since this
+The `cloudflare-check` trackers listed in [Supported Trackers](#supported-trackers) are implemented differently from the other trackers, since this
 verification check cannot be passed using stock Selenium. [undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) is
 used to create a web browser that is capable of bypassing Cloudflare detection.
 
