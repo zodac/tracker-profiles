@@ -18,7 +18,7 @@
 #   - 0: Success
 #   - 1: Invalid usage or version lookup failure
 # ------------------------------------------------------------------------------
-
+# TODO: Expand this to also update docker images/python packages
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
