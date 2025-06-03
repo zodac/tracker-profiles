@@ -35,23 +35,24 @@ WORKDIR /app
 ENV PUID=1000
 ENV PGID=1000
 
-# Install required applications:
+# Install required applications using 'tracker-profiles/.github/scripts/update-package-versions.sh'
 # - chromium (web browser)
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
-ARG CHROME_VERSION="137.0.7151.55-3~deb12u1"
+# BEGIN PINNED PACKAGE INSTALL
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-      chromium="${CHROME_VERSION}" \
-      curl \
-      fonts-arphic-ukai \
-      gosu \
-      x11-apps \
+      chromium="137.0.7151.55-3~deb12u1" \
+      curl="7.88.1-10+deb12u12" \
+      fonts-arphic-ukai="0.2.20080216.2-5" \
+      gosu="1.14-1+b10" \
+      x11-apps="7.7+9" \
     && \
     apt-get autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+# END PINNED PACKAGE INSTALL
 
 # Copy Python installation from the python_build stage
 COPY --from=python_build /usr/local /usr/local
