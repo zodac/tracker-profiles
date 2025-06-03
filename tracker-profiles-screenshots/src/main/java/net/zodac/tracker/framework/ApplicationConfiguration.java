@@ -31,6 +31,7 @@ import java.util.Locale;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+// TODO: Add ability to enable/disable XXX trackers
 /**
  * Utility file that loads the application configuration from environment variables.
  *
