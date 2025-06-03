@@ -44,6 +44,7 @@ ARG CHROME_VERSION="137.0.7151.55-3~deb12u1"
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
       chromium="${CHROME_VERSION}" \
+      curl \
       fonts-arphic-ukai \
       gosu \
       x11-apps \

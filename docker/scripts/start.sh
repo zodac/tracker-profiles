@@ -42,11 +42,33 @@ main() {
         # Run Python script in background
         /app/venv/bin/python /app/selenium_manager.py &
         PYTHON_PID=$!
+
+        # Wait for /ping to return 200 OK or time out after 5s
+        for i in {1..5}; do
+            if curl -fs http://localhost:5000/ping >/dev/null; then
+                break
+            fi
+            sleep 1
+
+            # If this is the last iteration and still failing, exit
+            if [[ $i -eq 20 ]]; then
+                echo -e "\e[31mFailed to start Python service\e[0m"
+                kill "${PYTHON_PID}" 2>/dev/null
+                exit 1
+            fi
+        done
     fi
 
     # Start Google Chrome in the background with suppressed output
     google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
     CHROME_PID=$!
+
+    # Give the process a second to start or fail, then check status
+    sleep 1
+    if ! kill -0 "${CHROME_PID}" 2>/dev/null; then
+        echo -e "\e[31mFailed to start Google Chrome\e[0m"
+        exit 1
+    fi
 
     # Run Java application
     java -jar /app/tracker-profiles.jar

@@ -14,6 +14,10 @@ app = Flask(__name__)
 sessions = {}
 lock = Lock()
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return '', 200
+
 @app.route('/open', methods=['POST'])
 def open_browser():
     logging.info("\t- /open request received")
@@ -31,16 +35,16 @@ def open_browser():
     browser_data_storage_path = data['browser_data_storage_path']
     # Check if path exists
     if not os.path.exists(browser_data_storage_path):
-        return jsonify({'error': ''browser_data_storage_path' does not exist'}), 400
+        return jsonify({'error': f"'browser_data_storage_path' '{browser_data_storage_path}' does not exist"}), 400
 
     # Check write permission
     if not os.access(browser_data_storage_path, os.W_OK):
-        return jsonify({'error': 'No write permission for browser_data_storage_path'}), 400
+        return jsonify({'error': f"No write permission for 'browser_data_storage_path' '{browser_data_storage_path}'"}), 400
 
     browser_dimensions = data['browser_dimensions']
     # Validate browser_dimensions format
     if not isinstance(browser_dimensions, str) or ',' not in browser_dimensions:
-        return jsonify({'error': 'Invalid 'browser_dimensions' format, expected "WIDTH,HEIGHT"'}), 400
+        return jsonify({'error': f"Invalid 'browser_dimensions' format, expected 'WIDTH,HEIGHT', found: '{browser_dimensions}'"}), 400
 
     try:
         options = create_chrome_options(browser_data_storage_path, browser_dimensions)
