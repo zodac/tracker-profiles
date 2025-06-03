@@ -26,55 +26,59 @@ The available trackers come in the following types:
 
 ### Supported Trackers
 
-| Tracker Name        | Support         |
-|---------------------|-----------------|
-| ABTorrents          | Headless        |
-| Aither              | Headless        |
-| AlphaRatio          | Headless        |
-| AnimeBytes          | Headless        |
-| Anthelion           | Headless        |
-| BackUps             | Headless        |
-| BakaBT              | Headless        |
-| BeyondHD            | **Manual**      |
-| Blutopia            | Headless        |
-| BwTorrents          | Headless        |
-| Cathode-Ray.Tube    | Headless        |
-| DICMusic            | Headless        |
-| DigitalCore.Club    | **Manual**      |
-| DocsPedia           | **Manual**      |
-| Empornium           | Headless        |
-| FearNoPeer          | Headless        |
-| FileList            | Headless        |
-| GazelleGames        | **Manual**      |
-| HDBits              | **Manual**      |
-| HDUnited            | Headless        |
-| ItaTorrents         | Headless        |
-| Kufirc              | **Non-English** |
-| Lat-Team            | **Non-English** |
-| Libble              | Headless        |
-| LST                 | Headless        |
-| Metal-Tracker       | Headless        |
-| MoreThanTV          | Headless        |
-| MyAnonaMouse        | Headless        |
-| Nebulance           | Headless        |
-| Orpheus             | Headless        |
-| PassThePopcorn      | **Manual**      |
-| PixelCove           | Headless        |
-| PornBay             | Headless        |
-| PrivateSilverScreen | Headless        |
-| Redacted            | Headless        |
-| ReelFlix            | Headless        |
-| RUTracker           | **Non-English** |
-| SecretCinema        | Headless        |
-| SeedPool            | Headless        |
-| Tasmanites          | Headless        |
-| TeamOS              | Headless        |
-| TheEmpire           | **Manual**      |
-| TheGeeks            | **Manual**      |
-| TorrentLeech        | Headless        |
-| TVChaosUK           | Headless        |
-| UHDBits             | Headless        |
-| Unwalled            | Headless        |
+| Tracker Name        | Support              |
+|---------------------|----------------------|
+| ABTorrents          | Headless             |
+| Aither              | Headless             |
+| AlphaRatio          | Headless             |
+| AnimeBytes          | Headless             |
+| Anthelion           | Headless             |
+| AvistaZ             | **Cloudflare-check** |
+| BackUps             | Headless             |
+| BakaBT              | Headless             |
+| BeyondHD            | **Manual**           |
+| Blutopia            | Headless             |
+| BwTorrents          | Headless             |
+| Cathode-Ray.Tube    | Headless             |
+| CinemaZ             | **Cloudflare-check** |
+| DICMusic            | Headless             |
+| DigitalCore.Club    | **Manual**           |
+| DocsPedia           | **Manual**           |
+| Empornium           | Headless             |
+| ExoticaZ            | **Cloudflare-check** |
+| FearNoPeer          | Headless             |
+| FileList            | Headless             |
+| GazelleGames        | **Manual**           |
+| HDBits              | **Manual**           |
+| HDUnited            | Headless             |
+| ItaTorrents         | Headless             |
+| Kufirc              | **Non-English**      |
+| Lat-Team            | **Non-English**      |
+| Libble              | Headless             |
+| LST                 | Headless             |
+| Metal-Tracker       | Headless             |
+| MoreThanTV          | Headless             |
+| MyAnonaMouse        | Headless             |
+| Nebulance           | Headless             |
+| Orpheus             | Headless             |
+| PassThePopcorn      | **Manual**           |
+| PixelCove           | Headless             |
+| PornBay             | Headless             |
+| PrivateHD           | **Cloudflare-check** |
+| PrivateSilverScreen | Headless             |
+| Redacted            | Headless             |
+| ReelFlix            | Headless             |
+| RUTracker           | **Non-English**      |
+| SecretCinema        | Headless             |
+| SeedPool            | Headless             |
+| Tasmanites          | Headless             |
+| TeamOS              | Headless             |
+| TheEmpire           | **Manual**           |
+| TheGeeks            | **Manual**           |
+| TorrentLeech        | Headless             |
+| TVChaosUK           | Headless             |
+| UHDBits             | Headless             |
+| Unwalled            | Headless             |
 
 ### Unsupported Trackers
 
@@ -83,14 +87,10 @@ The following trackers are not currently supported:
 | Tracker Name    | Reason                  |
 |-----------------|-------------------------|
 | AnimeTorrents   | Cloudflare verification |
-| AvistaZ         | Cloudflare verification |
 | BroadcasThe.Net | Cloudflare verification |
 | CGPeers         | Cloudflare verification |
-| CinemaZ         | Cloudflare verification |
-| ExoticaZ        | Cloudflare verification |
 | Hawke-Uno       | Cloudflare verification |
 | IPTorrents      | Cloudflare verification |
-| PrivateHD       | Cloudflare verification |
 | SceneTime       | Cloudflare verification |
 | Speed.CD        | Cloudflare verification |
 | SportsCult      | Cloudflare verification |

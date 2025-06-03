@@ -10,6 +10,8 @@ from threading import Lock
 from typing import TypedDict, Optional
 from waitress import serve
 
+# TODO: Add some linting for the Python code
+
 app = Flask(__name__)
 
 # Thread-safe session store
