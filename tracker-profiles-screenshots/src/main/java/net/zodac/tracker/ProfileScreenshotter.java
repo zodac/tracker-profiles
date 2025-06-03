@@ -75,17 +75,17 @@ public final class ProfileScreenshotter {
      * @see ScreenshotTaker
      */
     public static ExitState executeProfileScreenshotter() {
-        final File outputDirectory = CONFIG.outputDirectory().toFile();
-        if (!outputDirectory.exists()) {
-            LOGGER.trace("Creating output directory: '{}'", outputDirectory);
-            outputDirectory.mkdirs();
-        }
-
         final Map<TrackerType, Set<TrackerDefinition>> trackersByType = getTrackers();
         // TODO: If a tracker is listed in the CSV, but the category is disabled, it's possible to execute 0 trackers and skip this early exit
         if (trackersByType.isEmpty()) {
             LOGGER.error("No trackers selected!");
             return ExitState.FAILURE;
+        }
+
+        final File outputDirectory = CONFIG.outputDirectory().toFile();
+        if (!outputDirectory.exists()) {
+            LOGGER.trace("Creating output directory: '{}'", outputDirectory);
+            outputDirectory.mkdirs();
         }
 
         printTrackersInfo(trackersByType);
