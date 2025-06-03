@@ -16,10 +16,28 @@ lock = Lock()
 
 @app.route('/ping', methods=['GET'])
 def ping():
+    """
+    Health check endpoint.
+
+    Returns:
+        200 OK response with an empty body to indicate the service is running.
+    """
     return '', 200
 
 @app.route('/open', methods=['POST'])
 def open_browser():
+    """
+    Starts a new undetected Chrome browser session with the provided configuration.
+
+    Expects JSON payload with:
+        - 'browser_data_storage_path': str, writable path for browser profile and cache.
+        - 'browser_dimensions': str, format 'WIDTH,HEIGHT' for window size.
+
+    Returns:
+        - 200 OK with session ID and local session URL on success.
+        - 400 Bad Request for missing/invalid input.
+        - 500 Internal Server Error for unexpected issues during browser startup.
+    """
     logging.info("\t- /open request received")
     data = request.get_json()
 
@@ -70,6 +88,18 @@ def open_browser():
 
 @app.route('/close', methods=['POST'])
 def close_session():
+    """
+    Closes an existing browser session.
+
+    Expects JSON payload with:
+        - 'session_id': str, the ID of the session to close.
+
+    Returns:
+        - 200 OK with a confirmation message on success.
+        - 400 Bad Request if session_id is missing.
+        - 404 Not Found if session ID does not exist.
+        - 500 Internal Server Error if an error occurs while closing the session.
+    """
     logging.info("\t- /close request received")
     data = request.get_json()
     logging.debug(f"\t- Request payload: {data}")
@@ -96,7 +126,14 @@ def close_session():
 
 def create_chrome_options(browser_data_storage_path: str, browser_dimensions: str) -> uc.ChromeOptions:
     """
-    Configure and return ChromeOptions for the browser session.
+    Creates and configures ChromeOptions for launching an undetected Chrome browser.
+
+    Args:
+        browser_data_storage_path (str): Path to store user data and cache.
+        browser_dimensions (str): Browser window size in the format 'WIDTH,HEIGHT'.
+
+    Returns:
+        uc.ChromeOptions: Configured Chrome options.
     """
     options = uc.ChromeOptions()
 
@@ -120,6 +157,12 @@ def create_chrome_options(browser_data_storage_path: str, browser_dimensions: st
     return options
 
 def configure_logging():
+    """
+    Configures the root logger with colored output and support for a custom TRACE level.
+
+    The log level is determined by the LOG_LEVEL environment variable (defaults to INFO).
+    Logs are color-coded using `colorlog` and formatted to show milliseconds.
+    """
     # Add support for TRACE level logging
     TRACE_LEVEL_NUM = 5
     logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
@@ -172,6 +215,11 @@ def configure_logging():
     logging.getLogger(__name__).trace("Logging is configured")
 
 if __name__ == '__main__':
+    """
+    Entry point for running the Flask app with Waitress.
+
+    Starts the server on 0.0.0.0:5000 and configures logging beforehand.
+    """
     configure_logging()
     logging.info(f"Starting Waitress server to handle Python Selenium sessions")
     serve(app, host="0.0.0.0", port=5000)
