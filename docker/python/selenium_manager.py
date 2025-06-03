@@ -16,10 +16,10 @@ lock = Lock()
 
 @app.route('/open', methods=['POST'])
 def open_browser():
-    logging.info("  - /open request received")
+    logging.info("\t- /open request received")
     data = request.get_json()
 
-    logging.debug(f"  - Request payload: {data}")
+    logging.debug(f"\t- Request payload: {data}")
     if not data:
         return jsonify({'error': 'Missing JSON body'}), 400
 
@@ -29,21 +29,27 @@ def open_browser():
         return jsonify({'error': f'Missing required keys: {", ".join(missing_keys)}'}), 400
 
     browser_data_storage_path = data['browser_data_storage_path']
-    browser_dimensions = data['browser_dimensions']
+    # Check if path exists
+    if not os.path.exists(browser_data_storage_path):
+        return jsonify({'error': ''browser_data_storage_path' does not exist'}), 400
 
+    # Check write permission
+    if not os.access(browser_data_storage_path, os.W_OK):
+        return jsonify({'error': 'No write permission for browser_data_storage_path'}), 400
+
+    browser_dimensions = data['browser_dimensions']
+    # Validate browser_dimensions format
     if not isinstance(browser_dimensions, str) or ',' not in browser_dimensions:
-        return jsonify({'error': 'Invalid browser_dimensions format, expected "WIDTH,HEIGHT"'}), 400
+        return jsonify({'error': 'Invalid 'browser_dimensions' format, expected "WIDTH,HEIGHT"'}), 400
 
     try:
-        os.makedirs(browser_data_storage_path, exist_ok=True)
-
         options = create_chrome_options(browser_data_storage_path, browser_dimensions)
         driver = uc.Chrome(headless=False, use_subprocess=False, options=options)
 
         session_id = driver.session_id
         port = driver.service.service_url.split(":")[-1]
 
-        logging.info(f"    - Started session '{session_id}' on port {port}")
+        logging.info(f"\t\t- Started session '{session_id}' on port {port}")
 
         with lock:
             sessions[session_id] = driver
@@ -54,15 +60,15 @@ def open_browser():
         }), 200
 
     except Exception as e:
-        logging.exception("  - Failed to create browser session")
+        logging.exception("\t- Failed to create browser session")
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/close', methods=['POST'])
 def close_session():
-    logging.info("  - /close request received")
+    logging.info("\t- /close request received")
     data = request.get_json()
-    logging.debug(f"  - Request payload: {data}")
+    logging.debug(f"\t- Request payload: {data}")
 
     session_id = data.get('session_id')
     if not session_id:
@@ -73,15 +79,15 @@ def close_session():
         driver = sessions.pop(session_id, None)
 
     if not driver:
-        logging.warning(f"  - No session found for ID {session_id}")
+        logging.warning(f"\t- No session found for ID {session_id}")
         return jsonify({'error': 'Session not found'}), 404
 
     try:
         driver.quit()
-        logging.info(f"    - Session '{session_id}' closed")
+        logging.info(f"\t\t- Session '{session_id}' closed")
         return jsonify({'message': f'Session {session_id} closed'}), 200
     except Exception as e:
-        logging.exception(f"  - Failed to close session {session_id}")
+        logging.exception(f"\t- Failed to close session {session_id}")
         return jsonify({'error': str(e)}), 500
 
 def create_chrome_options(browser_data_storage_path: str, browser_dimensions: str) -> uc.ChromeOptions:
@@ -163,5 +169,5 @@ def configure_logging():
 
 if __name__ == '__main__':
     configure_logging()
+    logging.info(f"Starting Waitress server to handle Python Selenium sessions")
     serve(app, host="0.0.0.0", port=5000)
-    logging.info(f"Started Waitress server to handle Python Selenium sessions")
