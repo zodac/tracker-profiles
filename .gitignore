@@ -6,6 +6,7 @@
 .vscode/
 
 # Build
+*.bak
 *.log
 dependency-reduced-pom.xml
 pom.xml.versionsBackup
