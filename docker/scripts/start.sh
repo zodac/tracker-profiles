@@ -63,13 +63,6 @@ main() {
     google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
     CHROME_PID=$!
 
-    # Give the process a second to start or fail, then check status
-    sleep 1
-    if ! kill -0 "${CHROME_PID}" 2>/dev/null; then
-        echo -e "\e[31mFailed to start Google Chrome\e[0m"
-        exit 1
-    fi
-
     # Run Java application
     java -jar /app/tracker-profiles.jar
     JAVA_EXIT_CODE=$?

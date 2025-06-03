@@ -4,28 +4,50 @@ import uuid
 import logging
 import undetected_chromedriver as uc
 from colorlog import ColoredFormatter
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, Response, request
+from selenium.webdriver.remote.webdriver import WebDriver
 from threading import Lock
+from typing import TypedDict, Optional
 from waitress import serve
 
 app = Flask(__name__)
 
 # Thread-safe session store
-sessions = {}
+sessions: dict[str, WebDriver] = {}
 lock = Lock()
 
+class OpenRequestData(TypedDict):
+    """
+    Represents the expected JSON payload for the /open endpoint.
+
+    Attributes:
+        browser_data_storage_path (str): Filesystem path where browser session data will be stored.
+        browser_dimensions (str): Comma-separated dimensions for the browser window, e.g., "1920,1080".
+    """
+    browser_data_storage_path: str
+    browser_dimensions: str
+
+class CloseRequestData(TypedDict):
+    """
+    Represents the expected JSON payload for the /close endpoint.
+
+    Attributes:
+        session_id (str): Identifier of the browser session to close.
+    """
+    session_id: str
+
 @app.route('/ping', methods=['GET'])
-def ping():
+def ping() -> Response:
     """
     Health check endpoint.
 
     Returns:
         200 OK response with an empty body to indicate the service is running.
     """
-    return '', 200
+    return jsonify({'status': 'OK'}), 200
 
 @app.route('/open', methods=['POST'])
-def open_browser():
+def open_browser_session() -> Response:
     """
     Starts a new undetected Chrome browser session with the provided configuration.
 
@@ -39,18 +61,21 @@ def open_browser():
         - 500 Internal Server Error for unexpected issues during browser startup.
     """
     logging.info("\t- /open request received")
-    data = request.get_json()
+    data: dict[str, str] | None = request.get_json()
 
+    # Validation of input data
     logging.debug(f"\t- Request payload: {data}")
     if not data:
         return jsonify({'error': 'Missing JSON body'}), 400
+    try:
+        request_data: OpenRequestData = {
+            "browser_data_storage_path": data["browser_data_storage_path"],
+            "browser_dimensions": data["browser_dimensions"]
+        }
+    except KeyError as e:
+        return jsonify({'error': f"Missing required key: {e.args[0]}"}), 400
 
-    required_keys = ['browser_data_storage_path', 'browser_dimensions']
-    missing_keys = [key for key in required_keys if key not in data]
-    if missing_keys:
-        return jsonify({'error': f'Missing required keys: {", ".join(missing_keys)}'}), 400
-
-    browser_data_storage_path = data['browser_data_storage_path']
+    browser_data_storage_path = request_data['browser_data_storage_path']
     # Check if path exists
     if not os.path.exists(browser_data_storage_path):
         return jsonify({'error': f"'browser_data_storage_path' '{browser_data_storage_path}' does not exist"}), 400
@@ -59,7 +84,7 @@ def open_browser():
     if not os.access(browser_data_storage_path, os.W_OK):
         return jsonify({'error': f"No write permission for 'browser_data_storage_path' '{browser_data_storage_path}'"}), 400
 
-    browser_dimensions = data['browser_dimensions']
+    browser_dimensions = request_data['browser_dimensions']
     # Validate browser_dimensions format
     if not isinstance(browser_dimensions, str) or ',' not in browser_dimensions:
         return jsonify({'error': f"Invalid 'browser_dimensions' format, expected 'WIDTH,HEIGHT', found: '{browser_dimensions}'"}), 400
@@ -87,7 +112,7 @@ def open_browser():
 
 
 @app.route('/close', methods=['POST'])
-def close_session():
+def close_browser_session() -> Response:
     """
     Closes an existing browser session.
 
@@ -101,13 +126,19 @@ def close_session():
         - 500 Internal Server Error if an error occurs while closing the session.
     """
     logging.info("\t- /close request received")
-    data = request.get_json()
-    logging.debug(f"\t- Request payload: {data}")
+    data: dict[str, str] | None = request.get_json()
 
-    session_id = data.get('session_id')
-    if not session_id:
-        logging.error("Missing 'session_id' field")
+    # Validation of input data
+    logging.debug(f"\t- Request payload: {data}")
+    try:
+        request_data: CloseRequestData = {
+            "session_id": data["session_id"]
+        }
+    except (TypeError, KeyError):
+        logging.error("Missing or invalid 'session_id' field")
         return jsonify({'error': 'Missing session_id'}), 400
+
+    session_id = request_data["session_id"]
 
     with lock:
         driver = sessions.pop(session_id, None)
@@ -156,7 +187,7 @@ def create_chrome_options(browser_data_storage_path: str, browser_dimensions: st
 
     return options
 
-def configure_logging():
+def configure_logging() -> None:
     """
     Configures the root logger with colored output and support for a custom TRACE level.
 
