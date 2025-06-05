@@ -96,7 +96,7 @@ jobs:
 
       - name: Generate categorized changelog
         id: changelog
-        run: .github/scripts/generate_changelog.sh "${{ steps.prev_tag.outputs.prev_tag }}" "https://github.com/zodac/tracker-profiles"
+        run: .github/scripts/generate_changelog.sh "${{ steps.prev_tag.outputs.prev_tag }}"
 
       - name: Bump patch version in VERSION file
         run: .github/scripts/bump_version.sh "${{ steps.version.outputs.version }}"

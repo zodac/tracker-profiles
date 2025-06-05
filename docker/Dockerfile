@@ -1,4 +1,4 @@
-# Stage 1: Build the application
+# Stage 1: Build the Java artefact
 FROM maven:3.9.9-eclipse-temurin-24-alpine AS maven_build
 
 # Set the working directory
@@ -13,17 +13,15 @@ RUN mvn dependency:go-offline
 COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
-# Stage 2: Install Python 3.11 with venv + pip
-FROM python:3.11-slim AS python_build
+# Stage 2: Install Python with pip
+FROM python:3.13.4-slim AS python_build
 
-# Ensure pip, venv, setuptools, and wheel are available
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc && \
-    python3 -m ensurepip && \
-    pip install --upgrade pip setuptools wheel && \
-    apt-get purge -y gcc && \
-    apt-get autoremove -y && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# BEGIN PYTHON PACKAGES
+RUN python3 -m ensurepip && \
+    pip install \
+        pip=="25.1.1" \
+        wheel=="0.45.1" 
+# END PYTHON PACKAGES
 
 # Stage 2: Run the application
 FROM openjdk:24-jdk-slim
@@ -35,24 +33,24 @@ WORKDIR /app
 ENV PUID=1000
 ENV PGID=1000
 
-# Install required applications using 'tracker-profiles/.github/scripts/update-package-versions.sh'
+# Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - chromium (web browser)
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
-# BEGIN PINNED PACKAGE INSTALL
+# BEGIN PINNED DEBIAN PACKAGE INSTALL
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-      chromium="137.0.7151.55-3~deb12u1" \
-      curl="7.88.1-10+deb12u12" \
-      fonts-arphic-ukai="0.2.20080216.2-5" \
-      gosu="1.14-1+b10" \
-      x11-apps="7.7+9" \
+        chromium="137.0.7151.68-1~deb12u1" \
+        curl="7.88.1-10+deb12u12" \
+        fonts-arphic-ukai="0.2.20080216.2-5" \
+        gosu="1.14-1+b10" \
+        x11-apps="7.7+9" \
     && \
     apt-get autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-# END PINNED PACKAGE INSTALL
+# END PINNED DEBIAN PACKAGE INSTALL
 
 # Copy Python installation from the python_build stage
 COPY --from=python_build /usr/local /usr/local

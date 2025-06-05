@@ -1,9 +1,36 @@
 #!/bin/bash
+# ------------------------------------------------------------------------------
+# Script Name:     generate_changelog.sh
+#
+# Description:     Generates a categorized changelog from git commit messages
+#                  between a previous tag and the current HEAD. Outputs the
+#                  formatted changelog to the GitHub Actions environment.
+#
+# Usage:           ./generate_changelog.sh <previous_git_tag>
+#
+# Requirements:
+#   - git must be installed and in the system PATH
+#   - Executed within a git repository with a valid tag history
+#   - Environment must define GITHUB_ENV (typically provided in GitHub Actions)
+#
+# Behavior:
+#   - Reads all commits between the given tag and HEAD
+#   - Parses commit messages expecting a format like: [category] message
+#   - Categorizes commits by their bracketed prefix (e.g., [ci], [framework])
+#   - Preferred categories (ci, deployment, doc, framework, python) are printed first
+#   - Other categories are grouped under the "Trackers" section
+#   - Commit messages are linked using the provided repository URL
+#   - Outputs the changelog in a format suitable for use in GitHub Actions via $GITHUB_ENV
+#
+# Exit Codes:
+#   - 0: Success
+#   - Non-zero: Any failure due to missing arguments, git errors, or parsing issues
+# ------------------------------------------------------------------------------
 
 set -euo pipefail
 
 PREV_TAG="${1}"
-GIT_REPO_URL="${2}"
+GIT_REPO_URL="https://github.com/zodac/tracker-profiles"
 
 # Get commit messages with commit hash and raw message separated
 COMMITS=$(git log "${PREV_TAG}"..HEAD --pretty=format:"%h%n%B%n---END---")
