@@ -44,21 +44,21 @@ update_requirements() {
     echo
     echo "🔍 Fetching requirements.txt versions from PyPI..."
     while IFS= read -r line; do
-      # Match 'package>=version'
-      if [[ $line =~ ^([a-zA-Z0-9._-]+)'>='([0-9a-zA-Z._-]+)$ ]]; then
-        package="${BASH_REMATCH[1]}"
-        latest_version=$(get_pypi_version "${package}")
-        echo "  ${package}=${latest_version}"
-        echo "${package}>=${latest_version}" >> "${requirements}.tmp"
+        # Match 'package>=version'
+        if [[ $line =~ ^([a-zA-Z0-9._-]+)'>='([0-9a-zA-Z._-]+)$ ]]; then
+            package="${BASH_REMATCH[1]}"
+            latest_version=$(get_pypi_version "${package}")
+            echo "  ${package}=${latest_version}"
+            echo "${package}>=${latest_version}" >>"${requirements}.tmp"
 
-      # Match 'package==version'
-      elif [[ $line =~ ^([a-zA-Z0-9._-]+)'=='([0-9a-zA-Z._-]+)$ ]]; then
-        package="${BASH_REMATCH[1]}"
-        pinned_version="${BASH_REMATCH[2]}"
-        echo "  ${package}=${pinned_version} (pinned)"
-        echo "${line}" >> "${requirements}.tmp"
-      fi
-    done < "${requirements}"
+        # Match 'package==version'
+        elif [[ $line =~ ^([a-zA-Z0-9._-]+)'=='([0-9a-zA-Z._-]+)$ ]]; then
+            package="${BASH_REMATCH[1]}"
+            pinned_version="${BASH_REMATCH[2]}"
+            echo "  ${package}=${pinned_version} (pinned)"
+            echo "${line}" >>"${requirements}.tmp"
+        fi
+    done <"${requirements}"
 
     # Overwrite the original file
     mv "${requirements}.tmp" "${requirements}"
@@ -120,7 +120,7 @@ update_python_packages() {
     $0 ~ start_marker { print block; in_block = 1; next }
     $0 ~ end_marker { in_block = 0; next }
     !in_block { print }
-    ' "${dockerfile}" > "${dockerfile}.tmp"
+    ' "${dockerfile}" >"${dockerfile}.tmp"
 
     mv "${dockerfile}.tmp" "${dockerfile}"
     echo "✅ ${dockerfile#./} updated successfully with latest Python packages"
@@ -129,8 +129,8 @@ update_python_packages() {
 update_debian_packages() {
     dockerfile="${1}"
 
-    DEBIAN_START_MARKER="# BEGIN PINNED DEBIAN PACKAGE INSTALL"
-    DEBIAN_END_MARKER="# END PINNED DEBIAN PACKAGE INSTALL"
+    DEBIAN_START_MARKER="# BEGIN DEBIAN PACKAGES"
+    DEBIAN_END_MARKER="# END DEBIAN PACKAGES"
 
     if ! grep -q "${DEBIAN_START_MARKER}" "${dockerfile}" || ! grep -q "${DEBIAN_END_MARKER}" "${dockerfile}"; then
         echo "❌ Could not find Debian marker lines in ${dockerfile}"
@@ -187,7 +187,7 @@ update_debian_packages() {
     $0 ~ start_marker { print block; in_block = 1; next }
     $0 ~ end_marker { in_block = 0; next }
     !in_block { print }
-    ' "${dockerfile}" > "${dockerfile}.tmp"
+    ' "${dockerfile}" >"${dockerfile}.tmp"
 
     mv "${dockerfile}.tmp" "${dockerfile}"
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"

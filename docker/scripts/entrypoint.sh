@@ -9,12 +9,12 @@
 set -euo pipefail
 
 # Create group if not exists
-if ! getent group appgroup > /dev/null; then
+if ! getent group appgroup >/dev/null; then
     groupadd -g "${PGID}" appgroup
 fi
 
 # Create user if not exists
-if ! id appuser > /dev/null 2>&1; then
+if ! id appuser >/dev/null 2>&1; then
     useradd -u "${PUID}" -g "${PGID}" -m -s /bin/bash appuser
 fi
 

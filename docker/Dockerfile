@@ -38,7 +38,7 @@ ENV PGID=1000
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
-# BEGIN PINNED DEBIAN PACKAGE INSTALL
+# BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         chromium="137.0.7151.68-1~deb12u1" \
@@ -50,7 +50,7 @@ RUN apt-get update && \
     apt-get autoremove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-# END PINNED DEBIAN PACKAGE INSTALL
+# END DEBIAN PACKAGES
 
 # Copy Python installation from the python_build stage
 COPY --from=python_build /usr/local /usr/local
