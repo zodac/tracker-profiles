@@ -1,16 +1,17 @@
-import os
-import time
-import uuid
 import logging
+import os
+import uuid
+from datetime import datetime, timezone
+from logging import LogRecord
+from threading import Lock
+from typing import TypedDict
+from zoneinfo import ZoneInfo
+
 import undetected_chromedriver as uc
 from colorlog import ColoredFormatter
-from flask import Flask, jsonify, Response, request
+from flask import Flask, Response, jsonify, request
 from selenium.webdriver.remote.webdriver import WebDriver
-from threading import Lock
-from typing import TypedDict, Optional
 from waitress import serve
-
-# TODO: Add some linting for the Python code
 
 app = Flask(__name__)
 
@@ -38,17 +39,17 @@ class CloseRequestData(TypedDict):
     """
     session_id: str
 
-@app.route('/ping', methods=['GET'])
+@app.route("/ping", methods=["GET"])
 def ping() -> Response:
     """
     Health check endpoint.
 
     Returns:
-        200 OK response with an empty body to indicate the service is running.
+        - 200 OK response with an empty body to indicate the service is running.
     """
-    return jsonify({'status': 'OK'}), 200
+    return jsonify({"status": "OK"}), 200
 
-@app.route('/open', methods=['POST'])
+@app.route("/open", methods=["POST"])
 def open_browser_session() -> Response:
     """
     Starts a new undetected Chrome browser session with the provided configuration.
@@ -68,28 +69,28 @@ def open_browser_session() -> Response:
     # Validation of input data
     logging.debug(f"\t- Request payload: {data}")
     if not data:
-        return jsonify({'error': 'Missing JSON body'}), 400
+        return jsonify({"error": "Missing JSON body"}), 400
     try:
         request_data: OpenRequestData = {
             "browser_data_storage_path": data["browser_data_storage_path"],
-            "browser_dimensions": data["browser_dimensions"]
+            "browser_dimensions": data["browser_dimensions"],
         }
     except KeyError as e:
-        return jsonify({'error': f"Missing required key: {e.args[0]}"}), 400
+        return jsonify({"error": f"Missing required key: {e.args[0]}"}), 400
 
-    browser_data_storage_path = request_data['browser_data_storage_path']
+    browser_data_storage_path = request_data["browser_data_storage_path"]
     # Check if path exists
     if not os.path.exists(browser_data_storage_path):
-        return jsonify({'error': f"'browser_data_storage_path' '{browser_data_storage_path}' does not exist"}), 400
+        return jsonify({"error": f"'browser_data_storage_path' '{browser_data_storage_path}' does not exist"}), 400
 
     # Check write permission
     if not os.access(browser_data_storage_path, os.W_OK):
-        return jsonify({'error': f"No write permission for 'browser_data_storage_path' '{browser_data_storage_path}'"}), 400
+        return jsonify({"error": f"No write permission for 'browser_data_storage_path' '{browser_data_storage_path}'"}), 400
 
-    browser_dimensions = request_data['browser_dimensions']
+    browser_dimensions = request_data["browser_dimensions"]
     # Validate browser_dimensions format
-    if not isinstance(browser_dimensions, str) or ',' not in browser_dimensions:
-        return jsonify({'error': f"Invalid 'browser_dimensions' format, expected 'WIDTH,HEIGHT', found: '{browser_dimensions}'"}), 400
+    if not isinstance(browser_dimensions, str) or "," not in browser_dimensions:
+        return jsonify({"error": f"Invalid 'browser_dimensions' format, expected 'WIDTH,HEIGHT', found: '{browser_dimensions}'"}), 400
 
     try:
         options = create_chrome_options(browser_data_storage_path, browser_dimensions)
@@ -104,16 +105,16 @@ def open_browser_session() -> Response:
             sessions[session_id] = driver
 
         return jsonify({
-            'session_id': session_id,
-            'session_url': f"http://127.0.0.1:{port}"
+            "session_id": session_id,
+            "session_url": f"http://127.0.0.1:{port}",
         }), 200
 
     except Exception as e:
         logging.exception("\t- Failed to create browser session")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route('/close', methods=['POST'])
+@app.route("/close", methods=["POST"])
 def close_browser_session() -> Response:
     """
     Closes an existing browser session.
@@ -134,11 +135,11 @@ def close_browser_session() -> Response:
     logging.debug(f"\t- Request payload: {data}")
     try:
         request_data: CloseRequestData = {
-            "session_id": data["session_id"]
+            "session_id": data["session_id"],
         }
     except (TypeError, KeyError):
         logging.error("Missing or invalid 'session_id' field")
-        return jsonify({'error': 'Missing session_id'}), 400
+        return jsonify({"error": "Missing session_id"}), 400
 
     session_id = request_data["session_id"]
 
@@ -147,31 +148,31 @@ def close_browser_session() -> Response:
 
     if not driver:
         logging.warning(f"\t- No session found for ID {session_id}")
-        return jsonify({'error': 'Session not found'}), 404
+        return jsonify({"error": "Session not found"}), 404
 
     try:
         driver.quit()
         logging.info(f"\t\t- Session '{session_id}' closed")
-        return jsonify({'message': f'Session {session_id} closed'}), 200
+        return jsonify({"message": f"Session {session_id} closed"}), 200
     except Exception as e:
         logging.exception(f"\t- Failed to close session {session_id}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 def create_chrome_options(browser_data_storage_path: str, browser_dimensions: str) -> uc.ChromeOptions:
     """
     Creates and configures ChromeOptions for launching an undetected Chrome browser.
 
     Args:
-        browser_data_storage_path (str): Path to store user data and cache.
-        browser_dimensions (str): Browser window size in the format 'WIDTH,HEIGHT'.
+        - browser_data_storage_path (str): Path to store user data and cache.
+        - browser_dimensions (str): Browser window size in the format 'WIDTH,HEIGHT'.
 
     Returns:
-        uc.ChromeOptions: Configured Chrome options.
+        - uc.ChromeOptions: Configured Chrome options.
     """
     options = uc.ChromeOptions()
 
     options.add_argument(f"--window-size={browser_dimensions}")
-    options.add_argument(f"--disk-cache-dir={os.path.join(browser_data_storage_path, 'selenium')}")
+    options.add_argument(f"--disk-cache-dir={os.path.join(browser_data_storage_path, "selenium")}")
 
     user_data_dir = os.path.join(browser_data_storage_path, f"session_{uuid.uuid4()}")
     options.add_argument(f"--user-data-dir={user_data_dir}")
@@ -183,7 +184,7 @@ def create_chrome_options(browser_data_storage_path: str, browser_dimensions: st
 
     prefs = {
         "credentials_enable_service": False,
-        "profile.password_manager_enabled": False
+        "profile.password_manager_enabled": False,
     }
     options.add_experimental_option("prefs", prefs)
 
@@ -196,63 +197,63 @@ def configure_logging() -> None:
     The log level is determined by the LOG_LEVEL environment variable (defaults to INFO).
     Logs are color-coded using `colorlog` and formatted to show milliseconds.
     """
+    trace_level_index = 5
     # Add support for TRACE level logging
-    TRACE_LEVEL_NUM = 5
-    logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
+    logging.addLevelName(trace_level_index, "TRACE")
 
-    def trace(self, message, *args, **kws):
-        if self.isEnabledFor(TRACE_LEVEL_NUM):
-            self._log(TRACE_LEVEL_NUM, message, args, **kws)
+    def trace(self, message, *args, **kwargs):
+        if self.isEnabledFor(trace_level_index):
+            self._log(trace_level_index, message, args, **kwargs)
 
     logging.Logger.trace = trace
+    date_format="%Y-%m-%d %H:%M:%S.%f"
 
-    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+    class CustomFormatter(ColoredFormatter):
+        def formatTime(self, record: LogRecord, datefmt: str | None = None) -> str:
+            # Use the TIMEZONE environment variable if set, otherwise default to UTC
+            tz_name = os.getenv("TIMEZONE")
+            local_tz = ZoneInfo(tz_name) if tz_name else timezone.UTC
 
-    LOG_FORMAT = (
+            t = datetime.fromtimestamp(record.created, tz=local_tz)
+            s = t.strftime(datefmt or date_format)
+            return s[:-3]  # Trim microseconds to milliseconds
+
+    log_format = (
         "%(asctime)s "
         "[%(log_color)s%(levelname)-4s%(reset)s] "
         "%(message)s"
     )
 
-    DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
-
-    LOG_COLORS = {
-        'TRACE':    'bold_purple',
-        'DEBUG':    'bold_green',
-        'INFO':     'bold_blue',
-        'WARNING':  'bold_yellow',
-        'ERROR':    'bold_red',
-        'CRITICAL': 'bold_red',
+    log_colours = {
+        "TRACE":    "bold_purple",
+        "DEBUG":    "bold_green",
+        "INFO":     "bold_blue",
+        "WARNING":  "bold_yellow",
+        "ERROR":    "bold_red",
+        "CRITICAL": "bold_red",
     }
 
-    class CustomFormatter(ColoredFormatter):
-        def formatTime(self, record, datefmt=None):
-            from datetime import datetime
-            t = datetime.fromtimestamp(record.created)
-            s = t.strftime(datefmt or DATE_FORMAT)
-            return s[:-3]  # Trim microseconds to milliseconds
-
     formatter = CustomFormatter(
-        LOG_FORMAT,
-        datefmt=DATE_FORMAT,
-        log_colors=LOG_COLORS
+        log_format,
+        datefmt=date_format,
+        log_colors=log_colours,
     )
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
-    root_logger.setLevel(LOG_LEVEL)
+    root_logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
     root_logger.handlers = [handler]
 
     logging.getLogger(__name__).trace("Logging is configured")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     Entry point for running the Flask app with Waitress.
 
     Starts the server on 0.0.0.0:5000 and configures logging beforehand.
     """
     configure_logging()
-    logging.info(f"Starting Waitress server to handle Python Selenium sessions")
+    logging.info("Starting Waitress server to handle Python Selenium sessions")
     serve(app, host="0.0.0.0", port=5000)

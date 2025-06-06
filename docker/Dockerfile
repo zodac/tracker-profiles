@@ -35,6 +35,7 @@ ENV PGID=1000
 
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - chromium (web browser)
+# - curl (used to verify Python web server status)
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
