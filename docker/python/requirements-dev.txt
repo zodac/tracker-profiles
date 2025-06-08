@@ -1,0 +1,2 @@
+-r requirements.txt
+pytest-sugar>=1.0.0

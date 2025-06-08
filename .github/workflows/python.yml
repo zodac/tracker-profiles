@@ -32,6 +32,6 @@ jobs:
           restore-keys: |
             ruff-${{ runner.os }}-
 
-      # Python linting
-      - name: Lint with Ruff via wrapper script
-        run: bash .github/scripts/python_lint.sh
+      # Python linting and unit tests
+      - name: Lint with Ruff & unit tests
+        run: bash .github/scripts/python_lint_and_tests.sh

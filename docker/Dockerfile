@@ -59,7 +59,7 @@ ENV PATH="/usr/local/bin:${PATH}"
 
 # Copy Python requirements
 COPY ./docker/python/requirements.txt .
-COPY ./docker/python/selenium_manager.py .
+COPY ./docker/python/selenium_manager/ ./selenium_manager/
 
 # Set up Python virtual environment and install dependencies
 RUN python3 -m venv /app/venv && \

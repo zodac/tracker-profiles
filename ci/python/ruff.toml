@@ -46,13 +46,17 @@ ignore = [
 
 # Allow fix for only the specified rules
 fixable = [
-    "D212", # docstring should start on first line  https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
-    "I001", # unsorted imports                      https://docs.astral.sh/ruff/rules/unsorted-imports/
+    "D212", # docstring should start on first line                  https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
+    "I001", # unsorted imports                                      https://docs.astral.sh/ruff/rules/unsorted-imports/
 ]
 unfixable = []
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.mccabe]
+# Flag errors (`C901`) whenever the complexity level exceeds 5.
+max-complexity = 20
 
 [format]
 # Like Black, use double quotes for strings.

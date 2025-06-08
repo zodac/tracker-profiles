@@ -40,7 +40,7 @@ main() {
     # If TRACKER_EXECUTION_ORDER contains "cloudflare-check", launch Python service
     if [[ "${TRACKER_EXECUTION_ORDER:-}" == *cloudflare-check* ]]; then
         # Run Python script in background
-        /app/venv/bin/python /app/selenium_manager.py &
+        /app/venv/bin/python -m selenium_manager.server &
         PYTHON_PID=$!
 
         # Wait for /ping to return 200 OK or time out after 5s
