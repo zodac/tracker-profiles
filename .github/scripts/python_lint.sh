@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+mkdir -p .ruff_cache
+
 docker run --rm \
     -v "${PWD}":/app \
     -w /app \

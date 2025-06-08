@@ -13,6 +13,7 @@ pom.xml.versionsBackup
 target/
 
 # Python
+.ruff_cache
 venv/
 downloaded_files/
 
