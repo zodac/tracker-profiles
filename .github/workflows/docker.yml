@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Additional Docker Analysis
+      # Docker linting
       - name: Run Hadolint and generate report
         uses: hadolint/hadolint-action@v3.1.0
         with:

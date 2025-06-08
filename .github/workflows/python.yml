@@ -1,0 +1,37 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.github/scripts/python_lint.sh'
+      - '.github/workflows/python.yml'
+      - 'ci/python/ruff.toml'
+      - 'docker/python/**/*.py'
+
+jobs:
+  analyze:
+    name: Python Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruff cache
+        uses: actions/cache@v4
+        with:
+          path: .ruff_cache
+          key: ruff-${{ runner.os }}-${{ hashFiles('**/*.py', 'ci/python/ruff.toml') }}
+          restore-keys: |
+            ruff-${{ runner.os }}-
+
+      # Python linting
+      - name: Lint with Ruff via wrapper script
+        run: bash .github/scripts/python_lint.sh

@@ -28,25 +28,27 @@ exclude = [
     "venv",
 ]
 
-# Same as Black.
 line-length = 150
 indent-width = 4
-
-# Assume Python 3.9
 target-version = "py313"
 
 [lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
+# Enable all rules, with some exclusions
 select = ["ALL"]
 ignore = [
-    "TD003", # Missing issue link
-    "D413", # Missing blank line after last section
+    "D203", # Blank line before class (incompatible with D211)      https://docs.astral.sh/ruff/rules/incorrect-blank-line-before-class/
+    "D204", # Blank line required after class docstring             https://docs.astral.sh/ruff/rules/incorrect-blank-line-after-class/
+    "D213", # Docstrings on second line (incompatible with D212)    https://docs.astral.sh/ruff/rules/multi-line-summary-second-line/
+    "D413", # Missing blank line after last section                 https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section/
+    "PLR0911", # Too many return statements                         https://docs.astral.sh/ruff/rules/too-many-return-statements/
+    "TD003", # Missing issue link for TODOs                         https://docs.astral.sh/ruff/rules/missing-todo-link/
 ]
 
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["I001"]
+# Allow fix for only the specified rules
+fixable = [
+    "D212", # docstring should start on first line  https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
+    "I001", # unsorted imports                      https://docs.astral.sh/ruff/rules/unsorted-imports/
+]
 unfixable = []
 
 # Allow unused variables when underscore-prefixed.
