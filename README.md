@@ -259,8 +259,8 @@ verification check cannot be passed using stock Selenium. [undetected-chromedriv
 used to create a web browser that is capable of bypassing Cloudflare detection.
 
 Unfortunately, this is a Python-only package. While a *8reasonable* person would migrate the project to Python, I'd prefer to keep writing this in
-Java. So a [Python web-server](docker/python/selenium_manager/selenium_manager.py) is spun up that exposes endpoints to open/close a Selenium web browser that can
-bypass detection. There is an implementation of the
+Java. So a [Python web-server](docker/python/selenium_manager/server.py) is spun up that exposes endpoints to open/close a Selenium web browser that
+can bypass detection. There is a Java implementation of the
 [Selenium WebDriver class](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/driver/python/AttachedRemoteWebDriver.java) which
 can attach to the Selenium browser that was launched by Python.
 
