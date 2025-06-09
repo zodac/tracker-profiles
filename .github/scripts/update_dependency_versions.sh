@@ -204,7 +204,7 @@ if [[ ! -f "${1}" ]]; then
 fi
 
 if [[ ! -f "${2}" ]]; then
-    echo "❌ requirements.txt not found: ${2}"
+    echo "❌ Python requirements.txt not found: ${2}"
     exit 1
 fi
 

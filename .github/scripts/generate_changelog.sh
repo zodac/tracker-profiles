@@ -49,15 +49,15 @@ while IFS= read -r line; do
                 message="${BASH_REMATCH[2]}"
                 categories["${category}"]+="- [[${commit_hash}](${GIT_REPO_URL}/commit/${commit_hash})] ${message}"$'\n'
             fi
-        done <<<"$commit_message"
+        done <<<"${commit_message}"
 
         # Reset for next commit
         commit_hash=""
         commit_message=""
-    elif [[ -z "$commit_hash" ]]; then
-        commit_hash="$line"
+    elif [[ -z "${commit_hash}" ]]; then
+        commit_hash="${line}"
     else
-        commit_message+="$line"$'\n'
+        commit_message+="${line}"$'\n'
     fi
 done <<<"${commit_messages}"
 
