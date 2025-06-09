@@ -277,7 +277,8 @@
                 <!-- Linters -->
                 <!-- Manual execution: -->
                 <!-- mvn license:check -Dlint -->
-                <!-- To fix missing/invalid licences, run the following in each module: mvn license:format -Dlint -Dyear="2024" -->
+                <!-- To fix missing/invalid licences, run the following in each module: -->
+                <!-- `mvn license:format -Dlint -Dinitial-year="2024" -Dyear="2025"` -->
                 <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
@@ -299,7 +300,7 @@
                             <java>JavaPackage</java>
                         </mapping>
                         <properties>
-                            <initial-year>2021</initial-year>
+                            <initial-year>2024</initial-year>
                             <!--suppress UnresolvedMavenProperty, defined by build-helper-maven-plugin -->
                             <year>${current-year}</year>
                             <website>zodac.net</website>
