@@ -31,21 +31,12 @@ TEST_DOCKER_IMAGE="python:3.13.4-slim"
 # Linting
 echo
 echo "🐳 Running lints using [${LINT_DOCKER_IMAGE}]"
-mkdir -p .ruff_cache
-
-# Only set user mapping if running in GitHub Actions (which will set the ${CI} environment variable)
-docker_user_args=()
-if [[ "${CI:-}" == "true" ]]; then
-    docker_user_args=(-u "$(id -u):$(id -g)")
-fi
 
 docker run --rm \
-    "${docker_user_args[@]}" \
     -v "${PWD}":/app \
     -w /app \
-    -v "${PWD}/.ruff_cache":/app/.ruff_cache \
     "${LINT_DOCKER_IMAGE}" \
-    check /app/docker/python/selenium_manager --config ci/python/ruff.toml --fix "$@"
+    check /app/python/selenium_manager --config ci/python/ruff.toml --fix "$@"
 
 # Tests
 echo
@@ -56,8 +47,8 @@ docker run --rm -t \
     -w /app \
     "${TEST_DOCKER_IMAGE}" \
     bash -c "
-    export PYTHONPATH=/app/docker/python &&
+    export PYTHONPATH=/app/python &&
     pip install --quiet --upgrade pip --root-user-action=ignore &&
-    pip install --quiet -r /app/docker/python/requirements-dev.txt --root-user-action=ignore &&
-    pytest -v /app/docker/python/tests
+    pip install --quiet -r /app/python/requirements-dev.txt --root-user-action=ignore &&
+    pytest -p no:cacheprovider -v /app/python/tests
   "
