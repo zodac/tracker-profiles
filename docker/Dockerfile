@@ -23,7 +23,10 @@ RUN python3 -m ensurepip && \
         wheel=="0.45.1" 
 # END PYTHON PACKAGES
 
-# Stage 2: Run the application
+# Stage 3: Get gosu binary for dynamic PGID/PUID to run application (to work around the old version of go in official binary/image)
+FROM tianon/gosu:1.17 AS gosu_build
+
+# Stage 4: Run the application
 FROM openjdk:24-jdk-slim
 
 # Set the working directory
@@ -37,7 +40,6 @@ ENV PGID=1000
 # - chromium (web browser)
 # - curl (used to verify Python web server status)
 # - fonts-arphic-ukai (font for Chinese language characters)
-# - gosu (dynamic PGID/PUID to run application)
 # - x11-apps (UI browser)
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
@@ -45,7 +47,6 @@ RUN apt-get update && \
         chromium="137.0.7151.103-1~deb12u1" \
         curl="7.88.1-10+deb12u12" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
-        gosu="1.14-1+b10" \
         x11-apps="7.7+9" \
     && \
     apt-get autoremove && \
@@ -53,7 +54,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 # END DEBIAN PACKAGES
 
-# Copy Python installation from the python_build stage
+# Copy gosu binary
+COPY --from=gosu_build /gosu /usr/local/bin/gosu
+RUN chmod +x /usr/local/bin/gosu
+
+# Copy Python installation
 COPY --from=python_build /usr/local /usr/local
 ENV PATH="/usr/local/bin:${PATH}"
 
