@@ -181,7 +181,7 @@ The following are all possible configuration options, defined as environment var
 - [Apache Maven (v3.9.9)](https://maven.apache.org/download.cgi)
 - [Google Chrome](https://www.google.com/chrome/) (only if not using Docker)
 - [Java (JDK 24)](https://jdk.java.net/24/)
-- [Python (3.11.2+)](https://www.python.org/downloads/release/python-3112/) (only if testing trackers with Cloudflare verification)
+- [Python (3.13.4+)](https://www.python.org/downloads/release/python-3134/) (only if testing trackers with Cloudflare verification not in docker)
 
 ### Install Git Hooks
 
