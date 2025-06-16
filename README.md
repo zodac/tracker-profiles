@@ -32,6 +32,7 @@ The available trackers come in the following types:
 | Aither              | Headless             |
 | AlphaRatio          | Headless             |
 | AnimeBytes          | Headless             |
+| AnimeTorrents       | **Cloudflare-check** |
 | Anthelion           | Headless             |
 | AvistaZ             | **Cloudflare-check** |
 | BackUps             | Headless             |
@@ -84,17 +85,16 @@ The available trackers come in the following types:
 
 The following trackers are not currently supported:
 
-| Tracker Name    | Reason                  |
-|-----------------|-------------------------|
-| AnimeTorrents   | Cloudflare verification |
-| BroadcasThe.Net | Cloudflare verification |
-| CGPeers         | Cloudflare verification |
-| Hawke-Uno       | Cloudflare verification |
-| IPTorrents      | Cloudflare verification |
-| SceneTime       | Cloudflare verification |
-| Speed.CD        | Cloudflare verification |
-| SportsCult      | Cloudflare verification |
-| ULCX            | Cloudflare verification |
+| Tracker Name    |
+|-----------------|
+| BroadcasThe.Net |
+| CGPeers         |
+| Hawke-Uno       |
+| IPTorrents      |
+| SceneTime       |
+| Speed.CD        |
+| SportsCult      |
+| ULCX            |
 
 ## How To Use
 
