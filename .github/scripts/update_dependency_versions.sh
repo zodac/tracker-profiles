@@ -5,9 +5,9 @@
 # Description:     Updates version-pinned package declarations in both a Dockerfile
 #                  and a Python requirements.txt file. Fetches the latest versions
 #                  of Python, Debian, and Python pip packages, then rewrites the
-#                  Dockerfile and requirements file with those values.
+#                  Dockerfile and requirements files with those values.
 #
-# Usage:           ./update_dependency_versions.sh <path_to_Dockerfile> <path_to_requirements.txt>
+# Usage:           ./update_dependency_versions.sh <path_to_Dockerfile> <path_to_requirements.txt> <path_to_requirements_dev.txt>
 #
 # Requirements:
 #   - bash, awk, grep, jq, curl
@@ -22,7 +22,7 @@
 #       - Updates Debian packages (defined in the Dockerfile) with the latest candidate versions from apt
 #       - Updates Python tools (defined in the Dockerfile) with the latest versions from PyPI
 #       - Rewrites the install blocks in the Dockerfile between respective markers
-#   - For requirements.txt:
+#   - For requirements.txt/requirements-dev.txt:
 #       - Updates packages defined with `>=` to their latest PyPI versions
 #       - Leaves `==` pinned packages untouched
 #       - Overwrites the original requirements.txt with the updated values
@@ -39,30 +39,34 @@ get_pypi_version() {
 }
 
 update_requirements() {
-    requirements="${1}"
+    for requirements in "$@"; do
+        name=$(basename "${requirements}")
 
-    echo
-    echo "🔍 Fetching requirements.txt versions from PyPI..."
-    while IFS= read -r line; do
-        # Match 'package>=version'
-        if [[ $line =~ ^([a-zA-Z0-9._-]+)'>='([0-9a-zA-Z._-]+)$ ]]; then
-            package="${BASH_REMATCH[1]}"
-            latest_version=$(get_pypi_version "${package}")
-            echo "  ${package}=${latest_version}"
-            echo "${package}>=${latest_version}" >>"${requirements}.tmp"
+        echo
+        echo "🔍 Fetching ${name} versions from PyPI..."
+        while IFS= read -r line; do
+            # Match 'package>=version'
+            if [[ $line =~ ^([a-zA-Z0-9._-]+)'>='([0-9a-zA-Z._-]+)$ ]]; then
+                package="${BASH_REMATCH[1]}"
+                latest_version=$(get_pypi_version "${package}")
+                echo "  ${package}=${latest_version}"
+                echo "${package}>=${latest_version}" >>"${requirements}.tmp"
 
-        # Match 'package==version'
-        elif [[ $line =~ ^([a-zA-Z0-9._-]+)'=='([0-9a-zA-Z._-]+)$ ]]; then
-            package="${BASH_REMATCH[1]}"
-            pinned_version="${BASH_REMATCH[2]}"
-            echo "  ${package}=${pinned_version} (pinned)"
-            echo "${line}" >>"${requirements}.tmp"
-        fi
-    done <"${requirements}"
+            # Match 'package==version'
+            elif [[ $line =~ ^([a-zA-Z0-9._-]+)'=='([0-9a-zA-Z._-]+)$ ]]; then
+                package="${BASH_REMATCH[1]}"
+                pinned_version="${BASH_REMATCH[2]}"
+                echo "  ${package}=${pinned_version} (pinned)"
+                echo "${line}" >>"${requirements}.tmp"
+            else
+                echo "${line}" >>"${requirements}.tmp"
+            fi
+        done <"${requirements}"
 
-    # Overwrite the original file
-    mv "${requirements}.tmp" "${requirements}"
-    echo "✅ ${requirements#./} updated successfully with latest packages"
+        # Overwrite the original file
+        mv "${requirements}.tmp" "${requirements}"
+        echo "✅ ${requirements#./} updated successfully with latest packages"
+    done
 }
 
 update_python_packages() {
@@ -90,7 +94,7 @@ update_python_packages() {
     declare -A python_versions
 
     echo
-    echo "🔍 Fetching latest versions from PyPI..."
+    echo "🔍 Fetching latest Dockerfile Python versions from PyPI..."
     for package in "${package_names[@]}"; do
         version=$(get_pypi_version "${package}")
         if [[ -z "${version}" ]]; then
@@ -155,7 +159,7 @@ update_debian_packages() {
     declare -A debian_versions
 
     echo
-    echo "🔍 Fetching latest package versions..."
+    echo "🔍 Fetching latest dockerfile Debian package versions..."
     for package in "${package_names[@]}"; do
         version=$(get_debian_version "${package}")
         if [[ -z "${version}" ]]; then
@@ -193,21 +197,24 @@ update_debian_packages() {
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
 }
 
-if [[ "$#" -ne 2 ]]; then
-    echo -e "Usage ::= $(basename "${0}") <path_to_Dockerfile> <path_to_requirements.txt"
+# Default paths assume the script is being run from the root of the project
+dockerfile="${1:-./docker/Dockerfile}"
+requirements="${2:-./python/requirements.txt}"
+requirements_dev="${3:-./python/requirements-dev.txt}"
+
+if [[ ! -f "${dockerfile}" ]]; then
+    echo "❌ Dockerfile not found: ${dockerfile}"
+    exit 1
+fi
+if [[ ! -f "${requirements}" ]]; then
+    echo "❌ Python requirements.txt not found: ${requirements}"
+    exit 1
+fi
+if [[ ! -f "${requirements_dev}" ]]; then
+    echo "❌ Python requirements-dev.txt not found: ${requirements_dev}"
     exit 1
 fi
 
-if [[ ! -f "${1}" ]]; then
-    echo "❌ Dockerfile not found: ${1}"
-    exit 1
-fi
-
-if [[ ! -f "${2}" ]]; then
-    echo "❌ Python requirements.txt not found: ${2}"
-    exit 1
-fi
-
-update_debian_packages "${1}"
-update_python_packages "${1}"
-update_requirements "${2}"
+update_debian_packages "${dockerfile}"
+update_python_packages "${dockerfile}"
+update_requirements "${requirements}" "${requirements_dev}"
