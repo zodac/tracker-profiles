@@ -63,7 +63,7 @@
 
         <!-- Linter Properties -->
         <!--suppress UnresolvedMavenProperty, files are only used in child modules -->
-        <ci-config-directory>${project.parent.basedir}/ci</ci-config-directory>
+        <ci-config-directory>${project.parent.basedir}/ci/java</ci-config-directory>
         <checkstyle-file>${ci-config-directory}/checkstyle.xml</checkstyle-file>
         <license-file>${ci-config-directory}/license-template.txt</license-file>
         <license-header-definition-file>${ci-config-directory}/license-header-definition.txt</license-header-definition-file>
