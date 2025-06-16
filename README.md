@@ -188,7 +188,7 @@ The following are all possible configuration options, defined as environment var
 Run the following command to run git hooks for the project:
 
 ```bash
-bash ./ci/scripts/setup-hooks.sh
+bash ./ci/hooks/setup-hooks.sh
 ```
 
 ### Debugging Application
@@ -198,8 +198,8 @@ following:
 
 ```bash
 source venv/bin/activate
-pip install -r docker/python/requirements.txt
-./venv/bin/python docker/python/selenium_manager.py
+pip install -r ./python/requirements.txt
+./venv/bin/python ./python/selenium_manager.py
 ```
 
 Using IntelliJ, and click on **Run**> **Edit Configurations** and add the environment variables for the application. Once done, open

@@ -13,7 +13,7 @@
 #
 # Behavior:
 #   - Runs `ruff` inside a container with optional arguments for linting the
-#     `docker/python/selenium_manager` directory using a custom config file
+#     `python/selenium_manager` directory using a custom config file
 #   - Caches Ruff results in `.ruff_cache`
 #   - If in CI, sets the container user to the host user ID for file permissions
 #   - Runs `pytest` inside a container after installing dev requirements
