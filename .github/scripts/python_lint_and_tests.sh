@@ -36,7 +36,7 @@ docker run --rm \
     -v "${PWD}":/app \
     -w /app \
     "${LINT_DOCKER_IMAGE}" \
-    check /app/python/selenium_manager --config ci/python/ruff.toml --fix "$@"
+    check /app/python --config ci/python/ruff.toml --fix "$@"
 
 # Tests
 echo

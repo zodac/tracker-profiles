@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (c) 2024-2025 zodac.net
+
 """Entry point for launching the Flask application using the Waitress WSGI server.
 
 This script:

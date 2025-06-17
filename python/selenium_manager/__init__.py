@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (c) 2024-2025 zodac.net
+
 """Application factory for the Flask Selenium session manager.
 
 This package:

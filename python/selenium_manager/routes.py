@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (c) 2024-2025 zodac.net
+
 """Flask route definitions for managing Selenium browser sessions using undetected-chromedriver.
 
 Routes:
@@ -28,6 +31,7 @@ sessions: dict[str, WebDriver] = {}
 lock = Lock()
 logger = logging.getLogger(__name__)
 
+
 class OpenRequestData(TypedDict):
     """Represents the expected JSON payload for the /open endpoint.
 
@@ -38,6 +42,7 @@ class OpenRequestData(TypedDict):
     browser_data_storage_path: str
     browser_dimensions: str
 
+
 class CloseRequestData(TypedDict):
     """Represents the expected JSON payload for the /close endpoint.
 
@@ -45,6 +50,7 @@ class CloseRequestData(TypedDict):
         session_id (str): Identifier of the browser session to close.
     """
     session_id: str
+
 
 def register_routes(app: Flask) -> None:
     """Register all Flask routes for managing browser sessions.

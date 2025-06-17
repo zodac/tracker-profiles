@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (c) 2024-2025 zodac.net
+
 """Custom logging configuration for the application.
 
 Defines and installs a TRACE log level, colored output using colorlog,
@@ -34,7 +37,8 @@ def configure_logging() -> None:
     date_format = "%Y-%m-%d %H:%M:%S.%f"
 
     class CustomFormatter(ColoredFormatter):
-        def formatTime(self, record: LogRecord, datefmt: str | None = None) -> str: # NOQA: N802 - Overriding function in logging.Formatter
+        @staticmethod
+        def formatTime(record: LogRecord, datefmt: str | None = None) -> str:  # NOQA: N802 - Overriding function in logging.Formatter
             tz_name = os.getenv("TIMEZONE")
             local_tz = ZoneInfo(tz_name) if tz_name else timezone.UTC
             t = datetime.fromtimestamp(record.created, tz=local_tz)

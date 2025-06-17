@@ -32,22 +32,33 @@ line-length = 150
 indent-width = 4
 target-version = "py313"
 
+# Test-specific ignores
+[lint.per-file-ignores]
+"**/tests/**/*.py" = [
+    "D100",     # Missing docstring in public module                    https://docs.astral.sh/ruff/rules/undocumented-public-module/
+    "D103",     # Missing docstring in public function                  https://docs.astral.sh/ruff/rules/undocumented-public-function/
+    "INP001",   # Implicit namespace                                    https://docs.astral.sh/ruff/rules/implicit-namespace-package/
+    "S101",     # Using 'assert'                                        https://docs.astral.sh/ruff/rules/assert/#assert-s101
+    "TC002",    # Move third-party import into a type-checking block    https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
+]
+
 [lint]
-# Enable all rules, with some exclusions
+# Enable all rules (including preview rules), with some exclusions
+preview = true
 select = ["ALL"]
 ignore = [
-    "D203", # Blank line before class (incompatible with D211)      https://docs.astral.sh/ruff/rules/incorrect-blank-line-before-class/
-    "D204", # Blank line required after class docstring             https://docs.astral.sh/ruff/rules/incorrect-blank-line-after-class/
-    "D213", # Docstrings on second line (incompatible with D212)    https://docs.astral.sh/ruff/rules/multi-line-summary-second-line/
-    "D413", # Missing blank line after last section                 https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section/
-    "PLR0911", # Too many return statements                         https://docs.astral.sh/ruff/rules/too-many-return-statements/
-    "TD003", # Missing issue link for TODOs                         https://docs.astral.sh/ruff/rules/missing-todo-link/
+    "D203",     # Blank line before class (incompatible with D211)      https://docs.astral.sh/ruff/rules/incorrect-blank-line-before-class/
+    "D204",     # Blank line required after class docstring             https://docs.astral.sh/ruff/rules/incorrect-blank-line-after-class/
+    "D213",     # Docstrings on second line (incompatible with D212)    https://docs.astral.sh/ruff/rules/multi-line-summary-second-line/
+    "D413",     # Missing blank line after last section                 https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section/
+    "PLR0911",  # Too many return statements                            https://docs.astral.sh/ruff/rules/too-many-return-statements/
+    "TD003",    # Missing issue link for TODOs                          https://docs.astral.sh/ruff/rules/missing-todo-link/
 ]
 
 # Allow fix for only the specified rules
 fixable = [
-    "D212", # docstring should start on first line                  https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
-    "I001", # unsorted imports                                      https://docs.astral.sh/ruff/rules/unsorted-imports/
+    "D212",     # docstring should start on first line                  https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
+    "I001",     # unsorted imports                                      https://docs.astral.sh/ruff/rules/unsorted-imports/
 ]
 unfixable = []
 
@@ -57,6 +68,9 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [lint.mccabe]
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
 max-complexity = 20
+
+[lint.flake8-copyright]
+notice-rgx = "(?i)# SPDX-License-Identifier: 0BSD"
 
 [format]
 # Like Black, use double quotes for strings.

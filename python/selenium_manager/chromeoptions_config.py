@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+# Copyright (c) 2024-2025 zodac.net
+
 """Configuration utilities for Chrome browser options.
 
 This module defines helper functions to create and configure ChromeOptions
