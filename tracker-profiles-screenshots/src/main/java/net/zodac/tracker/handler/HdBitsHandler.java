@@ -32,7 +32,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code HDBits} tracker.
  */
-@TrackerHandler(name = "HDBits", type = TrackerType.MANUAL, url = {
+@TrackerHandler(name = "HDBits", type = TrackerType.CLOUDFLARE_CHECK, url = {
     "https://hdbits.org/",
     "https://backup.hdbits.org/"
 })
@@ -46,6 +46,11 @@ public class HdBitsHandler extends AbstractTrackerHandler {
      */
     public HdBitsHandler(final RemoteWebDriver driver, final Collection<String> trackerUrls) {
         super(driver, trackerUrls);
+    }
+
+    @Override
+    protected boolean hasCloudflareCheck() {
+        return true;
     }
 
     @Override

@@ -50,7 +50,7 @@ The available trackers come in the following types:
 | FearNoPeer          | Headless             |
 | FileList            | Headless             |
 | GazelleGames        | **Manual**           |
-| HDBits              | **Manual**           |
+| HDBits              | **Cloudflare-check** |
 | HDUnited            | Headless             |
 | ItaTorrents         | Headless             |
 | Kufirc              | **Non-English**      |
