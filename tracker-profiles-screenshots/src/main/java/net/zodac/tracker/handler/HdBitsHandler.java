@@ -49,7 +49,7 @@ public class HdBitsHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected boolean hasCloudflareCheck() {
+    protected boolean hasCloudflareCheck() { // TODO: Can this be moved to marker interfaces then handled in main class?
         return true;
     }
 

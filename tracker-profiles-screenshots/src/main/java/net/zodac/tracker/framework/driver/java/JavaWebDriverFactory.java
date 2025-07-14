@@ -86,6 +86,7 @@ public final class JavaWebDriverFactory {
         chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
         chromeOptions.addArguments("--disable-gpu");
         chromeOptions.addArguments("--disable-notifications");
+        chromeOptions.addArguments("--ignore-certificate-errors");
 
         return new ChromeDriver(chromeOptions);
     }

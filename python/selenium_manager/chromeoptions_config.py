@@ -37,6 +37,7 @@ def create_chrome_options(browser_data_storage_path: str, browser_dimensions: st
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--ignore-certificate-errors")
 
     prefs = {
         "credentials_enable_service": False,

@@ -68,7 +68,7 @@ public final class PythonWebDriverFactory {
         final String currentUrl = driver.getCurrentUrl();
         if (!EXPECTED_INITIAL_URL.equalsIgnoreCase(currentUrl)) {
             throw new DriverAttachException(
-                String.format("Expected intial URL for attached driver '%s', found: '%s'", EXPECTED_INITIAL_URL, currentUrl));
+                String.format("Expected initial URL for attached driver '%s', found: '%s'", EXPECTED_INITIAL_URL, currentUrl));
         }
 
         return driver;
