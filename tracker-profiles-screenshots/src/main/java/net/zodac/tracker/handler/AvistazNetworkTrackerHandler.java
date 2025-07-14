@@ -99,7 +99,8 @@ public class AvistazNetworkTrackerHandler extends AbstractTrackerHandler {
     @Override
     public Collection<By> getElementsPotentiallyContainingSensitiveInformation() {
         return List.of(
-            By.xpath("//tr[td[contains(text(), 'Email')]]/td[2]")
+            By.xpath("//tr[td[contains(text(), 'Email')]]/td[2]"),
+            By.xpath("//tr[td[contains(text(), 'IP')]]/td[2]")
         );
     }
 
