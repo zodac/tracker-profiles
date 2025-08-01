@@ -27,8 +27,8 @@
 
         <!-- 3PP Versions -->
         <ashot.version>1.5.4</ashot.version>
-        <commons-csv.version>1.14.0</commons-csv.version>
-        <commons-io.version>2.19.0</commons-io.version>
+        <commons-csv.version>1.14.1</commons-csv.version>
+        <commons-io.version>2.20.0</commons-io.version>
         <gson.version>2.13.1</gson.version>
         <jul-to-slf4j.version>2.0.17</jul-to-slf4j.version>
         <log4j.version>2.25.1</log4j.version>
@@ -39,7 +39,7 @@
         <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.6.0</maven-enforcer-plugin.version>
+        <maven-enforcer-plugin.version>3.6.1</maven-enforcer-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
@@ -47,10 +47,10 @@
 
         <!-- Linter 3PP Versions -->
         <checkstyle.version>10.26.1</checkstyle.version>
-        <error_prone_core.version>2.40.0</error_prone_core.version>
+        <error_prone_core.version>2.41.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
-        <pmd.version>7.15.0</pmd.version>
+        <pmd.version>7.16.0</pmd.version>
         <spotbugs.version>4.9.3</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
