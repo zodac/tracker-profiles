@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.util.Collection;
 import java.util.List;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -34,6 +35,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 @TrackerHandler(name = "PrivateSilverScreen", url = "https://privatesilverscreen.cc/")
 @TrackerHandler(name = "ReelFlix", url = "https://reelflix.xyz/")
 @TrackerHandler(name = "SeedPool", url = "https://seedpool.org/")
+@TrackerHandler(name = "UploadCX", type = TrackerType.CLOUDFLARE_CHECK, url = "https://upload.cx/") // Cloudflare check on login screen, no redirect
 @TrackerHandler(name = "Unwalled", url = "https://unwalled.cc/")
 public class Unit3dHandler extends AbstractTrackerHandler {
 
@@ -49,7 +51,7 @@ public class Unit3dHandler extends AbstractTrackerHandler {
 
     @Override
     protected By loginButtonSelector() {
-        return By.xpath("//button[contains(@class, 'auth-form__primary-button') and text()='Login']");
+        return By.xpath("//button[contains(@class, 'auth-form__primary-button')]");
     }
 
     @Override

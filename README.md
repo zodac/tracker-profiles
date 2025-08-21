@@ -80,6 +80,7 @@ The available trackers come in the following types:
 | TVChaosUK           | Headless             |
 | UHDBits             | Headless             |
 | Unwalled            | Headless             |
+| UploadCX            | **Cloudflare-check** |
 
 ### Unsupported Trackers
 
@@ -94,7 +95,6 @@ The following trackers are not currently supported:
 | SceneTime       |
 | Speed.CD        |
 | SportsCult      |
-| ULCX            |
 
 ## How To Use
 
