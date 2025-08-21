@@ -74,7 +74,7 @@ public class DicMusicHandler extends AbstractTrackerHandler {
 
     @Override
     public boolean isNotEnglish(final String username) {
-        LOGGER.debug("- Not translating, there is an option in the user settings to translate DIC to English");
+        LOGGER.debug("- Not translating, there is an option in the user settings to translate to English");
         return false;
     }
 

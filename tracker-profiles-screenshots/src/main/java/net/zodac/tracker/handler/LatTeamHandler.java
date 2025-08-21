@@ -18,14 +18,14 @@
 package net.zodac.tracker.handler;
 
 import java.util.Collection;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Lat-Team} tracker.
+ * Extension of {@link Unit3dHandler} for non-English trackers.
  */
-@TrackerHandler(name = "Lat-Team", type = TrackerType.NON_ENGLISH, url = "https://lat-team.com/")
+@TrackerHandler(name = "ItaTorrents", url = "https://itatorrents.xyz/")
+@TrackerHandler(name = "Lat-Team", url = "https://lat-team.com/")
 public class LatTeamHandler extends Unit3dHandler {
 
     /**
@@ -40,7 +40,7 @@ public class LatTeamHandler extends Unit3dHandler {
 
     @Override
     public boolean isNotEnglish(final String username) {
-        scriptExecutor.translatePage(username, "give up");
-        return true;
+        LOGGER.debug("- Not translating, there is an option in the user settings to translate to English");
+        return false;
     }
 }
