@@ -98,7 +98,7 @@ The following trackers are not currently supported:
 
 ## How To Use
 
-### Tracker Defintions
+### Tracker Definitions
 
 First, copy the [trackers_example.csv](./docker/trackers_example.csv) file. This file needs to be updated with your user's login information for each
 tracker. Any unwanted trackers can be deleted, or prefixed by the `CSV_COMMENT_SYMBOL` environment variable so they are excluded.
