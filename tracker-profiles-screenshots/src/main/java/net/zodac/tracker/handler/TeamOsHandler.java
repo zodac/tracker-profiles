@@ -58,6 +58,30 @@ public class TeamOsHandler extends AbstractTrackerHandler {
         return By.xpath("//button[@type='submit' and contains(@class, 'button--icon--login')]");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link TeamOsHandler}, the tracker can request you to read a thread after logging in. Since this page looks very similar to the normal
+     * post-login page, we can't simply rely on {@link #postLoginSelector()}. Instead, we'll explicitly search for this request to read a thread. If
+     * it exists, we'll open the page (forcing it into the current tag). We'll then continue with the rest of the flow.
+     */
+    @Override
+    protected void manualCheckAfterLoginClick(final String trackerName) {
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
+
+        final String title = driver.getTitle();
+        if (title != null && title.contains("Oops! We ran into some problems.")) {
+            LOGGER.debug("\t\t- Tracker admin requires updated thread to be viewed, clicking...");
+            final By threadRedirectSelector = By.xpath("//li[span[@class='button-text' and contains(text(), 'value')]]");
+            final WebElement threadRedirect = driver.findElement(threadRedirectSelector);
+
+            scriptExecutor.removeAttribute(threadRedirect, "target"); // Stop forcing the link to open in a new tab
+            clickButton(threadRedirect);
+            scriptExecutor.stopPageLoad();
+        }
+    }
+
     @Override
     protected By postLoginSelector() {
         return By.xpath("//div[@class='focus-wrap-user']");

@@ -94,9 +94,9 @@ public class EmporniumHandler extends AbstractTrackerHandler {
         scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);
 
         final List<By> toggleSelectors = List.of(
-            By.id("recentsnatchesbutton"), // Recent snatches
-            By.id("collagesbutton"), // Collages
-            By.id("submitbutton") // Uploaded torrents
+            By.id("recentsnatchesbutton"),  // Recent snatches
+            By.id("collagesbutton"),        // Collages
+            By.id("submitbutton")           // Uploaded torrents
         );
 
         for (final By toggleSelector : toggleSelectors) {

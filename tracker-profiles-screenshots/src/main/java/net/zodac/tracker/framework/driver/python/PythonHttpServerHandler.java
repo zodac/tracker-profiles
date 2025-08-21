@@ -86,7 +86,7 @@ final class PythonHttpServerHandler {
             final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != HttpURLConnection.HTTP_OK) {
-                LOGGER.warn("Request to open session responsed with status {}, body: {}", response.statusCode(), response.body());
+                LOGGER.warn("Request to open session responded with status {}, body: {}", response.statusCode(), response.body());
                 throw new DriverAttachException("Error opening Python session to attach driver");
             }
 
@@ -119,7 +119,7 @@ final class PythonHttpServerHandler {
             LOGGER.debug("Sending request to close session to '{}'", CLOSE_URL);
             final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != HttpURLConnection.HTTP_OK) {
-                LOGGER.warn("Request to close session {} responsed with status {}, body: {}", seleniumSession, response.statusCode(),
+                LOGGER.warn("Request to close session {} responded with status {}, body: {}", seleniumSession, response.statusCode(),
                     response.body());
             }
             LOGGER.trace("Request to close session successfully completed");
