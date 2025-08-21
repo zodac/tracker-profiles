@@ -66,7 +66,6 @@ The available trackers come in the following types:
 | PixelCove           | Headless             |
 | PornBay             | Headless             |
 | PrivateHD           | **Cloudflare-check** |
-| PrivateSilverScreen | Headless             |
 | Redacted            | Headless             |
 | ReelFlix            | Headless             |
 | RUTracker           | **Non-English**      |

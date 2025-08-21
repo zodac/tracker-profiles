@@ -32,7 +32,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 @TrackerHandler(name = "FearNoPeer", url = "https://fearnopeer.com/login") // URL set to login page to bypass Cloudflare verification
 @TrackerHandler(name = "HDUnited", url = "https://hd-united.vn/")
 @TrackerHandler(name = "LST", url = "https://lst.gg/")
-@TrackerHandler(name = "PrivateSilverScreen", url = "https://privatesilverscreen.cc/")
 @TrackerHandler(name = "ReelFlix", url = "https://reelflix.xyz/")
 @TrackerHandler(name = "SeedPool", url = "https://seedpool.org/")
 @TrackerHandler(name = "UploadCX", type = TrackerType.CLOUDFLARE_CHECK, url = "https://upload.cx/") // Cloudflare check on login screen, no redirect
