@@ -39,11 +39,6 @@ public class ItaTorrentsHandler extends Unit3dHandler {
     }
 
     @Override
-    protected By postLoginSelector() {
-        return By.xpath("//main[@class='page__page--show']");
-    }
-
-    @Override
     public boolean isNotEnglish(final String username) {
         LOGGER.debug("- Not translating, there is an option in the user settings to translate DIC to English");
         return false;
