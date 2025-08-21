@@ -19,7 +19,7 @@ FROM python:3.13.5-slim AS python_build
 # BEGIN PYTHON PACKAGES
 RUN python3 -m ensurepip && \
     pip install \
-        pip=="25.1.1" \
+        pip=="25.2" \
         wheel=="0.45.1" 
 # END PYTHON PACKAGES
 
@@ -44,7 +44,7 @@ ENV PGID=1000
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        chromium="138.0.7204.92-1~deb12u1" \
+        chromium="139.0.7258.138-1~deb12u1" \
         curl="7.88.1-10+deb12u12" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         x11-apps="7.7+9" \

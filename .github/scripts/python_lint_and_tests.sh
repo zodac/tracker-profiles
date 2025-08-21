@@ -25,8 +25,8 @@
 
 set -euo pipefail
 
-LINT_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.11.13"
-TEST_DOCKER_IMAGE="python:3.13.4-slim"
+LINT_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.12.9"
+TEST_DOCKER_IMAGE="python:3.13.7-alpine"
 
 # Linting
 echo
@@ -46,7 +46,7 @@ docker run --rm -t \
     -v "${PWD}":/app \
     -w /app \
     "${TEST_DOCKER_IMAGE}" \
-    bash -c "
+    sh -c "
     export PYTHONPATH=/app/python &&
     pip install --quiet --upgrade pip --root-user-action=ignore &&
     pip install --quiet -r /app/python/requirements-dev.txt --root-user-action=ignore &&
