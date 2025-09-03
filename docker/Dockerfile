@@ -1,5 +1,5 @@
 # Stage 1: Build the Java artefact
-FROM maven:3.9.10-eclipse-temurin-24-alpine AS maven_build
+FROM maven:3.9.11-eclipse-temurin-24-alpine AS maven_build
 
 # Set the working directory
 WORKDIR /app

@@ -38,7 +38,7 @@ jobs:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
           java-version: '24'
-          maven-version: '3.9.10'
+          maven-version: '3.9.11'
 
       - name: Update Maven project versions
         run: |
