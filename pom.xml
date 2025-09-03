@@ -59,7 +59,7 @@
         <maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
         <maven-pmd-plugin.version>3.27.0</maven-pmd-plugin.version>
         <sonar-maven-plugin.version>5.2.0.4988</sonar-maven-plugin.version>
-        <spotbugs-maven-plugin.version>4.9.4.0</spotbugs-maven-plugin.version>
+        <spotbugs-maven-plugin.version>4.9.4.1</spotbugs-maven-plugin.version>
 
         <!-- Linter Properties -->
         <!--suppress UnresolvedMavenProperty, files are only used in child modules -->

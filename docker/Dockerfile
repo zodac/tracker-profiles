@@ -17,10 +17,7 @@ RUN mvn clean install
 FROM python:3.13.5-slim AS python_build
 
 # BEGIN PYTHON PACKAGES
-RUN python3 -m ensurepip && \
-    pip install \
-        pip=="25.2" \
-        wheel=="0.45.1" 
+RUN python3 -m ensurepip &&     pip install         pip=="25.2"         wheel=="0.45.1" 
 # END PYTHON PACKAGES
 
 # Stage 3: Get gosu binary for dynamic PGID/PUID to run application (to work around the old version of go in official binary/image)
@@ -42,16 +39,7 @@ ENV PGID=1000
 # - fonts-arphic-ukai (font for Chinese language characters)
 # - x11-apps (UI browser)
 # BEGIN DEBIAN PACKAGES
-RUN apt-get update && \
-    apt-get install -yqq --no-install-recommends \
-        chromium="139.0.7258.138-1~deb12u1" \
-        curl="7.88.1-10+deb12u12" \
-        fonts-arphic-ukai="0.2.20080216.2-5" \
-        x11-apps="7.7+9" \
-    && \
-    apt-get autoremove && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update &&     apt-get install -yqq --no-install-recommends         chromium="(none)"         curl="8.5.0-2ubuntu10.6"         fonts-arphic-ukai="0.2.20080216.2-5"         x11-apps="7.7+11build3"     &&     apt-get autoremove &&     apt-get clean &&     rm -rf /var/lib/apt/lists/*
 # END DEBIAN PACKAGES
 
 # Copy gosu binary
