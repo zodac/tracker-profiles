@@ -10,7 +10,7 @@ on:
     - cron: '0 2 1 * *'
 
 jobs:
-  update:
+  update_versions:
     name: Versions Update
     runs-on: ubuntu-latest
     container: debian:12
@@ -57,12 +57,12 @@ jobs:
       - name: Save workspace for next job
         uses: actions/upload-artifact@v4
         with:
-          name: updated-workspace
+          name: updated_versions-workspace
           path: .
 
   check_git_changes:
     runs-on: ubuntu-latest
-    needs: update_packages
+    needs: update_versions
     permissions:
       actions: write
       contents: write
@@ -72,7 +72,7 @@ jobs:
       - name: Download updated workspace
         uses: actions/download-artifact@v5
         with:
-          name: updated-workspace
+          name: updated_versions-workspace
           path: .
 
       - name: Check for changes
