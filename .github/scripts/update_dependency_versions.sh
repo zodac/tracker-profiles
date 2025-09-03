@@ -35,7 +35,12 @@
 set -euo pipefail
 
 get_pypi_version() {
-    curl -s "https://pypi.org/pypi/${1}/json" | jq -r '.info.version'
+    version=$(curl -fsSL "https://pypi.org/pypi/${1}/json" | jq -r '.info.version // empty')
+    if [[ -z "$version" ]]; then
+        echo "⚠️ Could not fetch PyPI version for ${1}" >&2
+        return 1
+    fi
+    echo "$version"
 }
 
 update_requirements() {

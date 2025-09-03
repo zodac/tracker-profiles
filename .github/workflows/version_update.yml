@@ -50,7 +50,8 @@ jobs:
             grep \
             jq \
             curl \
-            git
+            git \
+            ca-certificates
 
           bash .github/scripts/update_dependency_versions.sh
 
