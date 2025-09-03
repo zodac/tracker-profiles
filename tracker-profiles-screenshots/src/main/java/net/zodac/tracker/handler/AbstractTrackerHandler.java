@@ -197,7 +197,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable {
      * By default, we assume there is Cloudflare check, so this method returns {@code false}. Should be overridden otherwise, but only return to
      * {@code true}. The common implementation to bypass the check is performed by {@link #cloudflareCheck(String)}.
      *
-     * @return {@code true} if there is a cloudflare check
+     * @return {@code true} if there is a Cloudflare check
      */
     protected boolean hasCloudflareCheck() {
         return false;
