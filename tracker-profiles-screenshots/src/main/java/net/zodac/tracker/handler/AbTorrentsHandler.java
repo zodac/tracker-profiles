@@ -32,7 +32,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
  */
-@TrackerHandler(name = "ABTorrents", type = TrackerType.MANUAL, url = "https://abtorrents.me/")
+@TrackerHandler(name = "ABTorrents", type = TrackerType.MANUAL, url = "https://abtorrents.xyz/")
 public class AbTorrentsHandler extends AbstractTrackerHandler {
 
     /**
