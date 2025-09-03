@@ -13,8 +13,6 @@ jobs:
   update:
     name: Versions Update
     runs-on: ubuntu-latest
-    container:
-      image: debian:12
     permissions:
       actions: write
       contents: write
@@ -42,10 +40,22 @@ jobs:
           java-version: '24'
           maven-version: '3.9.11'
 
-      - name: Update Maven project versions
+      - name: Update project versions
+        container: debian:12
         run: |
+          set -euo pipefail
+
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            bash \
+            gawk \
+            grep \
+            jq \
+            curl \
+            git
+
           bash .github/scripts/update_dependency_versions.sh
-          
+
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to commit"
             echo "has_changes=false" >> $GITHUB_ENV
