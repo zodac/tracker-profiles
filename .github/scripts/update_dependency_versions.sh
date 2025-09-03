@@ -105,28 +105,44 @@ update_python_packages() {
         echo "  ${package}=${version}"
     done
 
-    # Build the updated install block
-    PYTHON_REPLACEMENT="${PYTHON_START_MARKER}"$'\n'
-    PYTHON_REPLACEMENT+="RUN python3 -m ensurepip && \\"$'\n'
-    PYTHON_REPLACEMENT+="    pip install \\"$'\n'
-    for package in "${package_names[@]}"; do
-        PYTHON_REPLACEMENT+="        ${package}==\"${python_versions[${package}]}\" \\"$'\n'
-    done
-    # Remove trailing backslash
-    PYTHON_REPLACEMENT="${PYTHON_REPLACEMENT%\\$'\n'}"$'\n'
-    PYTHON_REPLACEMENT+="${PYTHON_END_MARKER}"
+    # Build the updated install block safely into a temp file
+    {
+        echo "${PYTHON_START_MARKER}"
+        echo "RUN python3 -m ensurepip && \\"
+        echo "    pip install \\"
+        count=${#package_names[@]}
+        for i in "${!package_names[@]}"; do
+            pkg="${package_names[$i]}"
+            ver="${python_versions[$pkg]}"
+            if (( i == count-1 )); then
+                # last package → no trailing backslash
+                echo "        ${pkg}==\"${ver}\""
+            else
+                echo "        ${pkg}==\"${ver}\" \\"
+            fi
+        done
+        echo "${PYTHON_END_MARKER}"
+    } > python_block.txt
 
     # Replace the old block with the new one
-    awk -v block="${PYTHON_REPLACEMENT}" \
-        -v start_marker="${PYTHON_START_MARKER}" \
+    awk -v start_marker="${PYTHON_START_MARKER}" \
         -v end_marker="${PYTHON_END_MARKER}" '
-    BEGIN { in_block = 0 }
+    BEGIN {
+        block = ""
+        while ((getline line < "python_block.txt") > 0) {
+            block = block line "\n"
+        }
+        close("python_block.txt")
+        sub(/\n$/, "", block)   # 🔥 remove trailing newline
+    }
     $0 ~ start_marker { print block; in_block = 1; next }
     $0 ~ end_marker { in_block = 0; next }
     !in_block { print }
-    ' "${dockerfile}" >"${dockerfile}.tmp"
+    ' "${dockerfile}" > "${dockerfile}.tmp"
 
     mv "${dockerfile}.tmp" "${dockerfile}"
+    rm -f python_block.txt
+
     echo "✅ ${dockerfile#./} updated successfully with latest Python packages"
 }
 
@@ -171,29 +187,38 @@ update_debian_packages() {
     done
 
     # Build the updated install block
-    DEBIAN_REPLACEMENT="${DEBIAN_START_MARKER}"$'\n'
-    DEBIAN_REPLACEMENT+="RUN apt-get update && \\"$'\n'
-    DEBIAN_REPLACEMENT+="    apt-get install -yqq --no-install-recommends \\"$'\n'
-    for package in "${package_names[@]}"; do
-        DEBIAN_REPLACEMENT+="        ${package}=\"${debian_versions[${package}]}\" \\"$'\n'
-    done
-    DEBIAN_REPLACEMENT+="    && \\"$'\n'
-    DEBIAN_REPLACEMENT+="    apt-get autoremove && \\"$'\n'
-    DEBIAN_REPLACEMENT+="    apt-get clean && \\"$'\n'
-    DEBIAN_REPLACEMENT+="    rm -rf /var/lib/apt/lists/*"$'\n'
-    DEBIAN_REPLACEMENT+="${DEBIAN_END_MARKER}"
+    {
+        echo "${DEBIAN_START_MARKER}"
+        echo "RUN apt-get update && \\"
+        echo "    apt-get install -yqq --no-install-recommends \\"
+        for package in "${package_names[@]}"; do
+            echo "        ${package}=\"${debian_versions[${package}]}\" \\"
+        done
+        echo "    && \\"
+        echo "    apt-get autoremove && \\"
+        echo "    apt-get clean && \\"
+        echo "    rm -rf /var/lib/apt/lists/*"
+        echo "${DEBIAN_END_MARKER}"
+    } > debian_block.txt
 
     # Replace the old block with the new one
-    awk -v block="${DEBIAN_REPLACEMENT}" \
-        -v start_marker="${DEBIAN_START_MARKER}" \
+    awk -v start_marker="${DEBIAN_START_MARKER}" \
         -v end_marker="${DEBIAN_END_MARKER}" '
-    BEGIN { in_block = 0 }
+    BEGIN {
+        while ((getline line < "debian_block.txt") > 0) {
+            block = block line ORS
+        }
+        close("debian_block.txt")
+        sub(/\n$/, "", block)   # 🔥 remove trailing newline
+    }
     $0 ~ start_marker { print block; in_block = 1; next }
     $0 ~ end_marker { in_block = 0; next }
     !in_block { print }
-    ' "${dockerfile}" >"${dockerfile}.tmp"
+    ' "${dockerfile}" > "${dockerfile}.tmp"
 
     mv "${dockerfile}.tmp" "${dockerfile}"
+    rm -f debian_block.txt
+
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
 }
 

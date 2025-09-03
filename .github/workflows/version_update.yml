@@ -13,6 +13,8 @@ jobs:
   update:
     name: Versions Update
     runs-on: ubuntu-latest
+    container:
+      image: debian:12
     permissions:
       actions: write
       contents: write
