@@ -61,6 +61,7 @@ jobs:
           path: .
 
   check_git_changes:
+    name: Check for Changes
     runs-on: ubuntu-latest
     needs: update_versions
     permissions:
@@ -69,6 +70,11 @@ jobs:
       security-events: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download updated workspace
         uses: actions/download-artifact@v5
         with:
