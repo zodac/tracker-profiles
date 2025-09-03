@@ -95,6 +95,41 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
             String.format("Select the '%s' image and click the 'X' button to log in", captchaTextElement.getText()));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link AbTorrentsHandler}, having any unread private messages means you are unable to search for any torrents. While this doesn't block
+     * the profile page, we'll click the link to the inbox then open any unread PMs before continuing.
+     */
+    @Override
+    protected void manualCheckAfterLoginClick(final String trackerName) {
+        ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
+
+        final By pmWarningSelector = By.xpath("//a[b[contains(@class, 'alert-warning') and contains(text(), 'New Private messages')]]");
+        final List<WebElement> privateMessageWarnings = driver.findElements(pmWarningSelector);
+
+        if (privateMessageWarnings.isEmpty()) {
+            LOGGER.debug("\t- No unread PMs");
+            return;
+        }
+
+        LOGGER.trace("\t- Found some unread private messages, opening inbox");
+        final WebElement privateMessageWarning = privateMessageWarnings.getFirst();
+        clickButton(privateMessageWarning);
+
+        final By unreadPmsSelector = By.xpath("//td[span[1][contains(text(), 'Unread')]]/a[1]");
+        final List<WebElement> unreadPms = driver.findElements(unreadPmsSelector);
+        LOGGER.debug("\t- {} unread PMs", unreadPms.size());
+
+        for (final WebElement unreadPm : unreadPms) {
+            clickButton(unreadPm);
+            driver.navigate().back();
+        }
+
+        LOGGER.debug("\t\t- Unread PMs cleared");
+    }
+
     @Override
     protected By postLoginSelector() {
         return By.id("base_usermenu");
