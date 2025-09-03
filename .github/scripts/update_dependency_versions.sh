@@ -197,6 +197,11 @@ update_debian_packages() {
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
 }
 
+update_pom_versions() {
+    mvn versions:update-properties
+    echo "✅ pom.xml updated successfully with latest Maven packages"
+}
+
 # Default paths assume the script is being run from the root of the project
 dockerfile="${1:-./docker/Dockerfile}"
 requirements="${2:-./python/requirements.txt}"
@@ -218,3 +223,4 @@ fi
 update_debian_packages "${dockerfile}"
 update_python_packages "${dockerfile}"
 update_requirements "${requirements}" "${requirements_dev}"
+update_pom_versions

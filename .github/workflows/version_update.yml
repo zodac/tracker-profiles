@@ -42,7 +42,7 @@ jobs:
 
       - name: Update Maven project versions
         run: |
-          mvn versions:update-properties
+          bash .github/scripts/update_dependency_versions.sh
           
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to commit"
@@ -54,7 +54,9 @@ jobs:
       - name: Run linters and unit/integration tests
         id: application_tests
         if: env.has_changes == 'true'
-        run: mvn clean install -Dall
+        run: |
+          mvn clean install -Dall
+          bash .github/scripts/python_lint_and_tests.sh
 
       - name: Commit changes
         id: change_commit
