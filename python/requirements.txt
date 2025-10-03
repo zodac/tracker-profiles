@@ -1,6 +1,6 @@
 colorlog>=6.9.0
 Flask>=3.1.2
-selenium>=4.35.0
+selenium>=4.36.0
 setuptools>=80.9.0
 undetected-chromedriver==3.5.5
 waitress>=3.0.2

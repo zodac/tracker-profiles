@@ -17,7 +17,7 @@
     <properties>
         <!-- Project Properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java-release>24</java-release>
+        <java-release>25</java-release>
         <maven-release>3.9.11</maven-release>
 
         <!-- Lint Properties -->
@@ -29,37 +29,40 @@
         <ashot.version>1.5.4</ashot.version>
         <commons-csv.version>1.14.1</commons-csv.version>
         <commons-io.version>2.20.0</commons-io.version>
-        <gson.version>2.13.1</gson.version>
+        <gson.version>2.13.2</gson.version>
+        <jspecify.version>1.0.0</jspecify.version>
         <jul-to-slf4j.version>2.0.17</jul-to-slf4j.version>
-        <log4j.version>2.25.1</log4j.version>
-        <selenium-java.version>4.35.0</selenium-java.version>
+        <log4j.version>2.25.2</log4j.version>
+        <selenium.version>4.36.0</selenium.version>
 
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <exec-maven-plugin.version>3.5.1</exec-maven-plugin.version>
+        <exec-maven-plugin.version>3.6.0</exec-maven-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.6.1</maven-enforcer-plugin.version>
+        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
+        <maven-dependency-plugin.version>3.9.0</maven-dependency-plugin.version>
+        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
-        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
-        <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
+        <maven-shade-plugin.version>3.6.1</maven-shade-plugin.version>
+        <versions-maven-plugin.version>2.19.1</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <checkstyle.version>11.0.1</checkstyle.version>
-        <error_prone_core.version>2.41.0</error_prone_core.version>
+        <asm-version>9.8</asm-version>
+        <checkstyle.version>11.1.0</checkstyle.version>
+        <error_prone_core.version>2.42.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.11.0</nullaway.version>
-        <pmd.version>7.16.0</pmd.version>
-        <spotbugs.version>4.9.4</spotbugs.version>
+        <pmd.version>7.17.0</pmd.version>
+        <spotbugs.version>4.9.6</spotbugs.version>
 
         <!-- Linter Plugin Versions -->
         <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-        <maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-pmd-plugin.version>3.27.0</maven-pmd-plugin.version>
         <sonar-maven-plugin.version>5.2.0.4988</sonar-maven-plugin.version>
-        <spotbugs-maven-plugin.version>4.9.4.1</spotbugs-maven-plugin.version>
+        <spotbugs-maven-plugin.version>4.9.6.0</spotbugs-maven-plugin.version>
 
         <!-- Linter Properties -->
         <!--suppress UnresolvedMavenProperty, files are only used in child modules -->
@@ -137,6 +140,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <dependency>
+                <groupId>org.jspecify</groupId>
+                <artifactId>jspecify</artifactId>
+                <version>${jspecify.version}</version>
+            </dependency>
             <!-- JUL to SLF4J Bridge, used to control Selenium logging output -->
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -155,8 +163,28 @@
             </dependency>
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-java</artifactId>
-                <version>${selenium-java.version}</version>
+                <artifactId>selenium-api</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-chrome-driver</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-chromium-driver</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-remote-driver</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-support</artifactId>
+                <version>${selenium.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -237,6 +265,49 @@
                         </compilerArgs>
                         <fork>true</fork>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                    <dependencies>
+                        <!-- Forces support for latest Java bytecode -->
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${asm-version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm-commons</artifactId>
+                            <version>${asm-version}</version>
+                        </dependency>
+                    </dependencies>
+                    <executions>
+                        <execution>
+                            <configuration>
+                                <failOnWarning>true</failOnWarning>
+                                <!-- We're only interested in 'compile' scope dependencies when performing analysis -->
+                                <ignoreNonCompile>true</ignoreNonCompile>
+                                <ignoredUnusedDeclaredDependencies>
+                                    <!-- Included so the logging files are on the classpath at runtime - not directly used -->
+                                    <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
+                                    <!-- Used at runtime to override the logging output from Selenium classes -->
+                                    <ignoredUnusedDeclaredDependency>org.slf4j:jul-to-slf4j::</ignoredUnusedDeclaredDependency>
+                                </ignoredUnusedDeclaredDependencies>
+                                <ignoredUsedUndeclaredDependencies>
+                                    <!-- Included with nullaway, which is scoped 'provided' but appears as a false-positive -->
+                                    <ignoredUsedUndeclaredDependency>org.checkerframework:dataflow-nullaway::</ignoredUsedUndeclaredDependency>
+                                </ignoredUsedUndeclaredDependencies>
+                                <skip>${skip-linters}</skip>
+                            </configuration>
+                            <goals>
+                                <goal>analyze-only</goal>
+                            </goals>
+                            <!-- Needs to execute after the 'compile' phase, but before 'test-compile', or else test dependencies cause failures -->
+                            <phase>process-classes</phase>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

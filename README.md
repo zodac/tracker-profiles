@@ -89,6 +89,7 @@ The following trackers are not currently supported:
 |-----------------|
 | BroadcasThe.Net |
 | CGPeers         |
+| DarkPeers       |
 | Hawke-Uno       |
 | IPTorrents      |
 | SceneTime       |

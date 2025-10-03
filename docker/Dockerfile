@@ -1,5 +1,5 @@
 # Stage 1: Build the Java artefact
-FROM maven:3.9.11-eclipse-temurin-24-alpine AS maven_build
+FROM maven:3.9.11-eclipse-temurin-25-alpine AS maven_build
 
 # Set the working directory
 WORKDIR /app
@@ -14,7 +14,7 @@ COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
 # Stage 2: Install Python with pip
-FROM python:3.13.5-slim AS python_build
+FROM python:3.13.7-slim AS python_build
 
 # BEGIN PYTHON PACKAGES
 RUN python3 -m ensurepip && \
@@ -27,7 +27,7 @@ RUN python3 -m ensurepip && \
 FROM tianon/gosu:1.17 AS gosu_build
 
 # Stage 4: Run the application
-FROM openjdk:24-jdk-slim
+FROM eclipse-temurin:25-jdk-noble
 
 # Set the working directory
 WORKDIR /app
@@ -44,8 +44,8 @@ ENV PGID=1000
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        chromium="139.0.7258.154-1~deb12u1" \
-        curl="7.88.1-10+deb12u12" \
+        chromium="140.0.7339.207-1~deb12u1" \
+        curl="7.88.1-10+deb12u14" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         x11-apps="7.7+9" \
     && \

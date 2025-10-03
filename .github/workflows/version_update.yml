@@ -38,7 +38,7 @@ jobs:
         with:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
-          java-version: '24'
+          java-version: '25'
           maven-version: '3.9.11'
 
       - name: Update project versions
@@ -88,7 +88,7 @@ jobs:
         with:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
-          java-version: '24'
+          java-version: '25'
           maven-version: '3.9.11'
 
       - name: Download updated workspace

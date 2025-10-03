@@ -18,14 +18,15 @@
 package net.zodac.tracker.framework;
 
 import java.util.Locale;
+import java.util.Objects;
 import org.apache.commons.csv.CSVRecord;
 
 /**
  * Simple class to hold the information for a given tracker.
  *
- * @param name        the tracker name
- * @param username    the user's username
- * @param password    the user's password
+ * @param name     the tracker name
+ * @param username the user's username
+ * @param password the user's password
  */
 public record TrackerDefinition(String name, String username, String password)
     implements Comparable<TrackerDefinition> {
@@ -47,5 +48,18 @@ public record TrackerDefinition(String name, String username, String password)
     @Override
     public int compareTo(final TrackerDefinition other) {
         return name.toLowerCase(Locale.getDefault()).compareTo(other.name.toLowerCase(Locale.getDefault()));
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof TrackerDefinition(final String otherName, final String otherUsername, final String otherPassword))) {
+            return false;
+        }
+        return Objects.equals(name, otherName) && Objects.equals(username, otherUsername) && Objects.equals(password, otherPassword);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, username, password);
     }
 }
