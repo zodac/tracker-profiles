@@ -44,7 +44,7 @@ ENV PGID=1000
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        chromium="140.0.7339.207-1~deb12u1" \
+        chromium="141.0.7390.54-1~deb12u1" \
         curl="7.88.1-10+deb12u14" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         x11-apps="7.7+9" \
