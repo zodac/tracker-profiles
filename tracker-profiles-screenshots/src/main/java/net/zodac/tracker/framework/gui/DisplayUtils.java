@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.framework.gui;
 
+import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -150,8 +151,9 @@ public final class DisplayUtils {
 
     private static void setStyleToSystemTheme() {
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (final ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException e) {
+            FlatDarkLaf.setup();
+            UIManager.setLookAndFeel(new FlatDarkLaf());
+        } catch (final UnsupportedLookAndFeelException e) {
             LOGGER.debug("Unexpected error setting UI style", e);
         }
     }

@@ -25,7 +25,6 @@ RUN python3 -m ensurepip && \
 
 # Copy Python requirements
 COPY ./python/requirements.txt .
-COPY ./python/selenium_manager/ ./selenium_manager/
 
 # Set up Python virtual environment and install dependencies
 RUN python3 -m venv /app/venv && \
@@ -53,6 +52,10 @@ FROM debian:trixie-slim AS scripts_builder
 COPY ./docker/scripts/start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Stage 5: Shell binaries
+FROM busybox:1.37.0-musl as shell_builder
+
+# Runtime
 FROM debian:12.12-slim
 
 # Set the working directory
@@ -69,7 +72,6 @@ RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20230311+deb12u1" \
         chromium="141.0.7390.54-1~deb12u1" \
-        curl="7.88.1-10+deb12u14" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         x11-apps="7.7+9" \
     && \
@@ -93,6 +95,7 @@ COPY --from=maven_builder /app/tracker-profiles-screenshots/target/tracker-profi
 
 # Copy scripts
 COPY --from=scripts_builder /start.sh /app/start.sh
+COPY --from=shell_builder /bin/busybox /bin/wget
 
 # Start application
 CMD ["/app/start.sh"]

@@ -51,16 +51,20 @@ public final class ApplicationLauncher {
         } catch (final Exception e) {
             LOGGER.debug("Error starting application pre-requisites", e);
             LOGGER.error("Error starting application pre-requisites: {}", e.getMessage());
-            System.exit(ExitState.FAILURE.exitCode());
+            exit(ExitState.FAILURE);
         }
 
         try {
             final ExitState exitState = ProfileScreenshotter.executeProfileScreenshotter();
-            System.exit(exitState.exitCode());
+            exit(exitState);
         } catch (final Exception e) {
             LOGGER.debug("Error abruptly ended execution", e);
             LOGGER.error("Error abruptly ended execution: {}", e.getMessage());
-            System.exit(ExitState.FAILURE.exitCode());
+            exit(ExitState.FAILURE);
         }
+    }
+
+    private static void exit(final ExitState exitState) {
+        System.exit(exitState.exitCode()); // NOPMD: DoNotTerminateVM - happy to terminate here
     }
 }

@@ -20,7 +20,7 @@
 #   - If the environment variable TRACKER_EXECUTION_ORDER contains the string
 #     "cloudflare-check":
 #       - Starts `selenium_manager.py` in the background
-#   - Starts Chrome in headless remote debugging mode on port 9222
+#   - Starts Chromium
 #   - Executes the Java JAR file
 #   - Outputs a colored success or error message based on Java's exit code
 #   - Tracks and prints total execution time in a natural format
@@ -44,14 +44,14 @@ main() {
 
             i=1
             while [ "${i}" -le 5 ]; do
-                if curl -fs http://localhost:5000/ping >/dev/null; then
+                if wget -q --spider http://localhost:5000/ping 2>/dev/null; then
                     break
                 fi
                 sleep 1
 
                 if [ "${i}" -eq 5 ]; then
                     echo "Failed to start Python service" >&2
-                    kill "$PYTHON_PID" 2>/dev/null || true
+                    kill "${PYTHON_PID}" 2>/dev/null || true
                     exit 1
                 fi
                 i=$((i + 1))
@@ -59,8 +59,7 @@ main() {
             ;;
     esac
 
-    # TODO: Remote port needed anymore?
-    chromium --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
+    chromium --display=:0 >/dev/null 2>&1 &
     CHROME_PID=$!
 
     java -jar /app/tracker-profiles.jar
