@@ -112,10 +112,8 @@ The application is run using Docker. Below is the command to run the `latest` do
 
 ```bash
 docker run \
-    --env PUID=$(id -u) \
-    --env PGID=$(id -g) \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
+    --env BROWSER_DATA_STORAGE_PATH=/app/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
@@ -124,13 +122,14 @@ docker run \
     --env LOG_LEVEL=INFO \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
-    --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
+    --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
-    --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
+    --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/chrome:/tmp/chrome \
-    -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/chrome:/app/tmp/chrome \
+    -v /tmp/screenshots:/app/screenshots \
+    --name tracker-profiles \
     --rm zodac/tracker-profiles:latest
 ```
 
@@ -178,10 +177,11 @@ The following are all possible configuration options, defined as environment var
 
 ### Requirements
 
-- [Apache Maven (v3.9.10)](https://maven.apache.org/download.cgi)
+- [Apache Maven (v3.9.11)](https://maven.apache.org/download.cgi)
+- [Docker](https://docs.docker.com/engine/install/) (if using the Docker dev image)
 - [Google Chrome](https://www.google.com/chrome/) (only if not using Docker)
-- [Java (JDK 24)](https://jdk.java.net/24/)
-- [Python (3.13.4+)](https://www.python.org/downloads/release/python-3134/) (only if testing trackers with Cloudflare verification not in docker)
+- [Java (JDK 25)](https://jdk.java.net/25/)
+- [Python (3.13+)](https://www.python.org/downloads/release/python-313/) (only if testing trackers with Cloudflare verification, and not using Docker)
 
 ### Install Git Hooks
 
@@ -220,10 +220,8 @@ Below is the command to build and run the development docker image with everythi
 ```bash
 docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
 docker run \
-    --env PUID=$(id -u) \
-    --env PGID=$(id -g) \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_DATA_STORAGE_PATH=/tmp/chrome \
+    --env BROWSER_DATA_STORAGE_PATH=/app/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
@@ -232,13 +230,14 @@ docker run \
     --env LOG_LEVEL=TRACE \
     --env OPEN_OUTPUT_DIRECTORY=false \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
-    --env OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
+    --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
-    --env TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
+    --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/chrome:/tmp/chrome \
-    -v /tmp/screenshots:/tmp/screenshots \
+    -v /tmp/chrome:/app/tmp/chrome \
+    -v /tmp/screenshots:/app/screenshots \
+    --name tracker-profiles-dev \
     --rm tracker-profiles-dev
 ```
 

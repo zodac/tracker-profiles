@@ -1,5 +1,5 @@
 # Stage 1: Build the Java artefact
-FROM maven:3.9.11-eclipse-temurin-25-alpine AS maven_build
+FROM maven:3.9.11-eclipse-temurin-25-alpine AS maven_builder
 
 # Set the working directory
 WORKDIR /app
@@ -13,8 +13,8 @@ RUN mvn dependency:go-offline
 COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
-# Stage 2: Install Python with pip
-FROM python:3.13.7-slim AS python_build
+# Stage 2: Install Python
+FROM python:3.13.5-slim AS python_builder
 
 # BEGIN PYTHON PACKAGES
 RUN python3 -m ensurepip && \
@@ -23,20 +23,43 @@ RUN python3 -m ensurepip && \
         wheel=="0.45.1"
 # END PYTHON PACKAGES
 
-# Stage 3: Get gosu binary for dynamic PGID/PUID to run application (to work around the old version of go in official binary/image)
-FROM tianon/gosu:1.17 AS gosu_build
+# Copy Python requirements
+COPY ./python/requirements.txt .
+COPY ./python/selenium_manager/ ./selenium_manager/
 
-# Stage 4: Run the application
-FROM eclipse-temurin:25-jdk-noble
+# Set up Python virtual environment and install dependencies
+RUN python3 -m venv /app/venv && \
+    /app/venv/bin/pip install --upgrade pip && \
+    /app/venv/bin/pip install -r ./requirements.txt
+
+# Stage 3: Install java
+FROM eclipse-temurin:25-jdk AS java_builder
+
+# Copy JAR so we can extract jdeps dependencies
+COPY --from=maven_builder /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar /tmp/tracker-profiles.jar
+
+RUN apt-get update && apt-get install -yqq --no-install-recommends binutils && \
+        jlink --compress=zip-9 \
+        --no-header-files \
+        --no-man-pages \
+        --strip-debug \
+        --add-modules $(jdeps --multi-release BASE --print-module-deps --ignore-missing-deps /tmp/tracker-profiles.jar) \
+        --output "/opt/jdk" && \
+    strip -p --strip-unneeded "/opt/jdk/lib/server/libjvm.so" && \
+    find /opt/jdk/bin -type f -exec strip -p --strip-unneeded {} \; || true
+
+# Stage 4: Prepare scripts
+FROM debian:trixie-slim AS scripts_builder
+COPY ./docker/scripts/start.sh /start.sh
+RUN chmod +x /start.sh
+
+FROM debian:12.12-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Configure non-root user
-ENV PUID=1000
-ENV PGID=1000
-
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
+# - ca-certificates (SSL)
 # - chromium (web browser)
 # - curl (used to verify Python web server status)
 # - fonts-arphic-ukai (font for Chinese language characters)
@@ -44,6 +67,7 @@ ENV PGID=1000
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
+        ca-certificates="20230311+deb12u1" \
         chromium="141.0.7390.54-1~deb12u1" \
         curl="7.88.1-10+deb12u14" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
@@ -54,36 +78,21 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 # END DEBIAN PACKAGES
 
-# Copy gosu binary
-COPY --from=gosu_build /gosu /usr/local/bin/gosu
-RUN chmod +x /usr/local/bin/gosu
-
 # Copy Python installation
-COPY --from=python_build /usr/local /usr/local
-ENV PATH="/usr/local/bin:${PATH}"
-
-# Copy Python requirements
-COPY ./python/requirements.txt .
+COPY --from=python_builder /usr/local /usr/local
+COPY --from=python_builder /app/venv /app/venv
 COPY ./python/selenium_manager/ ./selenium_manager/
+ENV PATH="/usr/local/bin:${PATH}"
+ENV PATH="/app/venv/bin:/usr/local/bin:${PATH}"
 
-# Set up Python virtual environment and install dependencies
-RUN python3 -m venv /app/venv && \
-    /app/venv/bin/pip install --upgrade pip && \
-    /app/venv/bin/pip install -r /app/requirements.txt && \
-    chown -R "${PUID}":"${PGID}" /app/venv
+# Copy JDK & JAR
+COPY --from=java_builder /opt/jdk /opt/jdk
+ENV JAVA_HOME="/opt/jdk"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+COPY --from=maven_builder /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar tracker-profiles.jar
 
-# Copy the compiled JAR file from the build stage
-COPY --from=maven_build /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar tracker-profiles.jar
+# Copy scripts
+COPY --from=scripts_builder /start.sh /app/start.sh
 
-# Command to run the main function
-COPY ./docker/scripts/start.sh /app/start.sh
-COPY ./docker/scripts/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/start.sh && chmod +x /app/entrypoint.sh
-
-# Needed to avoid 'dbind-WARNING' error
-ENV NO_AT_BRIDGE=1
-
-# Use entrypoint for dynamic user creation
-ENTRYPOINT ["/app/entrypoint.sh"]
 # Start application
 CMD ["/app/start.sh"]

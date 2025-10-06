@@ -37,7 +37,7 @@
 
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <exec-maven-plugin.version>3.6.0</exec-maven-plugin.version>
+        <exec-maven-plugin.version>3.6.1</exec-maven-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.9.0</maven-dependency-plugin.version>
@@ -48,7 +48,7 @@
         <versions-maven-plugin.version>2.19.1</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <asm-version>9.8</asm-version>
+        <asm-version>9.9</asm-version>
         <checkstyle.version>11.1.0</checkstyle.version>
         <error_prone_core.version>2.42.0</error_prone_core.version>
         <licenses.version>1</licenses.version>

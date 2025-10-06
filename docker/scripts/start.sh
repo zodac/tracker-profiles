@@ -32,92 +32,83 @@
 #   - 130: Script terminated via SIGINT (manual interruption)
 # ------------------------------------------------------------------------------
 
-set -euo pipefail
+set -eu
 
 main() {
-    start_time=$(date +%s%3N)
+    start_time=$(date +%s)
 
-    # If TRACKER_EXECUTION_ORDER contains "cloudflare-check", launch Python service
-    if [[ "${TRACKER_EXECUTION_ORDER:-}" == *cloudflare-check* ]]; then
-        # Run Python script in background
-        /app/venv/bin/python -m selenium_manager.server &
-        PYTHON_PID=$!
+    case "${TRACKER_EXECUTION_ORDER:-}" in
+        *cloudflare-check*)
+            /app/venv/bin/python -m selenium_manager.server &
+            PYTHON_PID=$!
 
-        # Wait for /ping to return 200 OK or time out after 5s
-        for i in {1..5}; do
-            if curl -fs http://localhost:5000/ping >/dev/null; then
-                break
-            fi
-            sleep 1
+            i=1
+            while [ "${i}" -le 5 ]; do
+                if curl -fs http://localhost:5000/ping >/dev/null; then
+                    break
+                fi
+                sleep 1
 
-            # If this is the last iteration and still failing, exit
-            if [[ $i -eq 20 ]]; then
-                echo -e "\e[31mFailed to start Python service\e[0m"
-                kill "${PYTHON_PID}" 2>/dev/null
-                exit 1
-            fi
-        done
-    fi
+                if [ "${i}" -eq 5 ]; then
+                    echo "Failed to start Python service" >&2
+                    kill "$PYTHON_PID" 2>/dev/null || true
+                    exit 1
+                fi
+                i=$((i + 1))
+            done
+            ;;
+    esac
 
-    # Start Google Chrome in the background with suppressed output
-    google-chrome-stable --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
+    # TODO: Remote port needed anymore?
+    chromium --remote-debugging-port=9222 --display=:0 >/dev/null 2>&1 &
     CHROME_PID=$!
 
-    # Run Java application
     java -jar /app/tracker-profiles.jar
     JAVA_EXIT_CODE=$?
 
-    if [[ ${JAVA_EXIT_CODE} -eq 1 ]]; then
-        echo -e "\e[31mFailed to take screenshots, please review logs\e[0m"
-        kill $$
+    if [ "${JAVA_EXIT_CODE}" -eq 1 ]; then
+        printf '\033[31mFailed to take screenshots, please review logs\033[0m\n'
+        exit 1
     else
-        echo -e "\e[32mScreenshots complete in $(get_execution_time "${start_time}")\e[0m"
+        printf '\033[32mScreenshots complete in %s\033[0m\n' "$(get_execution_time "$start_time")"
     fi
 }
 
 get_execution_time() {
-    local start_time="${1}"
-    end_time=$(date +%s%3N)
+    start_time="${1}"
+    end_time=$(date +%s)
     elapsed_time=$((end_time - start_time))
     _convert_to_natural_time "${elapsed_time}"
 }
 
 _convert_to_natural_time() {
-    local elapsed_time="${1}"
-    local elapsed_s elapsed_m natural_time
-
-    if [ "${elapsed_time}" -lt 1000 ]; then # Less than 1 second
-        natural_time="${elapsed_time}ms"
-    elif [ "${elapsed_time}" -lt 60000 ]; then # Less than 1 minute
-        elapsed_s=$((elapsed_time / 1000))
-        natural_time="${elapsed_s}s"
-    elif [ "${elapsed_time}" -lt 3600000 ]; then # Less than 1 hour
-        elapsed_m=$((elapsed_time / 60000))
-        elapsed_s=$(((elapsed_time % 60000) / 1000))
-        natural_time="${elapsed_m}m:${elapsed_s}s"
-    else # More than an hour
-        elapsed_h=$((elapsed_time / 3600000))
-        elapsed_m=$(((elapsed_time % 3600000) / 60000))
-        elapsed_s=$(((elapsed_time % 60000) / 1000))
-        natural_time="${elapsed_h}h:${elapsed_m}m:${elapsed_s}s"
+    elapsed_time="${1}"
+    if [ "${elapsed_time}" -lt 60 ]; then
+        echo "${elapsed_time}s"
+    elif [ "${elapsed_time}" -lt 3600 ]; then
+        elapsed_m=$((elapsed_time / 60))
+        elapsed_s=$((elapsed_time % 60))
+        echo "${elapsed_m}m:${elapsed_s}s"
+    else
+        elapsed_h=$((elapsed_time / 3600))
+        elapsed_m=$(((elapsed_time % 3600) / 60))
+        elapsed_s=$((elapsed_time % 60))
+        echo "${elapsed_h}h:${elapsed_m}m:${elapsed_s}s"
     fi
-
-    echo "${natural_time}"
 }
 
-# Function to handle termination signals
 cleanup() {
-    echo -e "\n\e[33mCleaning up...\e[0m"
-    kill -SIGTERM "${CHROME_PID}" 2>/dev/null || true
-    wait "${CHROME_PID}" 2>/dev/null || true
+    printf '\n\033[33mCleaning up...\033[0m\n'
+    kill -TERM "${CHROME_PID:-}" 2>/dev/null || true
+    wait "${CHROME_PID:-}" 2>/dev/null || true
 
-    if [[ -n "${PYTHON_PID:-}" ]]; then
-        kill -SIGTERM "${PYTHON_PID}" 2>/dev/null || true
+    if [ -n "${PYTHON_PID:-}" ]; then
+        kill -TERM "${PYTHON_PID}" 2>/dev/null || true
         wait "${PYTHON_PID}" 2>/dev/null || true
     fi
 
     exit 130
 }
 
-trap cleanup SIGINT
+trap cleanup INT
 main
