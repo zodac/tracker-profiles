@@ -113,7 +113,6 @@ The application is run using Docker. Below is the command to run the `latest` do
 ```bash
 docker run \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_DATA_STORAGE_PATH=/app/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
@@ -127,7 +126,6 @@ docker run \
     --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
     --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/chrome:/app/tmp/chrome \
     -v /tmp/screenshots:/app/screenshots \
     --name tracker-profiles \
     --rm zodac/tracker-profiles:latest
@@ -159,7 +157,6 @@ The following are all possible configuration options, defined as environment var
 
 | Environment Variable            | Description                                                                                                                | Default Value                                |
 |---------------------------------|----------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| *BROWSER_DATA_STORAGE_PATH*     | The file path in which to store browser data (profiles, caches, etc.)                                                      | /tmp/chrome                                  |
 | *BROWSER_HEIGHT*                | The height (in pixels) of the web browser used to take screenshots                                                         | 1050                                         |
 | *BROWSER_WIDTH*                 | The width (in pixels) of the web browser used to take screenshots                                                          | 1680                                         |
 | *CSV_COMMENT_SYMBOL*            | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                         | #                                            |
@@ -221,7 +218,6 @@ Below is the command to build and run the development docker image with everythi
 docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
 docker run \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_DATA_STORAGE_PATH=/app/tmp/chrome \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
@@ -235,7 +231,6 @@ docker run \
     --env TRACKER_EXECUTION_ORDER=headless,manual,non-english,cloudflare-check \
     --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/chrome:/app/tmp/chrome \
     -v /tmp/screenshots:/app/screenshots \
     --name tracker-profiles-dev \
     --rm tracker-profiles-dev

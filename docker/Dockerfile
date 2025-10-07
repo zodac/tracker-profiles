@@ -53,7 +53,7 @@ COPY ./docker/scripts/start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Stage 5: Shell binaries
-FROM busybox:1.37.0-musl as shell_builder
+FROM busybox:1.37.0-musl AS shell_builder
 
 # Runtime
 FROM debian:12.12-slim
@@ -97,5 +97,29 @@ COPY --from=maven_builder /app/tracker-profiles-screenshots/target/tracker-profi
 COPY --from=scripts_builder /start.sh /app/start.sh
 COPY --from=shell_builder /bin/busybox /bin/wget
 
+HEALTHCHECK --interval=30s \
+            --timeout=5s \
+            --start-period=10s \
+            --retries=3 \
+            CMD [ "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/ping" ]
+
+# Define non-root user UID and GID
+ENV PUID=1000
+ENV PGID=1000
+
+# Create user and group
+RUN groupadd -g ${PGID} nonroot && \
+    useradd -u ${PUID} -g nonroot -d /tmp/chrome-home -m nonroot
+
+# Ensure the home directory has proper ownership
+RUN chown -R nonroot:nonroot /tmp/chrome-home
+
+# Set environment and user
+ENV HOME=/tmp/chrome-home
+USER nonroot
+VOLUME /tmp/chrome-home
+
 # Start application
 CMD ["/app/start.sh"]
+# Debugging
+#ENTRYPOINT ["tail", "-f", "/dev/null"]
