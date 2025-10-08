@@ -70,7 +70,7 @@ public class ScriptExecutor {
     }
 
     /**
-     * Finds a Chrome alert and accepts it.
+     * Finds an alert and accepts it.
      */
     public void acceptAlert() {
         final Wait<WebDriver> wait = new WebDriverWait(driver, DEFAULT_WAIT_FOR_ALERT)

@@ -61,7 +61,7 @@ public record ApplicationConfiguration(
     private static final Logger LOGGER = LogManager.getLogger();
 
     // Default values
-    private static final String BROWSER_DATA_STORAGE_PATH = File.separator + "app" + File.separator + "tmp" + File.separator + "chrome-home";
+    private static final String BROWSER_DATA_STORAGE_PATH = File.separator + "tmp" + File.separator + "chrome-home";
     private static final String DEFAULT_BROWSER_WIDTH = "1680";
     private static final String DEFAULT_BROWSER_HEIGHT = "1050";
     private static final String DEFAULT_CSV_COMMENT_SYMBOL = "#";

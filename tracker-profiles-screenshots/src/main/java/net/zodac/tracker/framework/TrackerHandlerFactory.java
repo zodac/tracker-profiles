@@ -46,7 +46,6 @@ import net.zodac.tracker.framework.driver.python.PythonWebDriverFactory;
 import net.zodac.tracker.framework.exception.DisabledTrackerException;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
 import org.jspecify.annotations.Nullable;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
@@ -82,7 +81,7 @@ public final class TrackerHandlerFactory {
      * If the {@link AbstractTrackerHandler} also has the annotation {@link TrackerDisabled}, it will be skipped.
      *
      * <p>
-     * A new {@link ChromeDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
+     * A new {@link RemoteWebDriver} is created for each {@link TrackerDefinition}. Once created, the size of the browser window is set to
      * {@link ApplicationConfiguration#browserDimensions()}. If {@link ApplicationConfiguration#forceUiBrowser()} is {@code false}, then the
      * execution will be done in the background. Otherwise, a browser window will open for each tracker, and all UI actions will be visible for
      * debugging.

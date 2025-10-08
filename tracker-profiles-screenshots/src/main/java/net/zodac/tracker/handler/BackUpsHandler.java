@@ -98,7 +98,7 @@ public class BackUpsHandler extends AbstractTrackerHandler {
         final WebElement logoutButton = driver.findElement(logoutButtonSelector);
         clickButton(logoutButton);
 
-        // After clicking logout, a Chrome alert appears - find and click 'Yes'
+        // After clicking logout, an alert appears - find and click 'Yes'
         scriptExecutor.acceptAlert();
 
         scriptExecutor.waitForPageToLoad(DEFAULT_WAIT_FOR_PAGE_LOAD);

@@ -34,6 +34,8 @@
 
 set -euo pipefail
 
+DEBIAN_DOCKER_IMAGE_VERSION="13.1"
+
 get_pypi_version() {
     version=$(curl -fsSL "https://pypi.org/pypi/${1}/json" | jq -r '.info.version // empty')
     if [[ -z "$version" ]]; then
@@ -163,7 +165,7 @@ update_debian_packages() {
     fi
 
     get_debian_version() {
-        apt-cache policy "${1}" | awk '/Candidate:/ { print $2 }'
+        docker run --rm "debian:${DEBIAN_DOCKER_IMAGE_VERSION}-slim" sh -c "apt-get update -qq 2>/dev/null && apt-cache policy ${1}" | awk '/Candidate:/ { print $2 }'
     }
 
     # Extract the lines between the start and end markers

@@ -14,7 +14,7 @@ COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
 # Stage 2: Install Python
-FROM python:3.13.5-slim AS python_builder
+FROM python:3.13.7-slim AS python_builder
 
 # BEGIN PYTHON PACKAGES
 RUN python3 -m ensurepip && \
@@ -56,7 +56,7 @@ RUN chmod +x /start.sh
 FROM busybox:1.37.0-musl AS shell_builder
 
 # Runtime
-FROM debian:12.12-slim
+FROM debian:13.1-slim
 
 # Set the working directory
 WORKDIR /app
@@ -64,16 +64,11 @@ WORKDIR /app
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - ca-certificates (SSL)
 # - chromium (web browser)
-# - curl (used to verify Python web server status)
-# - fonts-arphic-ukai (font for Chinese language characters)
-# - x11-apps (UI browser)
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        ca-certificates="20230311+deb12u1" \
-        chromium="141.0.7390.54-1~deb12u1" \
-        fonts-arphic-ukai="0.2.20080216.2-5" \
-        x11-apps="7.7+9" \
+        ca-certificates="20250419" \
+        chromium="141.0.7390.54-1~deb13u1" \
     && \
     apt-get autoremove && \
     apt-get clean && \
