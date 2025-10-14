@@ -109,7 +109,7 @@ public class AbTorrentsHandler extends AbstractTrackerHandler {
     protected void manualCheckAfterLoginClick(final String trackerName) {
         ScriptExecutor.explicitWait(WAIT_FOR_LOGIN_PAGE_LOAD);
 
-        final By pmWarningSelector = By.xpath("//a[b[contains(@class, 'alert-warning') and contains(text(), 'New Private messages')]]");
+        final By pmWarningSelector = By.xpath("//a[b[contains(@class, 'alert-warning') and contains(text(), 'New Private message')]]");
         final List<WebElement> privateMessageWarnings = driver.findElements(pmWarningSelector);
 
         if (privateMessageWarnings.isEmpty()) {
