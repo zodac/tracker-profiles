@@ -21,7 +21,6 @@ import io.github.kusoroadeolu.clique.Clique;
 import io.github.kusoroadeolu.clique.components.ProgressBar;
 import io.github.kusoroadeolu.clique.configuration.ProgressBarConfiguration;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
@@ -37,9 +36,10 @@ import org.jspecify.annotations.Nullable;
  * The bar is kept at the bottom of the console by {@link ProgressBarPrintStream}, which clears and re-renders it around every log line.
  *
  * <p>
- * The Clique bar is driven by fine-grained ticks (one per workflow step: login, profile page, each screenshot, logout) so the fill and
- * percentage update smoothly. A separate tracker counter ({@code X/Y}) is appended to the bar content by {@link #getProgressBarContent()},
- * incremented once per completed tracker via {@link #tickTracker(String)}.
+ * The Clique bar is driven by fine-grained ticks (one per workflow step: login, profile page, each screenshot, logout). The Clique library presents
+ * the percentage complete as the number of {@code :total} completed which is incremented using {@link ProgressBar#tick()}. Since we know each
+ * tracker will have {@link TrackerStep#NUMBER_OF_STEPS} number of units, we also use {@code :units} (number of completed trackers) and
+ * {@code :total-units} (total number of trackers) to count the number of trackers that have been completed.
  */
 public final class ProgressBarManager {
 
@@ -47,11 +47,9 @@ public final class ProgressBarManager {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Lock progressBarLock = new ReentrantLock();
-    private final AtomicInteger completedTrackers = new AtomicInteger(0);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     private @Nullable ProgressBar progressBar;
-    private int trackerTotal;
 
     private ProgressBarManager() {
 
@@ -70,23 +68,19 @@ public final class ProgressBarManager {
      * Creates the progress bar and renders the initial (0%) state. Uses {@link ApplicationConfiguration} to configure the bar.
      *
      * <p>
-     * The Clique bar is initialised with {@code ticksTotal} so the fill and percentage reflect fine-grained workflow progress. The tracker
-     * counter displayed by {@link #getProgressBarContent()} uses {@code trackerTotal}, so users see {@code X/Y trackers} rather than raw
-     * tick numbers.
+     * The bar is initialised with {@code ticksTotal} fine-grained ticks and {@link TrackerStep#NUMBER_OF_STEPS} ticks per unit, so the
+     * Clique {@code :units} and {@code :total-units} format tokens display tracker-level progress.
      *
-     * @param trackerTotal the total number of trackers to screenshot (used for the {@code X/Y} counter suffix)
-     * @param ticksTotal   the total number of fine-grained ticks across all trackers (used for bar fill and percentage)
+     * @param ticksTotal the total number of fine-grained ticks across all trackers (used for bar fill and percentage)
      */
-    public void start(final int trackerTotal, final int ticksTotal) {
-        this.trackerTotal = trackerTotal;
-        this.completedTrackers.set(0);
-
+    public void start(final int ticksTotal) {
         if (CONFIG.progressBarEnabled()) {
             final ProgressBarConfiguration progressBarConfiguration = ProgressBarConfiguration.builder()
                 .length(CONFIG.progressBarLength())
                 .complete(CONFIG.progressBarCompleteCharacter())
                 .incomplete(CONFIG.progressBarIncompleteCharacter())
                 .format(CONFIG.progressBarFormat())
+                .ticksPerUnit(TrackerStep.NUMBER_OF_STEPS)
                 .build();
             LOGGER.trace("Starting progress bar with configuration: {}", progressBarConfiguration);
             progressBar = Clique.progressBar(ticksTotal, progressBarConfiguration);
@@ -164,18 +158,7 @@ public final class ProgressBarManager {
     }
 
     /**
-     * Increments the completed-tracker counter shown in the {@code X/Y} suffix of {@link #getProgressBarContent()}. Call once per tracker,
-     * after all fine-grained ticks for that tracker have been issued.
-     *
-     * @param trackerName the name of the tracker
-     */
-    public void tickTracker(final String trackerName) {
-        LOGGER.trace("Updating progress for tracker: {}", trackerName);
-        completedTrackers.incrementAndGet();
-    }
-
-    /**
-     * Returns the full bar string to render: the Clique-rendered bar followed by the tracker counter ({@code X/Y}) as a suffix.
+     * Returns the full bar string to render.
      *
      * @return the rendered bar string, or an empty string if the bar has not been started
      */
@@ -186,9 +169,7 @@ public final class ProgressBarManager {
 
         progressBarLock.lock();
         try {
-            final int trackerTotalWidth = String.valueOf(trackerTotal).length();
-            final String trackerCounter = ("%" + trackerTotalWidth + "d/%d").formatted(completedTrackers.get(), trackerTotal);
-            return "%s | %s trackers".formatted(progressBar.get(), trackerCounter);
+            return progressBar.get();
         } finally {
             progressBarLock.unlock();
         }

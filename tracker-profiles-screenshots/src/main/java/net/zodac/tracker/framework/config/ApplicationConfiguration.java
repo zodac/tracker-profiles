@@ -106,7 +106,7 @@ public record ApplicationConfiguration(
     private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
     private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "/app/screenshots";
     private static final String DEFAULT_PROGRESS_BAR_COMPLETE_CHARACTER = "█";
-    private static final String DEFAULT_PROGRESS_BAR_FORMAT = ":bar :percent% | [:elapsed]";
+    private static final String DEFAULT_PROGRESS_BAR_FORMAT = ":bar :percent% | [:elapsed] | :units/:total-units trackers";
     private static final String DEFAULT_PROGRESS_BAR_INCOMPLETE_CHARACTER = "░";
     private static final String DEFAULT_REDACTION_TYPE = "BOX";
     private static final ExistingScreenshotAction DEFAULT_SCREENSHOT_EXISTS_ACTION = ExistingScreenshotAction.CREATE_ANOTHER;

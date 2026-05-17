@@ -78,7 +78,7 @@ public final class ScreenshotOrchestrator {
             LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers));
 
             TrackerRetriever.printTrackersInfo(trackersByType, CONFIG.trackerExecutionOrder());
-            progressBarManager.start(numberOfTrackers, numberOfTrackers * TrackerStep.NUMBER_OF_STEPS);
+            progressBarManager.start(numberOfTrackers * TrackerStep.NUMBER_OF_STEPS);
 
             // Get the max length so we don't resize the log entry during execution
             final int maxTrackerNameLength = maxTrackerNameLength(trackersByType);
@@ -124,7 +124,6 @@ public final class ScreenshotOrchestrator {
             trackerScreenshotTasks.add(() -> {
                 final boolean success = ProfileScreenshotExecutor.takeScreenshot(tracker, progressBarManager, maxTrackerNameLength);
                 resultCollector.addResult(trackerType, tracker.name(), success);
-                progressBarManager.tickTracker(tracker.name());
                 return null;
             });
         }
