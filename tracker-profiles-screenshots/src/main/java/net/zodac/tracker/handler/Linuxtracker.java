@@ -22,8 +22,8 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.form;
 import static net.zodac.tracker.framework.xpath.HtmlElement.img;
 import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.HtmlElement.td;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsFlag;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsHref;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsSrc;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withHref;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withName;
@@ -68,7 +68,7 @@ public class Linuxtracker extends AbstractTrackerHandler {
     protected By profilePageElementSelector() {
         return XpathBuilder
             .from(td, withClass("lista"))
-            .child(img, containsSrc("images/flag"))
+            .child(img, containsFlag())
             .build();
     }
 

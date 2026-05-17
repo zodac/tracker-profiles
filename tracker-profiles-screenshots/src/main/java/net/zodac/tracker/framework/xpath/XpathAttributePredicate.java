@@ -120,6 +120,27 @@ public final class XpathAttributePredicate {
     }
 
     /**
+     * Update the XPATH query to filter the element at the current position if its {@code src} attribute contains the substring {@code flag}.
+     *
+     * <p>
+     * Convenience for matching country flag images, which are served from various paths across trackers
+     * (e.g. {@code pic/flag/}, {@code pic/flags/}, {@code images/flag/}, {@code img/flag/}).
+     *
+     * <p>
+     * Adds:
+     *
+     * <pre>
+     *      //existing_query<u>[contains(@src, '/flag')]</u>
+     * </pre>
+     *
+     * @return this {@link XpathAttributePredicate}
+     * @see #containsSrc(String)
+     */
+    public static XpathPredicate containsFlag() {
+        return containsSrc("/flag");
+    }
+
+    /**
      * Update the XPATH query to filter the element at the current position if it contains the provided {@code href} attribute.
      *
      * <p>
@@ -151,7 +172,6 @@ public final class XpathAttributePredicate {
      * @return this {@link XpathAttributePredicate}
      * @see #containsAttribute(String, String)
      */
-    // TODO: Make a containsFlag method for convenience?
     public static XpathPredicate containsSrc(final String value) {
         return containsAttribute("src", value);
     }

@@ -25,7 +25,7 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.tbody;
 import static net.zodac.tracker.framework.xpath.HtmlElement.td;
 import static net.zodac.tracker.framework.xpath.HtmlElement.tr;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsSrc;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsFlag;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
@@ -64,7 +64,7 @@ public class DimeaDozen extends AbstractTrackerHandler {
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(img, containsSrc("images/flag/"))
+            .from(img, containsFlag())
             .build();
     }
 

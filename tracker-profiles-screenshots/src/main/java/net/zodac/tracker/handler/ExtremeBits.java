@@ -23,7 +23,7 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.img;
 import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsSrc;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsFlag;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
@@ -69,7 +69,7 @@ public class ExtremeBits extends AbstractTrackerHandler {
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(img, containsSrc("img/flag/"))
+            .from(img, containsFlag())
             .build();
     }
 

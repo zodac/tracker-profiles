@@ -25,8 +25,8 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.li;
 import static net.zodac.tracker.framework.xpath.HtmlElement.nav;
 import static net.zodac.tracker.framework.xpath.HtmlElement.ul;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsFlag;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsHref;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsSrc;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttribute;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
@@ -88,7 +88,7 @@ public class F1Gp extends AbstractTrackerHandler implements HasFixedHeader {
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(img, containsSrc("images/flag/"))
+            .from(img, containsFlag())
             .build();
     }
 
