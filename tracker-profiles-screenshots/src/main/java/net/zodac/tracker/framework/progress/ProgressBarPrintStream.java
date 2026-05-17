@@ -54,7 +54,7 @@ public final class ProgressBarPrintStream extends PrintStream {
      * Creates a {@link ProgressBarPrintStream} that wraps {@link System#out}.
      */
     public ProgressBarPrintStream(final ProgressBarManager progressBarManager) {
-        super(System.out, true, StandardCharsets.UTF_8);
+        super(WRAPPED_STREAM, true, StandardCharsets.UTF_8);
         this.progressBarManager = progressBarManager;
         this.progressBarLock = progressBarManager.getProgressBarLock();
     }

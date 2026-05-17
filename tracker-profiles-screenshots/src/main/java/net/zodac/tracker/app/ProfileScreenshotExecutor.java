@@ -18,11 +18,11 @@
 package net.zodac.tracker.app;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -35,6 +35,7 @@ import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.config.ExistingScreenshotAction;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
+import net.zodac.tracker.framework.exception.ScreenshotWriteError;
 import net.zodac.tracker.framework.exception.TrackerUnavailableException;
 import net.zodac.tracker.framework.exception.TranslationException;
 import net.zodac.tracker.framework.progress.ProgressBarManager;
@@ -110,54 +111,56 @@ final class ProfileScreenshotExecutor {
     }
 
     private static boolean takeScreenshotWithAttempts(final TrackerCredential trackerCredential, final ProgressBarManager progressBarManager) {
-        for (int attempt = 1; attempt <= MAXIMUM_SCREENSHOT_ATTEMPTS; attempt++) {
-            if (attempt != FIRST_ATTEMPT) {
-                LOGGER.warn("");
-                LOGGER.info("[{}] (attempt {}/{})", trackerCredential.name(), attempt, MAXIMUM_SCREENSHOT_ATTEMPTS);
-            }
+        // May be overwritten during execution with updated count
+        // Must be defined at this level so it can retain successful steps through retries
+        final Set<TrackerStep> successfulSteps = EnumSet.noneOf(TrackerStep.class);
 
-            try {
-                final boolean screenshotResult = isSuccessfullyScreenshot(trackerCredential, progressBarManager);
+        try {
+            for (int attempt = 1; attempt <= MAXIMUM_SCREENSHOT_ATTEMPTS; attempt++) {
+                if (attempt != FIRST_ATTEMPT) {
+                    LOGGER.warn("");
+                    LOGGER.info("[{}] (attempt {}/{})", trackerCredential.name(), attempt, MAXIMUM_SCREENSHOT_ATTEMPTS);
+                }
 
-                if (screenshotResult) {
+                final Set<TrackerStep> screenshotResult = screenshotTracker(trackerCredential, progressBarManager, successfulSteps);
+                if (screenshotResult.size() == TrackerStep.NUMBER_OF_STEPS) { // All steps were successful
                     LOGGER.trace("Successfully screenshot '{}' on attempt #{}", trackerCredential.name(), attempt);
                     clearErrorScreenshots(trackerCredential.name(), ERRORS_DIRECTORY);
                     return true;
                 }
-            } catch (final Exception e) {
-                LOGGER.trace("Error screenshotting '{}' on attempt #{}", trackerCredential.name(), attempt, e);
-                final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
-                if (cleanedErrorMessage.isEmpty()) {
-                    LOGGER.warn("\t- Unexpected {} escaped error handling for tracker '{}'", e.getClass().getSimpleName(), trackerCredential.name());
-                } else {
-                    LOGGER.warn("\t- Unexpected {} escaped error handling for tracker '{}': {}", e.getClass().getSimpleName(),
-                        trackerCredential.name(), cleanedErrorMessage);
-                }
+            }
+
+            LOGGER.debug("\t- All {} attempts exhausted for tracker '{}'", MAXIMUM_SCREENSHOT_ATTEMPTS, trackerCredential.name());
+            return false;
+        } finally {
+            final int remaining = TrackerStep.NUMBER_OF_STEPS - successfulSteps.size();
+            if (remaining > 0) {
+                LOGGER.trace("Advancing progress bar {} missed step{} due to failed execution", remaining, StringUtils.pluralise(remaining));
+                progressBarManager.tickMultipleSteps(remaining);
             }
         }
-
-        LOGGER.debug("\t- All {} attempts exhausted for tracker '{}'", MAXIMUM_SCREENSHOT_ATTEMPTS, trackerCredential.name());
-        return false;
     }
 
-    private static boolean isSuccessfullyScreenshot(final TrackerCredential trackerCredential, final ProgressBarManager progressBarManager) {
+    private static Set<TrackerStep> screenshotTracker(final TrackerCredential trackerCredential, final ProgressBarManager progressBarManager,
+                                                      final Set<TrackerStep> successfulSteps) {
         AbstractTrackerHandler trackerHandler = null;
         try { // NOPMD: UseTryWithResources - need access to the trackerHandler to take a screenshot on error
             trackerHandler = TrackerHandlerFactory.getHandler(trackerCredential.name());
-            screenshotProfile(trackerHandler, trackerCredential, progressBarManager);
-            return true;
+            screenshotProfile(trackerHandler, trackerCredential, progressBarManager, successfulSteps);
+            return successfulSteps;
         } catch (final CancelledInputException e) {
             LOGGER.debug("\t- User cancelled manual input for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- User cancelled manual input for tracker '{}'", trackerCredential.name());
-        } catch (final FileNotFoundException e) {
-            LOGGER.debug("\t- Unable to find expected file for tracker '{}'", trackerCredential.name());
-            LOGGER.warn("\t- Unable to find expected file for tracker '{}': {}", trackerCredential.name(), e.getMessage());
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerCredential.name());
         } catch (final NoUserInputException e) {
+            final String errorMessage = e.getCause() == null ? e.getMessage() : e.getCause().getMessage();
             LOGGER.debug("\t- User provided no manual input for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- User provided no manual input for tracker '{}'", trackerCredential.name());
+            LOGGER.warn("\t- User provided no manual input for tracker '{}': {}", trackerCredential.name(), errorMessage);
+        } catch (final ScreenshotWriteError e) {
+            LOGGER.debug("\t- Error writing screenshot for tracker '{}'", trackerCredential.name(), e);
+            LOGGER.warn("\t- Error writing screenshot for tracker '{}'", trackerCredential.name());
         } catch (final TimeoutException e) {
             screenshotOnError(trackerHandler, trackerCredential.name(), ERRORS_DIRECTORY);
             LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerCredential.name(), e);
@@ -194,7 +197,7 @@ final class ProfileScreenshotExecutor {
             }
         }
 
-        return false;
+        return successfulSteps;
     }
 
     private static void clearErrorScreenshots(final String trackerName, final Path directory) {
@@ -265,80 +268,79 @@ final class ProfileScreenshotExecutor {
     }
 
     private static void screenshotProfile(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
-                                          final ProgressBarManager progressBarManager) throws IOException {
+                                          final ProgressBarManager progressBarManager, final Set<TrackerStep> successfulSteps) {
         LOGGER.trace("\t- Starting to take screenshot of profile");
-        int completedSteps = 0;
-        try {
-            final List<RedactionType> redactionsToExecute = redactionTypesToExecute(trackerCredential.name(), CONFIG.redactionTypes());
-            if (redactionsToExecute.isEmpty()) {
-                LOGGER.warn("\t- Screenshots already exist for all redaction types for tracker '{}', skipping", trackerCredential.name());
-                return;
-            }
+        final List<RedactionType> redactionsToExecute = redactionTypesToExecute(trackerCredential.name(), CONFIG.redactionTypes());
+        if (redactionsToExecute.isEmpty()) {
+            LOGGER.warn("\t- Screenshots already exist for all redaction types for tracker '{}', skipping", trackerCredential.name());
+            successfulSteps.addAll(EnumSet.allOf(TrackerStep.class));
+            return;
+        }
 
-            if (redactionsToExecute.size() != CONFIG.redactionTypes().size()) {
-                LOGGER.warn("\t- Some screenshots already exist for tracker '{}', only executing: {}", trackerCredential.name(), redactionsToExecute);
-            }
+        if (redactionsToExecute.size() != CONFIG.redactionTypes().size()) {
+            LOGGER.warn("\t- Some screenshots already exist for tracker '{}', only executing: {}", trackerCredential.name(), redactionsToExecute);
+        }
 
-            LOGGER.info("\t- Opening tracker");
-            trackerHandler.openTracker();
-            trackerHandler.navigateToLoginPage(trackerCredential.name());
+        LOGGER.info("\t- Opening tracker");
+        trackerHandler.openTracker();
+        trackerHandler.navigateToLoginPage(trackerCredential.name());
+        if (!successfulSteps.contains(TrackerStep.OPEN_TRACKER)) {
             progressBarManager.tick(TrackerStep.OPEN_TRACKER);
-            completedSteps++;
+            successfulSteps.add(TrackerStep.OPEN_TRACKER);
+        }
 
-            LOGGER.info("\t- Logging in as '{}'", trackerCredential.username());
-            trackerHandler.login(trackerCredential.username(), trackerCredential.password(), trackerCredential.name());
+        LOGGER.info("\t- Logging in as '{}'", trackerCredential.username());
+        trackerHandler.login(trackerCredential.username(), trackerCredential.password(), trackerCredential.name());
 
-            if (trackerHandler instanceof HasDismissibleElement trackerWithBanner) {
-                trackerWithBanner.dismiss();
-                LOGGER.info("\t- Banner has been cleared");
-            }
+        if (trackerHandler instanceof HasDismissibleElement trackerWithBanner) {
+            trackerWithBanner.dismiss();
+            LOGGER.info("\t- Banner has been cleared");
+        }
+        if (!successfulSteps.contains(TrackerStep.LOGIN)) {
             progressBarManager.tick(TrackerStep.LOGIN);
-            completedSteps++;
+            successfulSteps.add(TrackerStep.LOGIN);
+        }
 
-            LOGGER.info("\t- Opening user profile page");
-            trackerHandler.openProfilePage();
+        LOGGER.info("\t- Opening user profile page");
+        trackerHandler.openProfilePage();
+        if (!successfulSteps.contains(TrackerStep.OPEN_PROFILE_PAGE)) {
             progressBarManager.tick(TrackerStep.OPEN_PROFILE_PAGE);
-            completedSteps++;
+            successfulSteps.add(TrackerStep.OPEN_PROFILE_PAGE);
+        }
 
-            final boolean scrollDuringScreenshot = !(trackerHandler instanceof DoesNotScrollDuringScreenshot);
+        final boolean scrollDuringScreenshot = !(trackerHandler instanceof DoesNotScrollDuringScreenshot);
 
-            // If the tracker has no sensitive information, all redaction types produce identical screenshots, so we take a single one
-            final List<RedactionType> effectiveRedactions;
-            if (trackerHandler.hasSensitiveInformation()) {
-                effectiveRedactions = redactionsToExecute;
-            } else {
-                LOGGER.debug("\t- No sensitive information to redact, taking a single screenshot");
-                effectiveRedactions = redactionTypesToExecute(trackerCredential.name(), Set.of(RedactionType.NONE));
-                if (effectiveRedactions.isEmpty()) {
-                    LOGGER.warn("\t- Screenshot already exists for tracker '{}' with no sensitive information, skipping", trackerCredential.name());
-                }
+        // If the tracker has no sensitive information, all redaction types produce identical screenshots, so we take a single one
+        final List<RedactionType> effectiveRedactions;
+        if (trackerHandler.hasSensitiveInformation()) {
+            effectiveRedactions = redactionsToExecute;
+        } else {
+            LOGGER.debug("\t- No sensitive information to redact, taking a single screenshot");
+            effectiveRedactions = redactionTypesToExecute(trackerCredential.name(), Set.of(RedactionType.NONE));
+            if (effectiveRedactions.isEmpty()) {
+                LOGGER.warn("\t- Screenshot already exists for tracker '{}' with no sensitive information, skipping", trackerCredential.name());
             }
+        }
 
-            updateProfilePage(trackerHandler);
-            for (final RedactionType redactionType : effectiveRedactions) {
-                takeScreenshotForRedactionType(trackerHandler, trackerCredential, redactionType, scrollDuringScreenshot);
-            }
+        updateProfilePage(trackerHandler);
+        for (final RedactionType redactionType : effectiveRedactions) {
+            takeScreenshotForRedactionType(trackerHandler, trackerCredential, redactionType, scrollDuringScreenshot);
+        }
+        if (!successfulSteps.contains(TrackerStep.TAKE_SCREENSHOTS)) {
             progressBarManager.tick(TrackerStep.TAKE_SCREENSHOTS);
-            completedSteps++;
+            successfulSteps.add(TrackerStep.TAKE_SCREENSHOTS);
+        }
 
-            trackerHandler.logout();
-            LOGGER.info("\t- Logged out");
+        trackerHandler.logout();
+        LOGGER.info("\t- Logged out");
+        if (!successfulSteps.contains(TrackerStep.LOGOUT)) {
             progressBarManager.tick(TrackerStep.LOGOUT);
-            completedSteps++;
-        } finally {
-            final int remaining = TrackerStep.NUMBER_OF_STEPS - completedSteps;
-            if (remaining > 0) {
-                LOGGER.trace("Advancing progress bar {} missed step{} due to failed execution", remaining, StringUtils.pluralise(remaining));
-                progressBarManager.tickMultipleSteps(remaining);
-            }
+            successfulSteps.add(TrackerStep.LOGOUT);
         }
     }
 
-    private static void takeScreenshotForRedactionType(final AbstractTrackerHandler trackerHandler,
-                                                       final TrackerCredential trackerCredential,
-                                                       final RedactionType redactionType,
-                                                       final boolean scrollDuringScreenshot
-    ) throws IOException {
+    private static void takeScreenshotForRedactionType(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
+                                                       final RedactionType redactionType, final boolean scrollDuringScreenshot) {
         LOGGER.info("\t- Redaction: {}", redactionType.formattedName());
         final String baseName = screenshotBaseName(trackerCredential.name(), redactionType);
 
@@ -352,10 +354,10 @@ final class ProfileScreenshotExecutor {
         try {
             LOGGER.info("\t\t- Screenshot saved at: [{}]", pendingWrite.get().getAbsolutePath());
         } catch (final ExecutionException e) {
-            throw new IOException("Failed to write screenshot for '%s'".formatted(baseName), e);
+            throw new ScreenshotWriteError(baseName, e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("Interrupted while writing screenshot for '%s'".formatted(baseName), e);
+            throw new ScreenshotWriteError(baseName, e);
         }
 
         if (redactor != null) {
