@@ -35,6 +35,7 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.gui.DialogPosition;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -42,7 +43,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code SocietyGlitch} tracker.
  */
 @TrackerHandler(name = "SocietyGlitch", type = TrackerType.MANUAL, url = "https://stalker.societyglitch.com/")
-public class SocietyGlitch extends AbstractTrackerHandler {
+public class SocietyGlitch extends AbstractTrackerHandler implements RedactsIpAddress {
 
     /**
      * {@inheritDoc}
@@ -96,7 +97,7 @@ public class SocietyGlitch extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("contentcontainer"))

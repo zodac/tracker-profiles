@@ -28,13 +28,14 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIrcPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Fappaizuri} tracker.
  */
 @TrackerHandler(name = "Fappaizuri", adult = true, url = "https://fappaizuri.me/")
-public class Fappaizuri extends AbstractTrackerHandler {
+public class Fappaizuri extends AbstractTrackerHandler implements RedactsIrcPasskey {
 
     @Override
     protected By passwordFieldSelector() {
@@ -68,7 +69,7 @@ public class Fappaizuri extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ircPasskeyElements() {
+    public Collection<By> ircPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("myFrame-content"))

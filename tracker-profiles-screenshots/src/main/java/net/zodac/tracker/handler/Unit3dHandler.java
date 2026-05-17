@@ -39,6 +39,8 @@ import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import net.zodac.tracker.redaction.RedactionBuffer;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -71,7 +73,7 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "SlobitMedia", url = "https://media.slo-bitcloud.eu/")
 @TrackerHandler(name = "Unwalled", url = "https://unwalled.cc/")
 @TrackerHandler(name = "VietMediaF", url = "https://tracker.vietmediaf.store/")
-public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedHeader {
+public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedHeader, RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -136,7 +138,7 @@ public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissi
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("key-value__group"))
@@ -152,12 +154,12 @@ public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissi
      * The redaction doesn't cover the full {@code <li>} element for some reason, so we extend it to the left.
      */
     @Override
-    protected RedactionBuffer emailElementBuffer() {
+    public RedactionBuffer emailElementBuffer() {
         return RedactionBuffer.withLeftOffset(6);
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("data-table"))

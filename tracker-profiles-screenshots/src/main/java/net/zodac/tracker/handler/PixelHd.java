@@ -38,6 +38,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -45,7 +47,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code PixelHD} tracker.
  */
 @TrackerHandler(name = "PixelHD", url = "https://pixelhd.me/")
-public class PixelHd extends AbstractTrackerHandler implements HasDismissibleElement {
+public class PixelHd extends AbstractTrackerHandler implements HasDismissibleElement, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By loginPageSelector() {
@@ -141,7 +143,7 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))
@@ -154,7 +156,7 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

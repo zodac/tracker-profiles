@@ -35,7 +35,7 @@ public class CathodeRayTube extends LuminanceHandler {
      * For {@link CathodeRayTube}, the passkey is hidden by default.
      */
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of();
     }
 }

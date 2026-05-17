@@ -30,6 +30,8 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -37,7 +39,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code P2PBG} tracker.
  */
 @TrackerHandler(name = "P2PBG", url = "https://www.p2pbg.com/")
-public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleElement {
+public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleElement, RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By usernameFieldSelector() {
@@ -80,7 +82,7 @@ public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleEleme
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("article"), withClass("profile-shell__identity-panel"), atIndex(1))
@@ -91,7 +93,7 @@ public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleEleme
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("article"), withClass("profile-shell__identity-panel"), atIndex(1))

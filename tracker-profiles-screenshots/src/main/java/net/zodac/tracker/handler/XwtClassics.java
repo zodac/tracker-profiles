@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -41,7 +42,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code XWT-Classics} tracker.
  */
 @TrackerHandler(name = "XWT-Classics", url = "https://xwt-classics.net/")
-public class XwtClassics extends AbstractTrackerHandler {
+public class XwtClassics extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -70,7 +71,7 @@ public class XwtClassics extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("content"))

@@ -95,7 +95,7 @@ public class Empornium extends LuminanceHandler implements HasProfilePageActions
      * For {@link Empornium}, the IP address is not visible on the profile page.
      */
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of();
     }
 
@@ -106,7 +106,7 @@ public class Empornium extends LuminanceHandler implements HasProfilePageActions
      * For {@link Empornium}, the torrent passkey is not visible on the profile page.
      */
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of();
     }
 }

@@ -30,13 +30,14 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsIrcPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Extension of the {@link LuminanceHandler} for the {@code Libble} tracker.
  */
 @TrackerHandler(name = "Libble", url = "https://libble.me/")
-public class Libble extends LuminanceHandler implements HasFixedHeader {
+public class Libble extends LuminanceHandler implements HasFixedHeader, RedactsIrcPasskey {
 
     @Override
     public By loginPageSelector() {
@@ -69,7 +70,7 @@ public class Libble extends LuminanceHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> ircPasskeyElements() {
+    public Collection<By> ircPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))
@@ -81,7 +82,7 @@ public class Libble extends LuminanceHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

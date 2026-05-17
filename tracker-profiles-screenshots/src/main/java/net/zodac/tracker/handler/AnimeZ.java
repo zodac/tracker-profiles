@@ -34,6 +34,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -41,7 +42,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code AnimeZ} tracker.
  */
 @TrackerHandler(name = "AnimeZ", type = TrackerType.MANUAL, url = "https://animez.to/")
-public class AnimeZ extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader {
+public class AnimeZ extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader, RedactsEmail {
 
     @Override
     public By loginPageSelector() {
@@ -98,7 +99,7 @@ public class AnimeZ extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("card"))

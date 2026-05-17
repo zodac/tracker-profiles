@@ -37,6 +37,8 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 
@@ -44,7 +46,7 @@ import org.openqa.selenium.By;
  * Implementation of {@link AbstractTrackerHandler} for the {@code BTArg} tracker.
  */
 @TrackerHandler(name = "BTArg", type = TrackerType.MANUAL, url = "https://www.btarg.com.ar/")
-public class BtArg extends AbstractTrackerHandler implements NeedsExplicitTranslation {
+public class BtArg extends AbstractTrackerHandler implements NeedsExplicitTranslation, RedactsEmail, RedactsSensitiveInformation {
 
     @Nullable
     @Override
@@ -82,7 +84,7 @@ public class BtArg extends AbstractTrackerHandler implements NeedsExplicitTransl
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("main"))
@@ -95,7 +97,7 @@ public class BtArg extends AbstractTrackerHandler implements NeedsExplicitTransl
     }
 
     @Override
-    protected Map<String, By> sensitiveElements() {
+    public Map<String, By> sensitiveElements() {
         return Map.of(
             "IP and ISP", XpathBuilder
                 .from(table, withClass("main"))

@@ -90,12 +90,12 @@ public class Aura4k extends Unit3dHandler {
      * For {@link Aura4k}, the email address is not visible on the profile page.
      */
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of();
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("wow-table"))

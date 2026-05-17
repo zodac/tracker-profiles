@@ -40,7 +40,7 @@ public class YuScene extends Unit3dHandler {
      * For {@link YuScene}, the email address is hidden by default.
      */
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of();
     }
 
@@ -51,7 +51,7 @@ public class YuScene extends Unit3dHandler {
      * For {@link YuScene}, the IP address for active clients are hidden by default.
      */
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of();
     }
 }

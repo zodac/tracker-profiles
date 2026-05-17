@@ -94,7 +94,7 @@ public class ExoticaZ extends AvistazNetworkHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(main, withId("content-area"))
@@ -110,7 +110,7 @@ public class ExoticaZ extends AvistazNetworkHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(main, withId("content-area"))

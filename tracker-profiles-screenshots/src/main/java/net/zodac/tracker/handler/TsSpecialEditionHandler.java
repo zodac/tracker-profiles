@@ -36,6 +36,8 @@ import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 
 /**
@@ -46,7 +48,7 @@ import org.openqa.selenium.By;
 @TrackerHandler(name = "ImmortalSeed", url = "https://immortalseed.me/")
 @TrackerHandler(name = "Tasmanit.es", url = "https://tasmanit.es/")
 @TrackerHandler(name = "T3nnis", url = "https://t3nnis.tv/")
-public class TsSpecialEditionHandler extends AbstractTrackerHandler {
+public class TsSpecialEditionHandler extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By usernameFieldSelector() {
@@ -93,7 +95,7 @@ public class TsSpecialEditionHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(tbody)
@@ -104,7 +106,7 @@ public class TsSpecialEditionHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // IP address in profile sidebar
             XpathBuilder

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import org.openqa.selenium.By;
 
 /**
@@ -38,7 +39,7 @@ import org.openqa.selenium.By;
     "https://bwtorrents.tv/",
     "https://bwtorrents.cc/"
 })
-public class BwTorrents extends AbstractTrackerHandler {
+public class BwTorrents extends AbstractTrackerHandler implements RedactsEmail {
 
     @Override
     protected By loginButtonSelector() {
@@ -62,7 +63,7 @@ public class BwTorrents extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("details_mail"))

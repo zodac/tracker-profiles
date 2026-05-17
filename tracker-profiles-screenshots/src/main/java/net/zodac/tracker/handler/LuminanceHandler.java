@@ -28,6 +28,7 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
@@ -35,7 +36,7 @@ import org.openqa.selenium.By;
  */
 @CommonTrackerHandler("Luminance")
 @TrackerHandler(name = "PixelCove", url = "https://www.pixelcove.me/")
-public class LuminanceHandler extends GazelleHandler {
+public class LuminanceHandler extends GazelleHandler implements RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -48,7 +49,7 @@ public class LuminanceHandler extends GazelleHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

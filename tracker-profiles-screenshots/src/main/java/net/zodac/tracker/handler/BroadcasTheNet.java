@@ -86,7 +86,7 @@ public class BroadcasTheNet extends GazelleHandler implements HasCloudflareCheck
      * For {@link BroadcasTheNet}, the email address is not visible on the profile page.
      */
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of();
     }
 
@@ -97,7 +97,7 @@ public class BroadcasTheNet extends GazelleHandler implements HasCloudflareCheck
      * For {@link BroadcasTheNet}, the IP address is not visible on the profile page.
      */
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of();
     }
 

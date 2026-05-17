@@ -33,6 +33,7 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -40,7 +41,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code SkyeySnow} tracker.
  */
 @TrackerHandler(name = "SkyeySnow", type = TrackerType.MANUAL, url = "https://skyeysnow.com/")
-public class SkyeySnow extends AbstractTrackerHandler implements NeedsExplicitTranslation {
+public class SkyeySnow extends AbstractTrackerHandler implements NeedsExplicitTranslation, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -68,7 +69,7 @@ public class SkyeySnow extends AbstractTrackerHandler implements NeedsExplicitTr
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // Registration IP
             XpathBuilder

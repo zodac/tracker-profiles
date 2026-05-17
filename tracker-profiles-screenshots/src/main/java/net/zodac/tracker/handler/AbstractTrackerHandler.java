@@ -20,9 +20,7 @@ package net.zodac.tracker.handler;
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import net.zodac.tracker.app.ScreenshotOrchestrator;
 import net.zodac.tracker.framework.TrackerDefinition;
@@ -34,12 +32,15 @@ import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsIrcPasskey;
+import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import net.zodac.tracker.handler.definition.TrackerTimings;
 import net.zodac.tracker.handler.definition.UsesExtensions;
-import net.zodac.tracker.redaction.RedactionBuffer;
 import net.zodac.tracker.redaction.Redactor;
 import net.zodac.tracker.util.BrowserInteractionHelper;
-import net.zodac.tracker.util.TextSearcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -376,174 +377,60 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @return <code>true</code> if there are elements in need of redaction
      */
     public final boolean hasSensitiveInformation() {
-        return !emailElements().isEmpty()
-            || !ipAddressElements().isEmpty()
-            || !ircPasskeyElements().isEmpty()
-            || !torrentPasskeyElements().isEmpty()
-            || !sensitiveElements().isEmpty();
+        // It's not sufficient to just use instanceof, since some handlers may implement a redaction that a subclass tracker needs to override
+        return (this instanceof RedactsEmail email && !email.emailElements().isEmpty())
+            || (this instanceof RedactsIpAddress ip && !ip.ipAddressElements().isEmpty())
+            || (this instanceof RedactsIrcPasskey irc && !irc.ircPasskeyElements().isEmpty())
+            || (this instanceof RedactsTorrentPasskey torrent && !torrent.torrentPasskeyElements().isEmpty())
+            || (this instanceof RedactsSensitiveInformation sensitive && !sensitive.sensitiveElements().isEmpty());
     }
 
     /**
-     * Retrieves a {@link Collection} of {@link WebElement}s from the user's profile page, where the inner text needs to be redacted. This is used for
-     * {@link WebElement}s that has sensitive information (like an IP address), which should not be visible in the screenshot. Once found, the text
-     * in the {@link WebElement}s is redacted.
+     * Redacts the {@link WebElement}s on the user's profile page that hold sensitive information (email addresses, IP addresses, passkeys, etc.).
+     * Each redaction category is opt-in via the corresponding interfaces:
+     * <ol>
+     *     <li>{@link RedactsEmail}</li>
+     *     <li>{@link RedactsIpAddress}</li>
+     *     <li>{@link RedactsIrcPasskey}</li>
+     *     <li>{@link RedactsTorrentPasskey}</li>
+     *     <li>{@link RedactsSensitiveInformation}</li>
+     * </ol>
      *
      * @param redactor the {@link Redactor} to redact the sensitive information
      * @return the number of {@link WebElement}s where the text has been redacted
      * @see Redactor
      */
     // TODO: Add other redaction types (country, flag, avatar, gender, BT client, BT port, age/birthday, invitedBy)
-    // TODO: Move redaction methods to interfaces
     public int redactElements(final Redactor redactor) {
         LOGGER.trace("Redacting elements");
-        return redactEmailElements(redactor)
-            + redactIpAddressElements(redactor)
-            + redactIrcPasskeyElements(redactor)
-            + redactTorrentPasskeyElements(redactor)
-            + redactSensitiveElements(redactor);
-    }
+        int redacted = 0;
 
-    /**
-     * A {@link Collection} of {@link By} selectors for the user's visible email address on the profile page.
-     *
-     * @return {@link By} selectors for email HTML elements
-     */
-    protected Collection<By> emailElements() {
-        return List.of();
-    }
+        if (this instanceof RedactsEmail emailElements) {
+            LOGGER.debug("\t\t- Redacting email elements");
+            redacted += emailElements.redactEmailElements(driver, redactor);
+        }
 
-    /**
-     * The {@link RedactionBuffer} applied when redacting email elements. Override to adjust the buffer for a specific tracker.
-     *
-     * @return the {@link RedactionBuffer} for email redaction
-     */
-    protected RedactionBuffer emailElementBuffer() {
-        return RedactionBuffer.DEFAULT;
-    }
+        if (this instanceof RedactsIpAddress ipAddressElements) {
+            LOGGER.debug("\t\t- Redacting IP address elements");
+            redacted += ipAddressElements.redactIpAddressElements(driver, redactor);
+        }
 
-    private int redactEmailElements(final Redactor redactor) {
-        LOGGER.debug("\t\t- Redacting email elements");
-        return emailElements()
-            .stream()
-            .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
-            .filter(element -> TextSearcher.hasEmailAddress(browserInteractionHelper.getTextContent(element)))
-            .mapToInt(element -> redactor.redactEmail(element, emailElementBuffer()))
-            .sum();
-    }
+        if (this instanceof RedactsIrcPasskey ircPasskeyElements) {
+            LOGGER.debug("\t\t- Redacting IRC passkey elements");
+            redacted += ircPasskeyElements.redactIrcPasskeyElements(driver, redactor);
+        }
 
-    /**
-     * A {@link Collection} of {@link By} selectors for the user's visible IP address on the profile page.
-     *
-     * @return {@link By} selectors for IP address HTML elements
-     */
-    protected Collection<By> ipAddressElements() {
-        return List.of();
-    }
+        if (this instanceof RedactsTorrentPasskey torrentPasskeyElements) {
+            LOGGER.debug("\t\t- Redacting torrent passkey elements");
+            redacted += torrentPasskeyElements.redactTorrentPasskeyElements(driver, redactor);
+        }
 
-    /**
-     * The {@link RedactionBuffer} applied when redacting IP address elements. Override to adjust the buffer for a specific tracker.
-     *
-     * @return the {@link RedactionBuffer} for IP address redaction
-     */
-    protected RedactionBuffer ipAddressElementBuffer() {
-        return RedactionBuffer.DEFAULT;
-    }
+        if (this instanceof RedactsSensitiveInformation sensitiveElements) {
+            LOGGER.debug("\t\t- Redacting remaining sensitive elements");
+            redacted += sensitiveElements.redactSensitiveElements(driver, redactor);
+        }
 
-    private int redactIpAddressElements(final Redactor redactor) {
-        LOGGER.debug("\t\t- Redacting IP address elements");
-        return ipAddressElements()
-            .stream()
-            .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
-            .filter(element -> TextSearcher.hasIpAddress(browserInteractionHelper.getTextContent(element)))
-            .mapToInt(element -> redactor.redactIpAddress(element, ipAddressElementBuffer()))
-            .sum();
-    }
-
-    /**
-     * A {@link Collection} of {@link By} selectors for the user's IRC passkey on the profile page.
-     *
-     * @return {@link By} selectors for IRC passkey HTML elements
-     */
-    protected Collection<By> ircPasskeyElements() {
-        return List.of();
-    }
-
-    /**
-     * The {@link RedactionBuffer} applied when redacting IRC passkey elements. Override to adjust the buffer for a specific tracker.
-     *
-     * @return the {@link RedactionBuffer} for passkey redaction
-     */
-    protected RedactionBuffer ircPasskeyElementBuffer() {
-        return RedactionBuffer.DEFAULT;
-    }
-
-    private int redactIrcPasskeyElements(final Redactor redactor) {
-        LOGGER.debug("\t\t- Redacting IRC passkey elements");
-        return ircPasskeyElements()
-            .stream()
-            .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
-            .mapToInt(element -> redactor.redactIrcPasskey(element, ircPasskeyElementBuffer()))
-            .sum();
-    }
-
-    /**
-     * A {@link Collection} of {@link By} selectors for the user's visible torrent passkey on the profile page.
-     *
-     * @return {@link By} selectors for passkey HTML elements
-     */
-    protected Collection<By> torrentPasskeyElements() {
-        return List.of();
-    }
-
-    /**
-     * The {@link RedactionBuffer} applied when redacting torrent passkey elements. Override to adjust the buffer for a specific tracker.
-     *
-     * @return the {@link RedactionBuffer} for torrent passkey redaction
-     */
-    protected RedactionBuffer torrentPasskeyElementBuffer() {
-        return RedactionBuffer.DEFAULT;
-    }
-
-    private int redactTorrentPasskeyElements(final Redactor redactor) {
-        LOGGER.debug("\t\t- Redacting torrent passkey elements");
-        return torrentPasskeyElements()
-            .stream()
-            .flatMap(rootSelector -> driver.findElements(rootSelector).stream())
-            .mapToInt(element -> redactor.redactTorrentPasskey(element, torrentPasskeyElementBuffer()))
-            .sum();
-    }
-
-    /**
-     * A {@link Map} of {@link By} selectors for any miscellaneous sensitive elements visible on the profile page, keyed by a description.
-     *
-     * @return {@link By} selectors for sensitive HTML elements, with a {@link String} describing the content
-     */
-    protected Map<String, By> sensitiveElements() {
-        return Map.of();
-    }
-
-    /**
-     * The {@link RedactionBuffer} applied when redacting sensitive elements. Override to adjust the buffer for a specific tracker.
-     *
-     * @return the {@link RedactionBuffer} for sensitive element redaction
-     */
-    protected RedactionBuffer sensitiveElementBuffer() {
-        return RedactionBuffer.DEFAULT;
-    }
-
-    private int redactSensitiveElements(final Redactor redactor) {
-        LOGGER.debug("\t\t- Redacting remaining sensitive elements");
-        return sensitiveElements().entrySet()
-            .stream()
-            .mapToInt(entry -> {
-                final String description = entry.getKey();
-                final By selector = entry.getValue();
-                return driver.findElements(selector)
-                    .stream()
-                    .mapToInt(element -> redactor.redact(element, description, sensitiveElementBuffer()))
-                    .sum();
-            })
-            .sum();
+        return redacted;
     }
 
     /**

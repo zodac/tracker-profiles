@@ -34,13 +34,15 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DimeADozen} tracker.
  */
 @TrackerHandler(name = "DimeADozen", url = "http://www.dimeadozen.org/")
-public class DimeaDozen extends AbstractTrackerHandler {
+public class DimeaDozen extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -69,7 +71,7 @@ public class DimeaDozen extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(tbody)
@@ -81,7 +83,7 @@ public class DimeaDozen extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(tbody)

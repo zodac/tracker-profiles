@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -40,7 +41,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Alexandria} tracker.
  */
 @TrackerHandler(name = "Alexandria", url = "https://alxdria.org/")
-public class Alexandria extends AbstractTrackerHandler {
+public class Alexandria extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     public By loginPageSelector() {
@@ -70,7 +71,7 @@ public class Alexandria extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(tbody, withClass("p-datatable-tbody"))

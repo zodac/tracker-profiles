@@ -31,6 +31,8 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -38,7 +40,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
  */
 @TrackerHandler(name = "PassThePopcorn", type = TrackerType.MANUAL, url = "https://passthepopcorn.me/")
-public class PassThePopcorn extends AbstractTrackerHandler {
+public class PassThePopcorn extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -98,7 +100,7 @@ public class PassThePopcorn extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("content"))
@@ -109,7 +111,7 @@ public class PassThePopcorn extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // Footer with last used IP address
             XpathBuilder

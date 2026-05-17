@@ -34,13 +34,15 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code CZTeam} tracker.
  */
 @TrackerHandler(name = "CZTeam", type = TrackerType.MANUAL, url = "https://czteam.me/")
-public class CzTeam extends AbstractTrackerHandler implements HasCloudflareCheck {
+public class CzTeam extends AbstractTrackerHandler implements HasCloudflareCheck, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     public By cloudflareSelector() {
@@ -71,7 +73,7 @@ public class CzTeam extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("userdetails-page"))
@@ -84,7 +86,7 @@ public class CzTeam extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.tagName("code")
         );

@@ -41,7 +41,7 @@ public class LpBits extends NexusPhpHandler {
      * For {@link LpBits}, the IP address is already blurred and not visible in the screenshot.
      */
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of();
     }
 }

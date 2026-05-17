@@ -39,6 +39,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -50,7 +52,7 @@ import org.openqa.selenium.WebElement;
  * to the tracker.
  */
 @TrackerHandler(name = "SceneTime", url = "https://scenetime.com/login.php")
-public class SceneTime extends AbstractTrackerHandler implements HasDismissibleElement {
+public class SceneTime extends AbstractTrackerHandler implements HasDismissibleElement, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -98,7 +100,7 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("desc-table"))
@@ -110,7 +112,7 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("passkey-val")
         );

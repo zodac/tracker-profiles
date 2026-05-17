@@ -41,7 +41,7 @@ public class MoreThanTv extends LuminanceHandler implements HasFixedHeader {
      * For {@link MoreThanTv}, the torrent passkey is not visible on the profile page.
      */
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of();
     }
 }

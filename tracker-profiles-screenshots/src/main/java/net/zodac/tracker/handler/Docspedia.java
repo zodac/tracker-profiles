@@ -36,6 +36,8 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -43,7 +45,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Docspedia} tracker.
  */
 @TrackerHandler(name = "Docspedia", type = TrackerType.MANUAL, url = "https://docspedia.world/")
-public class Docspedia extends AbstractTrackerHandler {
+public class Docspedia extends AbstractTrackerHandler implements RedactsIpAddress, RedactsTorrentPasskey {
 
     /**
      * {@inheritDoc}
@@ -90,7 +92,7 @@ public class Docspedia extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("maincolumn"))
@@ -103,7 +105,7 @@ public class Docspedia extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("maincolumn"))

@@ -33,6 +33,7 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -40,7 +41,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code bitGAMER} tracker.
  */
 @TrackerHandler(name = "bitGAMER", url = "https://bitgamer.ch/")
-public class BitGamer extends AbstractTrackerHandler {
+public class BitGamer extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -74,7 +75,7 @@ public class BitGamer extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(td, withClass("embedded"))

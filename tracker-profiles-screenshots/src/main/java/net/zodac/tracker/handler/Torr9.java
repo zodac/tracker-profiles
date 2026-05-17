@@ -34,13 +34,15 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Torr9} tracker.
  */
 @TrackerHandler(name = "Torr9", url = "https://torr9.net/")
-public class Torr9 extends AbstractTrackerHandler implements HasFixedHeader {
+public class Torr9 extends AbstractTrackerHandler implements HasFixedHeader, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -75,7 +77,7 @@ public class Torr9 extends AbstractTrackerHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(input, withType("email"))
@@ -84,7 +86,7 @@ public class Torr9 extends AbstractTrackerHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("code"))

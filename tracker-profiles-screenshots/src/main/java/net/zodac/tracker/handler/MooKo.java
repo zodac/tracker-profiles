@@ -35,6 +35,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -43,7 +45,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code MooKo} tracker.
  */
 @TrackerHandler(name = "MooKo", url = "https://mooko.org/")
-public class MooKo extends AbstractTrackerHandler implements HasFixedHeader {
+public class MooKo extends AbstractTrackerHandler implements HasFixedHeader, RedactsEmail, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -93,7 +95,7 @@ public class MooKo extends AbstractTrackerHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("LayoutMainSidebar-sidebar"))
@@ -105,7 +107,7 @@ public class MooKo extends AbstractTrackerHandler implements HasFixedHeader {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // IP address in profile sidebar
             XpathBuilder

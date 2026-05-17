@@ -29,13 +29,6 @@ import org.openqa.selenium.By;
 @TrackerHandler(name = "DICMusic", url = "https://dicmusic.com/")
 public class DicMusic extends GazelleHandler implements HasJumpButtons {
 
-    @Override
-    public List<By> jumpButtonSelectors() {
-        return List.of(
-            By.id("back-to-top-btn")
-        );
-    }
-
     /**
      * {@inheritDoc}
      *
@@ -47,6 +40,13 @@ public class DicMusic extends GazelleHandler implements HasJumpButtons {
         return profilePageElementSelectorWithLastFm();
     }
 
+    @Override
+    public List<By> jumpButtonSelectors() {
+        return List.of(
+            By.id("back-to-top-btn")
+        );
+    }
+
     /**
      * {@inheritDoc}
      *
@@ -54,7 +54,7 @@ public class DicMusic extends GazelleHandler implements HasJumpButtons {
      * The redaction doesn't cover the full {@code <li>} element for some reason, so we extend it to the left.
      */
     @Override
-    protected RedactionBuffer emailElementBuffer() {
+    public RedactionBuffer emailElementBuffer() {
         return RedactionBuffer.withLeftOffset(7);
     }
 }

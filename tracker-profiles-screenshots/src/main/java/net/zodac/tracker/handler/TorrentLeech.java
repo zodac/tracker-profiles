@@ -35,6 +35,8 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -48,7 +50,7 @@ import org.openqa.selenium.WebElement;
     "https://www.tleechreload.org/",
     "https://www.tlgetin.cc/"
 })
-public class TorrentLeech extends AbstractTrackerHandler implements HasDismissibleElement {
+public class TorrentLeech extends AbstractTrackerHandler implements HasDismissibleElement, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -85,7 +87,7 @@ public class TorrentLeech extends AbstractTrackerHandler implements HasDismissib
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("profileViewTable"))
@@ -97,7 +99,7 @@ public class TorrentLeech extends AbstractTrackerHandler implements HasDismissib
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("profileViewTable"))

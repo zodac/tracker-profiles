@@ -38,6 +38,8 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -48,7 +50,7 @@ import org.openqa.selenium.WebElement;
     "https://hdbits.org/",
     "https://backup.hdbits.org/"
 })
-public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck {
+public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By usernameFieldSelector() {
@@ -112,7 +114,7 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // IP address
             XpathBuilder
@@ -130,7 +132,7 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(tr, withId("seclog"))

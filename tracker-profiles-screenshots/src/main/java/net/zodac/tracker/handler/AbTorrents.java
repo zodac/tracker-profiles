@@ -29,13 +29,14 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
  */
 @TrackerHandler(name = "ABTorrents", url = "https://usefultrash.net/")
-public class AbTorrents extends AbstractTrackerHandler implements HasFixedHeader {
+public class AbTorrents extends AbstractTrackerHandler implements HasFixedHeader, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -65,7 +66,7 @@ public class AbTorrents extends AbstractTrackerHandler implements HasFixedHeader
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(span, withClass("has-text-green"))

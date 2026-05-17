@@ -30,6 +30,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -37,7 +39,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code TheMixingBowl} tracker.
  */
 @TrackerHandler(name = "TheMixingBowl", url = "https://themixingbowl.org/")
-public class TheMixingBowl extends AbstractTrackerHandler {
+public class TheMixingBowl extends AbstractTrackerHandler implements RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By loginPageSelector() {
@@ -67,7 +69,7 @@ public class TheMixingBowl extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // Browser IP address
             By.id("browseip"),
@@ -77,7 +79,7 @@ public class TheMixingBowl extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("passkey")
         );

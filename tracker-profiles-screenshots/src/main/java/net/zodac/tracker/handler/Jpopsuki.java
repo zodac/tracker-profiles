@@ -31,13 +31,14 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Extension of the {@link GazelleHandler} for the {@code Jpopsuki} tracker.
  */
 @TrackerHandler(name = "JPopsuki", url = "https://jpopsuki.eu/")
-public class Jpopsuki extends GazelleHandler {
+public class Jpopsuki extends GazelleHandler implements RedactsTorrentPasskey {
 
     @Override
     public By loginPageSelector() {
@@ -55,7 +56,7 @@ public class Jpopsuki extends GazelleHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(span, withClass("has-text-green"))
@@ -64,7 +65,7 @@ public class Jpopsuki extends GazelleHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

@@ -35,13 +35,15 @@ import java.util.Map;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code SceneHD} tracker.
  */
 @TrackerHandler(name = "SceneHD", url = "https://scenehd.org/")
-public class SceneHd extends AbstractTrackerHandler {
+public class SceneHd extends AbstractTrackerHandler implements RedactsIpAddress, RedactsSensitiveInformation {
 
     @Override
     protected By loginButtonSelector() {
@@ -64,7 +66,7 @@ public class SceneHd extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withId("torrentsblock"))
@@ -74,7 +76,8 @@ public class SceneHd extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Map<String, By> sensitiveElements() {
+    public Map<String, By> sensitiveElements() {
+        // TODO: Split this into IP and ISP?
         return Map.of(
             "IP and ISP", XpathBuilder
                 .from(div, withId("community"))

@@ -36,6 +36,7 @@ import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -50,7 +51,7 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "ThePlace", type = TrackerType.MANUAL, url = "https://theplace.click/")
 @TrackerHandler(name = "TheShow", type = TrackerType.MANUAL, url = "https://theshow.click/")
 @TrackerHandler(name = "TheVault", type = TrackerType.MANUAL, url = "https://thevault.click/")
-public class TheClickHandler extends AbstractTrackerHandler {
+public class TheClickHandler extends AbstractTrackerHandler implements RedactsIpAddress {
 
     /**
      * {@inheritDoc}
@@ -104,7 +105,7 @@ public class TheClickHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(td, withClass("embedded"))

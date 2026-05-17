@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import net.zodac.tracker.redaction.RedactionBuffer;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -45,7 +46,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code MyAnonaMouse} tracker.
  */
 @TrackerHandler(name = "MyAnonaMouse", url = "https://www.myanonamouse.net/")
-public class MyAnonaMouse extends AbstractTrackerHandler {
+public class MyAnonaMouse extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     protected By usernameFieldSelector() {
@@ -80,7 +81,7 @@ public class MyAnonaMouse extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("blockBodyCon"))
@@ -99,7 +100,7 @@ public class MyAnonaMouse extends AbstractTrackerHandler {
      * The redaction doesn't cover the full {@code <li>} element for some reason, so we extend it to the left.
      */
     @Override
-    protected RedactionBuffer ipAddressElementBuffer() {
+    public RedactionBuffer ipAddressElementBuffer() {
         return RedactionBuffer.withLeftOffset(13);
     }
 

@@ -32,13 +32,16 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Shadowbit} tracker.
  */
 @TrackerHandler(name = "Shadowbit", url = "https://shadowbit.cc/")
-public class Shadowbit extends AbstractTrackerHandler {
+public class Shadowbit extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -71,7 +74,7 @@ public class Shadowbit extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("profile-details"))
@@ -82,7 +85,7 @@ public class Shadowbit extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("profile-details"))
@@ -93,7 +96,7 @@ public class Shadowbit extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(code, withId("passkey-display"))

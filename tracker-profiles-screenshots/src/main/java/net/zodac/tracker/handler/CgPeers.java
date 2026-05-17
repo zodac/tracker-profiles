@@ -137,7 +137,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(ul, withClass("stats"))
@@ -147,7 +147,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("cgp-table-main"))

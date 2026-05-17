@@ -40,6 +40,7 @@ import net.zodac.tracker.framework.driver.extension.Extension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginLiteExtension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginSetting;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import net.zodac.tracker.handler.definition.UsesExtensions;
 import org.openqa.selenium.By;
 
@@ -47,7 +48,7 @@ import org.openqa.selenium.By;
  * Implementation of {@link AbstractTrackerHandler} for the {@code PussyTorrents} tracker.
  */
 @TrackerHandler(name = "PussyTorrents", adult = true, url = "https://pussytorrents.org/")
-public class PussyTorrents extends AbstractTrackerHandler implements UsesExtensions {
+public class PussyTorrents extends AbstractTrackerHandler implements RedactsEmail, UsesExtensions {
 
     @Override
     protected By loginButtonSelector() {
@@ -72,7 +73,7 @@ public class PussyTorrents extends AbstractTrackerHandler implements UsesExtensi
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withId("profileTable"))

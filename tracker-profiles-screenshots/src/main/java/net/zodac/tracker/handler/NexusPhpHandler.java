@@ -43,6 +43,8 @@ import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
@@ -53,7 +55,7 @@ import org.openqa.selenium.support.ui.Select;
 @CommonTrackerHandler("NexusPHP")
 @TrackerHandler(name = "52PT", type = TrackerType.MANUAL, url = "https://52pt.site/")
 @TrackerHandler(name = "HDFans", type = TrackerType.MANUAL, url = "https://hdfans.org/")
-public class NexusPhpHandler extends AbstractTrackerHandler {
+public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     private static final ApplicationConfiguration CONFIG = Configuration.get();
 
@@ -139,7 +141,7 @@ public class NexusPhpHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("main"))
@@ -152,7 +154,7 @@ public class NexusPhpHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // Current IP address
             XpathBuilder

@@ -37,6 +37,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -45,7 +47,7 @@ import org.openqa.selenium.NoSuchElementException;
  * Implementation of {@link AbstractTrackerHandler} for the {@code YggReborn} tracker.
  */
 @TrackerHandler(name = "YggReborn", url = "https://www.yggreborn.org/")
-public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader {
+public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By usernameFieldSelector() {
@@ -82,7 +84,7 @@ public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader 
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(main, atIndex(1))
@@ -95,7 +97,7 @@ public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader 
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("announce-url")
         );

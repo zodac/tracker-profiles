@@ -36,6 +36,9 @@ import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -45,7 +48,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code SpeedApp} tracker.
  */
 @TrackerHandler(name = "SpeedApp", url = "https://speedapp.io/")
-public class SpeedApp extends AbstractTrackerHandler implements HasFixedHeader, HasFixedSidebar {
+public class SpeedApp extends AbstractTrackerHandler
+    implements HasFixedHeader, HasFixedSidebar, RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -107,7 +111,7 @@ public class SpeedApp extends AbstractTrackerHandler implements HasFixedHeader, 
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("dl"), withClass("row"))
@@ -118,7 +122,7 @@ public class SpeedApp extends AbstractTrackerHandler implements HasFixedHeader, 
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("dl"), withClass("row"))
@@ -130,7 +134,7 @@ public class SpeedApp extends AbstractTrackerHandler implements HasFixedHeader, 
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("dl"), withClass("row"))

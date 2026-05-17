@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -40,7 +41,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code BakaBT} tracker.
  */
 @TrackerHandler(name = "BakaBT", url = "https://bakabt.me/")
-public class Bakabt extends AbstractTrackerHandler {
+public class Bakabt extends AbstractTrackerHandler implements RedactsEmail {
 
     @Override
     protected By loginButtonSelector() {
@@ -58,7 +59,7 @@ public class Bakabt extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("userstats"))

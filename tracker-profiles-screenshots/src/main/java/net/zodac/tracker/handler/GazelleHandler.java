@@ -33,6 +33,8 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -44,7 +46,7 @@ import org.openqa.selenium.WebElement;
  */
 @CommonTrackerHandler("Gazelle")
 @TrackerHandler(name = "SecretCinema", url = "https://secret-cinema.pw/")
-public class GazelleHandler extends AbstractTrackerHandler {
+public class GazelleHandler extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Nullable
     @Override
@@ -102,7 +104,7 @@ public class GazelleHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(ul, withClass("stats"))
@@ -113,7 +115,7 @@ public class GazelleHandler extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // Last connected IP address
             XpathBuilder

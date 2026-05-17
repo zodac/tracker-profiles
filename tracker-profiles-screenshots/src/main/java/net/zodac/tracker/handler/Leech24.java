@@ -33,6 +33,9 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -40,7 +43,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Leech24} tracker.
  */
 @TrackerHandler(name = "Leech24", type = TrackerType.MANUAL, url = "https://leech24.net/")
-public class Leech24 extends AbstractTrackerHandler implements HasProfilePageActions {
+public class Leech24 extends AbstractTrackerHandler implements HasProfilePageActions, RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
 
     /**
      * {@inheritDoc}
@@ -113,7 +116,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         // The email address and IP address are both contained within this single cell
         return List.of(
             XpathBuilder
@@ -125,7 +128,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         // The email address and IP address are both contained within this single cell
         return List.of(
             XpathBuilder
@@ -143,7 +146,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
      * Uses the custom HTML element we added in {@link #performActionOnProfilePage()}.
      */
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("passkey-value")
         );

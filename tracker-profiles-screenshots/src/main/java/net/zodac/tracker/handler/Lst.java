@@ -105,7 +105,7 @@ public class Lst extends Unit3dHandler {
      * For {@link Lst}, the email is actually defined in a separate section, unlike other {@code UNIT3D}-based trackers.
      */
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         final Collection<By> allEmailElements = new ArrayList<>(super.emailElements());
 
         allEmailElements.add(
@@ -124,7 +124,7 @@ public class Lst extends Unit3dHandler {
      * The {@link RedactionBuffer} set in {@link Unit3dHandler} is excessive for {@link Lst}, so we use {@link RedactionBuffer#DEFAULT} instead.
      */
     @Override
-    protected RedactionBuffer emailElementBuffer() {
+    public RedactionBuffer emailElementBuffer() {
         return RedactionBuffer.DEFAULT;
     }
 }

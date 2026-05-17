@@ -38,6 +38,7 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -45,7 +46,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code TVChaosUK} tracker.
  */
 @TrackerHandler(name = "TVChaosUK", url = "https://tvchaosuk.com/")
-public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedSidebar, HasJumpButtons {
+public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedSidebar, HasJumpButtons, RedactsEmail {
 
     @Override
     public void dismiss() {
@@ -88,7 +89,7 @@ public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleE
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table)

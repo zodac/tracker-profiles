@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -41,7 +43,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code GreatPosterWall} tracker.
  */
 @TrackerHandler(name = "GreatPosterWall", url = "https://greatposterwall.com/")
-public class GreatPosterWall extends AbstractTrackerHandler {
+public class GreatPosterWall extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Override
     public By loginPageSelector() {
@@ -66,7 +68,7 @@ public class GreatPosterWall extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("LayoutMainSidebar-sidebar"))
@@ -78,7 +80,7 @@ public class GreatPosterWall extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             // IP address in profile sidebar
             XpathBuilder

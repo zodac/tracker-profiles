@@ -39,6 +39,7 @@ import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
+import net.zodac.tracker.handler.definition.RedactsEmail;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -46,7 +47,8 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link Zappateers} for the {@code Zappateers} tracker.
  */
 @TrackerHandler(name = "Zappateers", url = "https://zappateers.com/")
-public class Zappateers extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedHeader, HasFixedSidebar, HasJumpButtons {
+public class Zappateers extends AbstractTrackerHandler
+    implements HasDismissibleElement, HasFixedHeader, HasFixedSidebar, HasJumpButtons, RedactsEmail {
 
     /**
      * {@inheritDoc}
@@ -119,7 +121,7 @@ public class Zappateers extends AbstractTrackerHandler implements HasDismissible
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(table)

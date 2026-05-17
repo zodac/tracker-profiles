@@ -55,7 +55,7 @@ public class Nebulance extends LuminanceHandler implements HasProfilePageActions
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

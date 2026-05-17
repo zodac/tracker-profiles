@@ -45,6 +45,8 @@ import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -55,7 +57,7 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "AvistaZ", type = TrackerType.MANUAL, url = "https://avistaz.to/")
 @TrackerHandler(name = "CinemaZ", type = TrackerType.MANUAL, url = "https://cinemaz.to/")
 @TrackerHandler(name = "PrivateHD", type = TrackerType.MANUAL, url = "https://privatehd.to/")
-public class AvistazNetworkHandler extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader {
+public class AvistazNetworkHandler extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader, RedactsEmail, RedactsIpAddress {
 
     @Override
     public By loginPageSelector() {
@@ -132,7 +134,7 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("section"), withId("content-area"))
@@ -146,7 +148,7 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(NamedHtmlElement.of("section"), withId("content-area"))

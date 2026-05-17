@@ -35,6 +35,9 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -43,7 +46,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
  */
 @TrackerHandler(name = "LastFiles", type = TrackerType.MANUAL, url = "https://last-torrents.org/")
-public class LastFiles extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader, HasFixedSidebar {
+public class LastFiles extends AbstractTrackerHandler
+    implements HasCloudflareCheck, HasFixedHeader, HasFixedSidebar, RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By usernameFieldSelector() {
@@ -99,7 +103,7 @@ public class LastFiles extends AbstractTrackerHandler implements HasCloudflareCh
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("elite-meta"))
@@ -110,7 +114,7 @@ public class LastFiles extends AbstractTrackerHandler implements HasCloudflareCh
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("elite-meta"))
@@ -121,7 +125,7 @@ public class LastFiles extends AbstractTrackerHandler implements HasCloudflareCh
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("passkeyDisplay")
         );

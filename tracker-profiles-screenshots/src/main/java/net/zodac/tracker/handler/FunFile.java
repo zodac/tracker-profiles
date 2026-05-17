@@ -36,13 +36,15 @@ import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code FunFile} tracker.
  */
 @TrackerHandler(name = "FunFile", url = "https://www.funfile.org/")
-public class FunFile extends AbstractTrackerHandler {
+public class FunFile extends AbstractTrackerHandler implements RedactsEmail, RedactsSensitiveInformation {
 
     @Override
     protected By loginButtonSelector() {
@@ -67,7 +69,7 @@ public class FunFile extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(td, withClass("mf_content"))
@@ -81,7 +83,8 @@ public class FunFile extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Map<String, By> sensitiveElements() {
+    public Map<String, By> sensitiveElements() {
+        // TODO: Split this into IP and ISP?
         return Map.of(
             "IP and ISP", XpathBuilder
                 .from(td, withClass("mf_content"))

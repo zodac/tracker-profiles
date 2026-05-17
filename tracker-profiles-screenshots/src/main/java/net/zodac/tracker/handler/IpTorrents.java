@@ -31,6 +31,7 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
@@ -50,7 +51,7 @@ import org.openqa.selenium.By;
     "https://ipt.world/",
     "https://ipt.octopus.town/"
 })
-public class IpTorrents extends AbstractTrackerHandler {
+public class IpTorrents extends AbstractTrackerHandler implements RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -74,7 +75,7 @@ public class IpTorrents extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(code, atIndex(1))

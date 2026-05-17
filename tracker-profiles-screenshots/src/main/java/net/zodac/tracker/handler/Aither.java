@@ -43,7 +43,7 @@ public class Aither extends Unit3dHandler {
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(span, withClass("user-profile-card__meta-item"))

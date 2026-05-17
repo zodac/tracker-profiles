@@ -41,7 +41,7 @@ public class LemonHd extends NexusPhpHandler {
      * For {@link LemonHd}, the IP address is already blurred and not visible in the screenshot.
      */
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of();
     }
 }

@@ -30,13 +30,14 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
  * Extension of the {@link GazelleHandler} for the {@code D3Si.NET} tracker.
  */
 @TrackerHandler(name = "D3Si.NET", url = "https://d3si.net/")
-public class D3SiNet extends GazelleHandler {
+public class D3SiNet extends GazelleHandler implements RedactsTorrentPasskey {
 
     @Override
     public By loginPageSelector() {
@@ -61,7 +62,7 @@ public class D3SiNet extends GazelleHandler {
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             XpathBuilder
                 .from(div, withClass("sidebar"))

@@ -34,13 +34,14 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
 import org.openqa.selenium.By;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BootyTape} tracker.
  */
 @TrackerHandler(name = "BootyTape", adult = true, url = "https://ssl.bootytape.com/")
-public class BootyTape extends AbstractTrackerHandler {
+public class BootyTape extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -72,7 +73,7 @@ public class BootyTape extends AbstractTrackerHandler {
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("main"))

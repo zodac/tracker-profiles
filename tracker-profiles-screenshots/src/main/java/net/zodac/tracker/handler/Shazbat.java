@@ -40,6 +40,10 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
+import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
+import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -48,7 +52,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Shazbat} tracker.
  */
 @TrackerHandler(name = "Shazbat", url = "https://www.shazbat.tube/")
-public class Shazbat extends AbstractTrackerHandler implements HasFixedHeader, HasFixedSidebar {
+public class Shazbat extends AbstractTrackerHandler
+    implements HasFixedHeader, HasFixedSidebar, RedactsEmail, RedactsIpAddress, RedactsSensitiveInformation, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
@@ -101,7 +106,7 @@ public class Shazbat extends AbstractTrackerHandler implements HasFixedHeader, H
     }
 
     @Override
-    protected Collection<By> ipAddressElements() {
+    public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
                 .from(table, withClass("table-advance"))
@@ -113,7 +118,7 @@ public class Shazbat extends AbstractTrackerHandler implements HasFixedHeader, H
     }
 
     @Override
-    protected Collection<By> emailElements() {
+    public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
                 .from(input, withType("email"))
@@ -122,14 +127,14 @@ public class Shazbat extends AbstractTrackerHandler implements HasFixedHeader, H
     }
 
     @Override
-    protected Collection<By> torrentPasskeyElements() {
+    public Collection<By> torrentPasskeyElements() {
         return List.of(
             By.id("user-passkey")
         );
     }
 
     @Override
-    protected Map<String, By> sensitiveElements() {
+    public Map<String, By> sensitiveElements() {
         return Map.of(
             "2FA QR code", XpathBuilder
                 .from(img, containsSrc("data:image"))
