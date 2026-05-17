@@ -38,9 +38,9 @@
         <commons-io.version>2.22.0</commons-io.version>
         <flatlaf.version>3.7.1</flatlaf.version>
         <jspecify.version>1.0.0</jspecify.version>
-        <jul-to-slf4j.version>2.0.17</jul-to-slf4j.version>
+        <jul-to-slf4j.version>2.0.18</jul-to-slf4j.version>
         <log4j.version>2.26.0</log4j.version>
-        <selenium.version>4.43.0</selenium.version>
+        <selenium.version>4.44.0</selenium.version>
 
         <!-- Test 3PP Versions -->
         <assertj-core.version>3.27.7</assertj-core.version>
@@ -60,7 +60,7 @@
         <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>
 
         <!-- Linter 3PP Versions -->
-        <asm-version>9.9.1</asm-version>
+        <asm-version>9.10</asm-version>
         <checkstyle.version>13.4.2</checkstyle.version>
         <error_prone_core.version>2.49.0</error_prone_core.version>
         <licenses.version>1</licenses.version>

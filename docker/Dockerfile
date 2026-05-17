@@ -1,5 +1,5 @@
 # Stage 1: Patch chromedriver
-FROM python:3.14.4-slim-trixie AS chromedriver_builder
+FROM python:3.14.5-slim-trixie AS chromedriver_builder
 
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - ca-certificates (SSL)
@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419" \
         chromium="148.0.7778.167-1~deb13u1" \
-        curl="8.14.1-2+deb13u2" \
+        curl="8.14.1-2+deb13u3" \
         unzip="6.0-29" \
     && \
     apt-get autoremove && \
