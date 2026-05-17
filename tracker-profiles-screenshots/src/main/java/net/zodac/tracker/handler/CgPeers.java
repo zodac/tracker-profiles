@@ -92,7 +92,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
 
         // If the user didn't click 'Verify Code', do it for them (it shares the same HTML ID as the login button from the previous page)
         final String nextUrl = driver.getCurrentUrl();
-        if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
+        if (nextUrl.equalsIgnoreCase(initialUrl)) {
             final By loginButtonSelector = loginButtonSelector();
             if (loginButtonSelector != null) {
                 final WebElement loginButton = driver.findElement(loginButtonSelector);

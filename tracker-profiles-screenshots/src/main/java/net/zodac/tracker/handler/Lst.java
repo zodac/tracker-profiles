@@ -67,7 +67,7 @@ public class Lst extends Unit3dHandler {
         // If the user didn't click 'login', do it for them
         // Special case for PTP since the login button needs to be clicked twice
         final String nextUrl = driver.getCurrentUrl();
-        if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
+        if (nextUrl.equalsIgnoreCase(initialUrl)) {
             final By loginButtonSelector = loginButtonSelector();
             if (loginButtonSelector != null) {
                 final WebElement loginButton = driver.findElement(loginButtonSelector);

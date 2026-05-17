@@ -69,7 +69,7 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
 
         // If the user didn't click 'verify', do it for them
         final String nextUrl = driver.getCurrentUrl();
-        if (nextUrl == null || nextUrl.equalsIgnoreCase(initialUrl)) {
+        if (nextUrl.equalsIgnoreCase(initialUrl)) {
             final By verifyTwoFactorButtonSelector = XpathBuilder
                 .from(button, withType("submit"))
                 .build();
