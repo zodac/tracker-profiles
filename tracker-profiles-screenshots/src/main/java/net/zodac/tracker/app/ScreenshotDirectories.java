@@ -26,8 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Single source of truth for the output directory hierarchy used during a run: the root output directory and its {@code errors/} and
- * {@code redaction-errors/} subdirectories.
+ * Single source of truth for the output directory hierarchy used during a run: the root output directory and its {@code errors/} subdirectory.
  */
 public final class ScreenshotDirectories {
 
@@ -44,19 +43,14 @@ public final class ScreenshotDirectories {
      */
     public static final Path ERRORS = OUTPUT.resolve("errors");
 
-    /**
-     * The directory where failure screenshots are written when redaction is unexpectedly empty.
-     */
-    public static final Path REDACTION_ERRORS = OUTPUT.resolve("redaction-errors");
-
     private ScreenshotDirectories() {
 
     }
 
     /**
-     * Creates {@link #OUTPUT}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #ERRORS} and
-     * {@link #REDACTION_ERRORS}. When the flag is disabled the error directories are intentionally not created — failure-screenshot writes are
-     * also gated on the same flag, so leaving the directories absent keeps the two in lock-step.
+     * Creates {@link #OUTPUT}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #ERRORS}. When the flag
+     * is disabled the error directory is intentionally not created — failure-screenshot writes are also gated on the same flag, so leaving the
+     * directory absent keeps the two in lock-step.
      *
      * @throws IOException if any directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])
@@ -66,8 +60,7 @@ public final class ScreenshotDirectories {
             Files.createDirectories(OUTPUT);
             if (CONFIG.takeScreenshotOnError()) {
                 Files.createDirectories(ERRORS);
-                Files.createDirectories(REDACTION_ERRORS);
-                LOGGER.trace("Created error screenshot directories: [{}] and [{}]", ERRORS, REDACTION_ERRORS);
+                LOGGER.trace("Created error screenshot directory: [{}]", ERRORS);
             }
         } catch (final IOException e) {
             throw new IOException("Unable to create output directories: %s".formatted(e.getMessage()), e);

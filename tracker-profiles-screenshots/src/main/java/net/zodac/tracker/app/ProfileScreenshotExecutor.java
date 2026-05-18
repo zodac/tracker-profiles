@@ -319,7 +319,7 @@ final class ProfileScreenshotExecutor {
         LOGGER.info("\t- Redaction: {}", redactionType.formattedName());
         final String baseName = screenshotBaseName(trackerCredential.name(), redactionType);
 
-        final Redactor redactor = performRedaction(trackerHandler, redactionType, trackerCredential.name());
+        final Redactor redactor = performRedaction(trackerHandler, redactionType);
 
         trackerHandler.actionBeforeScreenshot();
         final Future<File> pendingWrite = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), CONFIG.outputDirectory(), baseName,
@@ -370,8 +370,7 @@ final class ProfileScreenshotExecutor {
     }
 
     @Nullable
-    private static Redactor performRedaction(final AbstractTrackerHandler trackerHandler, final RedactionType redactionType,
-                                             final String trackerName) {
+    private static Redactor performRedaction(final AbstractTrackerHandler trackerHandler, final RedactionType redactionType) {
         if (redactionType == RedactionType.NONE) {
             LOGGER.debug("\t\t- Not redacting content");
             return null;
@@ -387,10 +386,8 @@ final class ProfileScreenshotExecutor {
 
         final int numberOfRedactedElements = trackerHandler.redactElements(redactor);
         if (numberOfRedactedElements == 0) {
-            screenshotOnError(trackerHandler, trackerName, ScreenshotDirectories.REDACTION_ERRORS);
             LOGGER.warn("\t\t- Unexpectedly found nothing to redact");
         } else {
-            clearErrorScreenshots(trackerName, ScreenshotDirectories.REDACTION_ERRORS);
             LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, StringUtils.pluralise(numberOfRedactedElements));
         }
         return redactor;
