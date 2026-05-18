@@ -15,17 +15,19 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.redaction;
+package net.zodac.tracker.framework.redactor;
 
 import java.util.List;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
- * Implementation of {@link Redactor} that redacts text by covering the impacted {@link WebElement} with a solid, coloured box with a title.
+ * Implementation of {@link Redactor} that redacts text by applying a Gaussian blur directly to the sensitive content within the impacted
+ * {@link WebElement}.
  */
-final class BoxRedactor implements Redactor {
+final class BlurRedactor implements Redactor {
 
+    private static final String BLUR_DEFINITION = "blur(0.5em)";
     private static final String IRC_KEY_PREFIX_ALTERNATION = "IRC Key";
     private static final String TORRENT_PASSKEY_PREFIX_ALTERNATION = "Passkey|Pass Key";
 
@@ -40,54 +42,54 @@ final class BoxRedactor implements Redactor {
 
     private final RemoteWebDriver driver;
 
-    private BoxRedactor(final RemoteWebDriver driver) {
+    private BlurRedactor(final RemoteWebDriver driver) {
         this.driver = driver;
     }
 
     /**
-     * Creates a {@link BoxRedactor} and installs the redaction scripts on the page.
+     * Creates a {@link BlurRedactor} and installs the redaction scripts on the page.
      *
      * @param driver the {@link RemoteWebDriver}
-     * @return the created {@link BoxRedactor}
+     * @return the created {@link BlurRedactor}
      */
-    static BoxRedactor create(final RemoteWebDriver driver) {
-        final BoxRedactor redactor = new BoxRedactor(driver);
+    static BlurRedactor create(final RemoteWebDriver driver) {
+        final BlurRedactor redactor = new BlurRedactor(driver);
         driver.executeScript(INSTALL_ALL_SCRIPTS);
         return redactor;
     }
 
     @Override
     public int redact(final WebElement element, final String description, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_ELEMENT_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "orange", "white",
-            description, "", "box");
+        driver.executeScript(CALL_ELEMENT_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
+            "blur");
         return 1;
     }
 
     @Override
     public int redactEmail(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_EMAIL_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "blue", "white", "Email",
-            "", "box");
+        driver.executeScript(CALL_EMAIL_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
+            "blur");
         return 1;
     }
 
     @Override
     public int redactIpAddress(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_IP_ADDRESS_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "yellow", "black", "IP",
-            "", "box");
+        driver.executeScript(CALL_IP_ADDRESS_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
+            "blur");
         return 1;
     }
 
     @Override
     public int redactIrcPasskey(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "gray", "IRC",
-            IRC_KEY_PREFIX_ALTERNATION, "", "box");
+        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "",
+            IRC_KEY_PREFIX_ALTERNATION, BLUR_DEFINITION, "blur");
         return 1;
     }
 
     @Override
     public int redactTorrentPasskey(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "red", "Passkey",
-            TORRENT_PASSKEY_PREFIX_ALTERNATION, "", "box");
+        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "",
+            TORRENT_PASSKEY_PREFIX_ALTERNATION, BLUR_DEFINITION, "blur");
         return 1;
     }
 

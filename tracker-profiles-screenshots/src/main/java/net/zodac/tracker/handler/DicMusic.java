@@ -19,8 +19,8 @@ package net.zodac.tracker.handler;
 
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.redactor.RedactionBuffer;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
-import net.zodac.tracker.redaction.RedactionBuffer;
 import org.openqa.selenium.By;
 
 /**

@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.RedactsEmail;
-import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
+import net.zodac.tracker.handler.redaction.RedactsEmail;
+import net.zodac.tracker.handler.redaction.RedactsSensitiveInformation;
 import org.openqa.selenium.By;
 
 /**

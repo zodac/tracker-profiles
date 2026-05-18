@@ -27,7 +27,7 @@ import java.util.concurrent.Future;
 import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
-import net.zodac.tracker.redaction.RedactionType;
+import net.zodac.tracker.framework.redactor.RedactionType;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;

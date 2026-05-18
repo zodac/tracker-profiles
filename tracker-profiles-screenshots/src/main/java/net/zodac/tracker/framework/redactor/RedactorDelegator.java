@@ -15,7 +15,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.redaction;
+package net.zodac.tracker.framework.redactor;
 
 import java.util.regex.Pattern;
 import net.zodac.tracker.util.BrowserInteractionHelper;

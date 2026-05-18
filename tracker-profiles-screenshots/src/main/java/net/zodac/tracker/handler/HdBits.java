@@ -38,8 +38,8 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
-import net.zodac.tracker.handler.definition.RedactsIpAddress;
-import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
+import net.zodac.tracker.handler.redaction.RedactsIpAddress;
+import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 

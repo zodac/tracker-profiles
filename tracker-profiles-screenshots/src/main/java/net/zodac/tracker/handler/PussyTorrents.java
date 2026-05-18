@@ -40,8 +40,8 @@ import net.zodac.tracker.framework.driver.extension.Extension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginLiteExtension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginSetting;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.RedactsEmail;
 import net.zodac.tracker.handler.definition.UsesExtensions;
+import net.zodac.tracker.handler.redaction.RedactsEmail;
 import org.openqa.selenium.By;
 
 /**

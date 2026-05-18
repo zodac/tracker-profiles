@@ -15,10 +15,11 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.handler.definition;
+package net.zodac.tracker.framework.redaction;
 
 import java.util.function.Predicate;
-import net.zodac.tracker.redaction.Redactor;
+import net.zodac.tracker.framework.redactor.Redactor;
+import net.zodac.tracker.handler.redaction.Redaction;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**

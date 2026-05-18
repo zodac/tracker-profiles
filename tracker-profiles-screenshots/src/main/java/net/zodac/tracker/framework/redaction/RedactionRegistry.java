@@ -15,11 +15,17 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.handler.definition;
+package net.zodac.tracker.framework.redaction;
 
 import java.util.List;
+import net.zodac.tracker.framework.redactor.Redactor;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
-import net.zodac.tracker.redaction.Redactor;
+import net.zodac.tracker.handler.redaction.Redaction;
+import net.zodac.tracker.handler.redaction.RedactsEmail;
+import net.zodac.tracker.handler.redaction.RedactsIpAddress;
+import net.zodac.tracker.handler.redaction.RedactsIrcPasskey;
+import net.zodac.tracker.handler.redaction.RedactsSensitiveInformation;
+import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.remote.RemoteWebDriver;

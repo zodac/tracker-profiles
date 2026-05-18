@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.redactor.RedactionBuffer;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.redaction.RedactionBuffer;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 

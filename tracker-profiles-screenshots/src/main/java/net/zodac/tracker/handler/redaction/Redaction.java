@@ -15,9 +15,10 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.handler.definition;
+package net.zodac.tracker.handler.redaction;
 
-import net.zodac.tracker.redaction.Redactor;
+import net.zodac.tracker.framework.redaction.RedactionRegistry;
+import net.zodac.tracker.framework.redactor.Redactor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 

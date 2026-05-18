@@ -15,7 +15,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.redaction;
+package net.zodac.tracker.framework.redactor;
 
 import java.util.Arrays;
 import java.util.Locale;

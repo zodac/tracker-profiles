@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.zodac.tracker.framework.TrackerType;
-import net.zodac.tracker.redaction.RedactionType;
+import net.zodac.tracker.framework.redactor.RedactionType;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

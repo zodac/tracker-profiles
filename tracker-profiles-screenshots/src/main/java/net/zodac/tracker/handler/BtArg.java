@@ -37,8 +37,8 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
-import net.zodac.tracker.handler.definition.RedactsEmail;
-import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
+import net.zodac.tracker.handler.redaction.RedactsEmail;
+import net.zodac.tracker.handler.redaction.RedactsSensitiveInformation;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 

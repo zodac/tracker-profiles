@@ -15,7 +15,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package net.zodac.tracker.redaction;
+package net.zodac.tracker.framework.redactor;
 
 /**
  * Defines the pixel buffers applied to each side of redaction when performing redaction. A positive value expands the redaction beyond the

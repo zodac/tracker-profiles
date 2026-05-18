@@ -34,7 +34,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
-import net.zodac.tracker.handler.definition.RedactsEmail;
+import net.zodac.tracker.handler.redaction.RedactsEmail;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 

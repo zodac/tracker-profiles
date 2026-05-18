@@ -36,7 +36,7 @@ import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
-import net.zodac.tracker.handler.definition.RedactsIpAddress;
+import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
