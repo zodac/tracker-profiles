@@ -17,7 +17,7 @@
 
 package net.zodac.tracker.app;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,15 +62,17 @@ public final class ScreenshotOrchestrator {
      * </ol>
      *
      * @return the {@link ExitState} of the execution
+     * @throws IOException thrown if the output directories cannot be created
+     * @see ScreenshotDirectories#createAll()
      */
-    public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
+    public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType) throws IOException {
         final int numberOfTrackers = countNumberOfTrackers(trackersByType);
         if (numberOfTrackers == 0) {
             LOGGER.error("No trackers selected!");
             return ExitState.FAILURE;
         }
 
-        ensureOutputDirectoryExists();
+        ScreenshotDirectories.createAll();
         final ResultCollector resultCollector = ResultCollector.start();
         final ProgressBarManager progressBarManager = ProgressBarManager.create();
         try (final ProgressBarPrintStream progressBarPrintStream = new ProgressBarPrintStream(progressBarManager)) {
@@ -159,16 +161,5 @@ public final class ScreenshotOrchestrator {
             .mapToInt(credential -> credential.name().length())
             .max()
             .orElse(0);
-    }
-
-    private static void ensureOutputDirectoryExists() {
-        final File outputDirectory = CONFIG.outputDirectory().toFile();
-        if (!outputDirectory.exists()) {
-            LOGGER.trace("Creating output directory: '{}'", outputDirectory);
-            final boolean wasOutputDirectoryCreated = outputDirectory.mkdirs();
-            if (!wasOutputDirectoryCreated) {
-                LOGGER.trace("Could not create output directory (or already exists): '{}'", outputDirectory);
-            }
-        }
     }
 }

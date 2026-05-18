@@ -375,7 +375,7 @@ update_lint_tool_versions() {
         curl_args+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
     fi
 
-    # hadolint — Docker tag is "{version}-alpine"
+    # hadolint: Docker tag is "{version}-alpine"
     local hadolint_version
     hadolint_version=$(curl "${curl_args[@]}" "https://api.github.com/repos/hadolint/hadolint/releases/latest" \
         | jq -r '.tag_name // empty')
@@ -394,7 +394,7 @@ update_lint_tool_versions() {
         fi
     fi
 
-    # markdownlint-cli2 — query Docker Hub directly for the latest stable semver tag
+    # markdownlint-cli2: query Docker Hub directly for the latest stable semver tag
     local markdownlint_version
     markdownlint_version=$(curl -fsSL \
         "https://hub.docker.com/v2/repositories/davidanson/markdownlint-cli2/tags?page_size=50&ordering=last_updated" \
@@ -408,7 +408,7 @@ update_lint_tool_versions() {
         sed -i "s|MARKDOWNLINT_DOCKER_IMAGE=\"davidanson/markdownlint-cli2:[^\"]*\"|MARKDOWNLINT_DOCKER_IMAGE=\"davidanson/markdownlint-cli2:${markdownlint_version}\"|" "${lint_script}"
     fi
 
-    # node — Docker tag is "{version}-alpine"
+    # node: Docker tag is "{version}-alpine"
     local node_version
     node_version=$(curl "${curl_args[@]}" "https://api.github.com/repos/nodejs/node/releases/latest" \
         | jq -r '.tag_name // empty')
@@ -435,7 +435,7 @@ update_lint_tool_versions() {
         fi
     fi
 
-    # ruff — GitHub releases use bare version tags (e.g. "0.11.0"), matching both the GHCR image tag and PyPI package version
+    # ruff: GitHub releases use bare version tags (e.g. "0.11.0"), matching both the GHCR image tag and PyPI package version
     local ruff_version
     ruff_version=$(curl "${curl_args[@]}" "https://api.github.com/repos/astral-sh/ruff/releases/latest" | jq -r '.tag_name // empty')
     if [[ -z "${ruff_version}" ]]; then

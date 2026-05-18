@@ -72,8 +72,6 @@ final class ProfileScreenshotExecutor {
     private static final int FIRST_ATTEMPT = 1;
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ApplicationConfiguration CONFIG = Configuration.get();
-    private static final Path ERRORS_DIRECTORY = CONFIG.outputDirectory().resolve("errors");
-    private static final Path REDACTION_ERRORS_DIRECTORY = CONFIG.outputDirectory().resolve("redaction-errors");
     private static final int MAXIMUM_SCREENSHOT_ATTEMPTS = CONFIG.numberOfScreenshotAttempts();
 
     private ProfileScreenshotExecutor() {
@@ -126,7 +124,7 @@ final class ProfileScreenshotExecutor {
                 final Set<TrackerStep> screenshotResult = screenshotTracker(trackerCredential, progressBarManager, successfulSteps);
                 if (screenshotResult.size() == TrackerStep.NUMBER_OF_STEPS) { // All steps were successful
                     LOGGER.trace("Successfully screenshot '{}' on attempt #{}", trackerCredential.name(), attempt);
-                    clearErrorScreenshots(trackerCredential.name(), ERRORS_DIRECTORY);
+                    clearErrorScreenshots(trackerCredential.name(), ScreenshotDirectories.ERRORS);
                     return true;
                 }
             }
@@ -163,7 +161,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.debug("\t- Error writing screenshot for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- Error writing screenshot for tracker '{}'", trackerCredential.name());
         } catch (final TimeoutException e) {
-            screenshotOnError(trackerHandler, trackerCredential.name(), ERRORS_DIRECTORY);
+            screenshotOnError(trackerHandler, trackerCredential.name(), ScreenshotDirectories.ERRORS);
             LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerCredential.name(), e);
 
             final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
@@ -182,7 +180,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.debug("Browser unavailable, most likely user-cancelled", e);
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
         } catch (final Exception e) {
-            screenshotOnError(trackerHandler, trackerCredential.name(), ERRORS_DIRECTORY);
+            screenshotOnError(trackerHandler, trackerCredential.name(), ScreenshotDirectories.ERRORS);
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerCredential.name(), e);
 
             final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
@@ -201,32 +199,20 @@ final class ProfileScreenshotExecutor {
         return successfulSteps;
     }
 
+    // The directory itself is created up-front by prepareErrorDirectories() and is intentionally not deleted on clean-up
     private static void clearErrorScreenshots(final String trackerName, final Path directory) {
         final File errorsDirectory = directory.toFile();
-        if (!errorsDirectory.exists()) {
+        final File[] errorScreenshots = errorsDirectory.listFiles((_, name) -> name.startsWith(trackerName));
+        if (errorScreenshots == null) {
             return;
         }
 
-        final File[] errorScreenshots = errorsDirectory.listFiles((_, name) -> name.startsWith(trackerName));
-        if (errorScreenshots != null) {
-            for (final File errorScreenshot : errorScreenshots) {
-                try {
-                    Files.delete(errorScreenshot.toPath());
-                    LOGGER.debug("\t- Deleted error screenshot after successful retry: [{}]", errorScreenshot.getAbsolutePath());
-                } catch (final IOException e) {
-                    LOGGER.warn("\t- Failed to delete error screenshot: [{}]", errorScreenshot.getAbsolutePath(), e);
-                }
-            }
-        }
-
-        final String[] remaining = errorsDirectory.list();
-        if (remaining != null && remaining.length == 0) {
-            LOGGER.trace("No error screenshots remaining, deleting directory");
+        for (final File errorScreenshot : errorScreenshots) {
             try {
-                Files.delete(errorsDirectory.toPath());
-                LOGGER.debug("\t- Deleted empty errors directory after successful retry: [{}]", errorsDirectory.getAbsolutePath());
+                Files.delete(errorScreenshot.toPath());
+                LOGGER.debug("\t- Deleted error screenshot after successful retry: [{}]", errorScreenshot.getAbsolutePath());
             } catch (final IOException e) {
-                LOGGER.warn("\t- Failed to delete errors screenshot: [{}]", errorsDirectory.getAbsolutePath(), e);
+                LOGGER.warn("\t- Failed to delete error screenshot: [{}]", errorScreenshot.getAbsolutePath(), e);
             }
         }
     }
@@ -244,27 +230,15 @@ final class ProfileScreenshotExecutor {
 
         try {
             LOGGER.trace("Taking failure screenshot for '{}'", trackerName);
-            ensureDirectoryExists(directory);
             final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), directory, trackerName, false, 0).get();
             LOGGER.warn("\t\t- Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
-        } catch (final ExecutionException | IOException e) {
+        } catch (final ExecutionException e) {
             LOGGER.debug("\t\t- Unable to take failure screenshot of '{}'", trackerName, e);
             LOGGER.warn("\t\t- Unable to take failure screenshot of '{}': {}", trackerName, e.getMessage());
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("\t\t- Interrupted while taking failure screenshot of '{}'", trackerName, e);
             LOGGER.warn("\t\t- Interrupted while taking failure screenshot of '{}': {}", trackerName, e.getMessage());
-        }
-    }
-
-    private static void ensureDirectoryExists(final Path directory) throws IOException {
-        final File directoryHandle = directory.toFile();
-        if (!directoryHandle.exists()) {
-            LOGGER.trace("Creating directory: '{}'", directoryHandle);
-            final boolean created = directoryHandle.mkdirs();
-            if (!created && !directoryHandle.exists()) {
-                throw new IOException("Unable to create directory: " + directoryHandle.getAbsolutePath());
-            }
         }
     }
 
@@ -413,10 +387,10 @@ final class ProfileScreenshotExecutor {
 
         final int numberOfRedactedElements = trackerHandler.redactElements(redactor);
         if (numberOfRedactedElements == 0) {
-            screenshotOnError(trackerHandler, trackerName, REDACTION_ERRORS_DIRECTORY);
+            screenshotOnError(trackerHandler, trackerName, ScreenshotDirectories.REDACTION_ERRORS);
             LOGGER.warn("\t\t- Unexpectedly found nothing to redact");
         } else {
-            clearErrorScreenshots(trackerName, REDACTION_ERRORS_DIRECTORY);
+            clearErrorScreenshots(trackerName, ScreenshotDirectories.REDACTION_ERRORS);
             LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, StringUtils.pluralise(numberOfRedactedElements));
         }
         return redactor;
