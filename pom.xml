@@ -35,10 +35,8 @@
         <ashot.version>1.5.4</ashot.version>
         <clique.version>4.0.2</clique.version>
         <commons-csv.version>1.14.1</commons-csv.version>
-        <commons-io.version>2.22.0</commons-io.version>
         <flatlaf.version>3.7.1</flatlaf.version>
         <jspecify.version>1.0.0</jspecify.version>
-        <jul-to-slf4j.version>2.0.18</jul-to-slf4j.version>
         <log4j.version>2.26.0</log4j.version>
         <selenium.version>4.44.0</selenium.version>
 
@@ -113,7 +111,7 @@
                 <artifactId>ashot</artifactId>
                 <version>${ashot.version}</version>
                 <exclusions>
-                    <!-- Already imported -->
+                    <!-- Not needed -->
                     <exclusion>
                         <groupId>commons-io</groupId>
                         <artifactId>commons-io</artifactId>
@@ -122,6 +120,11 @@
                     <exclusion>
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
+                    </exclusion>
+                    <!-- Only used by ashot's test-time image diff utilities, not the screenshot path used here -->
+                    <exclusion>
+                        <groupId>org.hamcrest</groupId>
+                        <artifactId>hamcrest-core</artifactId>
                     </exclusion>
                     <!-- Already imported -->
                     <exclusion>
@@ -141,11 +144,6 @@
                 <version>${commons-csv.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons-io.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.formdev</groupId>
                 <artifactId>flatlaf</artifactId>
                 <version>${flatlaf.version}</version>
@@ -154,12 +152,6 @@
                 <groupId>org.jspecify</groupId>
                 <artifactId>jspecify</artifactId>
                 <version>${jspecify.version}</version>
-            </dependency>
-            <!-- JUL to SLF4J Bridge, used to control Selenium logging output -->
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jul-to-slf4j</artifactId>
-                <version>${jul-to-slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -386,8 +378,6 @@
                         <ignoredUnusedDeclaredDependencies>
                             <!-- Included so the logging files are on the classpath at runtime - not directly used -->
                             <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
-                            <!-- Used at runtime to override the logging output from Selenium classes -->
-                            <ignoredUnusedDeclaredDependency>org.slf4j:jul-to-slf4j::</ignoredUnusedDeclaredDependency>
                         </ignoredUnusedDeclaredDependencies>
                         <ignoredUsedUndeclaredDependencies>
                             <!-- Included with nullaway, which is scoped 'provided' but appears as a false-positive -->

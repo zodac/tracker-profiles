@@ -28,20 +28,12 @@
             <artifactId>commons-csv</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.formdev</groupId>
             <artifactId>flatlaf</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jul-to-slf4j</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -168,6 +160,14 @@
                                 <exclude>META-INF/LICENSE*</exclude>
                                 <exclude>META-INF/DEPENDENCIES*</exclude>
                                 <exclude>META-INF/MANIFEST*</exclude>
+                            </excludes>
+                        </filter>
+                        <!-- Strip selenium-manager's bundled macOS and Windows binaries; the runtime always provides a Linux chromedriver -->
+                        <filter>
+                            <artifact>org.seleniumhq.selenium:selenium-manager</artifact>
+                            <excludes>
+                                <exclude>org/openqa/selenium/manager/macos/**</exclude>
+                                <exclude>org/openqa/selenium/manager/windows/**</exclude>
                             </excludes>
                         </filter>
                     </filters>
