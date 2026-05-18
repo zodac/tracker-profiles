@@ -32,11 +32,8 @@ import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
-import net.zodac.tracker.handler.definition.RedactsEmail;
-import net.zodac.tracker.handler.definition.RedactsIpAddress;
-import net.zodac.tracker.handler.definition.RedactsIrcPasskey;
-import net.zodac.tracker.handler.definition.RedactsSensitiveInformation;
-import net.zodac.tracker.handler.definition.RedactsTorrentPasskey;
+import net.zodac.tracker.handler.definition.Redaction;
+import net.zodac.tracker.handler.definition.RedactionRegistry;
 import net.zodac.tracker.handler.definition.TrackerTimings;
 import net.zodac.tracker.handler.definition.UsesExtensions;
 import net.zodac.tracker.redaction.Redactor;
@@ -372,65 +369,19 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     }
 
     /**
-     * Checks if the {@link AbstractTrackerHandler} has any sensitive information that requires redaction of any elements.
-     *
-     * @return <code>true</code> if there are elements in need of redaction
-     */
-    public final boolean hasSensitiveInformation() {
-        // It's not sufficient to just use instanceof, since some handlers may implement a redaction that a subclass tracker needs to override
-        return (this instanceof RedactsEmail email && !email.emailElements().isEmpty())
-            || (this instanceof RedactsIpAddress ip && !ip.ipAddressElements().isEmpty())
-            || (this instanceof RedactsIrcPasskey irc && !irc.ircPasskeyElements().isEmpty())
-            || (this instanceof RedactsTorrentPasskey torrent && !torrent.torrentPasskeyElements().isEmpty())
-            || (this instanceof RedactsSensitiveInformation sensitive && !sensitive.sensitiveElements().isEmpty());
-    }
-
-    /**
      * Redacts the {@link WebElement}s on the user's profile page that hold sensitive information (email addresses, IP addresses, passkeys, etc.).
-     * Each redaction category is opt-in via the corresponding interfaces:
-     * <ol>
-     *     <li>{@link RedactsEmail}</li>
-     *     <li>{@link RedactsIpAddress}</li>
-     *     <li>{@link RedactsIrcPasskey}</li>
-     *     <li>{@link RedactsTorrentPasskey}</li>
-     *     <li>{@link RedactsSensitiveInformation}</li>
-     * </ol>
+     * Each redaction category is opt-in via a {@link Redaction} sub-interface; new categories are discovered
+     * automatically by {@link RedactionRegistry} with no changes required here.
      *
      * @param redactor the {@link Redactor} to redact the sensitive information
      * @return the number of {@link WebElement}s where the text has been redacted
      * @see Redactor
+     * @see RedactionRegistry
      */
     // TODO: Add other redaction types (country, flag, avatar, gender, BT client, BT port, age/birthday, invitedBy)
     public int redactElements(final Redactor redactor) {
         LOGGER.trace("Redacting elements");
-        int redacted = 0;
-
-        if (this instanceof RedactsEmail emailElements) {
-            LOGGER.debug("\t\t- Redacting email elements");
-            redacted += emailElements.redactEmailElements(driver, redactor);
-        }
-
-        if (this instanceof RedactsIpAddress ipAddressElements) {
-            LOGGER.debug("\t\t- Redacting IP address elements");
-            redacted += ipAddressElements.redactIpAddressElements(driver, redactor);
-        }
-
-        if (this instanceof RedactsIrcPasskey ircPasskeyElements) {
-            LOGGER.debug("\t\t- Redacting IRC passkey elements");
-            redacted += ircPasskeyElements.redactIrcPasskeyElements(driver, redactor);
-        }
-
-        if (this instanceof RedactsTorrentPasskey torrentPasskeyElements) {
-            LOGGER.debug("\t\t- Redacting torrent passkey elements");
-            redacted += torrentPasskeyElements.redactTorrentPasskeyElements(driver, redactor);
-        }
-
-        if (this instanceof RedactsSensitiveInformation sensitiveElements) {
-            LOGGER.debug("\t\t- Redacting remaining sensitive elements");
-            redacted += sensitiveElements.redactSensitiveElements(driver, redactor);
-        }
-
-        return redacted;
+        return RedactionRegistry.redactAll(this, driver, redactor);
     }
 
     /**

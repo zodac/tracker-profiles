@@ -29,7 +29,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * page that must be redacted before taking the screenshot.
  */
 @FunctionalInterface
-public interface RedactsIrcPasskey {
+public interface RedactsIrcPasskey extends Redaction {
 
     /**
      * Redacts the user's IRC passkey from all matched {@link WebElement}s on the user profile page.

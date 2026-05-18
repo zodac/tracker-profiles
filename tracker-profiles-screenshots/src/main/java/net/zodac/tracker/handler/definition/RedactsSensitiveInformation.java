@@ -29,7 +29,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * profile page that must be redacted before taking the screenshot.
  */
 @FunctionalInterface
-public interface RedactsSensitiveInformation {
+public interface RedactsSensitiveInformation extends Redaction {
 
     /**
      * Redacts each miscellaneous sensitive {@link WebElement} on the user profile page.

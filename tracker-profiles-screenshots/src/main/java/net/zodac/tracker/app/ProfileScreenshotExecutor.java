@@ -47,6 +47,7 @@ import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
 import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
+import net.zodac.tracker.handler.definition.RedactionRegistry;
 import net.zodac.tracker.redaction.RedactionType;
 import net.zodac.tracker.redaction.Redactor;
 import net.zodac.tracker.redaction.RedactorDelegator;
@@ -312,7 +313,7 @@ final class ProfileScreenshotExecutor {
 
         // If the tracker has no sensitive information, all redaction types produce identical screenshots, so we take a single one
         final List<RedactionType> effectiveRedactions;
-        if (trackerHandler.hasSensitiveInformation()) {
+        if (RedactionRegistry.hasAnyRedaction(trackerHandler)) {
             effectiveRedactions = redactionsToExecute;
         } else {
             LOGGER.debug("\t- No sensitive information to redact, taking a single screenshot");
@@ -395,23 +396,24 @@ final class ProfileScreenshotExecutor {
     }
 
     @Nullable
-    private static Redactor performRedaction(final AbstractTrackerHandler handler, final RedactionType redactionType, final String trackerName) {
+    private static Redactor performRedaction(final AbstractTrackerHandler trackerHandler, final RedactionType redactionType,
+                                             final String trackerName) {
         if (redactionType == RedactionType.NONE) {
             LOGGER.debug("\t\t- Not redacting content");
             return null;
         }
 
-        if (!handler.hasSensitiveInformation()) {
+        if (!RedactionRegistry.hasAnyRedaction(trackerHandler)) {
             LOGGER.debug("\t\t- Nothing to redact");
             return null;
         }
 
-        final Redactor redactor = RedactorDelegator.create(handler.driver(), redactionType);
+        final Redactor redactor = RedactorDelegator.create(trackerHandler.driver(), redactionType);
         LOGGER.info("\t\t- Redacting elements with sensitive information");
 
-        final int numberOfRedactedElements = handler.redactElements(redactor);
+        final int numberOfRedactedElements = trackerHandler.redactElements(redactor);
         if (numberOfRedactedElements == 0) {
-            screenshotOnError(handler, trackerName, REDACTION_ERRORS_DIRECTORY);
+            screenshotOnError(trackerHandler, trackerName, REDACTION_ERRORS_DIRECTORY);
             LOGGER.warn("\t\t- Unexpectedly found nothing to redact");
         } else {
             clearErrorScreenshots(trackerName, REDACTION_ERRORS_DIRECTORY);

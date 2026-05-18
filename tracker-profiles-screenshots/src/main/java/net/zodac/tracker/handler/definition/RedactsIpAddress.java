@@ -31,7 +31,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * page that must be redacted before taking the screenshot.
  */
 @FunctionalInterface
-public interface RedactsIpAddress {
+public interface RedactsIpAddress extends Redaction {
 
     /**
      * Redacts the user's IP address from all matched {@link WebElement}s on the user profile page.

@@ -17,29 +17,16 @@
 
 package net.zodac.tracker.framework;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.JarURLConnection;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandlers;
 import net.zodac.tracker.handler.AbstractTrackerHandler;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Factory class used to create an instance of a {@link AbstractTrackerHandler}.
@@ -86,7 +73,11 @@ public final class TrackerHandlerFactory {
 
     private static Map<String, Map.Entry<Class<?>, TrackerHandler>> buildHandlerMap() {
         final Map<String, Map.Entry<Class<?>, TrackerHandler>> map = new HashMap<>();
-        for (final Class<?> clazz : findAllClassesUsingClassLoader(AbstractTrackerHandler.class.getPackageName())) {
+        final var annotatedHandlers = PackageScanner.scan(
+            AbstractTrackerHandler.class.getPackageName(),
+            clazz -> clazz.isAnnotationPresent(TrackerHandler.class) || clazz.isAnnotationPresent(TrackerHandlers.class)
+        );
+        for (final Class<?> clazz : annotatedHandlers) {
             for (final TrackerHandler annotation : clazz.getAnnotationsByType(TrackerHandler.class)) {
                 map.put(annotation.name().toLowerCase(Locale.ROOT), Map.entry(clazz, annotation));
             }
@@ -101,59 +92,6 @@ public final class TrackerHandlerFactory {
             return abstractTrackerHandler;
         } catch (final IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
             throw new IllegalStateException("Error instantiating an instance of '%s'".formatted(trackerHandler), e);
-        }
-    }
-
-    private static Set<Class<?>> findAllClassesUsingClassLoader(final String packageName) {
-        final String packagePath = packageName.replace('.', '/');
-
-        try {
-            final URL resource = Thread.currentThread().getContextClassLoader().getResource(packagePath);
-            if (resource == null) {
-                throw new IllegalStateException("Unable to retrieve classes from package '%s'".formatted(packageName));
-            }
-
-            // If not running from a JAR, assume classes are available on the filesystem
-            return "jar".equals(resource.getProtocol()) ? getFromJar(resource, packagePath) : getFromFile(resource, packageName);
-        } catch (final IOException | URISyntaxException e) {
-            throw new IllegalStateException("Unable to retrieve classes from package '%s'".formatted(packageName), e);
-        }
-    }
-
-    private static Set<Class<?>> getFromFile(final URL resource, final String packageName) throws URISyntaxException {
-        final File[] directoryFiles = new File(resource.toURI()).listFiles();
-        if (directoryFiles == null || directoryFiles.length == 0) {
-            throw new IllegalStateException("Unable to retrieve classes from resource '%s'".formatted(resource.toURI()));
-        }
-
-        return Arrays.stream(directoryFiles)
-            .map(File::getName)
-            .filter(fileName -> fileName.endsWith(".class"))
-            .map(fileName -> getClass(fileName, packageName))
-            .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class) || aClass.isAnnotationPresent(TrackerHandlers.class))
-            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
-    }
-
-    private static Set<Class<?>> getFromJar(final URL resource, final String packagePath) throws IOException {
-        final JarURLConnection connection = (JarURLConnection) resource.openConnection();
-        connection.setUseCaches(false);
-
-        try (final JarFile jarFile = connection.getJarFile()) {
-            return jarFile.stream()
-                .map(ZipEntry::getName)
-                .filter(jarEntryName -> jarEntryName.startsWith(packagePath) && jarEntryName.endsWith(".class"))
-                .map(jarEntryName -> getClass(jarEntryName.replace('/', '.'), null))
-                .filter(aClass -> aClass.isAnnotationPresent(TrackerHandler.class) || aClass.isAnnotationPresent(TrackerHandlers.class))
-                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
-        }
-    }
-
-    private static Class<?> getClass(final String className, final @Nullable String packageName) {
-        try {
-            final String prefix = packageName == null ? "" : (packageName + ".");
-            return Class.forName(prefix + className.substring(0, className.lastIndexOf('.')));
-        } catch (final ClassNotFoundException e) {
-            throw new IllegalStateException("Unable to retrieve class '%s' from package '%s'".formatted(className, packageName), e);
         }
     }
 }
