@@ -86,7 +86,14 @@ Rules:
 - Annotation: `@TrackerHandler(name = "Name", url = "https://...")`
     - For multiple fallback URLs: `url = {"https://url1", "https://url2"}`
     - For MANUAL type: add `type = TrackerType.MANUAL`
-- Only include overrides that differ from the base class defaults
+- Declare `implements` for every interface the specialist agents flagged as needed:
+    - Redaction (`net.zodac.tracker.handler.redaction.*`): `RedactsEmail`, `RedactsIpAddress`,
+      `RedactsTorrentPasskey`, `RedactsIrcPasskey`, `RedactsSensitiveInformation` — one per category present
+    - Structural (`net.zodac.tracker.handler.definition.*`): `HasFixedHeader`, `HasFixedSidebar`,
+      `HasDismissibleElement`, `HasJumpButtons`, `HasProfilePageActions`, `HasCloudflareCheck`,
+      `NeedsExplicitTranslation`, `UsesExtensions`, `DoesNotScrollDuringScreenshot` — as applicable
+- Only include overrides that differ from the base class defaults; the interface methods are `public`,
+  the `AbstractTrackerHandler` selectors (`loginButtonSelector`, `profileLinkSelector`, etc.) are `protected`
 - Use `XpathBuilder` exclusively — never raw XPath strings
 - Imports must be sorted (static first, then standard, alphabetical within each group)
 - Do not add comments unless the logic is genuinely non-obvious

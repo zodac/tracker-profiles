@@ -149,31 +149,37 @@ grep -i "stylesheet\|\.css" /tmp/profile.html | head -5
 curl -s "https://tracker.site/styles/main.css" | grep -i "position.*fixed\|position.*sticky"
 ```
 
-**Implementation** — `HasFixedHeader` is a `@FunctionalInterface`. Override `headerSelector()` only;
-`unfixHeader()` has a working default. Use `By.tagName("header")` when the element is a plain `<header>`;
-fall back to `XpathBuilder` or `By.cssSelector()` for non-standard elements:
+**Implementation** — `HasFixedHeader` is a `@FunctionalInterface`. Override `headerSelectors()` only (returns
+`List<By>` — plural, since a tracker often has both a top nav and a sub-nav); `unfixHeaders()` has a working
+default. Use `By.tagName("header")` when the element is a plain `<header>`; fall back to `XpathBuilder` or
+`By.cssSelector()` for non-standard elements:
 
 ```java
 // Plain <header> element (most common):
 @Override
-public By headerSelector() {
-    return By.tagName("header");
+public List<By> headerSelectors() {
+    return List.of(By.tagName("header"));
 }
 
 // Named element with a class:
 @Override
-public By headerSelector() {
-    return XpathBuilder.from(NamedHtmlElement.of("nav"), withClass("main-nav")).build();
+public List<By> headerSelectors() {
+    return List.of(
+        XpathBuilder.from(NamedHtmlElement.of("nav"), withClass("main-nav")).build()
+    );
 }
 
 // Multiple selectors (e.g. menu bar + sub-bar):
 @Override
-public By headerSelector() {
-    return By.cssSelector("#menu, .main-menu");
+public List<By> headerSelectors() {
+    return List.of(
+        By.id("menu"),
+        By.className("main-menu")
+    );
 }
 ```
 
-Only override `unfixHeader()` if the default CSS removal is insufficient (rare — see `Torrenting.java`
+Only override `unfixHeaders()` if the default CSS removal is insufficient (rare — see `Torrenting.java`
 for a JS-injection example).
 
 ----
@@ -259,8 +265,8 @@ public void dismiss() {
 
 // FIXED HEADER: present — implements HasFixedHeader
 @Override
-public By headerSelector() {
-    return By.tagName("header");
+public List<By> headerSelectors() {
+    return List.of(By.tagName("header"));
 }
 
 // FIXED SIDEBAR: not present

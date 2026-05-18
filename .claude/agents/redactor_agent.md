@@ -15,17 +15,22 @@ specified by the orchestrator.
 
 ## Your Responsibilities
 
-Inspect the profile page HTML and identify every sensitive field, then map each to the correct override:
+Inspect the profile page HTML and identify every sensitive field, then map each to the correct redaction
+interface from `net.zodac.tracker.handler.redaction`. The handler **implements** the interface(s) it needs
+and overrides the single selector method on each:
 
-| Override                   | Redacts                                               |
-|----------------------------|-------------------------------------------------------|
-| `emailElements()`          | Email address                                         |
-| `ipAddressElements()`      | IP address (last connected IP, seeding IP, etc.)      |
-| `torrentPasskeyElements()` | Torrent passkey / RSS key                             |
-| `ircPasskeyElements()`     | IRC passkey                                           |
-| `sensitiveElements()`      | Anything else: API key, 2FA secret, invite code, etc. |
+| Interface to implement        | Selector method (return)                      | Redacts                                               |
+|-------------------------------|-----------------------------------------------|-------------------------------------------------------|
+| `RedactsEmail`                | `emailElements()` → `Collection<By>`          | Email address                                         |
+| `RedactsIpAddress`            | `ipAddressElements()` → `Collection<By>`      | IP address (last connected IP, seeding IP, etc.)      |
+| `RedactsTorrentPasskey`       | `torrentPasskeyElements()` → `Collection<By>` | Torrent passkey / RSS key                             |
+| `RedactsIrcPasskey`           | `ircPasskeyElements()` → `Collection<By>`     | IRC passkey                                           |
+| `RedactsSensitiveInformation` | `sensitiveElements()` → `Map<String, By>`     | Anything else: API key, 2FA secret, invite code, etc. |
 
-**Rule:** Before considering an implementation complete, you must have checked for all of the above.
+The selector methods are **`public`** (they're interface methods, not protected hooks on `AbstractTrackerHandler`).
+Implement an interface only if its category is present — do not implement an interface and return an empty list/map.
+
+**Rule:** Before considering an implementation complete, you must have checked for all five categories.
 Missing a sensitive field means the screenshot exposes private user data.
 
 ## Critical: Language-Independent Selectors
@@ -134,7 +139,7 @@ For `sensitiveElements()`, the return type is `Map<String, By>` — include a de
 
 ```java
 @Override
-protected Map<String, By> sensitiveElements() {
+public Map<String, By> sensitiveElements() {
     return Map.of(
         "API key", XpathBuilder.from(input, withId("api_key")).build(),
         "invite code", XpathBuilder.from(span, withClass("invite-token")).build()
@@ -151,13 +156,16 @@ Available axes: `child`, `parent`, `descendant`, `followingSibling`, `precedingS
 
 ## Output Format
 
-Return findings as structured Java method stubs. If a category has no sensitive fields, state that
-explicitly so the orchestrator knows it was checked (not skipped).
+Return findings as structured Java method stubs *plus* the list of redaction interfaces the handler must
+implement. If a category has no sensitive fields, state that explicitly so the orchestrator knows it was
+checked (not skipped) — do not list it in `implements`.
 
 ```java
+// IMPLEMENTS: RedactsEmail, RedactsTorrentPasskey
+
 // EMAIL
 @Override
-protected Collection<By> emailElements() {
+public Collection<By> emailElements() {
     return List.of(
         XpathBuilder.from(input, withType("email")).build()
     );
@@ -167,7 +175,7 @@ protected Collection<By> emailElements() {
 
 // TORRENT PASSKEY
 @Override
-protected Collection<By> torrentPasskeyElements() {
+public Collection<By> torrentPasskeyElements() {
     return List.of(
         XpathBuilder.from(input, withId("passkey")).build()
     );

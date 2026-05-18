@@ -34,13 +34,17 @@ Entry point: `ApplicationLauncher` → `TrackerRetriever` (load CSV) → `Displa
 
 `ProfileScreenshotExecutor` has three layers:
 
-- **`takeScreenshot`** (package-private) — the entry point called by `ScreenshotOrchestrator`. Handles pre-flight logging and delegates to the loop.
-- **`takeScreenshotWithAttempts`** (private) — the retry loop. Calls `isSuccessfullyScreenshot` up to `numberOfScreenshotAttempts` times.
-    - On any `Exception`, waits 1 second via `BrowserInteractionHelper.explicitWait` then retries.
-- **`isSuccessfullyScreenshot`** (private) — a single attempt. Contains all exception handling with per-exception log messages.
-    - Returns `true` on success
-    - Returns `false` on any handled failure.
-        - Exceptions that should propagate to trigger a retry are left uncaught (they bubble up to the `catch (Exception e)` in the retry loop).
+- **`takeScreenshot`** (package-private) — the entry point called by `ScreenshotOrchestrator`. Sets up per-tracker logging context
+  and delegates to the retry loop.
+- **`takeScreenshotWithAttempts`** (private) — the retry loop. Calls `screenshotTracker` up to `numberOfScreenshotAttempts` times
+  and returns success only when every `TrackerStep` has been recorded.
+- **`screenshotTracker`** (private) — a single attempt. Resolves the handler via `TrackerHandlerFactory`, delegates to
+  `screenshotProfile`, and contains the full per-exception catch chain with tailored log messages. Caught failures fall through
+  to a fresh retry; uncaught throws propagate out.
+
+Failure-screenshot writes go to `ScreenshotDirectories.ERRORS` / `ScreenshotDirectories.REDACTION_ERRORS`. Those directories
+are created up-front (and only when `TAKE_SCREENSHOT_ON_ERROR=true`) by `ScreenshotDirectories.createAll()` so the parallel
+write path never has to create them on demand.
 
 ### Tracker Handler Pattern
 
@@ -60,9 +64,11 @@ To add a new tracker:
 2. Annotate with `@TrackerHandler(name = "...", type = TrackerType.HEADLESS, url = "https://...")` (omit `type` for HEADLESS)
 3. Override the required selectors — at minimum: `usernameFieldSelector()`, `passwordFieldSelector()`,
    `logoutButtonSelector()`, `profileLinkSelector()`
-4. Override optional hooks for redaction (`ipAddressElements()`, `emailElements()`, `torrentPasskeyElements()`,
-   `ircPasskeyElements()`), implement fixed element removal interfaces (`HasFixedHeader`, `HasFixedSidebar`),
-   manual interaction (`preLoginClickAction()`), etc.
+4. Opt into redaction by **implementing the relevant `Redaction` sub-interfaces** from `net.zodac.tracker.handler.redaction`
+   (`RedactsEmail`, `RedactsIpAddress`, `RedactsTorrentPasskey`, `RedactsIrcPasskey`, `RedactsSensitiveInformation`)
+   — each declares one selector method (e.g. `emailElements()`). Also implement structural interfaces as needed
+   (`HasFixedHeader`, `HasFixedSidebar`, `HasDismissibleElement`, etc.), and any manual-interaction hooks
+   (`preLoginClickAction()`, `postLoginClickAction()`).
 5. Add the tracker's credentials to `./trackers_example.csv` and details to `README.md`
 
 Use `XpathBuilder` (with `HtmlElement` constants and `XpathAttributePredicate`) to construct selectors rather than raw XPath strings.
@@ -96,9 +102,27 @@ New env vars must be:
 
 ### Redaction
 
-If `RedactionType` is not `NONE`, `AbstractTrackerHandler.redactElements()` finds elements by the selectors returned from `ipAddressElements()`,
-`emailElements()`, `torrentPasskeyElements()`, `ircPasskeyElements()`, and `sensitiveElements()`, then applies the configured `RedactionType`
-(`TEXT` replacement, `BOX` overlay, Gaussian `BLUR`, fully `REMOVE`). Redaction happens after profile page load, before the screenshot.
+Redaction is opt-in per category, via sub-interfaces of `Redaction` in `net.zodac.tracker.handler.redaction`:
+
+| Interface                     | Selector method (override)        | Category               |
+|-------------------------------|-----------------------------------|------------------------|
+| `RedactsEmail`                | `emailElements()`                 | Email addresses        |
+| `RedactsIpAddress`            | `ipAddressElements()`             | IP addresses           |
+| `RedactsTorrentPasskey`       | `torrentPasskeyElements()`        | Torrent passkey/RSS    |
+| `RedactsIrcPasskey`           | `ircPasskeyElements()`            | IRC passkey            |
+| `RedactsSensitiveInformation` | `sensitiveElements()` (Map)       | Anything else          |
+
+A handler implements only the interfaces it needs (e.g. `implements Unit3dHandler, RedactsEmail, RedactsIpAddress`). Each interface
+provides a default `redactXxxElements(driver, redactor)` method that consumes the handler's selectors and dispatches to the
+`Redactor` — no logic in the handler beyond returning the selectors.
+
+If `RedactionType` is not `NONE`, `AbstractTrackerHandler.redactElements()` delegates to `RedactionRegistry.redactAll(...)`
+(`net.zodac.tracker.framework.redaction.RedactionRegistry`), which iterates every registered `Redaction` interface and invokes
+the matching default method on the handler. The `RedactionType` selects the visual treatment — `BOX` overlay or Gaussian `BLUR`
+(`NONE` skips the redaction phase). Redaction runs after profile page load and before the screenshot.
+
+To add a new redaction category: create a new interface in `handler/redaction/` extending `Redaction`, then add a single
+`RedactionEntry` to `RedactionRegistry.ENTRIES`. No changes required in `AbstractTrackerHandler`.
 
 ## Logging
 
@@ -128,7 +152,8 @@ The Clique bar is driven by exactly multiple ticks per tracker (see `TrackerStep
 should rely on the appended `X/Y` suffix for tracker-level progress.
 
 The screenshot phase is always one tick regardless of how many redaction types are configured — this is intentional, because
-`hasSensitiveInformation()` is determined at runtime per handler, making the actual screenshot count unknowable upfront.
+whether a handler has any non-empty redaction interface (`RedactionRegistry.hasAnyRedaction(handler)`) is determined at runtime,
+making the actual screenshot count unknowable upfront.
 
 ## Coding Standards
 
