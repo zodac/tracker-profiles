@@ -18,6 +18,8 @@
 package net.zodac.tracker.framework.redactor;
 
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -27,13 +29,15 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 final class BlurRedactor implements Redactor {
 
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final List<String> SCRIPT_NAMES = List.of(
+        "redact_element.js", "redact_email.js", "redact_ip_address.js", "redact_passkey.js", "undo_redaction.js"
+    );
+
     private static final String BLUR_DEFINITION = "blur(0.5em)";
     private static final String IRC_KEY_PREFIX_ALTERNATION = "IRC Key";
     private static final String TORRENT_PASSKEY_PREFIX_ALTERNATION = "Passkey|Pass Key";
 
-    private static final String INSTALL_ALL_SCRIPTS = Redactor.loadScripts(List.of(
-        "redact_element.js", "redact_email.js", "redact_ip_address.js", "redact_passkey.js", "undo_redaction.js"
-    ));
     private static final String CALL_ELEMENT_SCRIPT = "window.__redactElement.apply(null, arguments);";
     private static final String CALL_EMAIL_SCRIPT = "window.__redactEmail.apply(null, arguments);";
     private static final String CALL_IP_ADDRESS_SCRIPT = "window.__redactIpAddress.apply(null, arguments);";
@@ -51,11 +55,17 @@ final class BlurRedactor implements Redactor {
      *
      * @param driver the {@link RemoteWebDriver}
      * @return the created {@link BlurRedactor}
+     * @throws IllegalStateException if any of the bundled JavaScript redaction scripts cannot be loaded from the classpath
      */
     static BlurRedactor create(final RemoteWebDriver driver) {
-        final BlurRedactor redactor = new BlurRedactor(driver);
-        driver.executeScript(INSTALL_ALL_SCRIPTS);
-        return redactor;
+        try {
+            final String installScripts = Redactor.loadScripts(SCRIPT_NAMES);
+            driver.executeScript(installScripts);
+            return new BlurRedactor(driver);
+        } catch (final IllegalStateException e) {
+            LOGGER.error("Failed to load JavaScript redaction scripts: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override

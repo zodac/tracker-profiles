@@ -87,20 +87,22 @@ public interface Redactor {
     void undoRedaction();
 
     /**
-     * Loads a JavaScript resource file from the same package as this interface.
+     * Loads a JavaScript resource file from the same package as this interface. The thrown {@link IllegalStateException}'s message includes the
+     * resolved classpath location so callers can log it without needing to compute it themselves.
      *
      * @param scriptName the name of the script resource
      * @return the script content as a {@link String}
      * @throws IllegalStateException if the resource cannot be found or read
      */
     static String loadScript(final String scriptName) {
+        final String resourcePath = Redactor.class.getPackageName().replace('.', '/') + '/' + scriptName;
         try (final InputStream inputStream = Redactor.class.getResourceAsStream(scriptName)) {
             if (inputStream == null) {
-                throw new IllegalStateException(String.format("Could not find redaction script: '%s'", scriptName));
+                throw new IllegalStateException("Could not find redaction script '%s' on classpath at '/%s'".formatted(scriptName, resourcePath));
             }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (final IOException e) {
-            throw new IllegalStateException(String.format("Unable to load redaction script: '%s'", scriptName), e);
+            throw new IllegalStateException("Unable to read redaction script '%s' from '/%s'".formatted(scriptName, resourcePath), e);
         }
     }
 
