@@ -48,6 +48,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 public final class JavaWebDriverFactory {
 
     private static final File CHROMEDRIVER_EXECUTABLE_FILEPATH = new File("/usr/local/chromium/chromedriver-linux64/chromedriver");
+    private static final String SESSIONS_SUBDIRECTORY = "tracker-profiles-sessions";
     private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<RemoteWebDriver, Path> USER_DATA_DIRS = new ConcurrentHashMap<>();
@@ -78,7 +79,7 @@ public final class JavaWebDriverFactory {
     public static RemoteWebDriver createDriver(final TrackerType trackerType, final List<Extension> extensions) {
         LOGGER.trace("Creating Java driver");
         final ChromeOptions chromeOptions = new ChromeOptions();
-        final Path userDataDir = Path.of(CONFIG.browserDataStoragePath(), UUID.randomUUID().toString());
+        final Path userDataDir = Path.of(CONFIG.browserDataStoragePath(), SESSIONS_SUBDIRECTORY, UUID.randomUUID().toString());
 
         // User-defined options
         chromeOptions.addArguments("--window-size=" + CONFIG.browserDimensions());
@@ -147,17 +148,19 @@ public final class JavaWebDriverFactory {
     }
 
     /**
-     * Sweeps and deletes any stale user-data directories under the configured browser data storage path.
+     * Sweeps and deletes any stale user-data directories under the namespaced sessions subdirectory of the configured browser data storage path.
      *
      * <p>
      * Previous JVM runs may leave UUID-named subdirectories behind if the process was interrupted before {@link #deleteUserDataDir(RemoteWebDriver)}
-     * could clean them up. Any UUID-named subdirectory of the storage path that does not belong to a currently tracked driver is deleted.
+     * could clean them up. Any UUID-named subdirectory of the sessions path that does not belong to a currently tracked driver is deleted.
+     * Scanning is restricted to the {@value #SESSIONS_SUBDIRECTORY} subdirectory to avoid accidentally deleting unrelated UUID-named directories that
+     * may exist elsewhere in the configured storage path.
      *
      * <p>
      * Safe to call multiple times, as directories belonging to active drivers are excluded from deletion.
      */
     static void sweepStaleUserDataDirs() {
-        final Path base = Path.of(CONFIG.browserDataStoragePath());
+        final Path base = Path.of(CONFIG.browserDataStoragePath(), SESSIONS_SUBDIRECTORY);
         if (!Files.isDirectory(base)) {
             return;
         }
