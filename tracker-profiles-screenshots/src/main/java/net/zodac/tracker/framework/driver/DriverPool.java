@@ -168,10 +168,14 @@ public final class DriverPool {
         // Fallback: initialize() was not called — create a single driver lazily
         LOGGER.debug("No pool initialized for type {}, creating driver lazily", trackerType);
         final RemoteWebDriver lazyDriver = JavaWebDriverFactory.createDriver(trackerType, List.of());
-        final BlockingDeque<RemoteWebDriver> newDeque = new LinkedBlockingDeque<>();
-        instance.allPooledDrivers.add(lazyDriver);
-        instance.driverTypeMap.put(lazyDriver, trackerType);
-        instance.pool.put(trackerType, newDeque);
+        instance.lock.lock();
+        try {
+            instance.allPooledDrivers.add(lazyDriver);
+            instance.driverTypeMap.put(lazyDriver, trackerType);
+            instance.pool.putIfAbsent(trackerType, new LinkedBlockingDeque<>());
+        } finally {
+            instance.lock.unlock();
+        }
         return lazyDriver;
     }
 
@@ -187,7 +191,14 @@ public final class DriverPool {
     public static void release(final RemoteWebDriver driver) {
         final DriverPool instance = get();
         instance.remainingTasks.decrementAndGet();
-        if (instance.allPooledDrivers.contains(driver)) {
+        final boolean isPooled;
+        instance.lock.lock();
+        try {
+            isPooled = instance.allPooledDrivers.contains(driver);
+        } finally {
+            instance.lock.unlock();
+        }
+        if (isPooled) {
             LOGGER.trace("Returning pooled driver, navigating to blank page");
             try {
                 driver.navigate().to(DEFAULT_BROWSER_PAGE);
@@ -248,7 +259,13 @@ public final class DriverPool {
     }
 
     private static void returnDriverToPool(final DriverPool instance, final RemoteWebDriver driver) {
-        final TrackerType type = instance.driverTypeMap.get(driver);
+        final TrackerType type;
+        instance.lock.lock();
+        try {
+            type = instance.driverTypeMap.get(driver);
+        } finally {
+            instance.lock.unlock();
+        }
         if (type == null) {
             return;
         }
@@ -264,16 +281,20 @@ public final class DriverPool {
      */
     public static void shutdown() {
         final DriverPool instance = get();
-        final int numberOfPooledDrivers = instance.allPooledDrivers.size();
-        LOGGER.debug("Shutting down driver pool with {} pooled driver{}", numberOfPooledDrivers, StringUtils.pluralise(numberOfPooledDrivers));
-        for (final RemoteWebDriver driver : instance.allPooledDrivers) {
-            driver.quit();
-            JavaWebDriverFactory.deleteUserDataDir(driver);
+        instance.lock.lock();
+        try {
+            final int numberOfPooledDrivers = instance.allPooledDrivers.size();
+            LOGGER.debug("Shutting down driver pool with {} pooled driver{}", numberOfPooledDrivers, StringUtils.pluralise(numberOfPooledDrivers));
+            for (final RemoteWebDriver driver : instance.allPooledDrivers) {
+                driver.quit();
+                JavaWebDriverFactory.deleteUserDataDir(driver);
+            }
+            instance.pool.clear();
+            instance.allPooledDrivers.clear();
+            instance.driverTypeMap.clear();
+            instance.remainingTasks.set(0);
+        } finally {
+            instance.lock.unlock();
         }
-
-        instance.pool.clear();
-        instance.allPooledDrivers.clear();
-        instance.driverTypeMap.clear();
-        instance.remainingTasks.set(0);
     }
 }
