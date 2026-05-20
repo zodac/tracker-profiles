@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.framework.driver;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -95,6 +96,11 @@ public final class DriverPool {
         final DriverPool instance = get();
         final int count = (trackerType == TrackerType.HEADLESS) ? numberOfParallelThreads : 1;
         LOGGER.debug("Initializing {} pooled {} driver{}", count, trackerType.formattedName(), StringUtils.pluralise(count));
+        try {
+            BrowserDirectories.createAll();
+        } catch (final IOException e) {
+            throw new IllegalStateException("Unable to create browser directories: %s".formatted(e.getMessage()), e);
+        }
         JavaWebDriverFactory.sweepStaleUserDataDirs();
 
         final List<RemoteWebDriver> drivers = new ArrayList<>(count);

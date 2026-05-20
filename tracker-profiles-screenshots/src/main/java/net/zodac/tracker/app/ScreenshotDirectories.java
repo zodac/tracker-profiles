@@ -58,6 +58,8 @@ public final class ScreenshotDirectories {
     public static void createAll() throws IOException {
         try {
             Files.createDirectories(OUTPUT);
+            LOGGER.trace("Created screenshot output directory: [{}]", OUTPUT);
+
             if (CONFIG.takeScreenshotOnError()) {
                 Files.createDirectories(ERRORS);
                 LOGGER.trace("Created error screenshot directory: [{}]", ERRORS);
