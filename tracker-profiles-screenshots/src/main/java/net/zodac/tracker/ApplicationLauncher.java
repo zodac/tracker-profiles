@@ -47,24 +47,19 @@ public final class ApplicationLauncher {
      */
     // TODO: Investigate whether it's worth not logging out
     static void main() {
-        validateApplicationConfiguration();
+        initApplicationConfiguration();
 
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.getTrackers();
         validateDisplay(trackersByType);
         startApplication(trackersByType);
     }
 
-    private static void validateApplicationConfiguration() {
+    private static void initApplicationConfiguration() {
         try {
-            // Validate that the application configuration is valid
-            Configuration.get();
-        } catch (final ExceptionInInitializerError e) {
+            Configuration.init();
+        } catch (final IllegalArgumentException e) {
             LOGGER.debug("Invalid environment variable", e);
-            LOGGER.error("Invalid environment variable: {}", e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
-            exit(ExitState.FAILURE);
-        } catch (final Exception e) {
-            LOGGER.debug("Unexpected error starting application pre-requisites", e);
-            LOGGER.error("Unexpected error starting application pre-requisites: {}", e.getMessage());
+            LOGGER.error("Invalid environment variable: {}", e.getMessage());
             exit(ExitState.FAILURE);
         }
     }

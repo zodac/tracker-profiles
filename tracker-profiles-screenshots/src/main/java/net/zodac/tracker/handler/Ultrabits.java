@@ -31,7 +31,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType
 
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -43,8 +42,6 @@ import org.openqa.selenium.WebElement;
  */
 @TrackerHandler(name = "Ultrabits", type = TrackerType.MANUAL, url = "https://ultrabits.org/")
 public class Ultrabits extends AbstractTrackerHandler implements HasCloudflareCheck {
-
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
 
     @Override
     public By cloudflareSelector() {
@@ -58,7 +55,7 @@ public class Ultrabits extends AbstractTrackerHandler implements HasCloudflareCh
     protected By usernameFieldSelector() {
         // Special case where the website provides an option to use English, but only on the login page
         // We use this instead of an explicit translation to let the website handle it
-        if (CONFIG.enableTranslationToEnglish()) {
+        if (Configuration.get().enableTranslationToEnglish()) {
             LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
             final By languageDropdownSelector = XpathBuilder
                 .from(body, atIndex(1))

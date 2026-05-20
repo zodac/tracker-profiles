@@ -89,8 +89,27 @@ Run `grep -R --include='*.java' '^@TrackerHandler(' . | cut -d '"' -f2 | sort -u
 
 ### Configuration
 
-All runtime configuration is loaded from environment variables in `ApplicationConfiguration`. `Configuration` is a lazy singleton that calls
-`ApplicationConfiguration.load()` once. Any invalid value throws `IllegalArgumentException` at startup.
+All runtime configuration is loaded from environment variables in `ApplicationConfiguration`. `Configuration.init()` is called once at startup by
+`ApplicationLauncher`; all subsequent callers use `Configuration.get()`. Any invalid value throws `IllegalArgumentException` at startup.
+
+**`AbstractTrackerHandler` subclasses must never declare a `private static final ApplicationConfiguration CONFIG = Configuration.get()` field.**
+`TrackerHandlerFactory` loads every handler class via reflection at startup, before `Configuration.init()` has been called. A static field on any
+handler class would therefore call `Configuration.get()` before initialisation, throwing `IllegalStateException`. If a handler method needs
+configuration, call `Configuration.get()` inline at the point of use instead:
+
+```java
+// Correct — inline call inside the method body
+@Override
+protected By usernameFieldSelector() {
+    if (Configuration.get().enableTranslationToEnglish()) {
+        ...
+    }
+    return super.usernameFieldSelector();
+}
+
+// Wrong — static field triggers Configuration.get() at class-load time
+private static final ApplicationConfiguration CONFIG = Configuration.get();
+```
 
 New env vars must be:
 

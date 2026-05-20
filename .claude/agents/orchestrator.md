@@ -97,6 +97,10 @@ Rules:
 - Use `XpathBuilder` exclusively — never raw XPath strings
 - Imports must be sorted (static first, then standard, alphabetical within each group)
 - Do not add comments unless the logic is genuinely non-obvious
+- **Never add a `private static final ApplicationConfiguration CONFIG = Configuration.get()` field.**
+  `TrackerHandlerFactory` loads every handler class via reflection at startup before `Configuration.init()` has run — a
+  static field would call `Configuration.get()` too early and throw `IllegalStateException`. If a method needs config,
+  call `Configuration.get()` inline at the point of use.
 
 ### Step 4 — Complete the checklist
 

@@ -26,6 +26,10 @@ Determine the correct selectors and overrides for:
 - `passwordFieldSelector()` — default is `By.name("password")`; override if different
 - `loginButtonSelector()` — default is `By.id("login-button")`; override if different
 - `preLoginClickAction()` / `postLoginClickAction()` — only needed for captcha/2FA (MANUAL type) or extra steps
+- If any login method needs to check application config (e.g. `enableTranslationToEnglish()`), call
+  `Configuration.get().enableTranslationToEnglish()` **inline inside the method** — never as a `static final` field.
+  A static field on a handler class calls `Configuration.get()` at class-load time, before initialisation, and will
+  throw `IllegalStateException`.
 - `postLoginSelector()` — **must override** if `profileLinkSelector()` has side effects (e.g. opens a dropdown).
   Prefer a user-stats element (e.g. `div.user-stats`, `ul.ratio-bar`) over a generic nav element — the
   post-login page often shows the user's stats and this is a more meaningful confirmation of a successful login.

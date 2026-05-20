@@ -39,7 +39,6 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
@@ -57,13 +56,11 @@ import org.openqa.selenium.support.ui.Select;
 @TrackerHandler(name = "HDFans", type = TrackerType.MANUAL, url = "https://hdfans.org/")
 public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
-
     @Override
     protected By usernameFieldSelector() {
         // Special case where the website provides an option to use English, but only on the login page
         // We use this instead of an explicit translation to let the website handle it
-        if (CONFIG.enableTranslationToEnglish()) {
+        if (Configuration.get().enableTranslationToEnglish()) {
             LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
             final WebElement languageDropdown = driver.findElement(languageDropdownSelector());
             new Select(languageDropdown).selectByIndex(0);

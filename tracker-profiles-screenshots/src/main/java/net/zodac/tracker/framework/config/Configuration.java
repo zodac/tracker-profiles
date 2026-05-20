@@ -17,25 +17,47 @@
 
 package net.zodac.tracker.framework.config;
 
+import org.jspecify.annotations.Nullable;
+
 /**
- * Singleton class used to create an instance of {@link ApplicationConfiguration}.
+ * Singleton accessor for the application's {@link ApplicationConfiguration}.
+ *
+ * <p>
+ * {@link #init()} must be called once (from {@code ApplicationLauncher}) before any call to {@link #get()}. Calling {@link #get()} before
+ * {@link #init()} throws {@link IllegalStateException}.
  */
 public final class Configuration {
+
+    @Nullable
+    private static volatile ApplicationConfiguration instance; // NOPMD: AvoidUsingVolatile - we want this to be flushed to memory ASAP
 
     private Configuration() {
 
     }
 
-    private static final class InstanceHolder {
-        private static final ApplicationConfiguration INSTANCE = ApplicationConfiguration.load();
+    /**
+     * Loads and stores the {@link ApplicationConfiguration} from environment variables. Must be called exactly once at application startup, before
+     * any call to {@link #get()}.
+     *
+     * @return the loaded {@link ApplicationConfiguration}
+     * @throws IllegalArgumentException if any environment variable value is invalid
+     */
+    public static ApplicationConfiguration init() {
+        instance = ApplicationConfiguration.load();
+        return instance;
     }
 
     /**
-     * Retrieve an instance of {@link ApplicationConfiguration}.
+     * Retrieve the {@link ApplicationConfiguration} loaded by {@link #init()}.
      *
-     * @return the {@link ApplicationConfiguration}.
+     * @return the {@link ApplicationConfiguration}
+     * @throws IllegalStateException if {@link #init()} has not been called
      */
     public static ApplicationConfiguration get() {
-        return InstanceHolder.INSTANCE;
+        final ApplicationConfiguration config = instance;
+        if (config == null) {
+            throw new IllegalStateException("Configuration.init() has not been called");
+        }
+        return config;
     }
 }
