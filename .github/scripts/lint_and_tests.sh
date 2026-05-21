@@ -182,12 +182,16 @@ detect_changed_steps() {
     echo "Checking changes since tag [${latest_tag}]..." >&2
 
     local run_docker=false run_java=false run_javascript=false run_markdown=false run_python=false
+    local java_changed_files=()
     local file
 
     while IFS= read -r file; do
         [[ -z "${file}" ]] && continue
         [[ "${file}" =~ ^docker/ || "${file}" =~ ^ci/docker/ ]] && run_docker=true
-        [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^ci/java/ || "${file}" == "pom.xml" ]] && run_java=true
+        if [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^ci/java/ || "${file}" == "pom.xml" ]]; then
+            run_java=true
+            java_changed_files+=("${file}")
+        fi
         [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/ || "${file}" =~ ^ci/javascript/ ]] && run_javascript=true
         [[ "${file}" == "README.md" || "${file}" =~ ^ci/doc/ ]] && run_markdown=true
         [[ "${file}" =~ ^docker/scripts/.*\.py$ || "${file}" =~ ^ci/python/ ]] && run_python=true
@@ -199,6 +203,32 @@ detect_changed_steps() {
             git ls-files --others --exclude-standard
         } | sort -u
     )
+
+    # Suppress the java step if the only change is a <version> bump in the two pom.xml files
+    if [[ "${run_java}" == true ]]; then
+        local only_poms=true
+        local changed_file
+        for changed_file in "${java_changed_files[@]}"; do
+            if [[ "${changed_file}" != "pom.xml" && "${changed_file}" != "tracker-profiles-screenshots/pom.xml" ]]; then
+                only_poms=false
+                break
+            fi
+        done
+        if [[ "${only_poms}" == true ]]; then
+            local non_version_diff
+            non_version_diff=$(
+                {
+                    git diff "${latest_tag}..HEAD" -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
+                    git diff -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
+                    git diff --cached -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
+                } | grep '^[+-]' | grep -v '^---\|^+++' | grep -vE '^[+-][[:space:]]*<version>'
+            )
+            if [[ -z "${non_version_diff}" ]]; then
+                run_java=false
+                echo "Skipping java: only pom.xml version bump detected" >&2
+            fi
+        fi
+    fi
 
     [[ "${run_docker}"     == true ]] && echo "docker"
     [[ "${run_java}"       == true ]] && echo "java"
