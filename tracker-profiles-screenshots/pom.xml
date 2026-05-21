@@ -6,7 +6,7 @@
     <parent>
         <groupId>net.zodac</groupId>
         <artifactId>tracker-profiles</artifactId>
-        <version>10.0.4-SNAPSHOT</version>
+        <version>10.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>tracker-profiles-screenshots</artifactId>
