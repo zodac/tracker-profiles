@@ -112,6 +112,7 @@ docker run \
     --env TRACKER_EXECUTION_ORDER=HEADLESS \
     -v /tmp/screenshots:/tmp/screenshots \
     --name tracker-profiles \
+    --env TRACKER_EXECUTION_ORDER=HEADLESS \
     --rm zodac/tracker-profiles:latest
 ```
 
@@ -616,10 +617,9 @@ against a real site, there's no value to automating much testing, so each implem
 #### JavaScript Redaction
 
 The [JavaScript redaction logic](./tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor) used
-in [BlurRedactor](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/BlurRedactor.java)
-and [BoxRedactor](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/BoxRedactor.java) is mostly AI created with little
-input from me. I don't know JavaScript well enough to perform this overlay-based redaction, but I verify against all tracker handlers when updates are
-made, to cover as many cases as possible.
+in [JavaScriptRedactor](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/JavaScriptRedactor.java) is mostly AI
+created with little input from me. I don't know JavaScript well enough to perform this overlay-based redaction, but I verify against all tracker
+handlers when updates are made, to cover as many cases as possible.
 
 #### Progress Bar PrintStream
 
