@@ -49,7 +49,7 @@ jobs:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
           java-version: '26'
-          maven-version: '3.9.15'
+          maven-version: '3.9.16'
 
       - name: Run linters and unit/integration tests
         id: application_tests

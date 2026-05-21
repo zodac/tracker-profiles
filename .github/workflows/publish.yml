@@ -26,7 +26,7 @@ jobs:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
           java-version: '26'
-          maven-version: '3.9.15'
+          maven-version: '3.9.16'
 
       - name: Run Java lints and tests with Maven (including SonarQube)
         env:
@@ -69,7 +69,7 @@ jobs:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
           java-version: '26'
-          maven-version: '3.9.15'
+          maven-version: '3.9.16'
 
       - name: Set Maven version from VERSION file
         run: mvn versions:set -DnewVersion=${{ steps.version.outputs.version }} -DgenerateBackupPoms=false -DprocessAllModules

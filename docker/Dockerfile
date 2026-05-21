@@ -61,7 +61,7 @@ RUN jlink --compress=zip-9 \
     { find /opt/jdk/bin -type f -exec strip -p --strip-unneeded {} \; || true; }
 
 # Stage 3: Build the Java artefact
-FROM maven:3.9.15 AS maven_base
+FROM maven:3.9.16 AS maven_base
 FROM eclipse-temurin:26_35-jdk AS java_app_builder
 
 # Extract Maven binary and libraries from official Maven image
@@ -139,7 +139,7 @@ RUN DISPLAY=":0" \
     [ -f /app/app.jsa ] || touch /app/app.jsa
 
 # Runtime
-FROM debian:13.4-slim AS runtime
+FROM debian:13.5-slim AS runtime
 # Set the working directory
 WORKDIR /app
 
