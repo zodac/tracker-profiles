@@ -75,7 +75,8 @@ public final class TrackerHandlerFactory {
         final Map<String, Map.Entry<Class<?>, TrackerHandler>> map = new HashMap<>();
         final var annotatedHandlers = PackageScanner.scan(
             AbstractTrackerHandler.class.getPackageName(),
-            clazz -> clazz.isAnnotationPresent(TrackerHandler.class) || clazz.isAnnotationPresent(TrackerHandlers.class)
+            clazz -> AbstractTrackerHandler.class.isAssignableFrom(clazz)
+                && (clazz.isAnnotationPresent(TrackerHandler.class) || clazz.isAnnotationPresent(TrackerHandlers.class))
         );
         for (final Class<?> clazz : annotatedHandlers) {
             for (final TrackerHandler annotation : clazz.getAnnotationsByType(TrackerHandler.class)) {

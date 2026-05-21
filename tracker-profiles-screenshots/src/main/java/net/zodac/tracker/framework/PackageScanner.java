@@ -80,7 +80,7 @@ public final class PackageScanner {
             .filter(fileName -> fileName.endsWith(".class"))
             .map(fileName -> getClass(fileName, packageName))
             .filter(filter)
-            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
+            .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::getName))));
     }
 
     private static Set<Class<?>> getFromJar(final URL resource, final String packagePath, final Predicate<Class<?>> filter) throws IOException {
@@ -93,7 +93,7 @@ public final class PackageScanner {
                 .filter(jarEntryName -> jarEntryName.startsWith(packagePath) && jarEntryName.endsWith(".class"))
                 .map(jarEntryName -> getClass(jarEntryName.replace('/', '.'), null))
                 .filter(filter)
-                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::toString))));
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Class::getName))));
         }
     }
 
