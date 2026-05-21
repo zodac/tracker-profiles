@@ -25,7 +25,9 @@ import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
+import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
+import net.zodac.tracker.util.ScreenshotTaker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,6 +50,7 @@ public final class ApplicationLauncher {
     // TODO: Investigate whether it's worth not logging out
     static void main() {
         initApplicationConfiguration();
+        registerShutdownHook();
 
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.getTrackers();
         validateDisplay(trackersByType);
@@ -62,6 +65,15 @@ public final class ApplicationLauncher {
             LOGGER.error("Invalid environment variable: {}", e.getMessage());
             exit(ExitState.FAILURE);
         }
+    }
+
+    // Drain the PNG executor before the driver pool so queued writes complete before the chromedriver IPC channels are torn down
+    // Both shutdown() methods are idempotent, so they remain safe to call alongside the existing finally block on a normal exit
+    private static void registerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ScreenshotTaker.shutdown();
+            DriverPool.shutdown();
+        }, "application-shutdown-hook"));
     }
 
     private static void validateDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {

@@ -24,10 +24,13 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.redactor.RedactionType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
@@ -38,9 +41,11 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategy;
  */
 public final class ScreenshotTaker {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Duration TIME_BETWEEN_SCROLLS = Duration.ofMillis(500L);
     private static final ExecutorService WRITE_EXECUTOR = Executors.newFixedThreadPool(CONFIG.numberOfParallelThreads());
+    private static final long SHUTDOWN_DRAIN_TIMEOUT_SECONDS = 5L;
 
     private ScreenshotTaker() {
 
@@ -106,10 +111,22 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Shuts down the bounded PNG write executor. Call once after all screenshot work is finished.
+     * Shuts down the bounded PNG write executor and waits up to {@value #SHUTDOWN_DRAIN_TIMEOUT_SECONDS} seconds for queued writes to drain. If the
+     * drain does not complete in time, in-flight writes are cancelled via {@link ExecutorService#shutdownNow()}. Safe to call multiple times.
      */
     public static void shutdown() {
         WRITE_EXECUTOR.shutdown();
+        try {
+            if (!WRITE_EXECUTOR.awaitTermination(SHUTDOWN_DRAIN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                LOGGER.warn("PNG write executor did not drain within {}s, cancelling in-flight writes", SHUTDOWN_DRAIN_TIMEOUT_SECONDS);
+                WRITE_EXECUTOR.shutdownNow();
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.debug("Interrupted while draining PNG write executor", e);
+            LOGGER.warn("Interrupted while draining PNG write executor: {}", e.getMessage());
+            WRITE_EXECUTOR.shutdownNow();
+        }
     }
 
     private static File createOutputFileHandle(final Path outputDirectory, final String baseName, final int index) {

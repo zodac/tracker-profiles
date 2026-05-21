@@ -43,7 +43,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 /**
  * Utility class used to execute scripts on a web page.
  */
-public class BrowserInteractionHelper {
+public final class BrowserInteractionHelper {
 
     private static final Duration DEFAULT_WAIT_FOR_ALERT = Duration.ofSeconds(2L);
     private static final Duration DEFAULT_WAIT_FOR_CONTEXT_MENU = Duration.of(500L, ChronoUnit.MILLIS);
@@ -148,10 +148,6 @@ public class BrowserInteractionHelper {
     public void hardReloadPage(final Duration pageLoadDuration) {
         LOGGER.trace("Hard reloading page");
         final String currentUrl = driver.getCurrentUrl();
-        if (currentUrl == null) {
-            LOGGER.trace("Current URL is null");
-            return;
-        }
 
         driver.navigate().to(currentUrl);
         waitForPageToLoad(pageLoadDuration);
