@@ -93,7 +93,6 @@ public final class DriverPool {
      * @param numberOfTrackers        the total number of trackers for this type
      */
     public static void initialise(final TrackerType trackerType, final int numberOfParallelThreads, final int numberOfTrackers) {
-        final DriverPool instance = get();
         final int count = (trackerType == TrackerType.HEADLESS) ? numberOfParallelThreads : 1;
         LOGGER.debug("Initializing {} pooled {} driver{}", count, trackerType.formattedName(), StringUtils.pluralise(count));
         try {
@@ -117,6 +116,7 @@ public final class DriverPool {
             throw new IllegalStateException("Failed to create pooled %s driver".formatted(trackerType.formattedName()), e);
         }
 
+        final DriverPool instance = get();
         final BlockingDeque<RemoteWebDriver> deque = new LinkedBlockingDeque<>();
         for (final RemoteWebDriver driver : drivers) {
             deque.addLast(driver);

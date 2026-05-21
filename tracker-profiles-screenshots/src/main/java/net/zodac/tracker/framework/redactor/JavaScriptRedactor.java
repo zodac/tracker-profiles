@@ -24,17 +24,16 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
- * Implementation of {@link Redactor} that redacts text by applying a Gaussian blur directly to the sensitive content within the impacted
- * {@link WebElement}.
+ * Implementation of {@link Redactor} that executes bundled JavaScript redaction scripts on the page. The visual treatment (coloured box overlay vs.
+ * Gaussian blur) is selected by the supplied {@link RedactionType}.
  */
-final class BlurRedactor implements Redactor {
+final class JavaScriptRedactor implements Redactor {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final List<String> SCRIPT_NAMES = List.of(
-        "redact_element.js", "redact_email.js", "redact_ip_address.js", "redact_passkey.js", "undo_redaction.js"
+        "redact_common.js", "redact_element.js", "redact_email.js", "redact_ip_address.js", "redact_passkey.js", "undo_redaction.js"
     );
 
-    private static final String BLUR_DEFINITION = "blur(0.5em)";
     private static final String IRC_KEY_PREFIX_ALTERNATION = "IRC Key";
     private static final String TORRENT_PASSKEY_PREFIX_ALTERNATION = "Passkey|Pass Key";
 
@@ -45,23 +44,26 @@ final class BlurRedactor implements Redactor {
     private static final String CALL_UNDO_SCRIPT = "window.__undoRedaction();";
 
     private final RemoteWebDriver driver;
+    private final RedactionType redactionType;
 
-    private BlurRedactor(final RemoteWebDriver driver) {
+    private JavaScriptRedactor(final RemoteWebDriver driver, final RedactionType redactionType) {
         this.driver = driver;
+        this.redactionType = redactionType;
     }
 
     /**
-     * Creates a {@link BlurRedactor} and installs the redaction scripts on the page.
+     * Creates a {@link JavaScriptRedactor} and installs the redaction scripts on the page.
      *
-     * @param driver the {@link RemoteWebDriver}
-     * @return the created {@link BlurRedactor}
+     * @param driver        the {@link RemoteWebDriver}
+     * @param redactionType the {@link RedactionType} controlling the visual treatment; must not be {@link RedactionType#NONE}
+     * @return the created {@link JavaScriptRedactor}
      * @throws IllegalStateException if any of the bundled JavaScript redaction scripts cannot be loaded from the classpath
      */
-    static BlurRedactor create(final RemoteWebDriver driver) {
+    static JavaScriptRedactor create(final RemoteWebDriver driver, final RedactionType redactionType) {
         try {
             final String installScripts = Redactor.loadScripts(SCRIPT_NAMES);
             driver.executeScript(installScripts);
-            return new BlurRedactor(driver);
+            return new JavaScriptRedactor(driver, redactionType);
         } catch (final IllegalStateException e) {
             LOGGER.error("Failed to load JavaScript redaction scripts: {}", e.getMessage(), e);
             throw e;
@@ -70,41 +72,54 @@ final class BlurRedactor implements Redactor {
 
     @Override
     public int redact(final WebElement element, final String description, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_ELEMENT_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
-            "blur");
+        final RedactionStyle style = styleFor("orange", "white", description);
+        driver.executeScript(CALL_ELEMENT_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(),
+            style.bgColor(), style.textColor(), style.label(), style.blurDef(), style.mode());
         return 1;
     }
 
     @Override
     public int redactEmail(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_EMAIL_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
-            "blur");
+        final RedactionStyle style = styleFor("blue", "white", "Email");
+        driver.executeScript(CALL_EMAIL_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(),
+            style.bgColor(), style.textColor(), style.label(), style.blurDef(), style.mode());
         return 1;
     }
 
     @Override
     public int redactIpAddress(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_IP_ADDRESS_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "", "", BLUR_DEFINITION,
-            "blur");
+        final RedactionStyle style = styleFor("yellow", "black", "IP");
+        driver.executeScript(CALL_IP_ADDRESS_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(),
+            style.bgColor(), style.textColor(), style.label(), style.blurDef(), style.mode());
         return 1;
     }
 
     @Override
     public int redactIrcPasskey(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "",
-            IRC_KEY_PREFIX_ALTERNATION, BLUR_DEFINITION, "blur");
+        final RedactionStyle style = styleFor("gray", "white", "IRC");
+        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(),
+            style.bgColor(), style.textColor(), style.label(), IRC_KEY_PREFIX_ALTERNATION, style.blurDef(), style.mode());
         return 1;
     }
 
     @Override
     public int redactTorrentPasskey(final WebElement element, final RedactionBuffer buffer) {
-        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(), "", "",
-            TORRENT_PASSKEY_PREFIX_ALTERNATION, BLUR_DEFINITION, "blur");
+        final RedactionStyle style = styleFor("red", "white", "Passkey");
+        driver.executeScript(CALL_PASSKEY_SCRIPT, element, buffer.left(), buffer.up(), buffer.right(), buffer.down(),
+            style.bgColor(), style.textColor(), style.label(), TORRENT_PASSKEY_PREFIX_ALTERNATION, style.blurDef(), style.mode());
         return 1;
     }
 
     @Override
     public void undoRedaction() {
         driver.executeScript(CALL_UNDO_SCRIPT);
+    }
+
+    private RedactionStyle styleFor(final String bgColor, final String textColor, final String label) {
+        return switch (redactionType) {
+            case BLUR -> RedactionStyle.blur();
+            case BOX -> RedactionStyle.box(bgColor, textColor, label);
+            case NONE -> throw new IllegalStateException("NONE redaction type cannot produce a style");
+        };
     }
 }

@@ -20,7 +20,6 @@ package net.zodac.tracker.app;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -124,7 +123,7 @@ final class ProfileScreenshotExecutor {
                 final Set<TrackerStep> screenshotResult = screenshotTracker(trackerCredential, progressBarManager, successfulSteps);
                 if (screenshotResult.size() == TrackerStep.NUMBER_OF_STEPS) { // All steps were successful
                     LOGGER.trace("Successfully screenshot '{}' on attempt #{}", trackerCredential.name(), attempt);
-                    clearErrorScreenshots(trackerCredential.name(), ScreenshotDirectories.ERRORS);
+                    clearErrorScreenshots(trackerCredential.name());
                     return true;
                 }
             }
@@ -161,7 +160,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.debug("\t- Error writing screenshot for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- Error writing screenshot for tracker '{}'", trackerCredential.name());
         } catch (final TimeoutException e) {
-            screenshotOnError(trackerHandler, trackerCredential.name(), ScreenshotDirectories.ERRORS);
+            screenshotOnError(trackerHandler, trackerCredential.name());
             LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerCredential.name(), e);
 
             final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
@@ -180,7 +179,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.debug("Browser unavailable, most likely user-cancelled", e);
             LOGGER.warn("Browser unavailable, most likely user-cancelled");
         } catch (final Exception e) {
-            screenshotOnError(trackerHandler, trackerCredential.name(), ScreenshotDirectories.ERRORS);
+            screenshotOnError(trackerHandler, trackerCredential.name());
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerCredential.name(), e);
 
             final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
@@ -200,8 +199,8 @@ final class ProfileScreenshotExecutor {
     }
 
     // The directory itself is created up-front by prepareErrorDirectories() and is intentionally not deleted on clean-up
-    private static void clearErrorScreenshots(final String trackerName, final Path directory) {
-        final File errorsDirectory = directory.toFile();
+    private static void clearErrorScreenshots(final String trackerName) {
+        final File errorsDirectory = ScreenshotDirectories.ERRORS.toFile();
         final File[] errorScreenshots = errorsDirectory.listFiles((_, name) -> name.startsWith(trackerName));
         if (errorScreenshots == null) {
             return;
@@ -217,7 +216,7 @@ final class ProfileScreenshotExecutor {
         }
     }
 
-    private static void screenshotOnError(final @Nullable AbstractTrackerHandler trackerHandler, final String trackerName, final Path directory) {
+    private static void screenshotOnError(final @Nullable AbstractTrackerHandler trackerHandler, final String trackerName) {
         if (!CONFIG.takeScreenshotOnError()) {
             LOGGER.trace("Error occurred, but screenshots for errors are not enabled");
             return;
@@ -230,7 +229,8 @@ final class ProfileScreenshotExecutor {
 
         try {
             LOGGER.trace("Taking failure screenshot for '{}'", trackerName);
-            final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), directory, trackerName, false, 0).get();
+            final File screenshot =
+                ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.ERRORS, trackerName, false, 0).get();
             LOGGER.warn("\t\t- Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
         } catch (final ExecutionException e) {
             LOGGER.debug("\t\t- Unable to take failure screenshot of '{}'", trackerName, e);
@@ -320,6 +320,9 @@ final class ProfileScreenshotExecutor {
         final String baseName = screenshotBaseName(trackerCredential.name(), redactionType);
 
         final Redactor redactor = performRedaction(trackerHandler, redactionType);
+        if (redactor != null) {
+            LOGGER.trace("Redaction performed by: {}", redactor);
+        }
 
         trackerHandler.actionBeforeScreenshot();
         final Future<File> pendingWrite = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), CONFIG.outputDirectory(), baseName,

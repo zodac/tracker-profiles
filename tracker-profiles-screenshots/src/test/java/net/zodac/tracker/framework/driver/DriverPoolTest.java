@@ -78,7 +78,7 @@ class DriverPoolTest {
         final RemoteWebDriver expected = mock(RemoteWebDriver.class);
         final Extension extension = mock(Extension.class);
 
-        try (MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
             factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(expected);
 
             final RemoteWebDriver actual = DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
@@ -92,11 +92,10 @@ class DriverPoolTest {
     void givenNoPool_whenAcquire_thenLazyDriverCreatedAndRegistered() throws Exception {
         final RemoteWebDriver expected = mock(RemoteWebDriver.class);
 
-        try (MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
             factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(expected);
 
             final RemoteWebDriver actual = DriverPool.acquire(TrackerType.HEADLESS, List.of());
-
             assertThat(actual)
                 .isSameAs(expected);
             assertThat(getAllPooledDrivers())
@@ -115,7 +114,6 @@ class DriverPoolTest {
         DriverPool.acquire(TrackerType.HEADLESS, List.of());
 
         DriverPool.release(driver);
-
         assertThat(getPool().get(TrackerType.HEADLESS))
             .contains(driver);
     }
@@ -123,7 +121,7 @@ class DriverPoolTest {
     @Test
     void givenFreshDriver_whenRelease_thenDriverQuit() {
         final RemoteWebDriver driver = mock(RemoteWebDriver.class);
-        try (MockedStatic<JavaWebDriverFactory> _ = mockStatic(JavaWebDriverFactory.class)) {
+        try (final var _ = mockStatic(JavaWebDriverFactory.class)) {
             DriverPool.release(driver);
         }
 
@@ -139,7 +137,7 @@ class DriverPoolTest {
         DriverPool.acquire(TrackerType.HEADLESS, List.of());
         setRemainingTasks(getInstance(), 2);
 
-        try (MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
             factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(replacement);
             DriverPool.release(deadDriver);
         }
@@ -157,7 +155,7 @@ class DriverPoolTest {
         injectPooledDriver(driver1, TrackerType.HEADLESS);
         injectPooledDriver(driver2, TrackerType.MANUAL);
 
-        try (MockedStatic<JavaWebDriverFactory> _ = mockStatic(JavaWebDriverFactory.class)) {
+        try (final var _ = mockStatic(JavaWebDriverFactory.class)) {
             DriverPool.shutdown();
         }
 
