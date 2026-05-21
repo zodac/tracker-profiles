@@ -370,7 +370,7 @@ public final class BrowserInteractionHelper {
 
     private static void setBrowserAsActiveWindow() {
         LOGGER.trace("Setting Chromium browser as active window");
-        try (final Process process = new ProcessBuilder("wmctrl", "-x", "-a", "Chromium").start()) {
+        try (final Process process = new ProcessBuilder("/usr/bin/wmctrl", "-x", "-a", "Chromium").start()) {
             final int exitValue = process.waitFor();
             LOGGER.trace("Process result: {}", exitValue);
         } catch (final IOException e) {
