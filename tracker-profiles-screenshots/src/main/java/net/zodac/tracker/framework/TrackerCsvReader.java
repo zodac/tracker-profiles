@@ -83,7 +83,7 @@ public final class TrackerCsvReader {
         if (!trackersWithNoHandlers.isEmpty()) {
             final String plural = StringUtils.pluralise(trackersWithNoHandlers);
             if (CONFIG.failOnUnsupportedTracker()) {
-                throw new IllegalArgumentException(String.format("Unknown tracker%s in CSV: %s", plural, trackersWithNoHandlers));
+                throw new IllegalArgumentException("Unknown tracker%s in CSV: %s".formatted(plural, trackersWithNoHandlers));
             } else {
                 LOGGER.debug("Unknown tracker{} in CSV: {}", plural, trackersWithNoHandlers);
             }
@@ -113,24 +113,24 @@ public final class TrackerCsvReader {
 
     private static void validateFilePath(final Path csvPath) {
         if (!Files.exists(csvPath)) {
-            throw new InvalidCsvInputException(String.format("Tracker CSV file '%s' does not exist", csvPath.toAbsolutePath()));
+            throw new InvalidCsvInputException("Tracker CSV file '%s' does not exist".formatted(csvPath.toAbsolutePath()));
         }
 
         if (!Files.isRegularFile(csvPath)) {
-            throw new InvalidCsvInputException(String.format("Tracker CSV path '%s' is not a file", csvPath.toAbsolutePath()));
+            throw new InvalidCsvInputException("Tracker CSV path '%s' is not a file".formatted(csvPath.toAbsolutePath()));
         }
     }
 
     private static void validateCsvFileContent(final List<CSVRecord> records, final Path csvPath) {
         if (records.isEmpty()) {
-            throw new InvalidCsvInputException(String.format("CSV file '%s' is empty", csvPath.toAbsolutePath()));
+            throw new InvalidCsvInputException("CSV file '%s' is empty".formatted(csvPath.toAbsolutePath()));
         }
 
         // Validate header row
         final CSVRecord firstRecord = records.getFirst();
         if (!isHeaderRow(firstRecord)) {
             throw new InvalidCsvInputException(
-                String.format("CSV header row in '%s' is missing, expected: '%s'", csvPath.toAbsolutePath(), String.join(",", CSV_HEADERS)));
+                "CSV header row in '%s' is missing, expected: '%s'".formatted(csvPath.toAbsolutePath(), String.join(",", CSV_HEADERS)));
         }
     }
 

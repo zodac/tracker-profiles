@@ -39,6 +39,11 @@
 
     <module name="TreeWalker">
         <!-- New rules introduced in addition to Google checks -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="String\.format\("/>
+            <property name="message" value="Use &apos;&apos;.formatted()&apos;&apos; instead of &apos;&apos;String.format()&apos;&apos;"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
         <module name="EmptyLineSeparator">
             <property name="allowMultipleEmptyLines" value="false"/>
             <property name="allowMultipleEmptyLinesInsideClassMembers" value="false"/>

@@ -266,7 +266,7 @@ public final class BrowserInteractionHelper {
      */
     public void scroll(final int x, final int y) {
         LOGGER.trace("Scrolling up/down {}, left/right {}", x, y);
-        driver.executeScript(String.format("window.scrollBy(%s, %s);", x, y));
+        driver.executeScript("window.scrollBy(arguments[0], arguments[1]);", x, y);
         explicitWait(Duration.ofMillis(100L), "page to scroll");
     }
 

@@ -80,9 +80,9 @@ public enum TrackerType {
         }
 
         if (!trackers.isEmpty()) {
-            LOGGER.info(String.format("- %-12s: %d", formattedName(), trackers.size()));
+            LOGGER.info("- %-12s: %d".formatted(formattedName(), trackers.size()));
             for (final TrackerCredential trackerCredential : trackers) {
-                LOGGER.debug(String.format("\t- %-16s", trackerCredential.name()));
+                LOGGER.debug("\t- %-16s".formatted(trackerCredential.name()));
             }
         }
     }

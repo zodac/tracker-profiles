@@ -115,7 +115,7 @@ New env vars must be:
 
 1. Added as a record component (alphabetical order among components)
 2. Loaded via a `getXxx()` private static method using `getOrDefault()` or
-   `parseIntegerInRange(input, envVarName, max)` (min is hardcoded to 1; use `Integer.MAX_VALUE` for unbounded positive integers)
+   `parseIntegerInRange(input, envVarName, min, max)` (use `Integer.MAX_VALUE` for unbounded positive integers)
 3. Added to the `load()` constructor call and `print()` debug log
 4. Documented in the README `### Configuration Options` table and both Docker run examples (Debian and Windows blocks), all in alphabetical order
 

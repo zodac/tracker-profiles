@@ -118,7 +118,7 @@ public final class ScreenshotOrchestrator {
 
         LOGGER.info("");
         LOGGER.info(">>> Executing {} trackers {}<<<", trackerType.formattedName(),
-            effectiveThreadCount == 1 ? "" : String.format("(with %d threads) ", effectiveThreadCount));
+            effectiveThreadCount == 1 ? "" : "(with %d threads) ".formatted(effectiveThreadCount));
         LOGGER.info("");
 
         final List<Callable<Void>> trackerScreenshotTasks = new ArrayList<>();

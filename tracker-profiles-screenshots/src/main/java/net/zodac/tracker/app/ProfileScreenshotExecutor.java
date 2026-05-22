@@ -84,7 +84,6 @@ final class ProfileScreenshotExecutor {
      * @param progressBarManager the progress bar manager to tick at each workflow step
      * @param maxLogLength       the maximum length needed for the log entry to log the tracker name
      * @return {@code true} if screenshot was successful
-     * @throws RuntimeException thrown if all attempts are exhausted due to a retryable failure with a known cause
      */
     static boolean takeScreenshot(final TrackerCredential trackerCredential, final ProgressBarManager progressBarManager, final int maxLogLength) {
         setUpPerTrackerLogging(trackerCredential, maxLogLength);

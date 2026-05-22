@@ -147,7 +147,7 @@ public final class DisplayUtils {
 
         // Initial text
         if (CONFIG.inputTimeoutEnabled()) {
-            continueButton.setText(String.format("%s (%s)", BUTTON_CONTINUE_TEXT, remainingSeconds.get()));
+            continueButton.setText("%s (%s)".formatted(BUTTON_CONTINUE_TEXT, remainingSeconds.get()));
         } else {
             continueButton.setText(BUTTON_CONTINUE_TEXT);
         }
@@ -186,7 +186,7 @@ public final class DisplayUtils {
         final Timer countdownTimer = new Timer(timerDelay, event -> {
             final long value = remainingSeconds.decrementAndGet();
             if (value > 0) {
-                continueButton.setText(String.format("%s (%s)", BUTTON_CONTINUE_TEXT, value));
+                continueButton.setText("%s (%s)".formatted(BUTTON_CONTINUE_TEXT, value));
             } else {
                 continueButton.setText(BUTTON_CONTINUE_TEXT);
                 ((Timer) event.getSource()).stop();

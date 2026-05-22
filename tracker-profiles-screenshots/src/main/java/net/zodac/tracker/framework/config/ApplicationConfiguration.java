@@ -174,14 +174,14 @@ public record ApplicationConfiguration(
     private static String getBrowserDimensions() {
         final String browserWidth = getOrDefault("BROWSER_WIDTH", DEFAULT_BROWSER_WIDTH);
         final String browserHeight = getOrDefault("BROWSER_HEIGHT", DEFAULT_BROWSER_HEIGHT);
-        final String resolution = String.format("%sx%s", browserWidth, browserHeight);
+        final String resolution = "%sx%s".formatted(browserWidth, browserHeight);
 
         if (VALID_RESOLUTIONS.contains(resolution)) {
-            return String.format("%s,%s", browserWidth, browserHeight);
+            return "%s,%s".formatted(browserWidth, browserHeight);
         }
 
         throw new IllegalArgumentException(
-            String.format("[BROWSER_WIDTH][BROWSER_HEIGHT] Unsupported browser resolution '%s', must be one of: %s", resolution, VALID_RESOLUTIONS));
+            "[BROWSER_WIDTH][BROWSER_HEIGHT] Unsupported browser resolution '%s', must be one of: %s".formatted(resolution, VALID_RESOLUTIONS));
     }
 
     private static char getCsvCommentSymbol() {
@@ -190,7 +190,7 @@ public record ApplicationConfiguration(
 
     private static Duration getInputTimeoutDuration() {
         final String inputTimeoutSeconds = getOrDefault("INPUT_TIMEOUT_SECONDS", "300");
-        final int inputTimeoutSecondsValidated = parseIntegerInRange(inputTimeoutSeconds, "INPUT_TIMEOUT_SECONDS", Integer.MAX_VALUE);
+        final int inputTimeoutSecondsValidated = parseIntegerInRange(inputTimeoutSeconds, "INPUT_TIMEOUT_SECONDS", 1, Integer.MAX_VALUE);
         return Duration.ofSeconds(inputTimeoutSecondsValidated);
     }
 
@@ -198,19 +198,19 @@ public record ApplicationConfiguration(
         final String logLevelRaw = getOrDefault("LOG_LEVEL", "INFO").toUpperCase(Locale.ROOT);
         if (!VALID_LOG_LEVELS.contains(logLevelRaw)) {
             throw new IllegalArgumentException(
-                String.format("[LOG_LEVEL] Invalid value: '%s', must be one of: %s", logLevelRaw, VALID_LOG_LEVELS));
+                "[LOG_LEVEL] Invalid value: '%s', must be one of: %s".formatted(logLevelRaw, VALID_LOG_LEVELS));
         }
         return logLevelRaw;
     }
 
     private static int getNumberOfParallelThreads() {
         final String raw = getOrDefault("NUMBER_OF_PARALLEL_THREADS", "5");
-        return parseIntegerInRange(raw, "NUMBER_OF_PARALLEL_THREADS", 32);
+        return parseIntegerInRange(raw, "NUMBER_OF_PARALLEL_THREADS", 1, 32);
     }
 
     private static int getNumberOfScreenshotAttempts() {
         final String numberOfRetriesRaw = getOrDefault("NUMBER_OF_SCREENSHOT_ATTEMPTS", "1");
-        return parseIntegerInRange(numberOfRetriesRaw, "NUMBER_OF_SCREENSHOT_ATTEMPTS", 5);
+        return parseIntegerInRange(numberOfRetriesRaw, "NUMBER_OF_SCREENSHOT_ATTEMPTS", 1, 5);
     }
 
     private static Path getOutputDirectory() {
@@ -223,9 +223,9 @@ public record ApplicationConfiguration(
             final String outputDirectoryName = currentDate.format(DateTimeFormatter.ofPattern(outputDirectoryNameFormat, Locale.getDefault()));
             return Paths.get(outputDirectoryParentPath, outputDirectoryName);
         } catch (final IllegalArgumentException e) {
-            throw new IllegalArgumentException(String.format("[OUTPUT_DIRECTORY_NAME_FORMAT] Invalid time format: '%s'", timeZone), e);
+            throw new IllegalArgumentException("[OUTPUT_DIRECTORY_NAME_FORMAT] Invalid time format: '%s'".formatted(timeZone), e);
         } catch (final DateTimeException e) {
-            throw new IllegalArgumentException(String.format("[TIMEZONE] Invalid timezone: '%s'", timeZone), e);
+            throw new IllegalArgumentException("[TIMEZONE] Invalid timezone: '%s'".formatted(timeZone), e);
         }
     }
 
@@ -305,15 +305,7 @@ public record ApplicationConfiguration(
 
     private static int getProgressBarLength() {
         final String raw = getOrDefault("PROGRESS_BAR_LENGTH", "35");
-        try {
-            final int value = Integer.parseInt(raw);
-            if (value < 10 || value > 80) {
-                throw new IllegalArgumentException("[PROGRESS_BAR_LENGTH] Invalid input '%s', must be between 10 and 80".formatted(raw));
-            }
-            return value;
-        } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException("[PROGRESS_BAR_LENGTH] Invalid input '%s', must be a valid number".formatted(raw), e);
-        }
+        return parseIntegerInRange(raw, "PROGRESS_BAR_LENGTH", 10, 80);
     }
 
     private static Set<RedactionType> getRedactionTypes() {
@@ -324,7 +316,7 @@ public record ApplicationConfiguration(
         final String existingScreenshotActionRaw = getOrDefault("SCREENSHOT_EXISTS_ACTION", DEFAULT_SCREENSHOT_EXISTS_ACTION.toString());
         final ExistingScreenshotAction existingScreenshotActionInput = ExistingScreenshotAction.get(existingScreenshotActionRaw);
         if (existingScreenshotActionInput == null) {
-            throw new IllegalArgumentException(String.format("[SCREENSHOT_EXISTS_ACTION] Invalid value: '%s'", existingScreenshotActionRaw));
+            throw new IllegalArgumentException("[SCREENSHOT_EXISTS_ACTION] Invalid value: '%s'".formatted(existingScreenshotActionRaw));
         }
 
         return existingScreenshotActionInput;
@@ -343,11 +335,11 @@ public record ApplicationConfiguration(
             final T value = parser.apply(trimmed);
 
             if (value == null) {
-                throw new IllegalArgumentException(String.format("[%s] Invalid value: '%s'", envVarName, trimmed));
+                throw new IllegalArgumentException("[%s] Invalid value: '%s'".formatted(envVarName, trimmed));
             }
 
             if (!results.add(value)) {
-                throw new IllegalArgumentException(String.format("[%s] Duplicate value found: '%s'", envVarName, trimmed));
+                throw new IllegalArgumentException("[%s] Duplicate value found: '%s'".formatted(envVarName, trimmed));
             }
         }
         return results;
@@ -361,16 +353,16 @@ public record ApplicationConfiguration(
         return Boolean.parseBoolean(getOrDefault(environmentVariableName, Boolean.toString(defaultValue)));
     }
 
-    private static int parseIntegerInRange(final String input, final String environmentVariableName, final int max) {
+    private static int parseIntegerInRange(final String input, final String environmentVariableName, final int min, final int max) {
         try {
             final int integer = Integer.parseInt(input);
-            if (integer < 1 || integer > max) {
+            if (integer < min || integer > max) {
                 throw new IllegalArgumentException(
-                    String.format("[%s] Invalid input '%s', must be between %d and %d", environmentVariableName, input, 1, max));
+                    "[%s] Invalid input '%s', must be between %d and %d".formatted(environmentVariableName, input, min, max));
             }
             return integer;
         } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException(String.format("[%s] Invalid input '%s', must be a valid number", environmentVariableName, input), e);
+            throw new IllegalArgumentException("[%s] Invalid input '%s', must be a valid number".formatted(environmentVariableName, input), e);
         }
     }
 

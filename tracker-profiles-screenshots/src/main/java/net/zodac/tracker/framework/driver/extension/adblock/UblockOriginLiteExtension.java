@@ -123,7 +123,7 @@ public class UblockOriginLiteExtension implements Extension {
     }
 
     private static void openExtensionConfigurationPage(final RemoteWebDriver driver, final String id) {
-        driver.navigate().to(String.format("chrome-extension://%s/dashboard.html", id));
+        driver.navigate().to("chrome-extension://%s/dashboard.html".formatted(id));
         BrowserInteractionHelper.explicitWait(Duration.ofSeconds(1L), "configuration page to open");
     }
 
