@@ -25,8 +25,6 @@ import java.time.Duration;
  */
 public class ScreenshotWriteError extends RuntimeException {
 
-    private static final String ERROR_MESSAGE_FORMAT = "Error writing screenshot '%s' to disk";
-
     @Serial
     private static final long serialVersionUID = -4567630877374812049L;
 
@@ -36,6 +34,6 @@ public class ScreenshotWriteError extends RuntimeException {
      * @param cause the cause {@link Throwable}
      */
     public ScreenshotWriteError(final String screenshotName, final Throwable cause) {
-        super(ERROR_MESSAGE_FORMAT.formatted(screenshotName), cause);
+        super("Error writing screenshot '%s' to disk".formatted(screenshotName), cause);
     }
 }

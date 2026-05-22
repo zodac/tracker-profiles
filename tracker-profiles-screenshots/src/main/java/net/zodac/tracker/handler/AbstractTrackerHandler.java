@@ -129,7 +129,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
             } catch (final WebDriverException e) {
                 // If website can't be resolved, assume the site is down and attempt the next URL (if any), else rethrow exception
                 if (e.getMessage() != null && e.getMessage().contains("ERR_NAME_NOT_RESOLVED")) {
-                    final String errorMessage = e.getMessage().split("\n")[0];
+                    final String errorMessage = e.getMessage().split("\n", -1)[0];
                     LOGGER.warn("\t\t- Unable to connect: {}", errorMessage);
                 } else {
                     throw e;

@@ -246,7 +246,7 @@ public final class JavaWebDriverFactory {
 
     // No need to perform any validation, browserDimensions has been parsed already
     private static Dimension parseDimensions() {
-        final String[] parts = CONFIG.browserDimensions().split(",");
+        final String[] parts = CONFIG.browserDimensions().split(",", -1);
         final int width = Integer.parseInt(parts[0].trim());
         final int height = Integer.parseInt(parts[1].trim());
         return new Dimension(width, height);

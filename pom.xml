@@ -28,8 +28,12 @@
         <!-- Test Properties -->
         <!-- All disabled by default, activated through profiles -->
         <skip-tests>true</skip-tests>
-        <!-- Adding so Maven plugins will not copy/compile test resources -->
-        <maven.test.skip>${skip-tests}</maven.test.skip>
+
+        <!-- Default JAR-plugin phase; overridden to 'none' in profiles that skip the JAR build -->
+        <jar-phase>package</jar-phase>
+
+        <!-- Default build-helper-plugin phase; overridden to 'validate' in lint-active profiles, since only this plugin consumes 'current-year' -->
+        <build-helper-phase>none</build-helper-phase>
 
         <!-- 3PP Versions -->
         <ashot.version>1.5.4</ashot.version>
@@ -38,6 +42,7 @@
         <flatlaf.version>3.7.1</flatlaf.version>
         <jspecify.version>1.0.0</jspecify.version>
         <log4j.version>2.26.0</log4j.version>
+        <osgi-annotation.version>8.1.0</osgi-annotation.version>
         <selenium.version>4.44.0</selenium.version>
 
         <!-- Test 3PP Versions -->
@@ -48,6 +53,7 @@
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+        <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.10.0</maven-dependency-plugin.version>
@@ -122,7 +128,7 @@
                         <groupId>com.google.code.gson</groupId>
                         <artifactId>gson</artifactId>
                     </exclusion>
-                    <!-- Only used by ashot's test-time image diff utilities, not the screenshot path used here -->
+                    <!-- Only used by ashot for test-time image diff utilities, not the screenshot path used here -->
                     <exclusion>
                         <groupId>org.hamcrest</groupId>
                         <artifactId>hamcrest-core</artifactId>
@@ -202,6 +208,13 @@
                 <version>${error_prone_core.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <!-- Provides org.osgi.annotation.versioning.Version, referenced by log4j-api/log4j-core .class files; only needed at compile time -->
+            <dependency>
+                <groupId>org.osgi</groupId>
+                <artifactId>osgi.annotation</artifactId>
+                <version>${osgi-annotation.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
@@ -231,10 +244,11 @@
                             <goals>
                                 <goal>timestamp-property</goal>
                             </goals>
+                            <!-- Bound to 'none' unless a lint-active profile overrides; the only consumer is itself gated on 'skip-linters' -->
+                            <phase>${build-helper-phase}</phase>
                             <configuration>
-                                <name>current-year</name>
-                                <!-- Property config -->
                                 <locale>en_GB</locale>
+                                <name>current-year</name>
                                 <pattern>yyyy</pattern>
                                 <timeZone>UTC</timeZone>
                                 <unit>year</unit>
@@ -337,9 +351,6 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
-                        <release>${java-release}</release>
-                        <showWarnings>false</showWarnings>
-
                         <!-- Configuration for errorprone compiler checks -->
                         <annotationProcessorPaths>
                             <path>
@@ -355,7 +366,6 @@
                         </annotationProcessorPaths>
                         <compilerArgs>
                             <arg>-Xlint:all</arg>
-                            <arg>-Xdoclint:all,-missing</arg>
                             <!-- Configuration for ErrorProne -->
                             <arg>-XDcompilePolicy=simple</arg>
                             <arg>--should-stop=ifError=FLOW</arg>
@@ -371,27 +381,15 @@
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
                         </compilerArgs>
+                        <failOnWarning>true</failOnWarning>
                         <fork>true</fork>
+                        <release>${java-release}</release>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>${maven-dependency-plugin.version}</version>
-                    <configuration>
-                        <failOnWarning>true</failOnWarning>
-                        <!-- We're only interested in 'compile' scope dependencies when performing analysis -->
-                        <ignoreNonCompile>true</ignoreNonCompile>
-                        <ignoredUnusedDeclaredDependencies>
-                            <!-- Included so the logging files are on the classpath at runtime - not directly used -->
-                            <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
-                        </ignoredUnusedDeclaredDependencies>
-                        <ignoredUsedUndeclaredDependencies>
-                            <!-- Included with nullaway, which is scoped 'provided' but appears as a false-positive -->
-                            <ignoredUsedUndeclaredDependency>org.checkerframework:dataflow-nullaway::</ignoredUsedUndeclaredDependency>
-                        </ignoredUsedUndeclaredDependencies>
-                        <skip>${skip-linters}</skip>
-                    </configuration>
                     <dependencies>
                         <!-- Forces support for latest Java bytecode -->
                         <dependency>
@@ -406,12 +404,35 @@
                         </dependency>
                     </dependencies>
                     <executions>
+                        <!-- Resolves dependency paths into properties (e.g. ${org.mockito:mockito-core:jar}) so Surefire can reference the Mockito agent without hardcoding the local-repo path -->
                         <execution>
+                            <id>resolve-dependency-properties</id>
+                            <goals>
+                                <goal>properties</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                        </execution>
+                        <execution>
+                            <id>analyze-dependencies</id>
                             <goals>
                                 <goal>analyze-only</goal>
                             </goals>
                             <!-- Needs to execute after the 'compile' phase, but before 'test-compile', or else test dependencies cause failures -->
                             <phase>process-classes</phase>
+                            <configuration>
+                                <failOnWarning>true</failOnWarning>
+                                <!-- We're only interested in 'compile' scope dependencies when performing analysis -->
+                                <ignoreNonCompile>true</ignoreNonCompile>
+                                <ignoredUnusedDeclaredDependencies>
+                                    <!-- Included so the logging files are on the classpath at runtime - not directly used -->
+                                    <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
+                                </ignoredUnusedDeclaredDependencies>
+                                <ignoredUsedUndeclaredDependencies>
+                                    <!-- Included with nullaway, which is scoped 'provided' but appears as a false-positive -->
+                                    <ignoredUsedUndeclaredDependency>org.checkerframework:dataflow-nullaway::</ignoredUsedUndeclaredDependency>
+                                </ignoredUsedUndeclaredDependencies>
+                                <skip>${skip-linters}</skip>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
@@ -485,9 +506,10 @@
                     <executions>
                         <execution>
                             <goals>
-                                <goal>javadoc</goal>
+                                <!-- 'javadoc-no-fork' is used when binding to the lifecycle so the earlier phases are not re-executed -->
+                                <goal>javadoc-no-fork</goal>
                             </goals>
-                            <phase>validate</phase>
+                            <phase>prepare-package</phase>
                         </execution>
                     </executions>
                 </plugin>
@@ -558,7 +580,9 @@
                     <version>${maven-surefire-plugin.version}</version>
                     <configuration>
                         <!-- Load Mockito as a Java agent at JVM startup to avoid dynamic self-attach warnings on JDK 21+ -->
-                        <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+                        <!-- Disable CDS via -Xshare:off so the javaagent's bootstrap classpath append does not trigger a JVM warning -->
+                        <!--suppress UnresolvedMavenProperty, set by maven-dependency-plugin's 'properties'-->
+                        <argLine>-javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                         <includes>
                             <include>**/*Test.java</include>
@@ -638,7 +662,6 @@
                         <execution>
                             <goals>
                                 <goal>check</goal>
-                                <goal>spotbugs</goal>
                             </goals>
                             <phase>verify</phase>
                         </execution>
@@ -694,6 +717,8 @@
                 </property>
             </activation>
             <properties>
+                <build-helper-phase>validate</build-helper-phase>
+                <jar-phase>none</jar-phase>
                 <skip-artifact-build>true</skip-artifact-build>
                 <skip-linters>false</skip-linters>
                 <skip-tests>false</skip-tests>
@@ -722,6 +747,8 @@
                 </property>
             </activation>
             <properties>
+                <build-helper-phase>validate</build-helper-phase>
+                <jar-phase>none</jar-phase>
                 <skip-artifact-build>true</skip-artifact-build>
                 <skip-linters>false</skip-linters>
             </properties>

@@ -143,7 +143,7 @@ public final class DisplayUtils {
 
     private static JPanel createButtons(final JDialog dialog, final AtomicBoolean userInput) {
         final JButton continueButton = new JButton();
-        final AtomicLong remainingSeconds = new AtomicLong(CONFIG.inputTimeoutEnabled() ? CONFIG.inputTimeoutDuration().getSeconds() : 0);
+        final AtomicLong remainingSeconds = new AtomicLong(CONFIG.inputTimeoutEnabled() ? CONFIG.inputTimeoutDuration().toSeconds() : 0);
 
         // Initial text
         if (CONFIG.inputTimeoutEnabled()) {
@@ -262,7 +262,7 @@ public final class DisplayUtils {
                     timedOut.set(true);
                     dialog.dispose();
                 }
-            }), CONFIG.inputTimeoutDuration().getSeconds(), TimeUnit.SECONDS
+            }), CONFIG.inputTimeoutDuration().toSeconds(), TimeUnit.SECONDS
         );
 
         LOGGER.trace("Waiting {} for user input", CONFIG.inputTimeoutDuration());

@@ -25,8 +25,6 @@ import java.util.Collection;
  */
 public class TrackerUnavailableException extends RuntimeException {
 
-    private static final String ERROR_MESSAGE_FORMAT = "Tracker unavailable, unable to connect to any URL for '%s': %s";
-
     @Serial
     private static final long serialVersionUID = 8658837127489147931L;
 
@@ -37,6 +35,6 @@ public class TrackerUnavailableException extends RuntimeException {
      * @param urls        the URLs to access the tracker
      */
     public TrackerUnavailableException(final String trackerName, final Collection<String> urls) {
-        super(String.format(ERROR_MESSAGE_FORMAT, trackerName, urls));
+        super("Tracker unavailable, unable to connect to any URL for '%s': %s".formatted(trackerName, urls));
     }
 }

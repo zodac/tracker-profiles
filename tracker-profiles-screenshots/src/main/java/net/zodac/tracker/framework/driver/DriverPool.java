@@ -64,7 +64,7 @@ public final class DriverPool {
     private final AtomicInteger remainingTasks = new AtomicInteger(0);
     private final Map<TrackerType, BlockingDeque<RemoteWebDriver>> pool = new EnumMap<>(TrackerType.class);
     private final Set<RemoteWebDriver> allPooledDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
-    private final Map<RemoteWebDriver, TrackerType> driverTypeMap = new IdentityHashMap<>();
+    private final IdentityHashMap<RemoteWebDriver, TrackerType> driverTypeMap = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
 
     private DriverPool() {
 

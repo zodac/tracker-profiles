@@ -39,7 +39,7 @@ public final class StringUtils {
      * @return the first line of {@code input}, or an empty string if {@code null} or blank
      */
     public static String firstLine(final @Nullable String input) {
-        return input == null ? "" : input.split("\n")[0].trim();
+        return input == null ? "" : input.split("\n", -1)[0].trim();
     }
 
     /**

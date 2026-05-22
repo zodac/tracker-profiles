@@ -25,8 +25,6 @@ import java.time.Duration;
  */
 public class NoUserInputException extends RuntimeException {
 
-    private static final String ERROR_MESSAGE_FORMAT = "No user input received within %02d seconds";
-
     @Serial
     private static final long serialVersionUID = 3549095095563630059L;
 
@@ -37,6 +35,6 @@ public class NoUserInputException extends RuntimeException {
      * @param cause   the cause {@link Throwable}
      */
     public NoUserInputException(final Duration timeout, final Throwable cause) {
-        super(String.format(ERROR_MESSAGE_FORMAT, timeout.getSeconds()), cause);
+        super("No user input received within %02d seconds".formatted(timeout.toSeconds()), cause);
     }
 }

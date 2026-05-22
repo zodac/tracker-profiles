@@ -94,7 +94,7 @@ public enum TrackerType {
      * @return the formatted name of the {@link TrackerType}
      */
     public String formattedName() {
-        final String[] parts = name().toLowerCase(Locale.ROOT).split("_");
+        final String[] parts = name().toLowerCase(Locale.ROOT).split("_", -1);
         final StringBuilder result = new StringBuilder(name().length());
 
         for (int i = 0; i < parts.length; i++) {

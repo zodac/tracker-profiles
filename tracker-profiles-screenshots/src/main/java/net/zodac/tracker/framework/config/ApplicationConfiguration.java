@@ -338,7 +338,7 @@ public record ApplicationConfiguration(
         final String rawValue = getOrDefault(envVarName, defaultValue);
         final Set<T> results = new LinkedHashSet<>();
 
-        for (final String token : rawValue.split(",")) {
+        for (final String token : rawValue.split(",", -1)) {
             final String trimmed = token.trim();
             final T value = parser.apply(trimmed);
 
