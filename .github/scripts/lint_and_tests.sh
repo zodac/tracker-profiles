@@ -42,7 +42,7 @@ JAVA_BUILD_IMAGE="local/tracker-profiles-builder:latest"
 JDK_DOCKER_IMAGE="eclipse-temurin:26_35-jdk"
 MARKDOWNLINT_DOCKER_IMAGE="davidanson/markdownlint-cli2:v0.22.1"
 MAVEN_DOCKER_IMAGE="maven:3.9.16"
-RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.15.13"
+RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.15.14"
 
 VALID_STEPS=("docker" "java" "javascript" "markdown" "python")
 
