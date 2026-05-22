@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -33,7 +34,6 @@ class PackageScannerTest {
     @Test
     void givenKnownPackage_whenScanAcceptingAll_thenContainsExpectedClasses() {
         final Set<Class<?>> classes = PackageScanner.scan(SCAN_PACKAGE, _ -> true);
-
         assertThat(classes)
             .extracting(Class::getSimpleName)
             .contains("CommonTrackerHandler", "TrackerHandler", "TrackerHandlers");
@@ -41,21 +41,16 @@ class PackageScannerTest {
 
     @Test
     void givenFilterMatchingOneClass_whenScan_thenOnlyMatchingClassReturned() {
-        final Set<Class<?>> classes = PackageScanner.scan(
-            SCAN_PACKAGE,
-            clazz -> "TrackerHandler".equals(clazz.getSimpleName()));
-
+        final Set<Class<?>> classes = PackageScanner.scan(SCAN_PACKAGE, clazz -> clazz == TrackerHandler.class);
         assertThat(classes)
-            .singleElement()
-            .extracting(Class::getSimpleName)
-            .isEqualTo("TrackerHandler");
+            .containsExactly(TrackerHandler.class);
     }
 
     @Test
     void givenFilterRejectingAll_whenScan_thenEmptySetReturned() {
         final Set<Class<?>> classes = PackageScanner.scan(SCAN_PACKAGE, _ -> false);
-
-        assertThat(classes).isEmpty();
+        assertThat(classes)
+            .isEmpty();
     }
 
     @Test

@@ -36,8 +36,8 @@ class TrackerCredentialTest {
         final TrackerCredential first = new TrackerCredential("MyTracker", "user1", "pass1");
         final TrackerCredential second = new TrackerCredential("mytracker", "user2", "pass2");
 
-        assertThat(first.compareTo(second))
-            .isZero();
+        assertThat(first)
+            .isEqualByComparingTo(second);
     }
 
     @Test
@@ -45,8 +45,8 @@ class TrackerCredentialTest {
         final TrackerCredential first = new TrackerCredential("ATracker", "user", "pass");
         final TrackerCredential second = new TrackerCredential("BTracker", "user", "pass");
 
-        assertThat(first.compareTo(second))
-            .isNegative();
+        assertThat(first)
+            .isLessThan(second);
     }
 
     @Test
@@ -54,8 +54,8 @@ class TrackerCredentialTest {
         final TrackerCredential first = new TrackerCredential("ZTracker", "user", "pass");
         final TrackerCredential second = new TrackerCredential("ATracker", "user", "pass");
 
-        assertThat(first.compareTo(second))
-            .isPositive();
+        assertThat(first)
+            .isGreaterThan(second);
     }
 
     @Test

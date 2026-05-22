@@ -28,6 +28,9 @@
         <!-- Test Properties -->
         <!-- All disabled by default, activated through profiles -->
         <skip-tests>true</skip-tests>
+        <!-- JaCoCo Configuration (overridden in each child module that wants enforcement) -->
+        <line-coverage>0.0</line-coverage>
+        <branch-coverage>0.0</branch-coverage>
 
         <!-- Default JAR-plugin phase; overridden to 'none' in profiles that skip the JAR build -->
         <jar-phase>package</jar-phase>
@@ -53,6 +56,7 @@
         <!-- Plugin Versions -->
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
@@ -262,6 +266,54 @@
                     <version>${exec-maven-plugin.version}</version>
                 </plugin>
 
+                <!-- Test Execution -->
+                <!-- Must be run with tests, cannot be run alone -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <configuration>
+                        <rules>
+                            <rule>
+                                <element>BUNDLE</element>
+                                <limits>
+                                    <limit>
+                                        <counter>LINE</counter>
+                                        <value>COVEREDRATIO</value>
+                                        <minimum>${line-coverage}</minimum>
+                                    </limit>
+                                    <limit>
+                                        <counter>BRANCH</counter>
+                                        <value>COVEREDRATIO</value>
+                                        <minimum>${branch-coverage}</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                        </rules>
+                        <skip>${skip-tests}</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>default-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>default-prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>default-report</id>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- Manual execution: -->
                 <!-- mvn license:check -Dlint -->
                 <!-- To fix missing/invalid licences, run the following in each module: -->
@@ -404,7 +456,7 @@
                         </dependency>
                     </dependencies>
                     <executions>
-                        <!-- Resolves dependency paths into properties (e.g. ${org.mockito:mockito-core:jar}) so Surefire can reference the Mockito agent without hardcoding the local-repo path -->
+                        <!-- Resolves dependency paths into properties so Surefire can reference the agent without hardcoding the local path -->
                         <execution>
                             <id>resolve-dependency-properties</id>
                             <goals>
@@ -581,8 +633,9 @@
                     <configuration>
                         <!-- Load Mockito as a Java agent at JVM startup to avoid dynamic self-attach warnings on JDK 21+ -->
                         <!-- Disable CDS via -Xshare:off so the javaagent's bootstrap classpath append does not trigger a JVM warning -->
+                        <!-- @{argLine} is late-bound so JaCoCo's prepare-agent can prepend its agent path; falls back to empty if JaCoCo is skipped -->
                         <!--suppress UnresolvedMavenProperty, set by maven-dependency-plugin's 'properties'-->
-                        <argLine>-javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                        <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                         <includes>
                             <include>**/*Test.java</include>
