@@ -633,7 +633,7 @@
                     <configuration>
                         <!-- Load Mockito as a Java agent at JVM startup to avoid dynamic self-attach warnings on JDK 21+ -->
                         <!-- Disable CDS via -Xshare:off so the javaagent's bootstrap classpath append does not trigger a JVM warning -->
-                        <!-- @{argLine} is late-bound so JaCoCo's prepare-agent can prepend its agent path; falls back to empty if JaCoCo is skipped -->
+                        <!-- @{argLine} is late-bound so JaCoCo's prepare-agent can prepend its agent path -->
                         <!--suppress UnresolvedMavenProperty, set by maven-dependency-plugin's 'properties'-->
                         <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
                         <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>

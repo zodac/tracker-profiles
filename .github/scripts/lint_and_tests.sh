@@ -230,6 +230,26 @@ detect_changed_steps() {
         fi
     fi
 
+    # A bump to any docker image pinned in this script must re-trigger the matching step,
+    # since the image change won't otherwise show up in the file-path detection above.
+    # Runs after the pom-version-bump suppress so an image change can re-enable a suppressed step.
+    local script_path=".github/scripts/lint_and_tests.sh"
+    local script_diff
+    script_diff=$(
+        {
+            git diff "${latest_tag}..HEAD" -- "${script_path}" 2>/dev/null
+            git diff -- "${script_path}" 2>/dev/null
+            git diff --cached -- "${script_path}" 2>/dev/null
+        } | grep -E '^[+-][^+-]' || true
+    )
+    if [[ -n "${script_diff}" ]]; then
+        grep -qE '^[+-][[:space:]]*HADOLINT_DOCKER_IMAGE='                                <<<"${script_diff}" && run_docker=true
+        grep -qE '^[+-][[:space:]]*(ESLINT_BUILD_IMAGE|ESLINT_NODE_IMAGE)='               <<<"${script_diff}" && run_javascript=true
+        grep -qE '^[+-][[:space:]]*(JAVA_BUILD_IMAGE|JDK_DOCKER_IMAGE|MAVEN_DOCKER_IMAGE)=' <<<"${script_diff}" && run_java=true
+        grep -qE '^[+-][[:space:]]*MARKDOWNLINT_DOCKER_IMAGE='                            <<<"${script_diff}" && run_markdown=true
+        grep -qE '^[+-][[:space:]]*RUFF_DOCKER_IMAGE='                                    <<<"${script_diff}" && run_python=true
+    fi
+
     [[ "${run_docker}"     == true ]] && echo "docker"
     [[ "${run_java}"       == true ]] && echo "java"
     [[ "${run_javascript}" == true ]] && echo "javascript"
