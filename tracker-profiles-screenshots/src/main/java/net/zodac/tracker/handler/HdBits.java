@@ -87,13 +87,14 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
             .from(div, withClass("captchaIntro"))
             .descendant(span, withClass("captchaText"))
             .build();
-        final WebElement captchaTextElement = driver.findElement(captchaSelector);
-        LOGGER.info("\t\t >>> Waiting for user to select the '{}' image", captchaTextElement.getText());
+        final WebElement captchaTextElement = browserInteractionHelper.waitForElementToBePresent(captchaSelector, pageLoadDuration());
+        final String captchaText = browserInteractionHelper.getTextContent(captchaTextElement);
+        LOGGER.info("\t\t >>> Waiting for user to select the '{}' image", captchaText);
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         browserInteractionHelper.highlightElement(captchaElement);
 
-        displayUtils().confirm(trackerDefinition().name(), "Select the '%s' image and 2FA (if enabled)".formatted(captchaTextElement.getText()));
+        displayUtils().confirm(trackerDefinition().name(), "Select the '%s' image and 2FA (if enabled)".formatted(captchaText));
     }
 
     @Override
