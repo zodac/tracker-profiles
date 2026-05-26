@@ -454,7 +454,8 @@ public final class BrowserInteractionHelper {
     public void waitForPageToLoad(final Duration timeout) {
         try {
             LOGGER.trace("Waiting {} for page to load", timeout);
-            final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
+            final Wait<WebDriver> wait = new WebDriverWait(driver, timeout)
+                .withMessage("Waiting for page to load");
             wait.until(_ -> "complete".equals(driver.executeScript("return document.readyState")));
         } catch (final TimeoutException e) {
             if (LOGGER.isTraceEnabled()) {
