@@ -87,8 +87,8 @@ public class ArabP2p extends AbstractTrackerHandler implements HasFixedHeader {
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = profileLinkSelector();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(div, withClass("toolbar_div"))

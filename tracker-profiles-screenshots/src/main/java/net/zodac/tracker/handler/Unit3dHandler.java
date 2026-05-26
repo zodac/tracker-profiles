@@ -42,6 +42,7 @@ import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -102,14 +103,14 @@ public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissi
             .from(button, withClass("cookie-consent__agree"))
             .build();
 
-        final Collection<WebElement> cookieButtons = driver.findElements(cookieSelector);
+        final Collection<WebElement> cookieButtons = driver().findElements(cookieSelector);
         LOGGER.trace("Found {} cookie banners to clear", cookieButtons.size());
         for (final WebElement cookieButton : cookieButtons) {
             clickButton(cookieButton);
         }
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        browserInteractionHelper.moveToOrigin();
+        browserInteractionHelper().moveToOrigin();
     }
 
     @Override
@@ -186,6 +187,7 @@ public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissi
      */
     protected void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
 
@@ -194,7 +196,7 @@ public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissi
             .from(div, withClass("top-nav__right"))
             .descendant(li, withClass("top-nav__dropdown"))
             .build();
-        final WebElement profileParent = driver.findElement(profileParentSelector);
+        final WebElement profileParent = driver().findElement(profileParentSelector);
         browserInteractionHelper.moveTo(profileParent);
     }
 }

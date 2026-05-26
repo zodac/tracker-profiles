@@ -100,7 +100,8 @@ public class BitGamer extends AbstractTrackerHandler implements RedactsIpAddress
         final By controlPanelSelector = XpathBuilder
             .from(a, containsHref("/my.php"))
             .build();
-        final WebElement controlPanelLink = browserInteractionHelper.waitForElementToBeInteractable(controlPanelSelector, pageTransitionsDuration());
+        final WebElement controlPanelLink =
+            browserInteractionHelper().waitForElementToBeInteractable(controlPanelSelector, pageTransitionsDuration());
         clickButton(controlPanelLink);
     }
 }

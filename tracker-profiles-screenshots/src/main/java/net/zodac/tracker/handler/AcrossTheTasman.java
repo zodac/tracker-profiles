@@ -53,7 +53,8 @@ public class AcrossTheTasman extends AbstractTrackerHandler {
     @Override
     protected By passwordFieldSelector() {
         LOGGER.debug("\t\t- Clicking password hint field to reveal real password input");
-        final WebElement hintField = driver.findElement(By.id("navbar_password_hint"));
+        final By hintFieldSelector = By.id("navbar_password_hint");
+        final WebElement hintField = driver().findElement(hintFieldSelector);
         clickButton(hintField);
         return By.id("navbar_password");
     }
@@ -106,6 +107,6 @@ public class AcrossTheTasman extends AbstractTrackerHandler {
     @Override
     protected void additionalActionAfterLogoutClick() {
         LOGGER.debug("\t\t- Clicking JavaScript alert to confirm logout");
-        browserInteractionHelper.acceptAlert();
+        browserInteractionHelper().acceptAlert();
     }
 }

@@ -72,9 +72,9 @@ public class TheClickHandler extends AbstractTrackerHandler implements RedactsIp
         final By captchaSelector = XpathBuilder
             .from(div, withClass("h-captcha"))
             .build();
-        final WebElement captchaElement = driver.findElement(captchaSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override

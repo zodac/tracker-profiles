@@ -34,6 +34,7 @@ import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Hawke-Uno} tracker.
@@ -56,6 +57,7 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
      */
     @Override
     protected void postLoginClickAction() {
+        final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to enter 2FA code");
 
@@ -64,8 +66,8 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
             .child(form, atIndex(1))
             .build();
         final WebElement twoFactorElement = driver.findElement(twoFactorSelector);
-        browserInteractionHelper.highlightElement(twoFactorElement);
-        displayUtils.confirm(trackerDefinition.name(), "Enter the 2FA code");
+        browserInteractionHelper().highlightElement(twoFactorElement);
+        displayUtils().confirm(trackerDefinition().name(), "Enter the 2FA code");
 
         // If the user didn't click 'verify', do it for them
         final String nextUrl = driver.getCurrentUrl();
@@ -114,6 +116,7 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
     }
 
     private void openUserDropdownMenu() {
+        final RemoteWebDriver driver = driver();
         final By signOutButtonSelector = XpathBuilder
             .from(button, withAttribute("title", "Sign Out"), withType("button"))
             .build();

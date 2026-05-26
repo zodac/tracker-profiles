@@ -105,7 +105,7 @@ public class BlueTorrents extends AbstractTrackerHandler implements HasFixedHead
             .from(ul, withClass("dropdown-menu-end"))
             .navigateTo(precedingSibling(a))
             .build();
-        final WebElement dropdownToggle = driver.findElement(dropdownToggleSelector);
+        final WebElement dropdownToggle = driver().findElement(dropdownToggleSelector);
         clickButton(dropdownToggle);
     }
 }

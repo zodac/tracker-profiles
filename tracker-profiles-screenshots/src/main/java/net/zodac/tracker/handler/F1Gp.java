@@ -60,7 +60,7 @@ public class F1Gp extends AbstractTrackerHandler implements HasFixedHeader {
             .from(form, withAttribute("action", "index.php?page=login"))
             .navigateTo(precedingSibling(button))
             .build();
-        final WebElement loginForm = browserInteractionHelper.waitForElementToBeInteractable(loginFormSelector, pageLoadDuration());
+        final WebElement loginForm = browserInteractionHelper().waitForElementToBeInteractable(loginFormSelector, pageLoadDuration());
         clickButton(loginForm);
         return By.id("username");
     }

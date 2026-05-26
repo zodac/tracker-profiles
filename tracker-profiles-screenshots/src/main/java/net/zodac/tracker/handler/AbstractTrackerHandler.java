@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import net.zodac.tracker.app.ScreenshotOrchestrator;
 import net.zodac.tracker.framework.TrackerDefinition;
+import net.zodac.tracker.framework.TrackerHandlerContext;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.driver.extension.Extension;
@@ -64,52 +65,91 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     protected static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * The {@link RemoteWebDriver} instance used to load web pages and perform UI actions.
+     * The single set-once {@link TrackerHandlerContext} holding all runtime state for this handler. {@code null} until {@link #configure} is invoked
+     * by the factory. Accessed through {@link #driver()}, {@link #browserInteractionHelper()}, {@link #displayUtils()}, and
+     * {@link #trackerDefinition()}, all of which fail fast if invoked before configuration.
      */
-    @SuppressWarnings("NullAway") // Will be set in the configure() method
-    protected RemoteWebDriver driver;
-
-    /**
-     * The {@link BrowserInteractionHelper} instance to perform specific actions for each {@link AbstractTrackerHandler} implementation.
-     */
-    @SuppressWarnings("NullAway") // Will be set in the configure() method
-    protected BrowserInteractionHelper browserInteractionHelper;
-
-    /**
-     * The {@link DisplayUtils} instance bound to this handler's {@link RemoteWebDriver}.
-     */
-    @SuppressWarnings("NullAway") // Will be set in the configure() method
-    protected DisplayUtils displayUtils;
-
-    /**
-     * The {@link TrackerDefinition}.
-     */
-    @SuppressWarnings("NullAway") // Will be set in the configure() method
-    protected TrackerDefinition trackerDefinition;
+    @Nullable
+    private TrackerHandlerContext context;
 
     /**
      * We use a no-arg constructor to instantiate the {@link AbstractTrackerHandler} to avoid needing to define a constructor for each implementation.
-     * However, we still need to configure the {@link AbstractTrackerHandler} with details for the tracker, so the required fields are set here.
+     * However, we still need to configure the {@link AbstractTrackerHandler} with details for the tracker, so the required state is set here.
      *
      * <p>
-     * A {@link RemoteWebDriver} is acquired from the {@link DriverPool}.
+     * A {@link RemoteWebDriver} is acquired from the {@link DriverPool} and wrapped, together with the helpers built around it, into a single
+     * {@link TrackerHandlerContext} that is stored as a set-once field. Calling this method more than once on the same instance throws
+     * {@link IllegalStateException}.
      *
      * @param trackerDefinition the {@link TrackerDefinition} for this {@link AbstractTrackerHandler}
+     * @throws IllegalStateException if this handler has already been configured
      * @see DriverPool#acquire(TrackerType, List)
      */
-    public void configure(final TrackerDefinition trackerDefinition) {
-        LOGGER.trace("Configuring {}: {}", this.getClass().getSimpleName(), trackerDefinition);
-        this.trackerDefinition = trackerDefinition;
+    public final void configure(final TrackerDefinition trackerDefinition) {
+        if (context != null) {
+            throw new IllegalStateException("Handler '%s' has already been configured".formatted(getClass().getSimpleName()));
+        }
+
+        LOGGER.trace("Configuring {}: {}", getClass().getSimpleName(), trackerDefinition);
         final List<Extension> extensions = this instanceof UsesExtensions trackerExtensions ? trackerExtensions.requiredExtensions() : List.of();
-        driver = DriverPool.acquire(trackerDefinition.type(), extensions);
-        browserInteractionHelper = new BrowserInteractionHelper(driver);
-        displayUtils = DisplayUtils.withDriver(driver);
+        final RemoteWebDriver acquiredDriver = DriverPool.acquire(trackerDefinition.type(), extensions);
+        context = TrackerHandlerContext.of(trackerDefinition, acquiredDriver);
+    }
+
+    /**
+     * Retrieves the {@link RemoteWebDriver} for this handler.
+     *
+     * @return the {@link RemoteWebDriver}
+     * @throws IllegalStateException if {@link #configure} has not yet been called on this handler
+     */
+    public final RemoteWebDriver driver() {
+        return requireConfigured().driver();
+    }
+
+    /**
+     * Retrieves the {@link BrowserInteractionHelper} for this handler.
+     *
+     * @return the {@link BrowserInteractionHelper}
+     * @throws IllegalStateException if {@link #configure} has not yet been called on this handler
+     */
+    protected final BrowserInteractionHelper browserInteractionHelper() {
+        return requireConfigured().browserInteractionHelper();
+    }
+
+    /**
+     * Retrieves the {@link DisplayUtils} for this handler.
+     *
+     * @return the {@link DisplayUtils}
+     * @throws IllegalStateException if {@link #configure} has not yet been called on this handler
+     */
+    protected final DisplayUtils displayUtils() {
+        return requireConfigured().displayUtils();
+    }
+
+    /**
+     * Retrieves the {@link TrackerDefinition} for this handler.
+     *
+     * @return the {@link TrackerDefinition}
+     * @throws IllegalStateException if {@link #configure} has not yet been called on this handler
+     */
+    protected final TrackerDefinition trackerDefinition() {
+        return requireConfigured().trackerDefinition();
+    }
+
+    private TrackerHandlerContext requireConfigured() {
+        final TrackerHandlerContext context = this.context;
+        if (context == null) {
+            throw new IllegalStateException("Handler '%s' has not been configured".formatted(getClass().getSimpleName()));
+        }
+        return context;
     }
 
     /**
      * Navigates to the home page of the tracker. Waits {@link #pageLoadDuration()} for the page to finish loading.
      */
     public void openTracker() {
+        final TrackerDefinition trackerDefinition = trackerDefinition();
+        final RemoteWebDriver driver = driver();
         String successfulUrl = null;
 
         for (final String trackerUrl : trackerDefinition.urls()) {
@@ -123,7 +163,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
                 driver.manage().timeouts().pageLoadTimeout(maximumLinkResolutionDuration());
                 driver.navigate().to(trackerUrl);
 
-                browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
+                browserInteractionHelper().waitForPageToLoad(pageLoadDuration());
                 successfulUrl = trackerUrl;
                 LOGGER.trace("Successfully opened tracker at {}", trackerUrl);
             } catch (final WebDriverException e) {
@@ -165,6 +205,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         LOGGER.debug("\t- Navigating to login page");
         preLoginNavigationAction();
         final By loginLinkSelector = loginPageSelector();
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
+        final RemoteWebDriver driver = driver();
 
         if (loginLinkSelector != null) {
             final WebElement loginLink = browserInteractionHelper.waitForElementToBeInteractable(loginLinkSelector, pageLoadDuration());
@@ -199,6 +241,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      */
     public void login(final String username, final String password, final String trackerName) {
         LOGGER.trace("Logging in to tracker '{}'", trackerName);
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
+        final RemoteWebDriver driver = driver();
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
 
         try {
@@ -316,6 +360,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      */
     public void openProfilePage() {
         LOGGER.trace("Opening profile page");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         browserInteractionHelper.waitForPageToLoad(pageTransitionsDuration());
 
         final WebElement profileLink = browserInteractionHelper.waitForElementToBeInteractable(profileLinkSelector(), pageTransitionsDuration());
@@ -359,7 +404,8 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      */
     public void reloadProfilePage() {
         LOGGER.trace("Reloading profile page to restore original state");
-        driver.navigate().refresh();
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
+        driver().navigate().refresh();
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
 
         browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector(), pageLoadDuration());
@@ -381,7 +427,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     // TODO: Add other redaction types (country, flag, avatar, gender, BT client, BT port, age/birthday, invitedBy)
     public int redactElements(final Redactor redactor) {
         LOGGER.trace("Redacting elements");
-        return RedactionRegistry.redactAll(this, driver, redactor);
+        return RedactionRegistry.redactAll(this, driver(), redactor);
     }
 
     /**
@@ -393,7 +439,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @see BrowserInteractionHelper#hideScrollbar()
      */
     public void actionBeforeScreenshot() {
-        browserInteractionHelper.hideScrollbar();
+        browserInteractionHelper().hideScrollbar();
     }
 
     /**
@@ -406,6 +452,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @see BrowserInteractionHelper#showScrollbar()
      */
     public void actionAfterScreenshot() {
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         browserInteractionHelper.showScrollbar();
         browserInteractionHelper.scrollToTheTop();
     }
@@ -423,6 +470,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      */
     public final void logout() {
         LOGGER.debug("\t- Logging out of tracker");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By logoutButtonSelector = logoutButtonSelector();
         final WebElement logoutButton = browserInteractionHelper.waitForElementToBeInteractable(logoutButtonSelector, pageTransitionsDuration());
         clickButton(logoutButton);
@@ -458,16 +506,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     @Override
     public void close() {
         LOGGER.trace("Releasing driver");
-        DriverPool.release(driver);
-    }
-
-    /**
-     * Retrieves the {@link RemoteWebDriver}.
-     *
-     * @return the {@link RemoteWebDriver}
-     */
-    public RemoteWebDriver driver() {
-        return driver;
+        DriverPool.release(driver());
     }
 
     /**
@@ -479,6 +518,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @see BrowserInteractionHelper#stopPageLoad()
      */
     protected void clickButton(final WebElement buttonToClick) {
+        final RemoteWebDriver driver = driver();
         try {
             LOGGER.trace("Clicking: {}", buttonToClick);
             driver.manage().timeouts().pageLoadTimeout(maximumClickResolutionDuration());
@@ -486,7 +526,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         } catch (final TimeoutException e) {
             LOGGER.debug("\t\t- Page still loading after {}, force stopping page load", maximumClickResolutionDuration());
             LOGGER.trace(e);
-            browserInteractionHelper.stopPageLoad();
+            browserInteractionHelper().stopPageLoad();
         } catch (final Exception e) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(driver.getPageSource());

@@ -29,6 +29,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -57,9 +58,9 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
         LOGGER.info("\t\t >>> Waiting for user to enter captcha");
 
         final By captchaSelector = By.id("regimage");
-        final WebElement captchaElement = driver.findElement(captchaSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override
@@ -68,12 +69,13 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
             .from(div, withClass("flags"))
             .child(a, atIndex(1))
             .build();
-        final WebElement englishLanguageOption = driver.findElement(englishLanguageOptionSelector);
+        final WebElement englishLanguageOption = driver().findElement(englishLanguageOptionSelector);
         clickButton(englishLanguageOption);
     }
 
     @Override
     public void unfixHeaders(final RemoteWebDriver driver, final List<By> headerSelectors) {
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         for (final By headerSelector : headerSelectors) {
             final WebElement headerElement = driver.findElement(headerSelector);
 
@@ -103,7 +105,7 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
         final By logoutParentSelector = By.id("quickprofileview");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
     }
 }

@@ -42,6 +42,7 @@ import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
 import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code YggReborn} tracker.
@@ -111,6 +112,7 @@ public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader,
      */
     @Override
     protected By logoutButtonSelector() {
+        final RemoteWebDriver driver = driver();
         try {
             LOGGER.trace("Confirming we are still on the profile page");
             driver.findElement(profilePageElementSelector());
@@ -124,7 +126,7 @@ public class YggReborn extends AbstractTrackerHandler implements HasFixedHeader,
             .from(form, withAttribute("method", "post"))
             .child(button, atIndex(1))
             .build();
-        browserInteractionHelper.scrollToElement(driver.findElement(logoutButtonSelector));
+        browserInteractionHelper().scrollToElement(driver.findElement(logoutButtonSelector));
         return logoutButtonSelector;
     }
 }

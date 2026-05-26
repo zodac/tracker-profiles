@@ -97,9 +97,9 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
             .child(div, atIndex(1))
             .child(img, atIndex(1))
             .build();
-        final WebElement captchaElement = driver.findElement(captchaSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override
@@ -183,7 +183,7 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
             .child(ul, atIndex(2))
             .child(li, atIndex(3))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
     }
 }

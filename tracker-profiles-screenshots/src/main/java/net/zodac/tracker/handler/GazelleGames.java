@@ -68,9 +68,9 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
             .child(form, atIndex(1))
             .child(table, atIndex(1))
             .build();
-        final WebElement selectionElement = driver.findElement(selectionSelector);
-        browserInteractionHelper.highlightElement(selectionElement);
-        displayUtils.confirm(trackerDefinition.name(), "Select the correct game");
+        final WebElement selectionElement = driver().findElement(selectionSelector);
+        browserInteractionHelper().highlightElement(selectionElement);
+        displayUtils().confirm(trackerDefinition().name(), "Select the correct game");
     }
 
     @Override
@@ -117,7 +117,7 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
     @Override
     protected void additionalActionAfterLogoutClick() {
         LOGGER.debug("\t\t- Clicking JavaScript alert to confirm logout");
-        browserInteractionHelper.acceptAlert();
+        browserInteractionHelper().acceptAlert();
     }
 
     @Override

@@ -95,7 +95,7 @@ public class XenForoHandler extends AbstractTrackerHandler {
         final By profileParentSelector = XpathBuilder
             .from(a, withClass("p-navgroup-link--user"))
             .build();
-        final WebElement profileParent = browserInteractionHelper.waitForElementToBeInteractable(profileParentSelector, pageTransitionsDuration());
+        final WebElement profileParent = browserInteractionHelper().waitForElementToBeInteractable(profileParentSelector, pageTransitionsDuration());
         clickButton(profileParent);
         BrowserInteractionHelper.explicitWait(pageTransitionsDuration(), "first navbar click");
 

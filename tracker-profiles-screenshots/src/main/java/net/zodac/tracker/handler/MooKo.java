@@ -37,6 +37,7 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -78,6 +79,7 @@ public class MooKo extends AbstractTrackerHandler implements HasFixedHeader, Red
 
     @Override
     public void unfixHeaders(final RemoteWebDriver driver, final List<By> headerSelectors) {
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         for (final By headerSelector : headerSelectors) {
             final WebElement headerElement = driver.findElement(headerSelector);
             browserInteractionHelper.makeUnfixed(headerElement);
@@ -143,7 +145,7 @@ public class MooKo extends AbstractTrackerHandler implements HasFixedHeader, Red
             .child(div, atIndex(1))
             .child(span, atIndex(1))
             .build();
-        final WebElement dropDownMenu = driver.findElement(dropDownMenuSelector);
+        final WebElement dropDownMenu = driver().findElement(dropDownMenuSelector);
         clickButton(dropDownMenu);
     }
 }

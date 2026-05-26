@@ -34,6 +34,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -64,9 +65,9 @@ public class BeyondHd extends AbstractTrackerHandler implements HasFixedHeader, 
             .from(input, withId("captcha"))
             .navigateTo(parent(div))
             .build();
-        final WebElement captchaElement = driver.findElement(captchaSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override
@@ -101,10 +102,11 @@ public class BeyondHd extends AbstractTrackerHandler implements HasFixedHeader, 
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By logoutParentSelector = XpathBuilder
             .from(div, withClass("dropmenu"))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         browserInteractionHelper.moveTo(logoutParent);
 
         final By logoutSelector = XpathBuilder

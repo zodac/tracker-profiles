@@ -41,8 +41,10 @@ import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginSetting;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.definition.UsesExtensions;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Common implementation of {@link AbstractTrackerHandler} for {@code TorrentPier}-based trackers.
@@ -81,6 +83,9 @@ public class TorrentPier extends AbstractTrackerHandler implements HasDismissibl
     @Override
     public void dismiss() {
         LOGGER.debug("\t\t- Checking for donation notice");
+
+        final RemoteWebDriver driver = driver();
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
 
         // Donation banner at the bottom of the screen
         final By bottomBannerSelector = XpathBuilder

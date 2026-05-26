@@ -46,7 +46,7 @@ public class AsianDvdClub extends AbstractTrackerHandler {
     @Override
     protected void preLoginNavigationAction() {
         final By progressBarSelector = By.id("progressBar");
-        final Collection<WebElement> progressBars = driver.findElements(progressBarSelector);
+        final Collection<WebElement> progressBars = driver().findElements(progressBarSelector);
 
         if (progressBars.isEmpty()) {
             LOGGER.trace("No progress bar found prior to login");
@@ -54,7 +54,7 @@ public class AsianDvdClub extends AbstractTrackerHandler {
         }
 
         LOGGER.info("\t\t- Progress bar found, assuming we need to wait for 2 minutes");
-        browserInteractionHelper.waitForElementToBeInteractable(loginButtonSelector(), Duration.ofMinutes(2L));
+        browserInteractionHelper().waitForElementToBeInteractable(loginButtonSelector(), Duration.ofMinutes(2L));
     }
 
     @Override

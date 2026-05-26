@@ -62,9 +62,9 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
         // We use this instead of an explicit translation to let the website handle it
         if (Configuration.get().enableTranslationToEnglish()) {
             LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
-            final WebElement languageDropdown = driver.findElement(languageDropdownSelector());
+            final WebElement languageDropdown = driver().findElement(languageDropdownSelector());
             new Select(languageDropdown).selectByIndex(0);
-            browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
+            browserInteractionHelper().waitForPageToLoad(pageLoadDuration());
         }
 
         return super.usernameFieldSelector();
@@ -104,9 +104,9 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
         final By captchaElementSelector = XpathBuilder
             .from(img, withAttribute("alt", "CAPTCHA"))
             .build();
-        final WebElement captchaElement = driver.findElement(captchaElementSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaElementSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override

@@ -44,8 +44,8 @@ public class Anthelion extends GazelleHandler {
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
         final By logoutParentSelector = By.id("nav_user");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(div, withId("user_menu"))

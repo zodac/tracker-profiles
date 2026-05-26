@@ -64,9 +64,9 @@ public class Docspedia extends AbstractTrackerHandler implements RedactsIpAddres
     protected void preLoginClickAction() {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha");
 
-        final WebElement captchaElement = driver.findElement(By.id("captcha"));
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(By.id("captcha"));
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override

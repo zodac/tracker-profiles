@@ -59,7 +59,7 @@ public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleEleme
     @Override
     public void dismiss() {
         final By cookieSelector = By.id("cookie-consent-accept");
-        final Collection<WebElement> cookieButtons = driver.findElements(cookieSelector);
+        final Collection<WebElement> cookieButtons = driver().findElements(cookieSelector);
         LOGGER.trace("Found {} cookie banners to clear", cookieButtons.size());
         for (final WebElement cookieButton : cookieButtons) {
             clickButton(cookieButton);

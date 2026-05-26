@@ -29,6 +29,7 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -58,7 +59,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
 
         LOGGER.debug("\t\t- Checking for daily reward");
         final By dailyRewardSelector = By.id("notification-content");
-        final Collection<WebElement> dailyRewardElements = driver.findElements(dailyRewardSelector);
+        final Collection<WebElement> dailyRewardElements = driver().findElements(dailyRewardSelector);
         if (dailyRewardElements.isEmpty()) {
             LOGGER.debug("\t\t\t- No daily reward found");
             return;
@@ -66,7 +67,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
 
         // There should only be one of these, so we'll load it and click it
         LOGGER.debug("\t\t\t- Found daily reward, closing");
-        final WebElement dailyRewardElement = browserInteractionHelper.waitForElementToBeInteractable(dailyRewardSelector, pageLoadDuration());
+        final WebElement dailyRewardElement = browserInteractionHelper().waitForElementToBeInteractable(dailyRewardSelector, pageLoadDuration());
         clickButton(dailyRewardElement);
 
         LOGGER.debug("\t\t\t- Cleared daily reward");
@@ -89,6 +90,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
     @Override
     protected void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
 
@@ -98,7 +100,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
             .child(ul, atIndex(2))
             .child(li, atIndex(4))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         browserInteractionHelper.moveTo(logoutParent);
     }
 }

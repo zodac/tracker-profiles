@@ -31,6 +31,7 @@ import net.zodac.tracker.framework.redactor.RedactionBuffer;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code LST} tracker.
@@ -54,6 +55,7 @@ public class Lst extends Unit3dHandler {
      */
     @Override
     protected void postLoginClickAction() {
+        final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to select correct movie poster");
 
@@ -61,8 +63,8 @@ public class Lst extends Unit3dHandler {
             .from(div, withClass("auth-form__text-input-group"))
             .build();
         final WebElement selectionElement = driver.findElement(selectionSelector);
-        browserInteractionHelper.highlightElement(selectionElement);
-        displayUtils.confirm(trackerDefinition.name(), "Select the correct movie");
+        browserInteractionHelper().highlightElement(selectionElement);
+        displayUtils().confirm(trackerDefinition().name(), "Select the correct movie");
 
         // If the user didn't click 'login', do it for them
         // Special case for PTP since the login button needs to be clicked twice

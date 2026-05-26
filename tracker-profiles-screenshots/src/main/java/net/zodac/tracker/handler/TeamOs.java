@@ -30,6 +30,7 @@ import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginLiteExte
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginSetting;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.UsesExtensions;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -50,6 +51,7 @@ public class TeamOs extends XenForoHandler implements UsesExtensions {
      */
     @Override
     protected void postLoginClickAction() {
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         browserInteractionHelper.stopPageLoad();
 
         // When an update to site rules occurs, there is a single button with a link to the rules thread
@@ -57,7 +59,7 @@ public class TeamOs extends XenForoHandler implements UsesExtensions {
             .from(div, withClass("blockMessage"))
             .child(a, withClass("button"), containsHref("/threads/"))
             .build();
-        final List<WebElement> adminThreadButtons = driver.findElements(adminThreadButtonsSelector).stream().toList();
+        final List<WebElement> adminThreadButtons = driver().findElements(adminThreadButtonsSelector).stream().toList();
 
         if (adminThreadButtons.size() != EXPECTED_NUMBER_OF_THREAD_LINKS) {
             LOGGER.debug("\t\t- Found {} thread links, not clicking anything", adminThreadButtons.size());

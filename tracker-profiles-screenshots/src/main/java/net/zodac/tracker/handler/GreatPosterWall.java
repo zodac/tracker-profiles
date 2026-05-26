@@ -112,7 +112,7 @@ public class GreatPosterWall extends AbstractTrackerHandler implements RedactsEm
         final By dropDownMenuSelector = XpathBuilder
             .from(span, withClass("HeaderProfile-avatarContainer"))
             .build();
-        final WebElement dropDownMenu = driver.findElement(dropDownMenuSelector);
+        final WebElement dropDownMenu = driver().findElement(dropDownMenuSelector);
         clickButton(dropDownMenu);
     }
 }

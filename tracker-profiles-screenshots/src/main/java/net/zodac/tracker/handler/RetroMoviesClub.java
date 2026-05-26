@@ -34,7 +34,7 @@ public class RetroMoviesClub extends Unit3dHandler {
      */
     @Override
     public void actionBeforeScreenshot() {
-        driver.executeScript("""
+        driver().executeScript("""
             var style = document.createElement('style');
             style.textContent = '::-webkit-scrollbar { display: none !important; width: 0 !important; }';
             document.head.appendChild(style);

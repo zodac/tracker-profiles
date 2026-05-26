@@ -79,11 +79,11 @@ public class TorrentLeech extends AbstractTrackerHandler implements HasDismissib
         final By cookieSelector = XpathBuilder
             .from(button, withClass("close"), withAttribute("title", "Dismiss"))
             .build();
-        final WebElement cookieButton = driver.findElement(cookieSelector);
+        final WebElement cookieButton = driver().findElement(cookieSelector);
         clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        browserInteractionHelper.moveToOrigin();
+        browserInteractionHelper().moveToOrigin();
     }
 
     @Override

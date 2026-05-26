@@ -55,11 +55,11 @@ public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleE
             .child(div, atIndex(1))
             .child(button, atIndex(1))
             .build();
-        final WebElement cookieButton = driver.findElement(cookieSelector);
+        final WebElement cookieButton = driver().findElement(cookieSelector);
         clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
-        browserInteractionHelper.moveToOrigin();
+        browserInteractionHelper().moveToOrigin();
     }
 
     @Override
@@ -108,7 +108,7 @@ public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleE
             .child(li, atIndex(2))
             .child(a, atIndex(1))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
 
         return XpathBuilder

@@ -127,7 +127,7 @@ public class AnimeZ extends AbstractTrackerHandler implements HasCloudflareCheck
             .from(span, withClass("avatar"))
             .navigateTo(parent(a))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
     }
 }

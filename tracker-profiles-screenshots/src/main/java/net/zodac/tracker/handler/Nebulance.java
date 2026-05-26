@@ -29,6 +29,7 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
 import org.openqa.selenium.By;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link LuminanceHandler} for the {@code Nebulance} tracker.
@@ -50,6 +51,7 @@ public class Nebulance extends LuminanceHandler implements HasProfilePageActions
      */
     @Override
     public void performActionOnProfilePage() {
+        final RemoteWebDriver driver = driver();
         driver.executeScript("document.body.style.height = 'auto';");
         driver.executeScript("document.body.style.overflowY = 'visible';");
     }

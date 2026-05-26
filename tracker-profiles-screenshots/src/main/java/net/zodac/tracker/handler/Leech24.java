@@ -65,9 +65,9 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
             .from(div, withClass("g-recaptcha"))
             .child(div, atIndex(1))
             .build();
-        final WebElement captchaElement = driver.findElement(captchaSelector);
-        browserInteractionHelper.highlightElement(captchaElement);
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha");
+        final WebElement captchaElement = driver().findElement(captchaSelector);
+        browserInteractionHelper().highlightElement(captchaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
     }
 
     @Override
@@ -112,7 +112,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
             span.textContent = passkeyNode.textContent;
             passkeyNode.parentNode.replaceChild(span, passkeyNode);
             """;
-        driver.executeScript(script);
+        driver().executeScript(script);
     }
 
     @Override

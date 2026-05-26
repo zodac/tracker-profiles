@@ -65,7 +65,7 @@ public class SkyeySnow extends AbstractTrackerHandler implements NeedsExplicitTr
 
     @Override
     public void translatePageToEnglish() {
-        browserInteractionHelper.translatePage();
+        browserInteractionHelper().translatePage();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class SkyeySnow extends AbstractTrackerHandler implements NeedsExplicitTr
     private void openEditOutDropdownMenu() {
         LOGGER.debug("\t\t- Hovering over 'EDIT&LOGOUT' link to make logout button interactable");
         final By editOutSelector = By.id("editout");
-        final WebElement editOutLink = driver.findElement(editOutSelector);
-        browserInteractionHelper.moveTo(editOutLink);
+        final WebElement editOutLink = driver().findElement(editOutSelector);
+        browserInteractionHelper().moveTo(editOutLink);
     }
 }

@@ -36,6 +36,7 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Ultrabits} tracker.
@@ -57,6 +58,7 @@ public class Ultrabits extends AbstractTrackerHandler implements HasCloudflareCh
         // We use this instead of an explicit translation to let the website handle it
         if (Configuration.get().enableTranslationToEnglish()) {
             LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
+            final RemoteWebDriver driver = driver();
             final By languageDropdownSelector = XpathBuilder
                 .from(body, atIndex(1))
                 .child(div, atIndex(2))

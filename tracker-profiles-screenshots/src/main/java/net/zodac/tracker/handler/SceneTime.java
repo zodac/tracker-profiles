@@ -71,7 +71,7 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
         final By promotionCloseSelector = XpathBuilder
             .from(button, withAttribute("aria-label", "Close promotion"))
             .build();
-        final Collection<WebElement> announcements = driver.findElements(promotionCloseSelector);
+        final Collection<WebElement> announcements = driver().findElements(promotionCloseSelector);
         if (announcements.isEmpty()) {
             LOGGER.debug("\t\t\t- No promotion pop-up found");
             return;
@@ -79,7 +79,7 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
 
         // There should only be one of these, and we'll wait for it to scroll down and become interactable
         LOGGER.debug("\t\t\t- Found promotion pop-up, closing");
-        final WebElement promotionClose = browserInteractionHelper.waitForElementToBeInteractable(promotionCloseSelector, pageLoadDuration());
+        final WebElement promotionClose = browserInteractionHelper().waitForElementToBeInteractable(promotionCloseSelector, pageLoadDuration());
         clickButton(promotionClose);
 
         LOGGER.debug("\t\t\t- Cleared pop-up");
@@ -124,8 +124,8 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
         final By logoutParentSelector = XpathBuilder
             .from(div, withClass("st-status-avatar-wrapper"))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(ul, withClass("st-nav-dropdown"))

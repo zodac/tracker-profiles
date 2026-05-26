@@ -146,7 +146,7 @@ public class LastFiles extends AbstractTrackerHandler
             .from(li, withClass("user-menu"))
             .child(a, withClass("nav-link"))
             .build();
-        final WebElement profileParent = driver.findElement(profileParentSelector);
+        final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);
 
         LOGGER.trace("User dropdown menu clicked, waiting for pop-up to open");
@@ -154,6 +154,6 @@ public class LastFiles extends AbstractTrackerHandler
             .from(li, withClass("user-footer"))
             .child(a, atIndex(1))
             .build();
-        browserInteractionHelper.waitForElementToBeInteractable(profileLinkSelector, pageTransitionsDuration());
+        browserInteractionHelper().waitForElementToBeInteractable(profileLinkSelector, pageTransitionsDuration());
     }
 }

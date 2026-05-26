@@ -69,7 +69,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
             .from(footer, withClass("modal__footer"))
             .descendant(button, withClass("btn-primary"))
             .build();
-        final Collection<WebElement> siteChangesElements = driver.findElements(siteChangesSelector);
+        final Collection<WebElement> siteChangesElements = driver().findElements(siteChangesSelector);
 
         if (siteChangesElements.isEmpty()) {
             LOGGER.debug("\t\t\t- No site changes found");

@@ -89,8 +89,8 @@ public class TheMixingBowl extends AbstractTrackerHandler implements RedactsIpAd
     protected By logoutButtonSelector() {
         // Highlight the user profile link to make the logout button interactable
         final By logoutParentSelector = profileLinkSelector();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(ul, withId("navie"))

@@ -32,6 +32,7 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link TsSpecialEditionHandler} for the {@code BackUps} tracker.
@@ -76,7 +77,8 @@ public class BackUps extends TsSpecialEditionHandler implements HasFixedHeader {
      */
     @Override
     protected void postLoginClickAction() {
-        browserInteractionHelper.waitForPageToLoad(pageTransitionsDuration());
+        final RemoteWebDriver driver = driver();
+        browserInteractionHelper().waitForPageToLoad(pageTransitionsDuration());
 
         final By messagesSelector = By.id("collapseobj_messages");
         final Collection<WebElement> messages = driver.findElements(messagesSelector);
@@ -104,7 +106,7 @@ public class BackUps extends TsSpecialEditionHandler implements HasFixedHeader {
     protected By logoutButtonSelector() {
         // Click the user dropdown menu bar to make the logout button interactable
         final By logoutParentSelector = By.id("quickprofileview");
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
 
         return XpathBuilder

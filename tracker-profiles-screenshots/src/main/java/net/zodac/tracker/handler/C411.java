@@ -74,7 +74,7 @@ public class C411 extends AbstractTrackerHandler implements HasDismissibleElemen
             .from(span, withClass("i-heroicons:x-mark"))
             .navigateTo(parent(button))
             .build();
-        final Collection<WebElement> loginPopups = driver.findElements(loginPopupsSelector);
+        final Collection<WebElement> loginPopups = driver().findElements(loginPopupsSelector);
         LOGGER.trace("Found {} login pop-up{} to clear", loginPopups.size(), StringUtils.pluralise(loginPopups));
 
         for (final WebElement loginPopup : loginPopups) {
@@ -127,7 +127,7 @@ public class C411 extends AbstractTrackerHandler implements HasDismissibleElemen
             .child(div, atIndex(1))
             .child(span, atIndex(1))
             .build();
-        final WebElement profileParent = driver.findElement(profileParentSelector);
+        final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);
     }
 }

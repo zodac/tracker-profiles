@@ -40,8 +40,10 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code HDBits} tracker.
@@ -72,6 +74,8 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
      */
     @Override
     protected void preLoginClickAction() {
+        final RemoteWebDriver driver = driver();
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By twoFactorPasscodeSelector = XpathBuilder
             .from(input, withName("twostep_code"), withType("number"))
             .navigateTo(parent(td))
@@ -89,7 +93,7 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         browserInteractionHelper.highlightElement(captchaElement);
 
-        displayUtils.confirm(trackerDefinition.name(), "Select the '%s' image and 2FA (if enabled)".formatted(captchaTextElement.getText()));
+        displayUtils().confirm(trackerDefinition().name(), "Select the '%s' image and 2FA (if enabled)".formatted(captchaTextElement.getText()));
     }
 
     @Override

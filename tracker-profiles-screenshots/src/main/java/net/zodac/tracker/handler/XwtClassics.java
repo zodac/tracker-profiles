@@ -94,7 +94,7 @@ public class XwtClassics extends AbstractTrackerHandler implements RedactsIpAddr
             .child(td, atIndex(4))
             .child(a, atIndex(1))
             .build();
-        final WebElement userPanel = driver.findElement(userPanelSelector);
+        final WebElement userPanel = driver().findElement(userPanelSelector);
         clickButton(userPanel);
 
         final By logoutButton = XpathBuilder
@@ -104,7 +104,7 @@ public class XwtClassics extends AbstractTrackerHandler implements RedactsIpAddr
             .child(div, atIndex(2))
             .child(a, atIndex(1))
             .build();
-        browserInteractionHelper.waitForElementToBeInteractable(logoutButton, pageLoadDuration());
+        browserInteractionHelper().waitForElementToBeInteractable(logoutButton, pageLoadDuration());
         return logoutButton;
     }
 }

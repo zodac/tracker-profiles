@@ -88,11 +88,11 @@ public class GazelleHandler extends AbstractTrackerHandler implements RedactsEma
             final By lastFmSectionSelector = XpathBuilder
                 .from(div, withClass("box_lastfm"))
                 .build();
-            driver.findElement(lastFmSectionSelector);
+            driver().findElement(lastFmSectionSelector);
 
             LOGGER.debug("\t\t- Found Last.fm section, waiting for 'last played' entry to load");
             final By lastFmLastPlayedSelector = By.id("lastfm_stats");
-            browserInteractionHelper.waitForElementToBeVisible(lastFmLastPlayedSelector, pageLoadDuration());
+            browserInteractionHelper().waitForElementToBeVisible(lastFmLastPlayedSelector, pageLoadDuration());
             return lastFmLastPlayedSelector;
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t\t- Found no Last.fm section, assuming user has not linked account, will use fallback item to confirm profile page", e);
@@ -138,8 +138,8 @@ public class GazelleHandler extends AbstractTrackerHandler implements RedactsEma
     @Override
     protected By logoutButtonSelector() {
         // Highlight the profile menu to make the logout button interactable
-        final WebElement logoutParent = driver.findElement(profileLinkSelector());
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(profileLinkSelector());
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(li, withId("nav_logout"))

@@ -73,8 +73,8 @@ public class Bakabt extends AbstractTrackerHandler implements RedactsEmail {
     @Override
     protected By logoutButtonSelector() {
         // Highlight the nav bar to make the logout button interactable
-        final WebElement logoutParent = driver.findElement(profileLinkSelector());
-        browserInteractionHelper.moveTo(logoutParent);
+        final WebElement logoutParent = driver().findElement(profileLinkSelector());
+        browserInteractionHelper().moveTo(logoutParent);
 
         return XpathBuilder
             .from(li, withClass("welcomeback"))

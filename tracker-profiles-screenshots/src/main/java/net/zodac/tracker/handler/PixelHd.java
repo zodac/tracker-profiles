@@ -40,8 +40,10 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PixelHD} tracker.
@@ -97,6 +99,8 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
     @Override
     public void dismiss() {
         LOGGER.debug("\t\t- Checking for announcement");
+        final RemoteWebDriver driver = driver();
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By announcementSelector = XpathBuilder
             .from(div, withId("newAnnouncementSlideDown"))
             .child(a, atIndex(1))

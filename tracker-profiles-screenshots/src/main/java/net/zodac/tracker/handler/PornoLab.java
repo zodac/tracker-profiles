@@ -67,7 +67,7 @@ public class PornoLab extends TorrentPier implements HasProfilePageActions, Need
         final By selector = XpathBuilder
             .from(NamedHtmlElement.of("h1"), withClass("pagetitle"))
             .build();
-        browserInteractionHelper.translatePage(selector);
+        browserInteractionHelper().translatePage(selector);
     }
 
     /**
@@ -83,7 +83,7 @@ public class PornoLab extends TorrentPier implements HasProfilePageActions, Need
             .child(div, atIndex(4))
             .build();
 
-        final WebElement activeTorrents = driver.findElement(activeTorrentsSelector);
+        final WebElement activeTorrents = driver().findElement(activeTorrentsSelector);
         clickButton(activeTorrents);
         BrowserInteractionHelper.explicitWait(pageTransitionsDuration(), "section to close");
     }

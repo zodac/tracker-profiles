@@ -60,7 +60,7 @@ public class AnimeBytes extends AbstractTrackerHandler {
     protected void additionalActionAfterLogoutClick() {
         LOGGER.debug("\t\t- Logout button clicked, clicking confirmation button");
         final By logoutConfirmSelector = By.name("yes");
-        final WebElement logoutConfirm = browserInteractionHelper.waitForElementToBePresent(logoutConfirmSelector, pageTransitionsDuration());
+        final WebElement logoutConfirm = browserInteractionHelper().waitForElementToBePresent(logoutConfirmSelector, pageTransitionsDuration());
         clickButton(logoutConfirm);
     }
 
@@ -71,7 +71,7 @@ public class AnimeBytes extends AbstractTrackerHandler {
             .from(li, withId("username_menu"))
             .child(span, atIndex(1))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
 
         return XpathBuilder

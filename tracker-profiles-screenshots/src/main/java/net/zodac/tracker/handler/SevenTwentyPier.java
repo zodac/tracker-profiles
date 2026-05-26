@@ -78,7 +78,7 @@ public class SevenTwentyPier extends AbstractTrackerHandler {
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
         final By dropdownTriggerSelector = By.id("username_logged_in");
-        final WebElement dropdownTrigger = driver.findElement(dropdownTriggerSelector);
+        final WebElement dropdownTrigger = driver().findElement(dropdownTriggerSelector);
         clickButton(dropdownTrigger);
     }
 }

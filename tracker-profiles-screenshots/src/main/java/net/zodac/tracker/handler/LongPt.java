@@ -49,7 +49,7 @@ public class LongPt extends NexusPhpHandler {
      */
     @Override
     protected void postLoginClickAction() {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver());
         LOGGER.debug("\t- Performing Cloudflare verification check");
 
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
@@ -61,7 +61,7 @@ public class LongPt extends NexusPhpHandler {
             .build();
         final WebElement cloudflareElement = browserInteractionHelper.waitForElementToBePresent(cloudflareSelector, pageLoadDuration());
         browserInteractionHelper.highlightElement(cloudflareElement);
-        displayUtils.confirm(trackerDefinition.name(), "Pass the Cloudflare verification");
+        displayUtils().confirm(trackerDefinition().name(), "Pass the Cloudflare verification");
     }
 
     @Override

@@ -80,7 +80,7 @@ public class BtArg extends AbstractTrackerHandler implements NeedsExplicitTransl
 
     @Override
     public void translatePageToEnglish() {
-        browserInteractionHelper.translatePage();
+        browserInteractionHelper().translatePage();
     }
 
     @Override

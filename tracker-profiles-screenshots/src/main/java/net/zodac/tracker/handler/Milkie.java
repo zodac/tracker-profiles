@@ -89,7 +89,7 @@ public class Milkie extends AbstractTrackerHandler implements DoesNotScrollDurin
         reloadProfilePage();
 
         final By profileLinkSelector = profileLinkSelector();
-        final WebElement logoutParent = browserInteractionHelper.waitForElementToBePresent(profileLinkSelector, maximumLinkResolutionDuration());
+        final WebElement logoutParent = browserInteractionHelper().waitForElementToBePresent(profileLinkSelector, maximumLinkResolutionDuration());
         clickButton(logoutParent);
     }
 

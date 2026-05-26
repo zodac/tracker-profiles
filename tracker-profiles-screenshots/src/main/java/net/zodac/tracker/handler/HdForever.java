@@ -56,7 +56,7 @@ public class HdForever extends GazelleHandler implements HasJumpButtons, NeedsEx
 
     @Override
     public void translatePageToEnglish() {
-        browserInteractionHelper.translatePage();
+        browserInteractionHelper().translatePage();
     }
 
     @Override

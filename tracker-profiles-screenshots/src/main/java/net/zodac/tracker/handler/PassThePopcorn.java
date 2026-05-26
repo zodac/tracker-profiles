@@ -35,6 +35,7 @@ import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PassThePopcorn} tracker.
@@ -45,7 +46,7 @@ public class PassThePopcorn extends AbstractTrackerHandler implements RedactsEma
     @Override
     protected By loginButtonSelector() {
         final By captchaSelector = By.id("captcha_container");
-        browserInteractionHelper.waitForElementToBePresent(captchaSelector, pageLoadDuration());
+        browserInteractionHelper().waitForElementToBePresent(captchaSelector, pageLoadDuration());
         return By.id("login-button");
     }
 
@@ -65,12 +66,13 @@ public class PassThePopcorn extends AbstractTrackerHandler implements RedactsEma
      */
     @Override
     protected void postLoginClickAction() {
+        final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to select correct movie title");
 
         final WebElement selectionElement = driver.findElement(By.id("captcha_container"));
-        browserInteractionHelper.highlightElement(selectionElement);
-        displayUtils.confirm(trackerDefinition.name(), "Select the correct movie");
+        browserInteractionHelper().highlightElement(selectionElement);
+        displayUtils().confirm(trackerDefinition().name(), "Select the correct movie");
 
         // If the user didn't click 'login', do it for them
         // Special case for PTP since the login button needs to be clicked twice

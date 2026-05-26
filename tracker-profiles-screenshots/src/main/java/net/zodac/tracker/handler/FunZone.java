@@ -32,6 +32,7 @@ import net.zodac.tracker.util.BrowserInteractionHelper;
 import net.zodac.tracker.util.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code FunZone} tracker.
@@ -57,6 +58,7 @@ public class FunZone extends Unit3dHandler {
         BrowserInteractionHelper.explicitWait(Duration.ofSeconds(2L), "theme pop-ups to load");
         LOGGER.debug("\t\t- Checking for theme pop-ups");
 
+        final RemoteWebDriver driver = driver();
         final By popupsSelector = XpathBuilder
             .from(div, withId("themes-popup"))
             .child(div, atIndex(1))
@@ -89,7 +91,7 @@ public class FunZone extends Unit3dHandler {
             .child(button, atIndex(1))
             .build();
 
-        final Collection<WebElement> banners = driver.findElements(bannersSelector);
+        final Collection<WebElement> banners = driver().findElements(bannersSelector);
         if (banners.isEmpty()) {
             LOGGER.debug("\t\t\t- No theme banners found");
             return;

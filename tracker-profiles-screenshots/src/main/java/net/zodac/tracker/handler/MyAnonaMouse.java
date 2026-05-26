@@ -119,7 +119,7 @@ public class MyAnonaMouse extends AbstractTrackerHandler implements RedactsIpAdd
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Highlighting user dropdown menu to make profile/logout button interactable");
         final By profileDropDownSelector = By.id("userMenu");
-        final WebElement profileDropDown = driver.findElement(profileDropDownSelector);
-        browserInteractionHelper.moveTo(profileDropDown);
+        final WebElement profileDropDown = driver().findElement(profileDropDownSelector);
+        browserInteractionHelper().moveTo(profileDropDown);
     }
 }

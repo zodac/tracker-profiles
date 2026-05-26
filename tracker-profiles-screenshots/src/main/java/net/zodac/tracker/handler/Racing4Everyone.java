@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import java.time.Duration;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.WebElement;
 
 /**
@@ -41,6 +42,7 @@ public class Racing4Everyone extends Unit3dHandler {
      */
     @Override
     protected void postLoginClickAction() {
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final WebElement loginButton = browserInteractionHelper.waitForElementToBeInteractable(loginButtonSelector(), pageLoadDuration());
         LOGGER.trace("Clicking login button, again: {}", loginButton);
         clickButton(loginButton);

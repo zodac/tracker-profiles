@@ -54,7 +54,7 @@ public class CanalStreet extends GazelleHandler {
             .from(div, withId("user_bar"))
             .child(a, atIndex(2))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
 
         return XpathBuilder

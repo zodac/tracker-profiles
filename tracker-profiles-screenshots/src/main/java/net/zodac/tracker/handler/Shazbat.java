@@ -102,7 +102,7 @@ public class Shazbat extends AbstractTrackerHandler
             .from(a, withHref("/index"))
             .build();
         final WebElement index = driver.findElement(indexSelector);
-        browserInteractionHelper.moveTo(index);
+        browserInteractionHelper().moveTo(index);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class Shazbat extends AbstractTrackerHandler
      */
     @Override
     public void actionBeforeScreenshot() {
-        driver.executeScript("""
+        driver().executeScript("""
             var style = document.createElement('style');
             style.textContent = '.nicescroll-rails { display: none !important; }';
             document.head.appendChild(style);

@@ -65,11 +65,11 @@ public class BroadcasTheNet extends GazelleHandler implements HasCloudflareCheck
             .child(li, atIndex(2))
             .child(a, atIndex(1))
             .build();
-        final WebElement infoTabLink = driver.findElement(infoTabSelector);
+        final WebElement infoTabLink = driver().findElement(infoTabSelector);
         clickButton(infoTabLink);
 
         // Move the cursor out of the way, to avoid highlighting a tooltip for a badge
-        browserInteractionHelper.moveToOrigin();
+        browserInteractionHelper().moveToOrigin();
     }
 
     @Override

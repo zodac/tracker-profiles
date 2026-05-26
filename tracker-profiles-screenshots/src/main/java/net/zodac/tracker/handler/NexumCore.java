@@ -86,12 +86,12 @@ public class NexumCore extends AbstractTrackerHandler implements HasFixedHeader,
                 .build();
             clickButton(driver.findElement(toggleSelector));
         }
-        browserInteractionHelper.makeUnfixed(driver.findElement(By.id("sidebar-show")));
+        browserInteractionHelper().makeUnfixed(driver.findElement(By.id("sidebar-show")));
     }
 
     @Override
     public void translatePageToEnglish() {
-        browserInteractionHelper.translatePage();
+        browserInteractionHelper().translatePage();
     }
 
     @Override

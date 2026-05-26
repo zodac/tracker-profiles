@@ -39,6 +39,7 @@ import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.util.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link LuminanceHandler} for the {@code CGPeers} tracker.
@@ -82,13 +83,14 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
      */
     @Override
     protected void postLoginClickAction() {
+        final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
         LOGGER.info("\t\t >>> Waiting for user to enter the 2FA code and click the 'Verify Code' button");
 
         final By selectionSelector = By.name("code");
         final WebElement selectionElement = driver.findElement(selectionSelector);
-        browserInteractionHelper.highlightElement(selectionElement);
-        displayUtils.confirm(trackerDefinition.name(), "Enter the 2FA code");
+        browserInteractionHelper().highlightElement(selectionElement);
+        displayUtils().confirm(trackerDefinition().name(), "Enter the 2FA code");
 
         // If the user didn't click 'Verify Code', do it for them (it shares the same HTML ID as the login button from the previous page)
         final String nextUrl = driver.getCurrentUrl();
@@ -112,7 +114,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
         final By announcementSelector = XpathBuilder
             .from(button, withClass("announcement-dismiss"))
             .build();
-        final Collection<WebElement> announcements = driver.findElements(announcementSelector);
+        final Collection<WebElement> announcements = driver().findElements(announcementSelector);
 
         if (announcements.isEmpty()) {
             LOGGER.debug("\t\t\t- No announcements found");
@@ -171,7 +173,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = By.id("userDropdownTrigger");
-        final WebElement profileParent = driver.findElement(profileParentSelector);
+        final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);
     }
 }

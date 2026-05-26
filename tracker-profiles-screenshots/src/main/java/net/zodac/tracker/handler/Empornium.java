@@ -33,6 +33,7 @@ import net.zodac.tracker.handler.definition.HasProfilePageActions;
 import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Extension of the {@link LuminanceHandler} for the {@code Empornium} tracker.
@@ -68,6 +69,7 @@ public class Empornium extends LuminanceHandler implements HasProfilePageActions
      */
     @Override
     public void performActionOnProfilePage() {
+        final RemoteWebDriver driver = driver();
         // Maps each toggle button ID to its content div ID
         final Map<String, String> buttonToDivIds = Map.of(
             "recentsnatchesbutton", "recentsnatchesdiv",

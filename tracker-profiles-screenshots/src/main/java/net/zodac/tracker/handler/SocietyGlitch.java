@@ -62,11 +62,11 @@ public class SocietyGlitch extends AbstractTrackerHandler implements RedactsIpAd
     protected void preLoginClickAction() {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha");
 
-        final WebElement captchaElement = driver.findElement(By.id("captcha"));
-        browserInteractionHelper.highlightElement(captchaElement);
+        final WebElement captchaElement = driver().findElement(By.id("captcha"));
+        browserInteractionHelper().highlightElement(captchaElement);
 
         // The default position blocks the user input, so we override it
-        displayUtils.confirm(trackerDefinition.name(), "Solve the captcha", DialogPosition.of(0, 80));
+        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha", DialogPosition.of(0, 80));
     }
 
     @Override

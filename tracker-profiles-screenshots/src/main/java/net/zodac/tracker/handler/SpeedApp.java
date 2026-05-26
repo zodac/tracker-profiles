@@ -155,7 +155,7 @@ public class SpeedApp extends AbstractTrackerHandler
 
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Clicking user dropdown to make profile/logout button interactable");
-        final WebElement toggle = driver.findElement(By.id("kt_quick_user_toggle"));
+        final WebElement toggle = driver().findElement(By.id("kt_quick_user_toggle"));
         clickButton(toggle);
     }
 }

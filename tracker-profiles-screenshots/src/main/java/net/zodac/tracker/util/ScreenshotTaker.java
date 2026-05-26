@@ -45,7 +45,7 @@ public final class ScreenshotTaker {
     private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Duration TIME_BETWEEN_SCROLLS = Duration.ofMillis(500L);
     private static final ExecutorService WRITE_EXECUTOR = Executors.newFixedThreadPool(CONFIG.numberOfParallelThreads());
-    private static final long SHUTDOWN_DRAIN_TIMEOUT_SECONDS = 5L;
+    private static final Duration SHUTDOWN_DRAIN_TIMEOUT = Duration.ofSeconds(5L);
 
     private ScreenshotTaker() {
 
@@ -111,14 +111,14 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Shuts down the bounded PNG write executor and waits up to {@value #SHUTDOWN_DRAIN_TIMEOUT_SECONDS} seconds for queued writes to drain. If the
+     * Shuts down the bounded PNG write executor and waits up to {@link #SHUTDOWN_DRAIN_TIMEOUT} seconds for queued writes to drain. If the
      * drain does not complete in time, in-flight writes are cancelled via {@link ExecutorService#shutdownNow()}. Safe to call multiple times.
      */
     public static void shutdown() {
         WRITE_EXECUTOR.shutdown();
         try {
-            if (!WRITE_EXECUTOR.awaitTermination(SHUTDOWN_DRAIN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                LOGGER.warn("PNG write executor did not drain within {}s, cancelling in-flight writes", SHUTDOWN_DRAIN_TIMEOUT_SECONDS);
+            if (!WRITE_EXECUTOR.awaitTermination(SHUTDOWN_DRAIN_TIMEOUT.toSeconds(), TimeUnit.SECONDS)) {
+                LOGGER.warn("PNG write executor did not drain within {}, cancelling in-flight writes", SHUTDOWN_DRAIN_TIMEOUT);
                 WRITE_EXECUTOR.shutdownNow();
             }
         } catch (final InterruptedException e) {

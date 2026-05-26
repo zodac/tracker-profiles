@@ -28,6 +28,7 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -44,6 +45,7 @@ public class SpeedCd extends AbstractTrackerHandler implements HasCloudflareChec
     @Override
     protected By passwordFieldSelector() {
         // The password field doesn't load until the username is entered and the 'Next' button is clicked
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By usernameNextButtonSelector = XpathBuilder
             .from(form, withClass("login"), atIndex(1))
             .child(div, atIndex(2))

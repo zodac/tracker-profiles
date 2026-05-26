@@ -40,6 +40,7 @@ import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
 import net.zodac.tracker.handler.definition.HasJumpButtons;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -73,6 +74,7 @@ public class Zappateers extends AbstractTrackerHandler
     @Override
     public void dismiss() {
         LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
 
@@ -81,7 +83,7 @@ public class Zappateers extends AbstractTrackerHandler
             .from(div, withId("alert_system_notice"))
             .descendant(button, atIndex(1))
             .build();
-        final WebElement cookieButton = driver.findElement(cookieSelector);
+        final WebElement cookieButton = driver().findElement(cookieSelector);
         clickButton(cookieButton);
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
@@ -148,7 +150,7 @@ public class Zappateers extends AbstractTrackerHandler
             .from(li, withClass("hoe-header-profile"))
             .child(a, withClass("dropdown-toggle"))
             .build();
-        final WebElement profileParent = driver.findElement(profileParentSelector);
+        final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);
     }
 }

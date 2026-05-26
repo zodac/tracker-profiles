@@ -95,8 +95,8 @@ public class Alexandria extends AbstractTrackerHandler implements RedactsIpAddre
             .from(div, withId("desktopNavMenu"))
             .descendant(a, containsHref("/user/"))
             .build();
-        final WebElement piUserIcon = driver.findElement(userLinkIcon);
-        browserInteractionHelper.moveTo(piUserIcon);
+        final WebElement piUserIcon = driver().findElement(userLinkIcon);
+        browserInteractionHelper().moveTo(piUserIcon);
     }
 
     /**

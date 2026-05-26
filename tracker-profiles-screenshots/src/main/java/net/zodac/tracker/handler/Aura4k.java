@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
 
 /**
@@ -61,6 +62,7 @@ public class Aura4k extends Unit3dHandler {
     @Override
     protected By profileLinkSelector() {
         LOGGER.debug("\t\t- Waiting for welcome pop-up to disappear");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = XpathBuilder
             .from(body, atIndex(1))
             .child(div, atLastIndex())

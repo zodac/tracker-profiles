@@ -75,7 +75,7 @@ public class LatTeam extends Unit3dHandler {
         final By logoutParentSelector = XpathBuilder
             .from(span, withClass("user-sidebar__toggle-label"))
             .build();
-        final WebElement logoutParent = driver.findElement(logoutParentSelector);
+        final WebElement logoutParent = driver().findElement(logoutParentSelector);
         clickButton(logoutParent);
     }
 }
