@@ -98,12 +98,12 @@ public final class ScreenshotTaker {
      * @param scrollDuringScreenshot whether to scroll the profile page during the screenshot
      * @param index                  how many screenshots already exist for this base name
      * @return a {@link Future} that resolves to the saved screenshot {@link File} once PNG encoding is complete
-     * @see BrowserInteractionHelper#scrollToTheTop()
      */
     public static Future<File> takeScreenshot(final RemoteWebDriver driver, final Path outputDirectory, final String baseName,
                                               final boolean scrollDuringScreenshot, final int index) {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scrollDuringScreenshot);
         final File screenshot = createOutputFileHandle(outputDirectory.toAbsolutePath(), baseName, index);
+
         return WRITE_EXECUTOR.submit(() -> {
             ImageIO.write(screenshotImage, "PNG", screenshot);
             return screenshot;
