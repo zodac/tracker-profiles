@@ -29,12 +29,10 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
 import java.util.List;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
-import net.zodac.tracker.handler.definition.NeedsExplicitTranslation;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -42,8 +40,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Extension of {@link AbstractTrackerHandler} for the {@code Nexum-Core} tracker.
  */
-@TrackerHandler(name = "Nexum-Core", type = TrackerType.MANUAL, url = "https://nexum-core.com/")
-public class NexumCore extends AbstractTrackerHandler implements HasFixedHeader, HasFixedSidebar, NeedsExplicitTranslation {
+@TrackerHandler(name = "Nexum-Core", url = "https://nexum-core.com/")
+public class NexumCore extends AbstractTrackerHandler implements HasFixedHeader, HasFixedSidebar {
 
     @Override
     protected By loginButtonSelector() {
@@ -87,11 +85,6 @@ public class NexumCore extends AbstractTrackerHandler implements HasFixedHeader,
             clickButton(driver.findElement(toggleSelector));
         }
         browserInteractionHelper().makeUnfixed(driver.findElement(By.id("sidebar-show")));
-    }
-
-    @Override
-    public void translatePageToEnglish() {
-        browserInteractionHelper().translatePage();
     }
 
     @Override

@@ -214,6 +214,7 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [MoreThanTV](https://www.morethantv.me/)       |
 | [MyAnonaMouse](https://www.myanonamouse.net/)  |
 | [Nebulance](https://nebulance.io/)             |
+| [Nexum-Core](https://nexum-core.com/)          |
 | [NordicBytes](https://nordicbytes.org/)        |
 | [NordicHD](http://nordichd.org/)               |
 | [NordicQuality](https://nordicq.org/)          |
@@ -317,7 +318,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [LP-Bits](https://lp-bits.com/)                     | Captcha                                         |
 | [LST](https://lst.gg/)                              | Question on login                               |
 | [Milnueve](https://milnueve.cc/)                    | Cloudflare verification                         |
-| [Nexum-Core](https://nexum-core.com/)               | Needs to be explicitly translated               |
 | [PassThePopcorn](https://passthepopcorn.me/)        | Question on login                               |
 | [PornoLab](https://pornolab.net/forum/tracker.php)  | Needs to be explicitly translated               |
 | [PrivateHD](https://privatehd.to/)                  | Captcha & Cloudflare verification               |
