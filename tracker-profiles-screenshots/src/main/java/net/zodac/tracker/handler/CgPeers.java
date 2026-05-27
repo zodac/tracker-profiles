@@ -38,6 +38,7 @@ import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.util.StringUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -108,6 +109,13 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
         return By.id("userDropdownTrigger");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link CgPeers}, two {@code announcement-dismiss} buttons are present in the DOM simultaneously, cycling between hidden and visible
+     * states. We attempt to close both, but only on a best-effort basis.
+     */
     @Override
     public void dismiss() {
         LOGGER.debug("\t\t- Checking for 2FA announcements");
@@ -123,7 +131,13 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
 
         LOGGER.debug("\t\t\t- Found {} announcement{}, clearing", announcements.size(), StringUtils.pluralise(announcements));
         for (final WebElement announcement : announcements) {
-            clickButton(announcement);
+            try {
+                clickButton(announcement);
+                browserInteractionHelper().waitForElementToDisappear(announcementSelector, pageTransitionsDuration());
+            } catch (final ElementNotInteractableException e) {
+                LOGGER.trace("Element not interactable", e);
+                LOGGER.debug("\t\t\t- Element not interactable");
+            }
         }
 
         LOGGER.debug("\t\t- Cleared announcements");
