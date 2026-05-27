@@ -100,7 +100,6 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
     public void dismiss() {
         LOGGER.debug("\t\t- Checking for announcement");
         final RemoteWebDriver driver = driver();
-        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By announcementSelector = XpathBuilder
             .from(div, withId("newAnnouncementSlideDown"))
             .child(a, atIndex(1))
@@ -112,6 +111,7 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
 
         // There should only be one of these, and we'll wait for it to scroll down and become interactable
         LOGGER.debug("\t\t\t- Found announcement, opening link");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final WebElement announcementLink = browserInteractionHelper.waitForElementToBeInteractable(announcementSelector, pageLoadDuration());
         clickButton(announcementLink);
 

@@ -137,7 +137,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     }
 
     private TrackerHandlerContext requireConfigured() {
-        final TrackerHandlerContext context = this.context;
         if (context == null) {
             throw new IllegalStateException("Handler '%s' has not been configured".formatted(getClass().getSimpleName()));
         }
@@ -242,7 +241,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     public void login(final String username, final String password, final String trackerName) {
         LOGGER.trace("Logging in to tracker '{}'", trackerName);
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
-        final RemoteWebDriver driver = driver();
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
 
         try {
@@ -260,6 +258,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         passwordField.clear();
         passwordField.sendKeys(password);
 
+        final RemoteWebDriver driver = driver();
         final String loginPageUrl = driver.getCurrentUrl();
         preLoginClickAction();
         final By loginButtonSelector = loginButtonSelector();
