@@ -28,6 +28,7 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.contains
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
@@ -103,5 +104,10 @@ public class BitGamer extends AbstractTrackerHandler implements RedactsIpAddress
         final WebElement controlPanelLink =
             browserInteractionHelper().waitForElementToBeInteractable(controlPanelSelector, pageTransitionsDuration());
         clickButton(controlPanelLink);
+    }
+
+    @Override
+    public Duration pageTransitionsDuration() {
+        return Duration.ofSeconds(2L);
     }
 }

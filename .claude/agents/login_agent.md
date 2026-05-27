@@ -67,6 +67,8 @@ public Duration pageTransitionsDuration() {
 }
 ```
 
+  Place this override at the **bottom** of the class, after all other `@Override` methods and private helpers.
+
 ### Tracker type
 
 - `HEADLESS` — default (no annotation needed), no UI required

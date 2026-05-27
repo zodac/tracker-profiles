@@ -73,6 +73,9 @@ To add a new tracker:
 
 Use `XpathBuilder` (with `HtmlElement` constants and `XpathAttributePredicate`) to construct selectors rather than raw XPath strings.
 
+Overrides of `TrackerTimings` methods (e.g. `pageTransitionsDuration()`, `pageLoadDuration()`) must be placed at the **bottom** of the
+implementation class, after all other `@Override` methods and private helpers.
+
 ### Tracker Types
 
 Two types control how the browser is created and whether user interaction is needed:
