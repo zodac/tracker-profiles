@@ -80,7 +80,7 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
             .from(td, withId("nav_block"))
             .child(form, atIndex(1))
             .child(div, atIndex(1))
-            .child(NamedHtmlElement.of("select"), atIndex(1))
+            .descendant(NamedHtmlElement.of("select"), atIndex(1))
             .build();
     }
 
