@@ -49,8 +49,7 @@ public final class ScreenshotDirectories {
 
     /**
      * Creates {@link #OUTPUT}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #ERRORS}. When the flag
-     * is disabled the error directory is intentionally not created — failure-screenshot writes are also gated on the same flag, so leaving the
-     * directory absent keeps the two in lock-step.
+     * is disabled the error directory is intentionally not created.
      *
      * @throws IOException if any directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])

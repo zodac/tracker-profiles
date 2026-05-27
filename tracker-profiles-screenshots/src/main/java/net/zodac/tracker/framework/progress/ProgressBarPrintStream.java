@@ -108,11 +108,11 @@ public final class ProgressBarPrintStream extends PrintStream {
     public void close() {
         // super.close(); // Don't call super.close() or else it will close System.out and prevent any further logging
         if (progressBarManager.isActive()) {
-            // Bar is mid-progress: no newline was emitted, so the cursor is still on the bar line — clear it in place
+            // Bar is mid-progress: no newline was emitted, so the cursor is still on the bar line; clear it in place
             final byte[] clearBytes = "\r\u001B[2K".getBytes(StandardCharsets.UTF_8);
             WRAPPED_STREAM.write(clearBytes, 0, clearBytes.length);
         } else if (progressBarManager.isDone()) {
-            // Bar reached 100%: Clique emitted a newline leaving the cursor on the line below the bar — move up then clear
+            // Bar reached 100%: Clique emitted a newline leaving the cursor on the line below the bar; move up then clear
             final byte[] clearBytes = "\u001B[1A\r\u001B[2K".getBytes(StandardCharsets.UTF_8);
             WRAPPED_STREAM.write(clearBytes, 0, clearBytes.length);
         }

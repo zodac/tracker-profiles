@@ -87,6 +87,36 @@ class DriverPoolTest {
     }
 
     @Test
+    void givenExtensionsAndPool_whenAcquire_thenPooledSlotEvictedAndReplacedOnRelease() throws Exception {
+        final RemoteWebDriver pooled = mock(RemoteWebDriver.class);
+        final RemoteWebDriver fresh = mock(RemoteWebDriver.class);
+        final RemoteWebDriver replacement = mock(RemoteWebDriver.class);
+        final Extension extension = mock(Extension.class);
+        injectPooledDriver(pooled, TrackerType.HEADLESS);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(fresh, replacement);
+
+            final RemoteWebDriver acquired = DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
+            verify(extension).configure(fresh);
+            verify(pooled).quit();
+            assertThat(acquired)
+                .isSameAs(fresh);
+            assertThat(getPool().get(TrackerType.HEADLESS))
+                .isEmpty();
+            assertThat(getAllPooledDrivers())
+                .doesNotContain(pooled);
+
+            DriverPool.release(acquired);
+            verify(fresh).quit();
+            assertThat(getPool().get(TrackerType.HEADLESS))
+                .containsExactly(replacement);
+            assertThat(getAllPooledDrivers())
+                .contains(replacement);
+        }
+    }
+
+    @Test
     void givenNoPool_whenAcquire_thenLazyDriverCreatedAndRegistered() throws Exception {
         final RemoteWebDriver expected = mock(RemoteWebDriver.class);
 
