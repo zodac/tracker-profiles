@@ -210,6 +210,7 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Metal-Tracker](https://en.metal-tracker.com/) |
 | [MidnightScene](https://midnightscene.cc/)     |
 | [Milkie](https://milkie.cc/)                   |
+| [Milnueve](https://milnueve.cc/)               |
 | [MooKo](https://mooko.org/)                    |
 | [MoreThanTV](https://www.morethantv.me/)       |
 | [MyAnonaMouse](https://www.myanonamouse.net/)  |
@@ -317,7 +318,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [LongPT](https://longpt.org/)                       | Captcha & Cloudflare verification               |
 | [LP-Bits](https://lp-bits.com/)                     | Captcha                                         |
 | [LST](https://lst.gg/)                              | Question on login                               |
-| [Milnueve](https://milnueve.cc/)                    | Cloudflare verification                         |
 | [PassThePopcorn](https://passthepopcorn.me/)        | Question on login                               |
 | [PornoLab](https://pornolab.net/forum/tracker.php)  | Needs to be explicitly translated               |
 | [PrivateHD](https://privatehd.to/)                  | Captcha & Cloudflare verification               |
