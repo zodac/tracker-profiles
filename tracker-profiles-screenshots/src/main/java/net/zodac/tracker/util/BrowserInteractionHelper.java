@@ -133,28 +133,6 @@ public final class BrowserInteractionHelper {
     }
 
     /**
-     * Performs a hard reload of the current page by navigating to the current URL as a fresh top-level navigation, then waits for the page to load.
-     * This is distinct from {@code driver.navigate().refresh()}, which sends a reload with:
-     * <ul>
-     *     <li>{@code Cache-Control: max-age=0}</li>
-     *     <li>{@code Sec-Fetch-Site: same-origin}</li>
-     *     <li>{@code Referer} header</li>
-     * </ul>
-     *
-     * <p>
-     * Instead, this method navigates directly to the URL, equivalent to typing the URL in the address bar and pressing {@code ENTER}.
-     *
-     * @param pageLoadDuration the maximum {@link Duration} to wait for the page to load
-     */
-    public void hardReloadPage(final Duration pageLoadDuration) {
-        LOGGER.trace("Hard reloading page");
-        final String currentUrl = driver.getCurrentUrl();
-
-        driver.navigate().to(currentUrl);
-        waitForPageToLoad(pageLoadDuration);
-    }
-
-    /**
      * Hides the scrollbar on the current web page without changing page dimensions. Rather than setting {@code overflow: hidden} (which removes the
      * scrollbar gutter and causes layout shifts), this injects a stylesheet that makes the scrollbar transparent via both the standard
      * {@code scrollbar-color} property and the legacy {@code ::-webkit-scrollbar} pseudo-elements. The gutter space is preserved, preventing

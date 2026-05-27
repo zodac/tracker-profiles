@@ -400,11 +400,26 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     /**
      * Reloads the current profile page in the browser, restoring the page to its original state (clearing any DOM mutations from redaction). Waits
      * {@link #pageLoadDuration()} for the page to finish loading, then re-runs any {@link HasProfilePageActions#performActionOnProfilePage()}.
+     *
+     * <p>
+     * Performs a hard reload of the current page by navigating to the current URL as a fresh top-level navigation, then waits for the page to load.
+     * This is distinct from {@code driver.navigate().refresh()}, which sends a reload with:
+     * <ul>
+     *     <li>{@code Cache-Control: max-age=0}</li>
+     *     <li>{@code Sec-Fetch-Site: same-origin}</li>
+     *     <li>{@code Referer} header</li>
+     * </ul>
+     *
+     * <p>
+     * Instead, this method navigates directly to the URL, equivalent to typing the URL in the address bar and pressing {@code ENTER}.
      */
     public void reloadProfilePage() {
         LOGGER.trace("Reloading profile page to restore original state");
+        final RemoteWebDriver driver = driver();
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
-        driver().navigate().refresh();
+
+        final String currentUrl = driver.getCurrentUrl();
+        driver.navigate().to(currentUrl);
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
 
         browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector(), pageLoadDuration());
