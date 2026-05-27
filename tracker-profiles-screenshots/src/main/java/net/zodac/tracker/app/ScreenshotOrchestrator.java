@@ -114,7 +114,7 @@ public final class ScreenshotOrchestrator {
 
         final int numberOfTrackers = trackersByType.getOrDefault(trackerType, Set.of()).size();
         final int effectiveThreadCount = getEffectiveThreadCount(trackerType, numberOfTrackers);
-        DriverPool.initialise(trackerType, effectiveThreadCount, numberOfTrackers);
+        DriverPool.initialise(trackerType, effectiveThreadCount);
 
         LOGGER.info("");
         LOGGER.info(">>> Executing {} trackers {}<<<", trackerType.formattedName(),

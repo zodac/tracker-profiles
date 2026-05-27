@@ -31,11 +31,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.driver.extension.Extension;
+import net.zodac.tracker.handler.definition.UsesExtensions;
 import net.zodac.tracker.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,10 +46,10 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  *
  * <p>
  * Trackers that do not require browser extensions share a pool of drivers per {@link TrackerType}. Trackers that implement
- * {@link net.zodac.tracker.handler.definition.UsesExtensions} always receive a fresh driver on each call to {@link #acquire(TrackerType, List)}.
+ * {@link UsesExtensions} always receive a fresh driver on each call to {@link #acquire(TrackerType, List)}.
  *
  * <p>
- * Call {@link #initialise(TrackerType, int, int)} once per {@link TrackerType} before execution of that type begins to pre-create its pooled drivers.
+ * Call {@link #initialise(TrackerType, int)} once per {@link TrackerType} before execution of that type begins to pre-create its pooled drivers.
  * Callers then acquire a driver via {@link #acquire(TrackerType, List)}, use it, and return it via {@link #release(RemoteWebDriver)}.
  *
  * <p>
@@ -61,7 +61,6 @@ public final class DriverPool {
     private static final String DEFAULT_BROWSER_PAGE = "about:blank";
 
     private final Lock lock = new ReentrantLock();
-    private final AtomicInteger remainingTasks = new AtomicInteger(0);
     private final Map<TrackerType, BlockingDeque<RemoteWebDriver>> pool = new EnumMap<>(TrackerType.class);
     private final Set<RemoteWebDriver> allPooledDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
     private final IdentityHashMap<RemoteWebDriver, TrackerType> driverTypeMap = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
@@ -90,9 +89,8 @@ public final class DriverPool {
      *
      * @param trackerType             the {@link TrackerType} to initialise
      * @param numberOfParallelThreads the number of pooled drivers to create
-     * @param numberOfTrackers        the total number of trackers for this type
      */
-    public static void initialise(final TrackerType trackerType, final int numberOfParallelThreads, final int numberOfTrackers) {
+    public static void initialise(final TrackerType trackerType, final int numberOfParallelThreads) {
         final int count = (trackerType == TrackerType.HEADLESS) ? numberOfParallelThreads : 1;
         LOGGER.debug("Initializing {} pooled {} driver{}", count, trackerType.formattedName(), StringUtils.pluralise(count));
         try {
@@ -124,7 +122,6 @@ public final class DriverPool {
             instance.driverTypeMap.put(driver, trackerType);
         }
         instance.pool.put(trackerType, deque);
-        instance.remainingTasks.set(numberOfTrackers);
     }
 
     /**
@@ -146,15 +143,27 @@ public final class DriverPool {
         if (!extensions.isEmpty()) {
             LOGGER.trace("Creating fresh driver for extension-based {} tracker", trackerType);
             final RemoteWebDriver driver = JavaWebDriverFactory.createDriver(trackerType, extensions);
-            for (final Extension extension : extensions) {
-                LOGGER.trace("Configuring extension {}", extension.getClass().getSimpleName());
-                extension.configure(driver);
+            try {
+                for (final Extension extension : extensions) {
+                    LOGGER.trace("Configuring extension {}", extension.getClass().getSimpleName());
+                    extension.configure(driver);
+                }
+                return driver;
+            } catch (final RuntimeException e) {
+                LOGGER.trace("Failed to configure extensions, cleaning up fresh driver", e);
+                quitAndCleanup(driver);
+                throw e;
             }
-            return driver;
         }
 
         final DriverPool instance = get();
-        final BlockingDeque<RemoteWebDriver> deque = instance.pool.get(trackerType);
+        final BlockingDeque<RemoteWebDriver> deque;
+        instance.lock.lock();
+        try {
+            deque = instance.pool.get(trackerType);
+        } finally {
+            instance.lock.unlock();
+        }
         if (deque != null) {
             LOGGER.trace("Acquiring pooled driver for type {}", trackerType);
             try {
@@ -190,7 +199,6 @@ public final class DriverPool {
      */
     public static void release(final RemoteWebDriver driver) {
         final DriverPool instance = get();
-        instance.remainingTasks.decrementAndGet();
         final boolean isPooled;
         instance.lock.lock();
         try {
@@ -209,26 +217,27 @@ public final class DriverPool {
             }
         } else {
             LOGGER.trace("Quitting fresh driver");
-            driver.quit();
-            JavaWebDriverFactory.deleteUserDataDir(driver);
+            quitAndCleanup(driver);
         }
     }
 
     private static void replaceDeadDriverInPool(final DriverPool instance, final RemoteWebDriver deadDriver) {
         LOGGER.warn("Pooled driver is dead, replacing with a fresh driver");
         final TrackerType type = removeDeadTracker(instance, deadDriver);
+        quitAndCleanup(deadDriver);
 
         if (type == null) {
             LOGGER.warn("Dead driver has no associated TrackerType, cannot replace");
             return;
         }
 
-        if (instance.remainingTasks.get() == 0) {
-            LOGGER.debug("No remaining tasks, skipping dead driver replacement");
-            return;
+        final BlockingDeque<RemoteWebDriver> deque;
+        instance.lock.lock();
+        try {
+            deque = instance.pool.get(type);
+        } finally {
+            instance.lock.unlock();
         }
-
-        final BlockingDeque<RemoteWebDriver> deque = instance.pool.get(type);
         if (deque == null) {
             LOGGER.warn("No pool found for type {}, cannot replace dead driver", type.formattedName());
             return;
@@ -259,21 +268,29 @@ public final class DriverPool {
     }
 
     private static void returnDriverToPool(final DriverPool instance, final RemoteWebDriver driver) {
-        final TrackerType type;
+        BlockingDeque<RemoteWebDriver> deque = null;
         instance.lock.lock();
         try {
-            type = instance.driverTypeMap.get(driver);
+            final TrackerType type = instance.driverTypeMap.get(driver);
+            if (type != null) {
+                deque = instance.pool.get(type);
+            }
         } finally {
             instance.lock.unlock();
         }
-        if (type == null) {
-            return;
-        }
 
-        final BlockingDeque<RemoteWebDriver> deque = instance.pool.get(type);
         if (deque != null) {
             deque.addFirst(driver);
         }
+    }
+
+    private static void quitAndCleanup(final RemoteWebDriver driver) {
+        try {
+            driver.quit();
+        } catch (final Exception e) {
+            LOGGER.trace("Error quitting driver during cleanup", e);
+        }
+        JavaWebDriverFactory.deleteUserDataDir(driver);
     }
 
     /**
@@ -286,13 +303,11 @@ public final class DriverPool {
             final int numberOfPooledDrivers = instance.allPooledDrivers.size();
             LOGGER.debug("Shutting down driver pool with {} pooled driver{}", numberOfPooledDrivers, StringUtils.pluralise(numberOfPooledDrivers));
             for (final RemoteWebDriver driver : instance.allPooledDrivers) {
-                driver.quit();
-                JavaWebDriverFactory.deleteUserDataDir(driver);
+                quitAndCleanup(driver);
             }
             instance.pool.clear();
             instance.allPooledDrivers.clear();
             instance.driverTypeMap.clear();
-            instance.remainingTasks.set(0);
         } finally {
             instance.lock.unlock();
         }

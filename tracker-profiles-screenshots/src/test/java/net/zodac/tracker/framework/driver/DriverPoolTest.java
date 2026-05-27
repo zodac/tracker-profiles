@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicInteger;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.extension.Extension;
@@ -60,7 +59,6 @@ class DriverPoolTest {
         clearField(instance, "pool");
         clearField(instance, "allPooledDrivers");
         clearField(instance, "driverTypeMap");
-        setRemainingTasks(instance, 0);
     }
 
     @Test
@@ -135,13 +133,13 @@ class DriverPoolTest {
         when(deadDriver.navigate()).thenThrow(new WebDriverException("session closed"));
         injectPooledDriver(deadDriver, TrackerType.HEADLESS);
         DriverPool.acquire(TrackerType.HEADLESS, List.of());
-        setRemainingTasks(getInstance(), 2);
 
         try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
             factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(replacement);
             DriverPool.release(deadDriver);
         }
 
+        verify(deadDriver).quit();
         assertThat(getAllPooledDrivers())
             .doesNotContain(deadDriver).contains(replacement);
         assertThat(getPool().get(TrackerType.HEADLESS))
@@ -195,12 +193,6 @@ class DriverPoolTest {
         } else if (value instanceof Collection<?> col) {
             col.clear();
         }
-    }
-
-    private static void setRemainingTasks(final DriverPool instance, final int value) throws Exception {
-        final Field field = DriverPool.class.getDeclaredField("remainingTasks");
-        field.setAccessible(true);
-        ((AtomicInteger) field.get(instance)).set(value);
     }
 
     private static Object getField(final DriverPool instance, final String fieldName) throws Exception {
