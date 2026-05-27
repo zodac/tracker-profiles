@@ -33,7 +33,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClas
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.redactor.RedactionBuffer;
@@ -70,6 +69,7 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "OldToons.World", url = "https://oldtoons.world/")
 @TrackerHandler(name = "OnlyEncodes", url = "https://onlyencodes.cc/")
 @TrackerHandler(name = "PolishTorrent", url = "https://polishtorrent.top/")
+@TrackerHandler(name = "Racing4Everyone", url = "https://racing4everyone.eu/")
 @TrackerHandler(name = "Rastastugan", url = "https://rastastugan.org/")
 @TrackerHandler(name = "RocketHD", url = "https://rocket-hd.cc/")
 @TrackerHandler(name = "SexTorrent", adult = true, url = "https://sextorrent.myds.me/")
