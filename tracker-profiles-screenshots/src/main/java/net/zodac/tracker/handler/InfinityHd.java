@@ -23,6 +23,7 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClas
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code InfinityHD} tracker.
@@ -35,5 +36,22 @@ public class InfinityHd extends Unit3dHandler {
         return XpathBuilder
             .from(button, withClass("btn-launch"))
             .build();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * {@code InfinityHD} intermittently rejects an otherwise-valid login with a captcha error. If the login cannot be confirmed, the credentials are
+     * submitted once more before failing.
+     */
+    @Override
+    public void login(final String username, final String password, final String trackerName) {
+        try {
+            super.login(username, password, trackerName);
+        } catch (final TimeoutException e) {
+            LOGGER.warn("\t- Unable to confirm login, re-attempting once");
+            super.login(username, password, trackerName);
+        }
     }
 }
