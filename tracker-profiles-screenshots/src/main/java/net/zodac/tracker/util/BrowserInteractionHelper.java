@@ -59,6 +59,7 @@ public final class BrowserInteractionHelper {
      *
      * @param driver the {@link RemoteWebDriver}
      */
+    // TODO: Static constructor
     public BrowserInteractionHelper(final RemoteWebDriver driver) {
         this.driver = driver;
     }

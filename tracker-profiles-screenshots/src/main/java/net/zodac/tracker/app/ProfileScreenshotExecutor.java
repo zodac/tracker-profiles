@@ -174,9 +174,12 @@ final class ProfileScreenshotExecutor {
         } catch (final TranslationException e) {
             LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerCredential.name(), e);
             LOGGER.warn("\t- Unable to translate tracker '{}' to English: {}", trackerCredential.name(), e.getMessage());
-        } catch (final NoSuchSessionException | NoSuchWindowException | StaleElementReferenceException | UnreachableBrowserException e) {
-            LOGGER.debug("Browser unavailable, most likely user-cancelled", e);
-            LOGGER.warn("Browser unavailable, most likely user-cancelled");
+        } catch (final StaleElementReferenceException e) {
+            LOGGER.debug("\t- Page element became stale during interaction with tracker '{}'", trackerCredential.name(), e);
+            LOGGER.warn("\t- Page element became stale during interaction with tracker '{}'", trackerCredential.name());
+        } catch (final NoSuchSessionException | NoSuchWindowException | UnreachableBrowserException e) {
+            LOGGER.debug("\t- Browser became unavailable for tracker '{}' (cancelled by user, or browser crash)", trackerCredential.name(), e);
+            LOGGER.warn("\t- Browser became unavailable for tracker '{}' (cancelled by  user, or browser crash)", trackerCredential.name());
         } catch (final Exception e) {
             screenshotOnError(trackerHandler, trackerCredential.name());
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerCredential.name(), e);
