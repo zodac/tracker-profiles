@@ -38,9 +38,9 @@ public interface HasFixedHeader {
      * @see BrowserInteractionHelper#makeUnfixed(WebElement)
      */
     default void unfixHeaders(final RemoteWebDriver driver, final List<By> headerSelectors) {
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         for (final By headerSelector : headerSelectors) {
             final WebElement headerElement = driver.findElement(headerSelector);
-            final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
             browserInteractionHelper.makeUnfixed(headerElement);
         }
     }

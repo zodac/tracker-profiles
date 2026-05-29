@@ -84,7 +84,7 @@ public class UblockOriginLiteExtension implements Extension {
     @Override
     public void configure(final RemoteWebDriver driver) {
         try {
-            final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+            final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
             LOGGER.info("\t- Configuring {}", getClass().getSimpleName());
             LOGGER.debug("\t\t- Configuring with settings {}", settings);
             openExtensionConfigurationPage(driver, id());

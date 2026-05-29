@@ -54,14 +54,22 @@ public final class BrowserInteractionHelper {
 
     private final RemoteWebDriver driver;
 
+    private BrowserInteractionHelper(final RemoteWebDriver driver) {
+        this.driver = driver;
+    }
+
     /**
-     * Constructor that takes in a {@link RemoteWebDriver}.
+     * Creates a new {@link BrowserInteractionHelper} for the given {@link RemoteWebDriver}.
      *
      * @param driver the {@link RemoteWebDriver}
+     * @return a new {@link BrowserInteractionHelper}
+     * @throws IllegalArgumentException if driver is null
      */
-    // TODO: Static constructor
-    public BrowserInteractionHelper(final RemoteWebDriver driver) {
-        this.driver = driver;
+    public static BrowserInteractionHelper of(final RemoteWebDriver driver) {
+        if (driver == null) {
+            throw new IllegalArgumentException("driver must not be null");
+        }
+        return new BrowserInteractionHelper(driver);
     }
 
     /**

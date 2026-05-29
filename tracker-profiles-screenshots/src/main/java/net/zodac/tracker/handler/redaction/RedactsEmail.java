@@ -41,7 +41,7 @@ public interface RedactsEmail extends Redaction {
      * @return the number of {@link WebElement}s redacted
      */
     default int redactEmailElements(final RemoteWebDriver driver, final Redactor redactor) {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         return emailElements()
             .stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())

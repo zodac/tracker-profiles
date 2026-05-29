@@ -41,7 +41,7 @@ public interface RedactsIpAddress extends Redaction {
      * @return the number of {@link WebElement}s redacted
      */
     default int redactIpAddressElements(final RemoteWebDriver driver, final Redactor redactor) {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         return ipAddressElements()
             .stream()
             .flatMap(rootSelector -> driver.findElements(rootSelector).stream())

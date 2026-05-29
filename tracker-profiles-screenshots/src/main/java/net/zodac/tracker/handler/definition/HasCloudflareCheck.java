@@ -50,7 +50,7 @@ public interface HasCloudflareCheck {
      * @param trackerName      the name of the tracker
      */
     default void cloudflareCheck(final RemoteWebDriver driver, final Duration pageLoadDuration, final String trackerName) {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         final var logger = LogManager.getLogger(HasCloudflareCheck.class);
         logger.debug("\t- Performing Cloudflare verification check");
 

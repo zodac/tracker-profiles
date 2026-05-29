@@ -37,7 +37,7 @@ public interface HasJumpButtons {
      * @see BrowserInteractionHelper#removeElement(WebElement)
      */
     default void hideJumpButtons(final RemoteWebDriver driver, final List<By> jumpButtonSelectors) {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         for (final By jumpButtonSelector : jumpButtonSelectors) {
             final WebElement jumpButton = driver.findElement(jumpButtonSelector);
             browserInteractionHelper.removeElement(jumpButton);

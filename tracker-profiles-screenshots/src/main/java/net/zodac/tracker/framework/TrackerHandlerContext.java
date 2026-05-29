@@ -48,6 +48,6 @@ public record TrackerHandlerContext(
      * @return the {@link TrackerHandlerContext}
      */
     public static TrackerHandlerContext of(final TrackerDefinition trackerDefinition, final RemoteWebDriver driver) {
-        return new TrackerHandlerContext(driver, new BrowserInteractionHelper(driver), DisplayUtils.withDriver(driver), trackerDefinition);
+        return new TrackerHandlerContext(driver, BrowserInteractionHelper.of(driver), DisplayUtils.withDriver(driver), trackerDefinition);
     }
 }

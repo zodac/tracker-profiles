@@ -41,7 +41,7 @@ public interface HasFixedSidebar {
      * @param driver the {@link RemoteWebDriver}
      */
     default void unfixSidebar(final RemoteWebDriver driver) {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         final By sidebarSelector = By.id("hoe-left-panel");
         final WebElement sidebarElement = driver.findElement(sidebarSelector);
         browserInteractionHelper.makeUnfixed(sidebarElement);

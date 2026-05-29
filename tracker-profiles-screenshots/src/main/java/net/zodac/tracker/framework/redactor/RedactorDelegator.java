@@ -53,7 +53,7 @@ public final class RedactorDelegator implements Redactor {
             case BLUR, BOX -> JavaScriptRedactor.create(driver, redactionType);
             case NONE -> throw new IllegalStateException("RedactorDelegator should not be created for NONE redaction type");
         };
-        return new RedactorDelegator(new BrowserInteractionHelper(driver), redactor);
+        return new RedactorDelegator(BrowserInteractionHelper.of(driver), redactor);
     }
 
     @Override

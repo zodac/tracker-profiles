@@ -105,7 +105,7 @@ public class SpeedApp extends AbstractTrackerHandler
             final WebElement toggle = driver.findElement(By.id("kt_aside_toggle"));
             clickButton(toggle);
         }
-        final BrowserInteractionHelper helper = new BrowserInteractionHelper(driver);
+        final BrowserInteractionHelper helper = BrowserInteractionHelper.of(driver);
         final WebElement aside = driver.findElement(By.id("kt_aside"));
         helper.makeUnfixed(aside);
     }

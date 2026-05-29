@@ -49,7 +49,7 @@ public class LongPt extends NexusPhpHandler {
      */
     @Override
     protected void postLoginClickAction() {
-        final BrowserInteractionHelper browserInteractionHelper = new BrowserInteractionHelper(driver());
+        final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver());
         LOGGER.debug("\t- Performing Cloudflare verification check");
 
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
