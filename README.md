@@ -56,7 +56,7 @@ or becomes otherwise unavailable.
 
 ### Screenshots
 
-Below are examples of the different types of redaction from the [MooKo](https://mooko.org/) tracker.
+Below are examples of the different types of redaction from the [MooKo](https://mooko.org/) tracker (no longer active).
 
 <details>
 <summary>Example Screenshots</summary>
@@ -211,7 +211,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [MidnightScene](https://midnightscene.cc/)     |
 | [Milkie](https://milkie.cc/)                   |
 | [Milnueve](https://milnueve.cc/)               |
-| [MooKo](https://mooko.org/)                    |
 | [MoreThanTV](https://www.morethantv.me/)       |
 | [Nebulance](https://nebulance.io/)             |
 | [Nexum-Core](https://nexum-core.com/)          |
