@@ -120,7 +120,7 @@ Screenshots are saved to `/tmp/screenshots/<date>/` on your host. See [Configura
 
 ## Trackers
 
-There are currently **160** supported trackers listed below. The available trackers come in the following types:
+There are currently **159** supported trackers listed below. The available trackers come in the following types:
 
 - Headless: Can run with the browser in headless mode, meaning no UI browser is needed
 - Manual: There is some user interaction needed (a Captcha or 2FA to log in, etc.), requiring a UI browser
@@ -213,7 +213,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Milnueve](https://milnueve.cc/)               |
 | [MooKo](https://mooko.org/)                    |
 | [MoreThanTV](https://www.morethantv.me/)       |
-| [MyAnonaMouse](https://www.myanonamouse.net/)  |
 | [Nebulance](https://nebulance.io/)             |
 | [Nexum-Core](https://nexum-core.com/)          |
 | [NordicBytes](https://nordicbytes.org/)        |
@@ -337,6 +336,23 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [Torrenting](https://torrenting.com/)               | Cloudflare verification                         |
 | [Ultrabits](https://ultrabits.org/)                 | Cloudflare verification                         |
 | [UploadCX](https://upload.cx/)                      | Captcha                                         |
+
+</td>
+</tr>
+</table>
+
+### Unsupported
+
+The following trackers are explicitly not supported, either due to limitations with accessing them, or due to their terms and conditions forbidding
+this type of automated access.
+
+<table>
+<tr>
+<td valign="top">
+
+| Tracker Name                                  | Reason                                    |
+|-----------------------------------------------|-------------------------------------------|
+| [MyAnonaMouse](https://www.myanonamouse.net/) | Non-API access is not approved (Rule 1.7) |
 
 </td>
 </tr>
@@ -570,7 +586,9 @@ This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PA
 - **PATCH**: backwards-compatible bug fixes or code changes
 
 Changes to the [trackers_example.csv](./trackers_example.csv) file are considered `MINOR` (new trackers) or `MAJOR` (updates to the tracker
-name). However, removing a tracker due to the site no longer being available is **not** considered a `MAJOR` change. Trackers are external to the
+name, or removal of support).
+
+However, removing a tracker due to the site no longer being available is **not** considered a `MAJOR` change. Trackers are external to the
 application and not part of its public API, as their availability depends on third-party sites that can change or disappear at any time. Tracker
 removals will be released as `PATCH` versions.
 
