@@ -248,7 +248,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [SexTorrent](https://sextorrent.myds.me/)            |
 | [Shadowbit](https://shadowbit.cc/)                   |
 | [Shazbat](https://www.shazbat.tube/)                 |
-| [SlobitMedia](https://media.slo-bitcloud.eu/)        |
 | [SpeedApp](https://speedapp.io/)                     |
 | [SportsCult](https://sportscult.org/)                |
 | [T3nnis](https://t3nnis.tv/)                         |

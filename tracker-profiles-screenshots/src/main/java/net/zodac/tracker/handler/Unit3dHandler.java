@@ -73,7 +73,6 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "Rastastugan", url = "https://rastastugan.org/")
 @TrackerHandler(name = "RocketHD", url = "https://rocket-hd.cc/")
 @TrackerHandler(name = "SexTorrent", adult = true, url = "https://sextorrent.myds.me/")
-@TrackerHandler(name = "SlobitMedia", url = "https://media.slo-bitcloud.eu/")
 @TrackerHandler(name = "Unwalled", url = "https://unwalled.cc/")
 @TrackerHandler(name = "VietMediaF", url = "https://tracker.vietmediaf.store/")
 public class Unit3dHandler extends AbstractTrackerHandler implements HasDismissibleElement, HasFixedHeader, RedactsEmail, RedactsIpAddress {
