@@ -50,7 +50,8 @@ public class InfinityHd extends Unit3dHandler {
         try {
             super.login(username, password, trackerName);
         } catch (final TimeoutException e) {
-            LOGGER.warn("\t- Unable to confirm login, re-attempting once");
+            LOGGER.debug("\t- Unable to confirm login, re-attempting once", e);
+            LOGGER.warn("\t- Unable to confirm login, re-attempting once: {}", e.getMessage());
             super.login(username, password, trackerName);
         }
     }

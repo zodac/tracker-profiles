@@ -42,7 +42,7 @@ JAVA_BUILD_IMAGE="local/tracker-profiles-builder:latest"
 JDK_DOCKER_IMAGE="eclipse-temurin:26_35-jdk"
 MARKDOWNLINT_DOCKER_IMAGE="davidanson/markdownlint-cli2:v0.22.1"
 MAVEN_DOCKER_IMAGE="maven:3.9.16"
-RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.15.14"
+RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.15.15"
 
 VALID_STEPS=("docker" "java" "javascript" "markdown" "python")
 
@@ -204,29 +204,21 @@ detect_changed_steps() {
         } | sort -u
     )
 
-    # Suppress the java step if the only change is a <version> bump in the two pom.xml files
+    # Suppress the java step if the only changes are comments
     if [[ "${run_java}" == true ]]; then
-        local only_poms=true
-        local changed_file
-        for changed_file in "${java_changed_files[@]}"; do
-            if [[ "${changed_file}" != "pom.xml" && "${changed_file}" != "tracker-profiles-screenshots/pom.xml" ]]; then
-                only_poms=false
-                break
-            fi
-        done
-        if [[ "${only_poms}" == true ]]; then
-            local non_version_diff
-            non_version_diff=$(
-                {
-                    git diff "${latest_tag}..HEAD" -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
-                    git diff -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
-                    git diff --cached -- pom.xml "tracker-profiles-screenshots/pom.xml" 2>/dev/null
-                } | grep '^[+-]' | grep -v '^---\|^+++' | grep -vE '^[+-][[:space:]]*<version>'
-            )
-            if [[ -z "${non_version_diff}" ]]; then
-                run_java=false
-                echo "Skipping java: only pom.xml version bump detected" >&2
-            fi
+        local non_comment_diff
+        non_comment_diff=$(
+            {
+                git diff "${latest_tag}..HEAD" -- "${java_changed_files[@]}" 2>/dev/null
+                git diff -- "${java_changed_files[@]}" 2>/dev/null
+                git diff --cached -- "${java_changed_files[@]}" 2>/dev/null
+            } | grep '^[+-]' | grep -v '^---\|^+++' \
+              | grep -vE '^[+-][[:space:]]*(//|/\*\*?|\*|<!--|-->)' \
+              | grep -vE '^[+-][[:space:]]*$'
+        )
+        if [[ -z "${non_comment_diff}" ]]; then
+            run_java=false
+            echo "Skipping java: only comment changes detected" >&2
         fi
     fi
 

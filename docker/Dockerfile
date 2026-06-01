@@ -10,7 +10,7 @@ FROM python:3.14.5-slim-trixie AS chromedriver_builder
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419" \
-        chromium="148.0.7778.178-1~deb13u1" \
+        chromium="148.0.7778.215-1~deb13u1" \
         curl="8.14.1-2+deb13u3" \
         unzip="6.0-29" \
     && \
@@ -171,7 +171,7 @@ ENV NO_AT_BRIDGE=1
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419" \
-        chromium="148.0.7778.178-1~deb13u1" \
+        chromium="148.0.7778.215-1~deb13u1" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
         wmctrl="1.07+git20240228.1105759-1" \
