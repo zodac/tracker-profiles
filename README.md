@@ -181,7 +181,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | Tracker Name (F–J)                              |
 |-------------------------------------------------|
 | [F1Carreras](https://f1carreras.xyz/)           |
-| [F1GP](https://f1gp.site/)                      |
 | [Fappaizuri](https://fappaizuri.me/)            |
 | [FileList](https://filelist.io/)                |
 | [FunFile](https://www.funfile.org/)             |
