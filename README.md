@@ -299,7 +299,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [ExoticaZ](https://exoticaz.to/)                    | Captcha & Cloudflare verification               |
 | [GazelleGames](https://gazellegames.net/)           | Question on login                               |
 | [Hawke-Uno](https://hawke.uno/)                     | 2FA & Cloudflare verification                   |
-| [HD-Forever](https://hdf.world/)                    | Needs to be explicitly translated               |
 | [HDBits](https://hdbits.org/)                       | 2FA, Cloudflare verification, question on login |
 | [HDZero](https://hdzero.org/)                       | Cloudflare verification                         |
 | [Immortal-S](https://immortal-s.me/)                | Cloudflare verification                         |
