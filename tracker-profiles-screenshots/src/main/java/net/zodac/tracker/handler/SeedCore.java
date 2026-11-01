@@ -34,10 +34,11 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
 /**
- * Extension of the {@link Unit3dHandler} for the {@code RoTorrent} tracker.
+ * Extension of the {@link Unit3dHandler} for the {@code SeedCore} tracker.
  */
-@TrackerHandler(name = "RoTorrent", type = TrackerType.MANUAL, url = "https://rotorrent.info/")
-public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
+// TODO: Does this still need to be MANUAL?
+@TrackerHandler(name = "SeedCore", type = TrackerType.MANUAL, url = "https://seedcore.net")
+public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
 
     @Override
     public By cloudflareSelector() {
@@ -50,7 +51,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link RoTorrent} there is potentially a pop-up with a daily reward of bonus points that can be cleared. We still use
+     * For {@link SeedCore} there is potentially a pop-up with a daily reward of bonus points that can be cleared. We still use
      * {@link #dismiss()} from {@link Unit3dHandler} to clear the cookie banner.
      */
     @Override
@@ -84,7 +85,7 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link RoTorrent}, there are multiple dropdowns, and we need to select the correct one explicitly.
+     * For {@link SeedCore}, there are multiple dropdowns, and we need to select the correct one explicitly.
      */
     @Override
     protected void openUserDropdownMenu() {
