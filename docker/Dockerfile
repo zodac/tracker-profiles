@@ -1,5 +1,5 @@
 # Stage 1: Patch chromedriver
-FROM python:3.14.5-slim-trixie AS chromedriver_builder
+FROM python:3.15.2-slim-trixie AS chromedriver_builder
 
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - ca-certificates (SSL)
@@ -9,10 +9,10 @@ FROM python:3.14.5-slim-trixie AS chromedriver_builder
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        ca-certificates="20250419" \
-        chromium="148.0.7778.215-1~deb13u1" \
-        curl="8.14.1-2+deb13u3" \
-        unzip="6.0-29" \
+        ca-certificates="20250419+deb13u1" \
+        chromium="156.0.8078.73-1~deb13u1" \
+        curl="8.14.1-2+deb13u7" \
+        unzip="6.0-29+deb13u1" \
     && \
     apt-get autoremove && \
     apt-get clean && \
@@ -37,7 +37,7 @@ RUN mkdir -p /usr/local/chromium && \
     python3 /usr/local/bin/patch_chromedriver.py
 
 # Stage 2: Create minimal JDK
-FROM eclipse-temurin:26_35-jdk AS jdk_builder
+FROM eclipse-temurin:27_35-jdk AS jdk_builder
 
 # Hardcoding the required modules instead of using $(jdeps --multi-release BASE --print-module-deps --ignore-missing-deps /tmp/tracker-profiles.jar)
 # Dependencies are unlikely to change, so this extra step is unnecessary for every build
@@ -61,8 +61,8 @@ RUN jlink --compress=zip-9 \
     { find /opt/jdk/bin -type f -exec strip -p --strip-unneeded {} \; || true; }
 
 # Stage 3: Build the Java artefact
-FROM maven:3.9.16 AS maven_base
-FROM eclipse-temurin:26_35-jdk AS java_app_builder
+FROM maven:3.10.0 AS maven_base
+FROM eclipse-temurin:27_35-jdk AS java_app_builder
 
 # Extract Maven binary and libraries from official Maven image
 COPY --from=maven_base /usr/share/maven /usr/share/maven
@@ -83,7 +83,7 @@ COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
 # Stage 4: Generate static AppCDS archive to reduce startup time and memory footprint
-FROM eclipse-temurin:26_35-jdk AS appcds_builder
+FROM eclipse-temurin:27_35-jdk AS appcds_builder
 WORKDIR /app
 
 COPY --from=jdk_builder /opt/jdk /opt/jdk
@@ -139,7 +139,7 @@ RUN DISPLAY=":0" \
     [ -f /app/app.jsa ] || touch /app/app.jsa
 
 # Runtime
-FROM debian:13.5-slim AS runtime
+FROM debian:13.7-slim AS runtime
 # Set the working directory
 WORKDIR /app
 
@@ -170,8 +170,8 @@ ENV NO_AT_BRIDGE=1
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        ca-certificates="20250419" \
-        chromium="148.0.7778.215-1~deb13u1" \
+        ca-certificates="20250419+deb13u1" \
+        chromium="156.0.8078.73-1~deb13u1" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
         wmctrl="1.07+git20240228.1105759-1" \

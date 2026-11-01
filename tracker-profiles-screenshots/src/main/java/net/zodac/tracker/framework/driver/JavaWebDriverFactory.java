@@ -201,12 +201,13 @@ public final class JavaWebDriverFactory {
     }
 
     private static boolean isUuidDirectory(final Path path) {
-        if (!Files.isDirectory(path)) {
+        final Path fileName = path.getFileName();
+        if (!Files.isDirectory(path) || fileName == null) {
             return false;
         }
 
         try {
-            UUID.fromString(path.getFileName().toString());
+            UUID.fromString(fileName.toString());
             return true;
         } catch (final IllegalArgumentException _) {
             return false;

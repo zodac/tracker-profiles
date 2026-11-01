@@ -36,13 +36,13 @@ set -uo pipefail
 trap 'echo; echo "❌ Interrupted"; exit 130' INT
 
 ESLINT_BUILD_IMAGE="local/tracker-profiles-eslint:latest"
-ESLINT_NODE_IMAGE="node:26.2.0-alpine"
-HADOLINT_DOCKER_IMAGE="hadolint/hadolint:v2.14.0-alpine"
+ESLINT_NODE_IMAGE="node:26.13.0-alpine"
+HADOLINT_DOCKER_IMAGE="hadolint/hadolint:v2.15.1-alpine"
 JAVA_BUILD_IMAGE="local/tracker-profiles-builder:latest"
-JDK_DOCKER_IMAGE="eclipse-temurin:26_35-jdk"
-MARKDOWNLINT_DOCKER_IMAGE="davidanson/markdownlint-cli2:v0.22.1"
-MAVEN_DOCKER_IMAGE="maven:3.9.16"
-RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.15.15"
+JDK_DOCKER_IMAGE="eclipse-temurin:27_35-jdk"
+MARKDOWNLINT_DOCKER_IMAGE="davidanson/markdownlint-cli2:v0.24.0"
+MAVEN_DOCKER_IMAGE="maven:3.10.0"
+RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.17.3"
 
 VALID_STEPS=("docker" "java" "javascript" "markdown" "python")
 
@@ -87,7 +87,7 @@ EOF
         -w /app \
         "${ESLINT_BUILD_IMAGE}" \
         eslint --config ci/javascript/eslint.config.cjs \
-        "tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/*.js" 2>&1); then
+        "tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js" 2>&1); then
         echo "✅ JavaScript lint passed"
     else
         echo "${output}"

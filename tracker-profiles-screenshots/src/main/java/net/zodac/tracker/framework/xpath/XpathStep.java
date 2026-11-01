@@ -21,7 +21,7 @@ import org.openqa.selenium.By;
 
 /**
  * Each {@link XpathStep} incrementally builds an XPath query by appending to a {@link XpathBuilder} instance, including XPath navigation steps, such
- * as:
+ * as the following.
  * <ul>
  *     <li>descendant</li>
  *     <li>direct child</li>

@@ -80,7 +80,6 @@ public class RoTorrent extends Unit3dHandler implements HasCloudflareCheck {
             .build();
     }
 
-
     /**
      * {@inheritDoc}
      *

@@ -53,7 +53,7 @@ public final class ScreenshotOrchestrator {
     }
 
     /**
-     * Orchestrates the profile screenshot process by:
+     * Orchestrates the profile screenshot process by performing the following.
      * <ol>
      *   <li>Retrieving trackers from the CSV file</li>
      *   <li>Ensuring the output directory exists</li>

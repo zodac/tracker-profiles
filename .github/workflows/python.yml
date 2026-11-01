@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
 
       - name: Install Ruff
-        run: pip install ruff==0.15.15
+        run: pip install ruff==0.17.3
 
       - name: Run Ruff
         run: ruff check docker/scripts --config ci/python/ruff.toml

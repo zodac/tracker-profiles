@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
@@ -43,13 +43,13 @@ jobs:
           fi
 
       - name: Set up maven
-        uses: s4u/setup-maven-action@v1.20.0
+        uses: s4u/setup-maven-action@v1.22.0
         if: env.has_changes == 'true'
         with:
           checkout-fetch-depth: 0
           java-distribution: 'temurin'
-          java-version: '26'
-          maven-version: '3.9.16'
+          java-version: '27'
+          maven-version: '3.10.0'
 
       - name: Run linters and unit/integration tests
         id: application_tests

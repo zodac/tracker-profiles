@@ -1,2 +1,2 @@
-setuptools>=82.0.1
+setuptools>=84.2.1
 undetected-chromedriver==3.5.5

@@ -39,6 +39,7 @@ import net.zodac.tracker.handler.definition.UsesExtensions;
 import net.zodac.tracker.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
@@ -340,6 +341,7 @@ public final class DriverPool {
         return true;
     }
 
+    @Nullable
     private static TrackerType removeFromTracking(final DriverPool instance, final RemoteWebDriver driver) {
         instance.lock.lock();
         try {
