@@ -150,7 +150,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [ArabP2P](https://www.arabp2p.net/)               |
 | [AsianCinema](https://eiga.moi/)                  |
 | [AsianDVDClub](https://asiandvdclub.org/)         |
-| [Aura4K](https://aura4k.net/)                     |
 | [AussieRul.es](https://aussierul.es/)             |
 | [BackUps](https://back-ups.me/)                   |
 | [BakaBT](https://bakabt.me/)                      |
