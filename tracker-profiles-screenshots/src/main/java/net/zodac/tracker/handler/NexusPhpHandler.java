@@ -53,7 +53,6 @@ import org.openqa.selenium.support.ui.Select;
  */
 @CommonTrackerHandler("NexusPHP")
 @TrackerHandler(name = "52PT", type = TrackerType.MANUAL, url = "https://52pt.site/")
-@TrackerHandler(name = "HDFans", type = TrackerType.MANUAL, url = "https://hdfans.org/")
 public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEmail, RedactsIpAddress {
 
     @Override

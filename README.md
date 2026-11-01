@@ -301,7 +301,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [Hawke-Uno](https://hawke.uno/)                     | 2FA & Cloudflare verification                   |
 | [HD-Forever](https://hdf.world/)                    | Needs to be explicitly translated               |
 | [HDBits](https://hdbits.org/)                       | 2FA, Cloudflare verification, question on login |
-| [HDFans](https://hdfans.org/)                       | Captcha                                         |
 | [HDZero](https://hdzero.org/)                       | Cloudflare verification                         |
 | [Immortal-S](https://immortal-s.me/)                | Cloudflare verification                         |
 | [IPTorrents](https://iptorrents.com/)               | Cloudflare verification                         |
