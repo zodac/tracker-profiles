@@ -308,7 +308,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [IPTorrents](https://iptorrents.com/)               | Cloudflare verification                         |
 | [LastFiles](https://last-torrents.org/)             | Cloudflare verification                         |
 | [Leech24](https://leech24.net/)                     | Captcha                                         |
-| [LemonHD](https://lemonhd.net/)                     | Captcha                                         |
 | [LetSeed](https://letseed.org/)                     | Captcha                                         |
 | [LP-Bits](https://lp-bits.com/)                     | Captcha                                         |
 | [LST](https://lst.gg/)                              | Question on login                               |
