@@ -253,9 +253,9 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Tasmanit.es](https://tasmanit.es/)                  |
 | [TeamOS](https://teamos.xyz/)                        |
 | [TheMixingBowl](https://themixingbowl.org/)          |
-| [Torr9](https://torr9.net/)                          |
 | [Torrenteros](https://torrenteros.org/)              |
 | [TorrentLeech](https://www.torrentleech.org/)        |
+| [Tr4ker](https://tr4ker.net/)                        |
 | [TranceTraffic](https://www.trancetraffic.com/)      |
 | [TVChaosUK](https://tvchaosuk.com/)                  |
 

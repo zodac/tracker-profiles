@@ -39,10 +39,10 @@ import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
 
 /**
- * Implementation of {@link AbstractTrackerHandler} for the {@code Torr9} tracker.
+ * Implementation of {@link AbstractTrackerHandler} for the {@code Tr4ker} tracker.
  */
-@TrackerHandler(name = "Torr9", url = "https://torr9.net/")
-public class Torr9 extends AbstractTrackerHandler implements HasFixedHeader, RedactsEmail, RedactsTorrentPasskey {
+@TrackerHandler(name = "Tr4ker", url = "https://tr4ker.net/")
+public class Tr4ker extends AbstractTrackerHandler implements HasFixedHeader, RedactsEmail, RedactsTorrentPasskey {
 
     @Override
     protected By loginButtonSelector() {
