@@ -211,7 +211,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [MidnightScene](https://midnightscene.cc/)     |
 | [Milkie](https://milkie.cc/)                   |
 | [Milnueve](https://milnueve.cc/)               |
-| [MoreThanTV](https://www.morethantv.me/)       |
 | [Nebulance](https://nebulance.io/)             |
 | [Nexum-Core](https://nexum-core.com/)          |
 | [NordicBytes](https://nordicbytes.org/)        |
