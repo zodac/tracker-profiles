@@ -215,7 +215,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Nebulance](https://nebulance.io/)             |
 | [Nexum-Core](https://nexum-core.com/)          |
 | [NordicBytes](https://nordicbytes.org/)        |
-| [NordicHD](http://nordichd.org/)               |
 | [NordicQuality](https://nordicq.org/)          |
 | [OldToons.World](https://oldtoons.world/)      |
 | [OnlyEncodes](https://onlyencodes.cc/)         |
