@@ -366,10 +366,16 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         browserInteractionHelper.removeAttribute(profileLink, "target"); // Removing 'target="_blank"', to ensure link opens in same tab
         clickButton(profileLink);
 
+        final By profilePageElementSelector = profilePageElementSelector();
+        if (profilePageElementSelector == null) {
+            LOGGER.trace("No profilePageElementSelector defined to open profile page");
+            return;
+        }
+
         try {
             LOGGER.debug("\t\t- Waiting to confirm user profile page has loaded successfully");
             browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
-            browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector(), pageLoadDuration());
+            browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector, pageLoadDuration());
             browserInteractionHelper.moveToOrigin();
             if (this instanceof HasProfilePageActions trackerWithProfilePageActions) {
                 trackerWithProfilePageActions.performActionOnProfilePage();
@@ -395,6 +401,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      *
      * @return the profile page content {@link By} selector
      */
+    @Nullable
     protected abstract By profilePageElementSelector();
 
     /**
@@ -422,7 +429,13 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         driver.navigate().to(currentUrl);
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
 
-        browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector(), pageLoadDuration());
+        final By profilePageElementSelector = profilePageElementSelector();
+        if (profilePageElementSelector == null) {
+            LOGGER.trace("No profilePageElementSelector defined to reload profile page");
+            return;
+        }
+
+        browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector, pageLoadDuration());
         if (this instanceof HasProfilePageActions trackerWithProfilePageActions) {
             trackerWithProfilePageActions.performActionOnProfilePage();
         }

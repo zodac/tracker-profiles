@@ -27,14 +27,12 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.td;
 import static net.zodac.tracker.framework.xpath.HtmlElement.tr;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
-import java.util.Collection;
-import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.redaction.RedactsIpAddress;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
@@ -42,7 +40,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code XWT-Classics} tracker.
  */
 @TrackerHandler(name = "XWT-Classics", url = "https://xwt-classics.net/")
-public class XwtClassics extends AbstractTrackerHandler implements RedactsIpAddress {
+public class XwtClassics extends AbstractTrackerHandler {
 
     @Override
     protected By loginButtonSelector() {
@@ -54,33 +52,14 @@ public class XwtClassics extends AbstractTrackerHandler implements RedactsIpAddr
     @Override
     protected By profileLinkSelector() {
         return XpathBuilder
-            .from(body, atIndex(1))
-            .child(table, atIndex(2))
-            .child(tbody, atIndex(1))
-            .child(tr, atIndex(1))
-            .child(td, atIndex(6))
-            .child(a, atIndex(1))
+            .from(NamedHtmlElement.of("h1"), withClass("hero-title"))
             .build();
     }
 
     @Override
+    @Nullable
     protected By profilePageElementSelector() {
-        return XpathBuilder
-            .from(table, withClass("details-table"))
-            .build();
-    }
-
-    @Override
-    public Collection<By> ipAddressElements() {
-        return List.of(
-            XpathBuilder
-                .from(div, withId("content"))
-                .descendant(table, atIndex(1))
-                .child(tbody, atIndex(1))
-                .child(tr, atIndex(3))
-                .child(td, atIndex(2))
-                .build()
-        );
+        return null;
     }
 
     @Override
