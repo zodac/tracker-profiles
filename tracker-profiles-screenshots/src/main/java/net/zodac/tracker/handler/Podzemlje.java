@@ -17,10 +17,17 @@
 
 package net.zodac.tracker.handler;
 
+import static net.zodac.tracker.framework.xpath.HtmlElement.div;
+import static net.zodac.tracker.framework.xpath.HtmlElement.li;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
+
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code Podzemlje} tracker.
@@ -48,10 +55,22 @@ public class Podzemlje extends Unit3dHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link Podzemlje}, the IP address for active clients are hidden by default.
+     * For {@link Podzemlje}, the user dropdown menu needs to be clicked, not just hovered over.
      */
     @Override
-    public Collection<By> ipAddressElements() {
-        return List.of();
+    protected void openUserDropdownMenu() {
+        LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
+        final By loginPopupSelector = By.id("swal2-title");
+        browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
+
+        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        final By profileParentSelector = XpathBuilder
+            .from(div, withClass("top-nav__right"))
+            .descendant(li, withClass("top-nav__dropdown"))
+            .build();
+        final WebElement profileParent = driver().findElement(profileParentSelector);
+        browserInteractionHelper.moveTo(profileParent);
+        clickButton(profileParent);
     }
 }
