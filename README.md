@@ -249,7 +249,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Torrenteros](https://torrenteros.org/)              |
 | [TorrentLeech](https://www.torrentleech.org/)        |
 | [Tr4ker](https://tr4ker.net/)                        |
-| [TranceTraffic](https://www.trancetraffic.com/)      |
 | [TVChaosUK](https://tvchaosuk.com/)                  |
 
 </td>
