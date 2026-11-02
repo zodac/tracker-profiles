@@ -1,0 +1,57 @@
+/*
+ * BSD Zero Clause License
+ *
+ * Copyright (c) 2024-2026 zodac.net
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+package net.zodac.tracker.handler;
+
+import java.util.Collection;
+import java.util.List;
+import net.zodac.tracker.framework.annotation.TrackerHandler;
+import org.openqa.selenium.By;
+
+/**
+ * Extension of the {@link Unit3dHandler} for the {@code Concertos} tracker.
+ */
+@TrackerHandler(name = "PolishTorrent", url = "https://polishtorrent.top/")
+public class PolishTorrent extends Unit3dHandler {
+
+    @Override
+    protected By profilePageElementSelector() {
+        return By.id("profile-overview");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link PolishTorrent}, the email address is hidden by default.
+     */
+    @Override
+    public Collection<By> emailElements() {
+        return List.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link PolishTorrent}, IP addresses are hidden by default.
+     */
+    @Override
+    public Collection<By> ipAddressElements() {
+        return List.of();
+    }
+}

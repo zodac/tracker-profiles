@@ -67,7 +67,6 @@ import org.openqa.selenium.WebElement;
 @TrackerHandler(name = "NordicQuality", url = "https://nordicq.org/")
 @TrackerHandler(name = "OldToons.World", url = "https://oldtoons.world/")
 @TrackerHandler(name = "OnlyEncodes", url = "https://onlyencodes.cc/")
-@TrackerHandler(name = "PolishTorrent", url = "https://polishtorrent.top/")
 @TrackerHandler(name = "Racing4Everyone", url = "https://racing4everyone.eu/")
 @TrackerHandler(name = "Rastastugan", url = "https://rastastugan.org/")
 @TrackerHandler(name = "RocketHD", url = "https://rocket-hd.cc/")

@@ -401,6 +401,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      *
      * @return the profile page content {@link By} selector
      */
+    // TODO: Rename to profilePageContentSelector
     @Nullable
     protected abstract By profilePageElementSelector();
 
