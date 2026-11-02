@@ -232,7 +232,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [ReelFlix](https://reelflix.cc/)                     |
 | [RetroMoviesClub](https://retro-movies.club/)        |
 | [RocketHD](https://rocket-hd.cc/)                    |
-| [RUTracker](https://rutracker.org/forum/tracker.php) |
 | [SceneHD](https://scenehd.org/)                      |
 | [SceneTime](https://www.scenetime.com/)              |
 | [SecretCinema](https://secret-cinema.pw/)            |
@@ -277,54 +276,55 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 <tr>
 <td valign="top">
 
-| Tracker Name                                        | Reason                                          |
-|-----------------------------------------------------|-------------------------------------------------|
-| [52PT](https://52pt.site/)                          | Captcha                                         |
-| [AnimeZ](https://animez.to/)                        | Captcha                                         |
-| [Anthelion](https://anthelion.me/)                  | 2FA                                             |
-| [AsianDVDClub](https://asiandvdclub.org/)           | Question on login                               |
-| [AvistaZ](https://avistaz.to/)                      | Captcha & Cloudflare verificaiton               |
-| [BeyondHD](https://beyond-hd.me/)                   | Captcha                                         |
-| [Baozi](https://p.t-baozi.cc/)                      | Captcha & Cloudflare verification               |
-| [BroadcasThe.Net](https://broadcasthe.net/)         | Captcha & Cloudflare verification               |
-| [BTArg](https://www.btarg.com.ar/tracker/)          | Needs to be explicitly translated               |
-| [C411](https://c411.org/)                           | Cloudslare verification                         |
-| [CGPeers](https://cgpeers.to/)                      | 2FA & Cloudflare verification                   |
-| [CinemaZ](https://cinemaz.to/)                      | Captcha & Cloudflare verification               |
-| [CZTeam](https://czteam.me/)                        | Cloudflare verification                         |
-| [DigitalCore.Club](https://digitalcore.club/)       | Captcha                                         |
-| [DocsPedia](https://docspedia.world/)               | Captcha                                         |
-| [ExoticaZ](https://exoticaz.to/)                    | Captcha & Cloudflare verification               |
-| [GazelleGames](https://gazellegames.net/)           | Question on login                               |
-| [Hawke-Uno](https://hawke.uno/)                     | 2FA & Cloudflare verification                   |
-| [HDBits](https://hdbits.org/)                       | 2FA, Cloudflare verification, question on login |
-| [HDZero](https://hdzero.org/)                       | Cloudflare verification                         |
-| [Immortal-S](https://immortal-s.me/)                | Cloudflare verification                         |
-| [IPTorrents](https://iptorrents.com/)               | Cloudflare verification                         |
-| [LastFiles](https://last-torrents.org/)             | Cloudflare verification                         |
-| [Leech24](https://leech24.net/)                     | Captcha                                         |
-| [LetSeed](https://letseed.org/)                     | Captcha                                         |
-| [LP-Bits](https://lp-bits.com/)                     | Captcha                                         |
-| [LST](https://lst.gg/)                              | Question on login                               |
-| [PassThePopcorn](https://passthepopcorn.me/)        | Question on login                               |
-| [PornoLab](https://pornolab.net/forum/tracker.php)  | Needs to be explicitly translated               |
-| [PrivateHD](https://privatehd.to/)                  | Captcha & Cloudflare verification               |
-| [PT.GTK](https://pt.gtk.pw/)                        | Captcha                                         |
-| [SeedCore](https://seedcore.net/)                   | Cloudflare verification                         |
-| [SkyeySnow](https://skyeysnow.com/)                 | Needs to be explicitly translated               |
-| [SocietyGlitch](https://stalker.societyglitch.com/) | Captcha                                         |
-| [Speed.CD](https://speed.cd/)                       | Cloudflare verification                         |
-| [TheEmpire](https://theempire.click/)               | Captcha                                         |
-| [TheGeeks](https://thegeeks.click/)                 | Captcha                                         |
-| [TheKitchen](https://thekitchen.click/)             | Captcha                                         |
-| [TheOccult](https://theoccult.click/)               | Captcha                                         |
-| [ThePlace](https://theplace.click/)                 | Captcha                                         |
-| [TheShow](https://theshow.click/)                   | Captcha                                         |
-| [TheVault](https://thevault.click/)                 | Captcha                                         |
-| [TorrentDay](https://www.torrentday.com/)           | Cloudflare verification                         |
-| [Torrenting](https://torrenting.com/)               | Cloudflare verification                         |
-| [Ultrabits](https://ultrabits.org/)                 | Cloudflare verification                         |
-| [UploadCX](https://upload.cx/)                      | Captcha                                         |
+| Tracker Name                                         | Reason                                          |
+|------------------------------------------------------|-------------------------------------------------|
+| [52PT](https://52pt.site/)                           | Captcha                                         |
+| [AnimeZ](https://animez.to/)                         | Captcha                                         |
+| [Anthelion](https://anthelion.me/)                   | 2FA                                             |
+| [AsianDVDClub](https://asiandvdclub.org/)            | Question on login                               |
+| [AvistaZ](https://avistaz.to/)                       | Captcha & Cloudflare verificaiton               |
+| [BeyondHD](https://beyond-hd.me/)                    | Captcha                                         |
+| [Baozi](https://p.t-baozi.cc/)                       | Captcha & Cloudflare verification               |
+| [BroadcasThe.Net](https://broadcasthe.net/)          | Captcha & Cloudflare verification               |
+| [BTArg](https://www.btarg.com.ar/tracker/)           | Needs to be explicitly translated               |
+| [C411](https://c411.org/)                            | Cloudslare verification                         |
+| [CGPeers](https://cgpeers.to/)                       | 2FA & Cloudflare verification                   |
+| [CinemaZ](https://cinemaz.to/)                       | Captcha & Cloudflare verification               |
+| [CZTeam](https://czteam.me/)                         | Cloudflare verification                         |
+| [DigitalCore.Club](https://digitalcore.club/)        | Captcha                                         |
+| [DocsPedia](https://docspedia.world/)                | Captcha                                         |
+| [ExoticaZ](https://exoticaz.to/)                     | Captcha & Cloudflare verification               |
+| [GazelleGames](https://gazellegames.net/)            | Question on login                               |
+| [Hawke-Uno](https://hawke.uno/)                      | 2FA & Cloudflare verification                   |
+| [HDBits](https://hdbits.org/)                        | 2FA, Cloudflare verification, question on login |
+| [HDZero](https://hdzero.org/)                        | Cloudflare verification                         |
+| [Immortal-S](https://immortal-s.me/)                 | Cloudflare verification                         |
+| [IPTorrents](https://iptorrents.com/)                | Cloudflare verification                         |
+| [LastFiles](https://last-torrents.org/)              | Cloudflare verification                         |
+| [Leech24](https://leech24.net/)                      | Captcha                                         |
+| [LetSeed](https://letseed.org/)                      | Captcha                                         |
+| [LP-Bits](https://lp-bits.com/)                      | Captcha                                         |
+| [LST](https://lst.gg/)                               | Question on login                               |
+| [PassThePopcorn](https://passthepopcorn.me/)         | Question on login                               |
+| [PornoLab](https://pornolab.net/forum/tracker.php)   | Needs to be explicitly translated               |
+| [PrivateHD](https://privatehd.to/)                   | Captcha & Cloudflare verification               |
+| [PT.GTK](https://pt.gtk.pw/)                         | Captcha                                         |
+| [RUTracker](https://rutracker.org/forum/tracker.php) | Cloudflare verification                         | 
+| [SeedCore](https://seedcore.net/)                    | Cloudflare verification                         |
+| [SkyeySnow](https://skyeysnow.com/)                  | Needs to be explicitly translated               |
+| [SocietyGlitch](https://stalker.societyglitch.com/)  | Captcha                                         |
+| [Speed.CD](https://speed.cd/)                        | Cloudflare verification                         |
+| [TheEmpire](https://theempire.click/)                | Captcha                                         |
+| [TheGeeks](https://thegeeks.click/)                  | Captcha                                         |
+| [TheKitchen](https://thekitchen.click/)              | Captcha                                         |
+| [TheOccult](https://theoccult.click/)                | Captcha                                         |
+| [ThePlace](https://theplace.click/)                  | Captcha                                         |
+| [TheShow](https://theshow.click/)                    | Captcha                                         |
+| [TheVault](https://thevault.click/)                  | Captcha                                         |
+| [TorrentDay](https://www.torrentday.com/)            | Cloudflare verification                         |
+| [Torrenting](https://torrenting.com/)                | Cloudflare verification                         |
+| [Ultrabits](https://ultrabits.org/)                  | Cloudflare verification                         |
+| [UploadCX](https://upload.cx/)                       | Captcha                                         |
 
 </td>
 </tr>

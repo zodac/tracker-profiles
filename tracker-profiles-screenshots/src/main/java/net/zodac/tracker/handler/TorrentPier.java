@@ -50,10 +50,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Common implementation of {@link AbstractTrackerHandler} for {@code TorrentPier}-based trackers.
  */
 @CommonTrackerHandler("TorrentPier")
-@TrackerHandler(name = "RUTracker", url = {
-    "https://rutracker.org/forum/tracker.php",
-    "https://rutracker.net/forum/tracker.php"
-})
 public class TorrentPier extends AbstractTrackerHandler implements HasDismissibleElement, UsesExtensions {
 
     @Override
