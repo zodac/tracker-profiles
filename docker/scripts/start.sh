@@ -37,7 +37,7 @@ main() {
 
     DEFAULT_JAVA_OPTS="-Xms128m -Xmx512m \
       -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders \
-      -XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=45 \
+      -XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 \
       -XX:SharedArchiveFile=/app/app.jsa -Xshare:auto \
       -Djava.util.logging.config.file=/app/logging.properties"
 

@@ -7,7 +7,6 @@ Aither,username,password
 Alexandria,username,password
 AlphaRatio,username,password
 AnimeBytes,username,password
-Anthelion,username,password
 ArabicSource,username,password
 ArabP2P,username,password
 AsianCinema,username,password
@@ -109,6 +108,7 @@ Zappateers,username,password
 #,Manual trackers,UI required for user input
 52PT,username,password
 AnimeZ,username,password
+Anthelion,username,password
 AvistaZ,username,password
 BeyondHD,username,password
 Baozi,username,password

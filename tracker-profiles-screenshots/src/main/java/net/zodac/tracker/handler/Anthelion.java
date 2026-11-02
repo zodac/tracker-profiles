@@ -19,9 +19,14 @@ package net.zodac.tracker.handler;
 
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
+import static net.zodac.tracker.framework.xpath.HtmlElement.img;
+import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withName;
+import static net.zodac.tracker.framework.xpath.XpathAxis.parent;
 
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.jspecify.annotations.Nullable;
@@ -31,13 +36,35 @@ import org.openqa.selenium.WebElement;
 /**
  * Extension of the {@link GazelleHandler} for the {@code Anthelion} tracker.
  */
-@TrackerHandler(name = "Anthelion", url = "https://anthelion.me/")
+@TrackerHandler(name = "Anthelion", type = TrackerType.MANUAL, url = "https://anthelion.me/")
 public class Anthelion extends GazelleHandler {
 
     @Override
     @Nullable
     protected By loginPageSelector() {
         return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link Anthelion} 2FA is now mandatory, so must be entered by the user.
+     *
+     * <p>
+     * Manual user interaction:
+     * <ol>
+     *     <li>Enter the 2FA code</li>
+     * </ol>
+     */
+    @Override
+    protected void preLoginClickAction() {
+        LOGGER.info("\t\t >>> Waiting for user to enter their 2FA code");
+
+        final By twoFaSelector = By.id("twofa");
+        final WebElement twoFaElement = driver().findElement(twoFaSelector);
+        browserInteractionHelper().highlightElement(twoFaElement);
+        displayUtils().confirm(trackerDefinition().name(), "Enter the 2FA code");
     }
 
     @Override

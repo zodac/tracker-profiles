@@ -438,7 +438,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @see Redactor
      * @see RedactionRegistry
      */
-    // TODO: Add other redaction types (country, flag, avatar, gender, BT client, BT port, age/birthday, invitedBy)
+    // TODO: Add other redaction types (country, flag, avatar, gender, BT client, BT port, age/birthday, invitedBy, last-fm username)
     public int redactElements(final Redactor redactor) {
         LOGGER.trace("Redacting elements");
         return RedactionRegistry.redactAll(this, driver(), redactor);

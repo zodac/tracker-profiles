@@ -37,6 +37,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Extension of the {@link TsSpecialEditionHandler} for the {@code BackUps} tracker.
  */
+// TODO: BLUR redaction works fine, but the BOX redaction is misplaced. I ran both, so perhaps some state not being reset correctly
 @TrackerHandler(name = "BackUps", url = "https://back-ups.me/")
 public class BackUps extends TsSpecialEditionHandler implements HasFixedHeader {
 

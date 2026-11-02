@@ -145,7 +145,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Alexandria](https://alxdria.org/)                |
 | [AlphaRatio](https://alpharatio.cc/)              |
 | [AnimeBytes](https://animebytes.tv/)              |
-| [Anthelion](https://anthelion.me/)                |
 | [ArabicSource](https://arabicsource.net/)         |
 | [ArabP2P](https://www.arabp2p.net/)               |
 | [AsianCinema](https://eiga.moi/)                  |
@@ -285,6 +284,7 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 |-----------------------------------------------------|-------------------------------------------------|
 | [52PT](https://52pt.site/)                          | Captcha                                         |
 | [AnimeZ](https://animez.to/)                        | Captcha                                         |
+| [Anthelion](https://anthelion.me/)                  | 2FA                                             |
 | [AvistaZ](https://avistaz.to/)                      | Captcha & Cloudflare verificaiton               |
 | [BeyondHD](https://beyond-hd.me/)                   | Captcha                                         |
 | [Baozi](https://p.t-baozi.cc/)                      | Captcha & Cloudflare verification               |
@@ -531,7 +531,7 @@ The following options are passed to the Java process by default:
 ```text
 -Xms128m -Xmx512m
 -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders
--XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=45
+-XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200
 -XX:SharedArchiveFile=/app/app.jsa -Xshare:auto
 -Djava.util.logging.config.file=/app/logging.properties
 ```
@@ -755,7 +755,7 @@ mvn clean install && \
     java \
         --enable-preview \
         -Xms128m -Xmx512m \
-        -XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 -XX:InitiatingHeapOccupancyPercent=45 \
+        -XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 \
         -XX:StartFlightRecording=filename=recording_$(date +%Y%m%d_%H%M%S).jfr,settings=profile \
         -jar ./tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar
 ```
