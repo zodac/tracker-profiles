@@ -19,6 +19,7 @@ package net.zodac.tracker.handler;
 
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
+import static net.zodac.tracker.framework.xpath.HtmlElement.form;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsHref;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
@@ -106,7 +107,9 @@ public class P2Pbg extends AbstractTrackerHandler implements HasDismissibleEleme
     @Override
     protected By logoutButtonSelector() {
         return XpathBuilder
-            .from(a, containsHref("/logout"))
+            .from(div, withClass("p2p-site-nav__welcome"))
+            .child(form, atIndex(1))
+            .child(a, atIndex(1))
             .build();
     }
 
