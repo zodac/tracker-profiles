@@ -19,12 +19,8 @@ package net.zodac.tracker.handler;
 
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
-import static net.zodac.tracker.framework.xpath.HtmlElement.img;
-import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withName;
-import static net.zodac.tracker.framework.xpath.XpathAxis.parent;
 
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
@@ -49,7 +45,7 @@ public class Anthelion extends GazelleHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link Anthelion} 2FA is now mandatory, so must be entered by the user.
+     * For {@link Anthelion}, 2FA is now mandatory, so must be entered by the user.
      *
      * <p>
      * Manual user interaction:

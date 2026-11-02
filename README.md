@@ -148,7 +148,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [ArabicSource](https://arabicsource.net/)         |
 | [ArabP2P](https://www.arabp2p.net/)               |
 | [AsianCinema](https://eiga.moi/)                  |
-| [AsianDVDClub](https://asiandvdclub.org/)         |
 | [AussieRul.es](https://aussierul.es/)             |
 | [BackUps](https://back-ups.me/)                   |
 | [BakaBT](https://bakabt.me/)                      |
@@ -285,6 +284,7 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [52PT](https://52pt.site/)                          | Captcha                                         |
 | [AnimeZ](https://animez.to/)                        | Captcha                                         |
 | [Anthelion](https://anthelion.me/)                  | 2FA                                             |
+| [AsianDVDClub](https://asiandvdclub.org/)           | Question on login                               |
 | [AvistaZ](https://avistaz.to/)                      | Captcha & Cloudflare verificaiton               |
 | [BeyondHD](https://beyond-hd.me/)                   | Captcha                                         |
 | [Baozi](https://p.t-baozi.cc/)                      | Captcha & Cloudflare verification               |

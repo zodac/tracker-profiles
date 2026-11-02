@@ -49,6 +49,7 @@ import net.zodac.tracker.framework.exception.NoUserInputException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
@@ -243,6 +244,13 @@ public final class DisplayUtils {
                         initialUrl, currentUrl, initialTitle, currentTitle);
                     userProvidedInput.set(true);
                     SwingUtilities.invokeLater(dialog::dispose);
+                }
+            } catch (final WebDriverException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    LOGGER.debug("Page was probably manually progressed");
+                    LOGGER.trace("Page was probably manually progressed", e);
+                } else {
+                    LOGGER.trace("Error polling for page change", e);
                 }
             } catch (final Exception e) {
                 LOGGER.trace("Error polling for page change", e);

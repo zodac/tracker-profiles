@@ -22,10 +22,13 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.img;
 import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.containsHref;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withText;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
+import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.openqa.selenium.By;
@@ -34,7 +37,7 @@ import org.openqa.selenium.WebElement;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code AsianDvdClub} tracker.
  */
-@TrackerHandler(name = "AsianDVDClub", url = "https://asiandvdclub.org/")
+@TrackerHandler(name = "AsianDVDClub", type = TrackerType.MANUAL, url = "https://asiandvdclub.org/")
 public class AsianDvdClub extends AbstractTrackerHandler {
 
     /**
@@ -47,14 +50,45 @@ public class AsianDvdClub extends AbstractTrackerHandler {
     protected void preLoginNavigationAction() {
         final By progressBarSelector = By.id("progressBar");
         final Collection<WebElement> progressBars = driver().findElements(progressBarSelector);
-
         if (progressBars.isEmpty()) {
             LOGGER.trace("No progress bar found prior to login");
             return;
         }
 
         LOGGER.info("\t\t- Progress bar found, assuming we need to wait for 2 minutes");
+
+        final By skipToLoginSelector = XpathBuilder
+            .from(a, withText("Skip to Login"))
+            .build();
+        final List<WebElement> skipToLoginElements = driver().findElements(skipToLoginSelector);
+        if (!progressBars.isEmpty()) {
+            LOGGER.trace("Found a button to skip to login, trying to click it");
+            clickButton(skipToLoginElements.getFirst());
+        }
+
         browserInteractionHelper().waitForElementToBeInteractable(loginButtonSelector(), Duration.ofMinutes(2L));
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link AsianDvdClub}, you may be asked to enter some personal account information before being able to log in.
+     *
+     * <p>
+     * Manual user interaction:
+     * <ol>
+     *     <li>Enter personal information</li>
+     * </ol>
+     */
+    @Override
+    protected void preLoginClickAction() {
+        LOGGER.info("\t\t >>> Waiting for user to enter their personal information");
+
+        final By birthdaySelector = By.id("birthday");
+        final WebElement birthdayElement = driver().findElement(birthdaySelector);
+        browserInteractionHelper().highlightElement(birthdayElement);
+        displayUtils().confirm(trackerDefinition().name(), "Enter the requested information");
     }
 
     @Override
@@ -87,6 +121,6 @@ public class AsianDvdClub extends AbstractTrackerHandler {
 
     @Override
     protected By postLogoutElementSelector() {
-        return By.id("progressBar");
+        return loginButtonSelector();
     }
 }
