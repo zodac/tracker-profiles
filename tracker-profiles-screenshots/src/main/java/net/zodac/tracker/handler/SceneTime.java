@@ -103,10 +103,8 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
     public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
-                .from(table, withClass("desc-table"))
-                .child(tbody, atIndex(1))
-                .child(tr, atIndex(3))
-                .child(td, atIndex(2))
+                .from(div, withClass("ud-main-grid"))
+                .descendant(div, withClass("ud-data-list__val"))
                 .build()
         );
     }
@@ -122,14 +120,15 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
     protected By logoutButtonSelector() {
         // Highlight the user profile button to make the logout button interactable
         final By logoutParentSelector = XpathBuilder
-            .from(div, withClass("st-status-avatar-wrapper"))
+            .from(div, withClass("st-status-profile-trigger"))
             .build();
         final WebElement logoutParent = driver().findElement(logoutParentSelector);
-        browserInteractionHelper().moveTo(logoutParent);
+        clickButton(logoutParent);
 
         return XpathBuilder
-            .from(ul, withClass("st-nav-dropdown"))
-            .child(li, atIndex(7))
+            .from(div, withId("st-profile-menu"))
+            .child(ul, atIndex(1))
+            .child(li, withClass("st-pp-logout"))
             .child(a, atIndex(1))
             .build();
     }
