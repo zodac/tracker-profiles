@@ -158,7 +158,6 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [BootyTape](https://ssl.bootytape.com/)           |
 | [BrokenStones](https://brokenstones.is/)          |
 | [BwTorrents](https://bwtorrents.tv/)              |
-| [C411](https://c411.org/)                         |
 | [CanalStreet](https://canal-street.org/)          |
 | [CapybaraBR](https://capybarabr.com/)             |
 | [Cathode-Ray.Tube](https://www.cathode-ray.tube/) |
@@ -290,6 +289,7 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [Baozi](https://p.t-baozi.cc/)                      | Captcha & Cloudflare verification               |
 | [BroadcasThe.Net](https://broadcasthe.net/)         | Captcha & Cloudflare verification               |
 | [BTArg](https://www.btarg.com.ar/tracker/)          | Needs to be explicitly translated               |
+| [C411](https://c411.org/)                           | Cloudslare verification                         |
 | [CGPeers](https://cgpeers.to/)                      | 2FA & Cloudflare verification                   |
 | [CinemaZ](https://cinemaz.to/)                      | Captcha & Cloudflare verification               |
 | [CZTeam](https://czteam.me/)                        | Cloudflare verification                         |
