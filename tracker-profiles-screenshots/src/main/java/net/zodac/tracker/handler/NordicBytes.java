@@ -23,10 +23,7 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.footer;
 import static net.zodac.tracker.framework.xpath.HtmlElement.form;
 import static net.zodac.tracker.framework.xpath.HtmlElement.li;
-import static net.zodac.tracker.framework.xpath.HtmlElement.table;
-import static net.zodac.tracker.framework.xpath.HtmlElement.tbody;
-import static net.zodac.tracker.framework.xpath.HtmlElement.td;
-import static net.zodac.tracker.framework.xpath.HtmlElement.tr;
+import static net.zodac.tracker.framework.xpath.HtmlElement.span;
 import static net.zodac.tracker.framework.xpath.HtmlElement.ul;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
@@ -35,7 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -44,7 +40,7 @@ import org.openqa.selenium.WebElement;
  * Implementation of {@link AbstractTrackerHandler} for the {@code NordicBytes} tracker.
  */
 @TrackerHandler(name = "NordicBytes", url = "https://nordicbytes.org/")
-public class NordicBytes extends AbstractTrackerHandler implements HasDismissibleElement, RedactsIpAddress {
+public class NordicBytes extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -62,11 +58,11 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
      * this, then close it if found.
      */
     @Override
-    public void dismiss() {
+    public void postLoginClickAction() {
         LOGGER.debug("\t\t- Checking for site changes modal");
 
         final By siteChangesSelector = XpathBuilder
-            .from(footer, withClass("modal__footer"))
+            .from(footer, withClass("__dialog-footer"))
             .descendant(button, withClass("btn-primary"))
             .build();
         final Collection<WebElement> siteChangesElements = driver().findElements(siteChangesSelector);
@@ -87,11 +83,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
     @Override
     protected By profileLinkSelector() {
         return XpathBuilder
-            .from(div, withClass("header--user"))
-            .child(div, atIndex(1))
-            .child(div, atIndex(1))
-            .child(ul, atIndex(1))
-            .child(li, atIndex(1))
+            .from(div, withClass("__navbar-username"))
             .child(a, atIndex(1))
             .build();
     }
@@ -99,7 +91,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(div, withClass("__header-profile"))
+            .from(div, withClass("__profile-header"))
             .build();
     }
 
@@ -107,10 +99,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
     public Collection<By> ipAddressElements() {
         return List.of(
             XpathBuilder
-                .from(table)
-                .child(tbody)
-                .child(tr)
-                .child(td, atIndex(2))
+                .from(span, withClass("__profile-client-ip"))
                 .build()
         );
     }
@@ -118,11 +107,8 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
     @Override
     protected By logoutButtonSelector() {
         return XpathBuilder
-            .from(div, withClass("header--user"))
-            .child(div, atIndex(1))
-            .child(div, atIndex(1))
-            .child(div, atIndex(1))
-            .child(ul, atIndex(1))
+            .from(div, withClass("__navbar-wrapper"))
+            .child(ul, atIndex(3))
             .child(li, atIndex(2))
             .child(form, atIndex(1))
             .child(button, atIndex(1))
