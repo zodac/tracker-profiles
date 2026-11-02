@@ -55,8 +55,15 @@ public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleE
             .child(div, atIndex(1))
             .child(button, atIndex(1))
             .build();
-        final WebElement cookieButton = driver().findElement(cookieSelector);
-        clickButton(cookieButton);
+        final Collection<WebElement> cookieButtons = driver().findElements(cookieSelector);
+        if (cookieButtons.isEmpty()) {
+            LOGGER.debug("\t- No cookie buttons found");
+        }
+
+        for (final WebElement cookieButton : cookieButtons) {
+            LOGGER.trace("Clearing cookie button: {}", cookieButton);
+            clickButton(cookieButton);
+        }
 
         // Move the mouse, or else a dropdown menu is highlighted and covers some of the page
         browserInteractionHelper().moveToOrigin();
