@@ -109,6 +109,11 @@ public enum HtmlElement implements Element {
     nav,
 
     /**
+     * Ordered list {@link Element}: {@code <ol>}.
+     */
+    ol,
+
+    /**
      * Paragraph {@link Element}: {@code <p>}.
      */
     p,

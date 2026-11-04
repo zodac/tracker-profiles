@@ -187,11 +187,6 @@ public final class BrowserInteractionHelper {
         updateCss(element, "position", "static");
     }
 
-    private void updateCss(final WebElement element, final String propertyName, final String propertyValue) {
-        LOGGER.trace("Updating CSS of element '{}', property '{}' to value: '{}'", element, propertyName, propertyValue);
-        driver.executeScript("arguments[0].style[arguments[1]] = arguments[2];", element, propertyName, propertyValue);
-    }
-
     /**
      * Moves the mouse cursor to the provided {@link WebElement}.
      *
@@ -379,6 +374,18 @@ public final class BrowserInteractionHelper {
     }
 
     /**
+     * Update an CSS attribute from the {@link WebElement}.
+     *
+     * @param element       the {@link WebElement} to update
+     * @param propertyName  the CSS property name
+     * @param propertyValue the CSS property value
+     */
+    public void updateCss(final WebElement element, final String propertyName, final String propertyValue) {
+        LOGGER.trace("Updating CSS of element '{}', property '{}' to value: '{}'", element, propertyName, propertyValue);
+        driver.executeScript("arguments[0].style[arguments[1]] = arguments[2];", element, propertyName, propertyValue);
+    }
+
+    /**
      * Waits for the specified {@link WebElement} to become interactable.
      *
      * @param selector the {@link By} selector for the target {@link WebElement}
@@ -443,7 +450,7 @@ public final class BrowserInteractionHelper {
             LOGGER.trace("Waiting {} for page to load", timeout);
             final Wait<WebDriver> wait = new WebDriverWait(driver, timeout)
                 .withMessage("Waiting for page to load");
-            wait.until(_ -> "complete".equals(driver.executeScript("return document.readyState")));
+            wait.until(_ -> "complete" .equals(driver.executeScript("return document.readyState")));
         } catch (final TimeoutException e) {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Page didn't load, page source: {}", driver.getPageSource());

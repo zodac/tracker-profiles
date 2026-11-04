@@ -17,10 +17,24 @@
 
 package net.zodac.tracker.handler;
 
+import static net.zodac.tracker.framework.xpath.HtmlElement.a;
+import static net.zodac.tracker.framework.xpath.HtmlElement.button;
+import static net.zodac.tracker.framework.xpath.HtmlElement.div;
+import static net.zodac.tracker.framework.xpath.HtmlElement.form;
+import static net.zodac.tracker.framework.xpath.HtmlElement.li;
+import static net.zodac.tracker.framework.xpath.HtmlElement.nav;
+import static net.zodac.tracker.framework.xpath.HtmlElement.ol;
+import static net.zodac.tracker.framework.xpath.HtmlElement.ul;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
+import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
+
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.util.BrowserInteractionHelper;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code YUSCENE} tracker.
@@ -28,9 +42,26 @@ import org.openqa.selenium.By;
 @TrackerHandler(name = "YUSCENE", url = "https://yu-scene.net/")
 public class YuScene extends Unit3dHandler {
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link YuScene}, we use the profile link at the footer of the page.
+     */
+    @Override
+    protected By profileLinkSelector() {
+        return XpathBuilder
+            .from(ul, withClass("footer__section-list"))
+            .child(li, atIndex(1))
+            .child(a, atIndex(1))
+            .build();
+    }
+
     @Override
     protected By profilePageElementSelector() {
-        return By.id("profile-overview");
+        return XpathBuilder
+            .from(div, withClass("profile-hero__identity"))
+            .build();
     }
 
     /**
@@ -48,10 +79,23 @@ public class YuScene extends Unit3dHandler {
      * {@inheritDoc}
      *
      * <p>
-     * For {@link YuScene}, the IP address for active clients are hidden by default.
+     * For {@link YuScene}, we use the logout button at the footer of the page. It is a zero-width element, so we reset the style to make it
+     * clickable.
+     *
+     * @see BrowserInteractionHelper#updateCss(WebElement, String, String)
      */
     @Override
-    public Collection<By> ipAddressElements() {
-        return List.of();
+    protected By logoutButtonSelector() {
+        final By logoutButtonSelector = XpathBuilder
+            .from(ul, withClass("footer__section-list"))
+            .child(li, atIndex(2))
+            .child(form, atIndex(1))
+            .child(button, atIndex(1))
+            .build();
+
+        final WebElement logoutButton = driver().findElement(logoutButtonSelector);
+        browserInteractionHelper().updateCss(logoutButton, "display", "inline-block");
+
+        return logoutButtonSelector;
     }
 }
