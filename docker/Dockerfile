@@ -10,7 +10,7 @@ FROM python:3.15.2-slim-trixie AS chromedriver_builder
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419+deb13u1" \
-        chromium="156.0.8078.73-1~deb13u1" \
+        chromium="156.0.8078.79-1~deb13u1" \
         curl="8.14.1-2+deb13u7" \
         unzip="6.0-29+deb13u1" \
     && \
@@ -45,7 +45,7 @@ FROM eclipse-temurin:27_35-jdk AS jdk_builder
 # BEGIN UBUNTU PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        binutils="2.46-3ubuntu2" \
+        binutils="2.42-4ubuntu2.10" \
     && \
     apt-get autoremove && \
     apt-get clean && \
@@ -171,7 +171,7 @@ ENV NO_AT_BRIDGE=1
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419+deb13u1" \
-        chromium="156.0.8078.73-1~deb13u1" \
+        chromium="156.0.8078.79-1~deb13u1" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
         wmctrl="1.07+git20240228.1105759-1" \

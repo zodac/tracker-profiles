@@ -42,7 +42,7 @@
         <ashot.version>1.5.4</ashot.version>
         <clique.version>4.0.3</clique.version>
         <commons-csv.version>1.14.1</commons-csv.version>
-        <flatlaf.version>3.7.2</flatlaf.version>
+        <flatlaf.version>3.8</flatlaf.version>
         <jspecify.version>1.0.1</jspecify.version>
         <log4j.version>2.26.1</log4j.version>
         <osgi-annotation.version>8.1.0</osgi-annotation.version>
@@ -71,7 +71,7 @@
         <!-- Linter 3PP Versions -->
         <asm-version>9.11.1</asm-version>
         <checkstyle.version>14.4.0</checkstyle.version>
-        <error_prone_core.version>2.51.0</error_prone_core.version>
+        <error_prone_core.version>2.52.0</error_prone_core.version>
         <licenses.version>1</licenses.version>
         <nullaway.version>0.14.3</nullaway.version>
         <pmd.version>7.29.0</pmd.version>
