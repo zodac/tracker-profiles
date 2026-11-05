@@ -28,19 +28,22 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.ul;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
+import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code NordicBytes} tracker.
  */
 @TrackerHandler(name = "NordicBytes", url = "https://nordicbytes.org/")
-public class NordicBytes extends AbstractTrackerHandler implements RedactsIpAddress {
+public class NordicBytes extends AbstractTrackerHandler implements HasDismissibleElement, RedactsIpAddress {
 
     @Override
     protected By loginButtonSelector() {
@@ -78,6 +81,48 @@ public class NordicBytes extends AbstractTrackerHandler implements RedactsIpAddr
         }
 
         LOGGER.debug("\t\t- Cleared site changes");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link NordicBytes}, there is a pop-up for global freeleech at times.
+     */
+    @Override
+    public void dismiss() {
+        LOGGER.debug("\t\t- Checking for Freeleech pop-up");
+        final RemoteWebDriver driver = driver();
+        final By twoFaReminderSelectors = XpathBuilder
+            .from(div, withClass("fl-celebration__stage"))
+            .build();
+        final Collection<WebElement> twoFaReminders = driver.findElements(twoFaReminderSelectors);
+        if (twoFaReminders.isEmpty()) {
+            return;
+        }
+
+        LOGGER.debug("\t\t\t- Found Freeleech pop-up, closing");
+        final By closeButtonSelector = XpathBuilder
+            .from(button, withClass("celebration__close"))
+            .build();
+        final WebElement closeButton = driver.findElement(closeButtonSelector);
+        clickButton(closeButton);
+
+        LOGGER.debug("\t\t\t- Closed pop-up");
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * For {@link NordicBytes}, the {@code <body>} is constrained to the viewport height, so {@code window.scrollTo()} has no effect and only the
+     * first viewport is captured. By default, this is only corrected by {@link #actionAfterScreenshot()}, so it must also be applied before the first
+     * screenshot.
+     */
+    @Override
+    public void actionBeforeScreenshot() {
+        browserInteractionHelper().showScrollbar();
+        super.actionBeforeScreenshot();
     }
 
     @Override
