@@ -45,7 +45,7 @@ FROM eclipse-temurin:27_35-jdk AS jdk_builder
 # BEGIN UBUNTU PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
-        binutils="2.42-4ubuntu2.10" \
+        binutils="2.46-3ubuntu2" \
     && \
     apt-get autoremove && \
     apt-get clean && \

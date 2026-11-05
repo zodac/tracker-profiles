@@ -37,7 +37,6 @@
 set -euo pipefail
 
 DEBIAN_DOCKER_IMAGE_VERSION="13.7"
-UBUNTU_DOCKER_IMAGE_VERSION="24.04"
 
 get_pypi_version() {
     version=$(curl -fsSL "https://pypi.org/pypi/${1}/json" | jq -r '.info.version // empty')
@@ -205,11 +204,24 @@ update_ubuntu_packages() {
 
     echo
     echo "🔍 Fetching latest dockerfile Ubuntu package versions..."
-    # Pull latest ubuntu image
-    docker pull "ubuntu:${UBUNTU_DOCKER_IMAGE_VERSION}" >/dev/null
 
     for ((section = 1; section <= section_count; section++)); do
         echo "--- Section ${section}/${section_count}"
+
+        # Use the image this section is built from, since its Ubuntu release can change without the tag showing it
+        ubuntu_image=$(awk -v start="${UBUNTU_START_MARKER}" -v n="${section}" '
+            /^FROM / { image = $2 }
+            $0 ~ start { count++; if (count == n) { print image; exit } }
+        ' "${dockerfile}")
+
+        if [[ -z "${ubuntu_image}" ]]; then
+            echo "❌ No base image found for section ${section}"
+            rm -f ubuntu_block.txt "${dockerfile}.tmp"
+            return 1
+        fi
+
+        echo "  Base image: ${ubuntu_image}"
+        docker pull "${ubuntu_image}" >/dev/null
 
         # Extract only the Nth section's package block
         package_block=$(awk -v start="${UBUNTU_START_MARKER}" -v end="${UBUNTU_END_MARKER}" -v n="${section}" '
@@ -231,7 +243,7 @@ update_ubuntu_packages() {
         declare -A ubuntu_versions
 
         # Single container: update apt once, then query all packages together
-        versions_raw=$(docker run --rm "ubuntu:${UBUNTU_DOCKER_IMAGE_VERSION}" sh -c \
+        versions_raw=$(docker run --rm "${ubuntu_image}" sh -c \
             "apt-get update -qq -o Acquire::Languages=none 2>/dev/null && apt-cache policy ${package_names[*]}")
 
         while IFS='=' read -r pkg ver; do
@@ -668,10 +680,10 @@ fi
 update_debian_image_version "${dockerfile}" || echo "⚠️ Debian image version update failed, continuing..."
 update_python_image_version "${dockerfile}" || echo "⚠️ Python image version update failed, continuing..."
 update_debian_packages "${dockerfile}"      || echo "⚠️ Debian packages update failed, continuing..."
-update_ubuntu_packages "${dockerfile}"      || echo "⚠️ Ubuntu packages update failed, continuing..."
 update_requirements "${requirements}"       || echo "⚠️ Python requirements update failed, continuing..."
 update_pom_versions                         || echo "⚠️ Maven versions update failed, continuing..."
 update_maven_version "${dockerfile}"        || echo "⚠️ Maven version update failed, continuing..."
 update_java_version "${dockerfile}"         || echo "⚠️ Java version update failed, continuing..."
+update_ubuntu_packages "${dockerfile}"      || echo "⚠️ Ubuntu packages update failed, continuing..."
 update_lint_tool_versions                   || echo "⚠️ Lint tool versions update failed, continuing..."
 update_github_actions                       || echo "⚠️ GitHub Actions update failed, continuing..."
