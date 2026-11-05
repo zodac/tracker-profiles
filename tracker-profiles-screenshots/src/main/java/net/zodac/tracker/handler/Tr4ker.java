@@ -46,7 +46,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 @TrackerHandler(name = "Tr4ker", url = "https://tr4ker.net/")
 public class Tr4ker extends AbstractTrackerHandler implements HasFixedHeader, HasFixedSidebar {
 
-
     @Override
     @Nullable
     protected By loginPageSelector() {
@@ -76,7 +75,6 @@ public class Tr4ker extends AbstractTrackerHandler implements HasFixedHeader, Ha
             .child(button, atIndex(1))
             .build();
     }
-
 
     @Override
     protected By profileLinkSelector() {

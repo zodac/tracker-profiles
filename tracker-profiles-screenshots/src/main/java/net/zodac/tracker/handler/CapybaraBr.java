@@ -26,7 +26,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType
 import java.util.Collection;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.HasDismissibleElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -35,7 +34,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Extension of the {@link Unit3dHandler} for the {@code CapybaraBR} tracker.
  */
 @TrackerHandler(name = "CapybaraBR", url = "https://capybarabr.com/")
-public class CapybaraBr extends Unit3dHandler implements HasDismissibleElement {
+public class CapybaraBr extends Unit3dHandler {
 
     @Override
     protected By loginButtonSelector() {

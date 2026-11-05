@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.annotation.CommonTrackerHandler;
-import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.driver.extension.Extension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginLiteExtension;
 import net.zodac.tracker.framework.driver.extension.adblock.UblockOriginSetting;

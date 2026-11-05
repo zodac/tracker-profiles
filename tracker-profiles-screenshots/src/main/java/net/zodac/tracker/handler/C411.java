@@ -68,11 +68,6 @@ public class C411 extends AbstractTrackerHandler implements HasCloudflareCheck, 
     }
 
     @Override
-    protected By usernameFieldSelector() {
-        return super.usernameFieldSelector();
-    }
-
-    @Override
     protected By loginButtonSelector() {
         return XpathBuilder
             .from(button, withType("submit"))

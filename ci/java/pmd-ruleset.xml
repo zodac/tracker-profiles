@@ -64,7 +64,7 @@
             <property name="nativePattern" value="[a-z][a-zA-Z0-9]*"/>
             <property name="junit3TestPattern" value=".*"/>
             <property name="junit4TestPattern" value=".*"/>
-            <property name="junit5TestPattern" value=".*"/>
+            <property name="junitJupiterTestPattern" value=".*" />
         </properties>
     </rule>
 
