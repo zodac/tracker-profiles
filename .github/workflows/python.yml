@@ -5,7 +5,7 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/python.yml'
-      - 'ci/python/ruff.toml'
+      - 'code-quality-config/python/ruff.toml'
       - 'docker/scripts/*.py'
   workflow_dispatch: # allows manual trigger
 
@@ -22,9 +22,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
+        with:
+          submodules: true # code-quality-config: holds the shared ruff config
 
       - name: Install Ruff
         run: pip install ruff==0.17.3
 
       - name: Run Ruff
-        run: ruff check docker/scripts --config ci/python/ruff.toml
+        run: ruff check docker/scripts --config code-quality-config/python/ruff.toml

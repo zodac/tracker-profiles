@@ -91,7 +91,12 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         }
 
         LOGGER.trace("Configuring {}: {}", getClass().getSimpleName(), trackerDefinition);
-        final List<Extension> extensions = this instanceof UsesExtensions trackerExtensions ? trackerExtensions.requiredExtensions() : List.of();
+        final List<Extension> extensions;
+        if (this instanceof final UsesExtensions trackerExtensions) {
+            extensions = trackerExtensions.requiredExtensions();
+        } else {
+            extensions = List.of();
+        }
         final RemoteWebDriver acquiredDriver = DriverPool.acquire(trackerDefinition.type(), extensions);
         context = TrackerHandlerContext.of(trackerDefinition, acquiredDriver);
     }
@@ -210,11 +215,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         if (loginLinkSelector != null) {
             final WebElement loginLink = browserInteractionHelper.waitForElementToBeInteractable(loginLinkSelector, pageLoadDuration());
             clickButton(loginLink);
-            if (this instanceof HasCloudflareCheck hasCloudflareCheck) {
+            if (this instanceof final HasCloudflareCheck hasCloudflareCheck) {
                 hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerName);
             }
             browserInteractionHelper.waitForElementToBePresent(usernameFieldSelector(), pageLoadDuration());
-        } else if (this instanceof HasCloudflareCheck hasCloudflareCheck) {
+        } else if (this instanceof final HasCloudflareCheck hasCloudflareCheck) {
             hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerName);
         }
     }
@@ -377,7 +382,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
             browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
             browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector, pageLoadDuration());
             browserInteractionHelper.moveToOrigin();
-            if (this instanceof HasProfilePageActions trackerWithProfilePageActions) {
+            if (this instanceof final HasProfilePageActions trackerWithProfilePageActions) {
                 trackerWithProfilePageActions.performActionOnProfilePage();
             }
         } catch (final TimeoutException e) {
@@ -437,7 +442,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         }
 
         browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector, pageLoadDuration());
-        if (this instanceof HasProfilePageActions trackerWithProfilePageActions) {
+        if (this instanceof final HasProfilePageActions trackerWithProfilePageActions) {
             trackerWithProfilePageActions.performActionOnProfilePage();
         }
     }

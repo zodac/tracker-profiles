@@ -139,7 +139,7 @@ final class ProfileScreenshotExecutor {
     }
 
     private static Set<TrackerStep> screenshotTracker(final TrackerCredential trackerCredential, final ProgressBarManager progressBarManager,
-                                                      final Set<TrackerStep> successfulSteps) {
+        final Set<TrackerStep> successfulSteps) {
         AbstractTrackerHandler trackerHandler = null;
         try { // NOPMD: UseTryWithResources - need access to the trackerHandler to take a screenshot on error
             trackerHandler = TrackerHandlerFactory.getHandler(trackerCredential.name());
@@ -245,7 +245,7 @@ final class ProfileScreenshotExecutor {
     }
 
     private static void screenshotProfile(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
-                                          final ProgressBarManager progressBarManager, final Set<TrackerStep> successfulSteps) {
+        final ProgressBarManager progressBarManager, final Set<TrackerStep> successfulSteps) {
         LOGGER.trace("\t- Starting to take screenshot of profile");
         final List<RedactionType> redactionsToExecute = redactionTypesToExecute(trackerCredential.name(), CONFIG.redactionTypes());
         if (redactionsToExecute.isEmpty()) {
@@ -269,7 +269,7 @@ final class ProfileScreenshotExecutor {
         LOGGER.info("\t- Logging in as '{}'", trackerCredential.username());
         trackerHandler.login(trackerCredential.username(), trackerCredential.password(), trackerCredential.name());
 
-        if (trackerHandler instanceof HasDismissibleElement trackerWithBanner) {
+        if (trackerHandler instanceof final HasDismissibleElement trackerWithBanner) {
             trackerWithBanner.dismiss();
             LOGGER.info("\t- Banner has been cleared");
         }
@@ -321,7 +321,7 @@ final class ProfileScreenshotExecutor {
     }
 
     private static void takeScreenshotForRedactionType(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
-                                                       final RedactionType redactionType, final boolean scrollDuringScreenshot) {
+        final RedactionType redactionType, final boolean scrollDuringScreenshot) {
         LOGGER.info("\t- Redaction: {}", redactionType.formattedName());
         final String baseName = screenshotBaseName(trackerCredential.name(), redactionType);
 
@@ -355,27 +355,27 @@ final class ProfileScreenshotExecutor {
         LOGGER.info("\t\t- Performing updates to profile page, if needed");
         int counter = 0;
 
-        if (CONFIG.enableTranslationToEnglish() && trackerHandler instanceof NeedsExplicitTranslation trackerNeedsTranslation) {
+        if (CONFIG.enableTranslationToEnglish() && trackerHandler instanceof final NeedsExplicitTranslation trackerNeedsTranslation) {
             LOGGER.info("\t\t\t- Translating profile page to English");
             trackerNeedsTranslation.translatePageToEnglish();
             counter++;
         }
 
-        if (trackerHandler instanceof HasFixedHeader trackerWithFixedHeader) {
+        if (trackerHandler instanceof final HasFixedHeader trackerWithFixedHeader) {
             LOGGER.debug("\t\t\t- Unfixing header");
             trackerWithFixedHeader.unfixHeaders(trackerHandler.driver(), trackerWithFixedHeader.headerSelectors());
             LOGGER.info("\t\t\t- Header has been updated to not be fixed");
             counter++;
         }
 
-        if (trackerHandler instanceof HasFixedSidebar trackerWithFixedSidebar) {
+        if (trackerHandler instanceof final HasFixedSidebar trackerWithFixedSidebar) {
             LOGGER.debug("\t\t\t- Unfixing sidebar");
             trackerWithFixedSidebar.unfixSidebar(trackerHandler.driver());
             LOGGER.info("\t\t\t- Sidebar has been updated to not be fixed");
             counter++;
         }
 
-        if (trackerHandler instanceof HasJumpButtons trackerWithJumpButtons) {
+        if (trackerHandler instanceof final HasJumpButtons trackerWithJumpButtons) {
             LOGGER.debug("\t\t\t- Hiding jump to top/bottom buttons");
             trackerWithJumpButtons.hideJumpButtons(trackerHandler.driver(), trackerWithJumpButtons.jumpButtonSelectors());
             LOGGER.info("\t\t\t- Top/bottom jump buttons have been hidden");

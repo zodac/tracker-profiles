@@ -218,9 +218,9 @@ class DriverPoolTest {
 
     private static void clearField(final DriverPool instance, final String fieldName) throws Exception {
         final Object value = getField(instance, fieldName);
-        if (value instanceof Map<?, ?> map) {
+        if (value instanceof final Map<?, ?> map) {
             map.clear();
-        } else if (value instanceof Collection<?> col) {
+        } else if (value instanceof final Collection<?> col) {
             col.clear();
         }
     }

@@ -44,7 +44,7 @@ record RedactionEntry<T extends Redaction>(Class<T> redactionInterface, Invoker<
      * @return the created {@link RedactionEntry}
      */
     static <T extends Redaction> RedactionEntry<T> of(final Class<T> redactionInterface, final Invoker<T> invoker,
-                                                      final Predicate<T> emptyCheck, final String description) {
+        final Predicate<T> emptyCheck, final String description) {
         return new RedactionEntry<>(redactionInterface, invoker, emptyCheck, description);
     }
 

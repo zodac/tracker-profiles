@@ -5,7 +5,7 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/javascript.yml'
-      - 'ci/javascript/eslint.config.cjs'
+      - 'code-quality-config/javascript/eslint.config.cjs'
       - 'tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/**/*.js'
   workflow_dispatch: # allows manual trigger
 
@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
+        with:
+          submodules: true # code-quality-config: holds the shared eslint config
 
       - name: Set up Node.js
         uses: actions/setup-node@v7.1.0
@@ -32,4 +34,4 @@ jobs:
         run: npm install --save-dev eslint
 
       - name: Run ESLint
-        run: npx eslint --config ci/javascript/eslint.config.cjs "tracker-profiles-screenshots/src/main/resources/**/*.js"
+        run: npx eslint --config code-quality-config/javascript/eslint.config.cjs "tracker-profiles-screenshots/src/main/resources/**/*.js"

@@ -110,11 +110,7 @@ public class Lst extends Unit3dHandler {
     public Collection<By> emailElements() {
         final Collection<By> allEmailElements = new ArrayList<>(super.emailElements());
 
-        allEmailElements.add(
-            XpathBuilder
-                .from(span, withClass("profile-hero__account-value--email"))
-                .build()
-        );
+        allEmailElements.add(XpathBuilder.from(span, withClass("profile-hero__account-value--email")).build());
 
         return allEmailElements;
     }

@@ -35,7 +35,7 @@ package net.zodac.tracker.framework.xpath;
  * final By selector = XpathBuilder
  *     .from(HtmlElement.div)
  *     .build();
- *}
+ * }
  *
  * <p>
  * Resulting XPath: {@code //div}
@@ -48,7 +48,7 @@ package net.zodac.tracker.framework.xpath;
  *     .from(HtmlElement.form)
  *     .child(HtmlElement.input, XpathAttributePredicate.withClass("email"), XpathAttributePredicate.withAttribute("title", "user-email"))
  *     .build();
- *}
+ * }
  *
  * <p>
  * Resulting XPath: {@code //form/input[contains(@class, 'email')][@title='user-email']}
@@ -64,7 +64,7 @@ package net.zodac.tracker.framework.xpath;
  *     .navigateTo(XpathAxis.parent(HtmlElement.tr))
  *     .child(HtmlElement.td, XpathAttributePredicate.atIndex(2))
  *   .build();
- *}
+ * }
  *
  * <p>
  * Resulting XPath: {@code //root//table[1]//td[contains(normalize-space(), 'Total')]/ancestor::tr[1]/td[2]}
@@ -89,7 +89,7 @@ package net.zodac.tracker.framework.xpath;
  *     .navigateTo(parent(tr))
  *     .child(td, atIndex(2))
  *   .build();
- *}
+ * }
  *
  * @see XpathStep
  * @see XpathAttributePredicate

@@ -196,9 +196,7 @@ public class UblockOriginLiteExtension implements Extension {
     }
 
     private static void enableAllCheckBoxes(final RemoteWebDriver driver,
-                                            final BrowserInteractionHelper browserInteractionHelper,
-                                            final By checkboxesSelector
-    ) {
+        final BrowserInteractionHelper browserInteractionHelper, final By checkboxesSelector) {
         final List<WebElement> checkboxes = driver.findElements(checkboxesSelector).stream().toList();
         final int numberOfCheckboxes = checkboxes.size();
         LOGGER.debug("\t\t\t- Found {} checkboxes", numberOfCheckboxes);

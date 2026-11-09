@@ -76,7 +76,7 @@ public final class TrackerHandlerFactory {
         final var annotatedHandlers = PackageScanner.scan(
             AbstractTrackerHandler.class.getPackageName(),
             clazz -> AbstractTrackerHandler.class.isAssignableFrom(clazz)
-                && (clazz.isAnnotationPresent(TrackerHandler.class) || clazz.isAnnotationPresent(TrackerHandlers.class))
+            && (clazz.isAnnotationPresent(TrackerHandler.class) || clazz.isAnnotationPresent(TrackerHandlers.class))
         );
         for (final Class<?> clazz : annotatedHandlers) {
             for (final TrackerHandler annotation : clazz.getAnnotationsByType(TrackerHandler.class)) {

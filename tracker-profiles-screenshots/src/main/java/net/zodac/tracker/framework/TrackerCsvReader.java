@@ -96,8 +96,8 @@ public final class TrackerCsvReader {
 
     private static Set<TrackerCredential> extractTrackerCredentials(final Path csvPath) throws IOException {
         try (final InputStream inputStream = Files.newInputStream(CONFIG.trackerInputFilePath());
-             final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
-             final CSVParser csvParser = DEFAULT_FORMAT.parse(reader)
+            final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
+            final CSVParser csvParser = DEFAULT_FORMAT.parse(reader)
         ) {
             // Ensure file isn't empty
             final List<CSVRecord> records = csvParser.getRecords();

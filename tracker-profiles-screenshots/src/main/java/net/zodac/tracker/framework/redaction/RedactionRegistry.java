@@ -45,37 +45,57 @@ public final class RedactionRegistry {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final List<RedactionEntry<?>> ENTRIES = List.of(
-        RedactionEntry.of(
+        emailEntry(),
+        ipAddressEntry(),
+        ircPasskeyEntry(),
+        torrentPasskeyEntry(),
+        sensitiveInformationEntry()
+    );
+
+    private static RedactionEntry<RedactsEmail> emailEntry() {
+        return RedactionEntry.of(
             RedactsEmail.class,
             RedactsEmail::redactEmailElements,
             redactsEmail -> redactsEmail.emailElements().isEmpty(),
             "email"
-        ),
-        RedactionEntry.of(
+        );
+    }
+
+    private static RedactionEntry<RedactsIpAddress> ipAddressEntry() {
+        return RedactionEntry.of(
             RedactsIpAddress.class,
             RedactsIpAddress::redactIpAddressElements,
             redactsIpAddress -> redactsIpAddress.ipAddressElements().isEmpty(),
             "IP address"
-        ),
-        RedactionEntry.of(
+        );
+    }
+
+    private static RedactionEntry<RedactsIrcPasskey> ircPasskeyEntry() {
+        return RedactionEntry.of(
             RedactsIrcPasskey.class,
             RedactsIrcPasskey::redactIrcPasskeyElements,
             redactsIrcPasskey -> redactsIrcPasskey.ircPasskeyElements().isEmpty(),
             "IRC passkey"
-        ),
-        RedactionEntry.of(
+        );
+    }
+
+    private static RedactionEntry<RedactsTorrentPasskey> torrentPasskeyEntry() {
+        return RedactionEntry.of(
             RedactsTorrentPasskey.class,
             RedactsTorrentPasskey::redactTorrentPasskeyElements,
             redactsTorrentPasskey -> redactsTorrentPasskey.torrentPasskeyElements().isEmpty(),
             "torrent passkey"
-        ),
-        RedactionEntry.of(
+        );
+    }
+
+    private static RedactionEntry<RedactsSensitiveInformation> sensitiveInformationEntry() {
+        return RedactionEntry.of(
             RedactsSensitiveInformation.class,
             RedactsSensitiveInformation::redactSensitiveElements,
             redactsSensitiveInformation -> redactsSensitiveInformation.sensitiveElements().isEmpty(),
             "sensitive information"
-        )
-    );
+        );
+    }
 
     private RedactionRegistry() {
 

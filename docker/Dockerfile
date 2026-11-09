@@ -22,6 +22,7 @@ RUN apt-get update && \
 # Copy Python requirements
 WORKDIR /app
 COPY ./docker/config/requirements.txt .
+# hadolint ignore=DL3013
 RUN python3 -m pip install --no-cache-dir --upgrade pip && python3 -m pip install --no-cache-dir -r ./requirements.txt
 
 # Download latest chromedriver for chromium verison then patch with undetected-chromedriver
@@ -199,6 +200,7 @@ RUN groupadd -g ${PGID} nonroot && \
     chown -R nonroot:nonroot /tmp/chrome-home
 # Set environment and user
 ENV HOME=/tmp/chrome-home
+# hadolint ignore=DL3066
 USER nonroot
 VOLUME /tmp/chrome-home
 

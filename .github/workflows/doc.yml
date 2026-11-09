@@ -7,7 +7,7 @@ on:
       - '.claude/CLAUDE.md'
       - '.claude/agents/*.md'
       - '.github/workflows/doc.yml'
-      - 'ci/doc/.markdownlint.json'
+      - 'code-quality-config/markdown/.markdownlint.json'
       - 'README.md'
   workflow_dispatch: # allows manual trigger
 
@@ -24,9 +24,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
+        with:
+          submodules: true # code-quality-config: holds the shared markdownlint config
 
       - uses: DavidAnson/markdownlint-cli2-action@v25.0.0
         with:
-          config: 'ci/doc/.markdownlint.json'
-          globs: '**/*.md,!RELEASE_NOTES.md'
+          config: 'code-quality-config/markdown/.markdownlint.json'
+          globs: '**/*.md,!RELEASE_NOTES.md,!ai-sandbox/**,!code-quality-config/**'
           separator: ','

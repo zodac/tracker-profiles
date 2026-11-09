@@ -50,10 +50,7 @@ class TrackerDefinitionTest {
         assertThat(definition.type())
             .isEqualTo(TrackerType.HEADLESS);
         assertThat(definition.urls())
-            .containsExactly(
-                "https://primary.example.com/",
-                "https://backup.example.com/"
-            );
+            .containsExactly("https://primary.example.com/", "https://backup.example.com/");
     }
 
     @TrackerHandler(name = "SampleSingleUrl", type = TrackerType.MANUAL, url = "https://example.com/")

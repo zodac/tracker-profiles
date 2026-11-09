@@ -280,7 +280,7 @@ class XpathBuilderTest {
         "aria-label(),label,//div[aria-label()='label']"
     })
     void testWithAttributeFunctionShouldAppendExactAttributePredicate(final String attributeName, final String attributeValue,
-                                                                      final String expected) {
+        final String expected) {
         final String actual = XpathBuilder
             .from(div, withAttributeFunction(attributeName, attributeValue))
             .toString();

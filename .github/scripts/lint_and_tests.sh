@@ -56,7 +56,7 @@ run_docker() {
         -v "${PWD}":/app \
         -w /app \
         "${HADOLINT_DOCKER_IMAGE}" \
-        hadolint --config ci/docker/.hadolint.yaml docker/Dockerfile 2>&1); then
+        hadolint --config code-quality-config/docker/.hadolint.yaml docker/Dockerfile 2>&1); then
         echo "✅ Dockerfile lint passed"
     else
         echo "${output}"
@@ -86,7 +86,7 @@ EOF
         -v "${PWD}":/app \
         -w /app \
         "${ESLINT_BUILD_IMAGE}" \
-        eslint --config ci/javascript/eslint.config.cjs \
+        eslint --config code-quality-config/javascript/eslint.config.cjs \
         "tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js" 2>&1); then
         echo "✅ JavaScript lint passed"
     else
@@ -104,8 +104,8 @@ run_markdown() {
         -v "${PWD}":/app \
         -w /app \
         "${MARKDOWNLINT_DOCKER_IMAGE}" \
-        --config ci/doc/.markdownlint.json \
-        "**/*.md" "!RELEASE_NOTES.md" "!tracker-profiles-screenshots/target/**" 2>&1); then
+        --config code-quality-config/markdown/.markdownlint.json \
+        "**/*.md" "!RELEASE_NOTES.md" "!ai-sandbox/**" "!code-quality-config/**" "!tracker-profiles-screenshots/target/**" 2>&1); then
         echo "✅ Markdown lint passed"
     else
         echo "${output}"
@@ -160,7 +160,7 @@ run_python() {
         -v "${PWD}":/app \
         -w /app \
         "${RUFF_DOCKER_IMAGE}" \
-        check docker/scripts --config ci/python/ruff.toml 2>&1); then
+        check docker/scripts --config code-quality-config/python/ruff.toml 2>&1); then
         echo "✅ Python lint passed"
     else
         echo "${output}"
@@ -187,14 +187,14 @@ detect_changed_steps() {
 
     while IFS= read -r file; do
         [[ -z "${file}" ]] && continue
-        [[ "${file}" =~ ^docker/ || "${file}" =~ ^ci/docker/ ]] && run_docker=true
-        if [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^ci/java/ || "${file}" == "pom.xml" ]]; then
+        [[ "${file}" =~ ^docker/ || "${file}" =~ ^code-quality-config/docker/ ]] && run_docker=true
+        if [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^code-quality-config/java/ || "${file}" == "pom.xml" || "${file}" == "tracker-profiles-screenshots/pom.xml" ]]; then
             run_java=true
             java_changed_files+=("${file}")
         fi
-        [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/ || "${file}" =~ ^ci/javascript/ ]] && run_javascript=true
-        [[ "${file}" == "README.md" || "${file}" =~ ^ci/doc/ ]] && run_markdown=true
-        [[ "${file}" =~ ^docker/scripts/.*\.py$ || "${file}" =~ ^ci/python/ ]] && run_python=true
+        [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/ || "${file}" =~ ^code-quality-config/javascript/ ]] && run_javascript=true
+        [[ "${file}" == "README.md" || "${file}" =~ ^code-quality-config/markdown/ ]] && run_markdown=true
+        [[ "${file}" =~ ^docker/scripts/.*\.py$ || "${file}" =~ ^code-quality-config/python/ ]] && run_python=true
     done < <(
         {
             git diff --name-only "${latest_tag}..HEAD"

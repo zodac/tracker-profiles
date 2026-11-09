@@ -3,7 +3,12 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.zodac</groupId>
+    <parent>
+        <groupId>net.zodac</groupId>
+        <artifactId>parent-pom</artifactId>
+        <version>1.2.2</version>
+    </parent>
+
     <artifactId>tracker-profiles</artifactId>
     <version>12.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -14,222 +19,34 @@
     </modules>
 
     <properties>
-        <!-- Project Properties -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java-release>27</java-release>
-        <maven-release>3.10.0</maven-release>
+        <!-- Override parent-pom default: this project started in 2024 -->
+        <initial-year>2024</initial-year>
 
-        <!-- Lint Properties -->
-        <!-- All disabled by default, activated through profiles -->
-        <skip-artifact-build>false</skip-artifact-build>
-        <skip-linters>true</skip-linters>
-        <skip-sonarqube>true</skip-sonarqube>
-
-        <!-- Test Properties -->
-        <!-- All disabled by default, activated through profiles -->
-        <skip-tests>true</skip-tests>
-        <!-- JaCoCo Configuration (overridden in each child module that wants enforcement) -->
-        <line-coverage>0.0</line-coverage>
-        <branch-coverage>0.0</branch-coverage>
-
-        <!-- Default JAR-plugin phase; overridden to 'none' in profiles that skip the JAR build -->
-        <jar-phase>package</jar-phase>
-
-        <!-- Default build-helper-plugin phase; overridden to 'validate' in lint-active profiles, since only this plugin consumes 'current-year' -->
-        <build-helper-phase>none</build-helper-phase>
-
-        <!-- 3PP Versions -->
-        <ashot.version>1.5.4</ashot.version>
-        <clique.version>4.0.3</clique.version>
-        <commons-csv.version>1.14.1</commons-csv.version>
+        <!-- Version overrides: tracker-profiles is ahead of parent-pom 1.2.2 -->
+        <error_prone_core.version>2.52.0</error_prone_core.version>
         <flatlaf.version>3.8</flatlaf.version>
         <jspecify.version>1.0.1</jspecify.version>
-        <log4j.version>2.26.1</log4j.version>
-        <osgi-annotation.version>8.1.0</osgi-annotation.version>
-        <selenium.version>4.52.0</selenium.version>
-
-        <!-- Test 3PP Versions -->
-        <assertj-core.version>3.27.7</assertj-core.version>
-        <junit-bom.version>6.1.3</junit-bom.version>
         <mockito.version>5.24.0</mockito.version>
 
-        <!-- Plugin Versions -->
-        <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
-        <exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
+        <!-- tracker-profiles-specific versions not in parent-pom -->
         <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
-        <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
-        <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
-        <maven-enforcer-plugin.version>3.7.0</maven-enforcer-plugin.version>
-        <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
-        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
         <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
-        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
-        <versions-maven-plugin.version>2.23.0</versions-maven-plugin.version>
 
-        <!-- Linter 3PP Versions -->
-        <asm-version>9.11.1</asm-version>
-        <checkstyle.version>14.4.0</checkstyle.version>
-        <error_prone_core.version>2.52.0</error_prone_core.version>
-        <licenses.version>1</licenses.version>
-        <nullaway.version>0.14.3</nullaway.version>
-        <pmd.version>7.29.0</pmd.version>
-        <spotbugs.version>4.10.5</spotbugs.version>
-
-        <!-- Linter Plugin Versions -->
-        <license-maven-plugin.version>5.1.2</license-maven-plugin.version>
-        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-        <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
-        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
-        <sortpom-maven-plugin.version>4.0.0</sortpom-maven-plugin.version>
-        <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
-
-        <!-- Linter Properties -->
-        <!--suppress UnresolvedMavenProperty, files are only used in child modules -->
-        <ci-config-directory>${project.parent.basedir}/ci/java</ci-config-directory>
-        <checkstyle-file>${ci-config-directory}/checkstyle.xml</checkstyle-file>
-        <license-file>${ci-config-directory}/license-template.txt</license-file>
-        <license-header-definition-file>${ci-config-directory}/license-header-definition.txt</license-header-definition-file>
-        <pmd-ruleset>${ci-config-directory}/pmd-ruleset.xml</pmd-ruleset>
-        <sonar.exclusions>src/test/**/*</sonar.exclusions>
-        <!--suppress UnresolvedMavenProperty, injected by environment variable -->
-        <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
-        <sonar.java.checkstyle.reportPaths>${project.build.directory}/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
-        <sonar.java.pmd.reportPaths>${project.build.directory}/pmd.xml</sonar.java.pmd.reportPaths>
-        <sonar.java.spotbugs.reportPaths>${project.build.directory}/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
-        <sonar.language>java</sonar.language>
-        <sonar.projectKey>${project.artifactId}</sonar.projectKey>
-        <sonar.projectName>${project.artifactId}</sonar.projectName>
-        <!--suppress UnresolvedMavenProperty, injected by environment variable -->
-        <sonar.token>${env.SONARQUBE_PAT}</sonar.token>
-        <spotbugs-include-file>${ci-config-directory}/spotbugs-include-filter-file.xml</spotbugs-include-file>
-        <spotbugs-exclude-file>${ci-config-directory}/spotbugs-exclude-filter-file.xml</spotbugs-exclude-file>
+        <!-- Linter property overrides: use the code-quality-config submodule at the project root.
+             The child module (tracker-profiles-screenshots) overrides these again with
+             ${project.parent.basedir}/code-quality-config/... so they resolve to this root. -->
+        <checkstyle-project-suppression-file>${project.basedir}/ci/java/checkstyle-suppression.xml</checkstyle-project-suppression-file>
+        <ci-config-directory>${project.basedir}/code-quality-config/java</ci-config-directory>
+        <license-file>${project.basedir}/code-quality-config/licenses/bsd0.txt</license-file>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit-bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>ru.yandex.qatools.ashot</groupId>
-                <artifactId>ashot</artifactId>
-                <version>${ashot.version}</version>
-                <exclusions>
-                    <!-- Not needed -->
-                    <exclusion>
-                        <groupId>commons-io</groupId>
-                        <artifactId>commons-io</artifactId>
-                    </exclusion>
-                    <!-- Excluded due to CVEs -->
-                    <exclusion>
-                        <groupId>com.google.code.gson</groupId>
-                        <artifactId>gson</artifactId>
-                    </exclusion>
-                    <!-- Only used by ashot for test-time image diff utilities, not the screenshot path used here -->
-                    <exclusion>
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-core</artifactId>
-                    </exclusion>
-                    <!-- Already imported -->
-                    <exclusion>
-                        <groupId>org.seleniumhq.selenium</groupId>
-                        <artifactId>selenium-remote-driver</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>io.github.kusoroadeolu</groupId>
-                <artifactId>clique-core</artifactId>
-                <version>${clique.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-csv</artifactId>
-                <version>${commons-csv.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.formdev</groupId>
-                <artifactId>flatlaf</artifactId>
-                <version>${flatlaf.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jspecify</groupId>
-                <artifactId>jspecify</artifactId>
-                <version>${jspecify.version}</version>
-            </dependency>
+            <!-- tracker-profiles-specific: not in parent-pom -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-api</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-core</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
-            <!-- Included so the dependency is picked up by 'mvn versions:update-properties', not actually used directly -->
-            <dependency>
-                <groupId>com.uber.nullaway</groupId>
-                <artifactId>nullaway</artifactId>
-                <version>${nullaway.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-api</artifactId>
-                <version>${selenium.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-chrome-driver</artifactId>
-                <version>${selenium.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-chromium-driver</artifactId>
-                <version>${selenium.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-remote-driver</artifactId>
-                <version>${selenium.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-support</artifactId>
-                <version>${selenium.version}</version>
-            </dependency>
-            <!-- Included so the dependency is picked up by 'mvn versions:update-properties', not actually used directly -->
-            <dependency>
-                <groupId>com.google.errorprone</groupId>
-                <artifactId>error_prone_core</artifactId>
-                <version>${error_prone_core.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <!-- Provides org.osgi.annotation.versioning.Version, referenced by log4j-api/log4j-core .class files; only needed at compile time -->
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>osgi.annotation</artifactId>
-                <version>${osgi-annotation.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>${assertj-core.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>${mockito.version}</version>
-                <scope>test</scope>
+                <artifactId>log4j-transform-maven-shade-plugin-extensions</artifactId>
+                <version>${log4j-transform-maven-shade-plugin-extensions.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -237,226 +54,23 @@
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Plugin run at first phase to define properties for use in later phases -->
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>${build-helper-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>timestamp-property</id>
-                            <goals>
-                                <goal>timestamp-property</goal>
-                            </goals>
-                            <!-- Bound to 'none' unless a lint-active profile overrides; the only consumer is itself gated on 'skip-linters' -->
-                            <phase>${build-helper-phase}</phase>
-                            <configuration>
-                                <locale>en_GB</locale>
-                                <name>current-year</name>
-                                <pattern>yyyy</pattern>
-                                <timeZone>UTC</timeZone>
-                                <unit>year</unit>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>${exec-maven-plugin.version}</version>
-                </plugin>
 
-                <!-- Test Execution -->
-                <!-- Must be run with tests, cannot be run alone -->
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${jacoco-maven-plugin.version}</version>
-                    <configuration>
-                        <rules>
-                            <rule>
-                                <element>BUNDLE</element>
-                                <limits>
-                                    <limit>
-                                        <counter>LINE</counter>
-                                        <value>COVEREDRATIO</value>
-                                        <minimum>${line-coverage}</minimum>
-                                    </limit>
-                                    <limit>
-                                        <counter>BRANCH</counter>
-                                        <value>COVEREDRATIO</value>
-                                        <minimum>${branch-coverage}</minimum>
-                                    </limit>
-                                </limits>
-                            </rule>
-                        </rules>
-                        <skip>${skip-tests}</skip>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>default-check</id>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>default-prepare-agent</id>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>default-report</id>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn license:check -Dlint -->
-                <!-- To fix missing/invalid licences, run the following in each module: -->
-                <!-- `mvn license:format -Dlint -Dinitial-year="2024" -Dyear="2025"` -->
-                <plugin>
-                    <groupId>com.mycila</groupId>
-                    <artifactId>license-maven-plugin</artifactId>
-                    <version>${license-maven-plugin.version}</version>
-                    <configuration>
-                        <licenseSets>
-                            <licenseSet>
-                                <header>${license-file}</header>
-                                <headerDefinitions>
-                                    <headerDefinition>${license-header-definition-file}</headerDefinition>
-                                </headerDefinitions>
-                                <includes>
-                                    <include>src/main/java/**</include>
-                                    <include>src/test/java/**</include>
-                                </includes>
-                            </licenseSet>
-                        </licenseSets>
-                        <mapping>
-                            <java>JavaPackage</java>
-                        </mapping>
-                        <properties>
-                            <initial-year>2024</initial-year>
-                            <!--suppress UnresolvedMavenProperty, defined by build-helper-maven-plugin -->
-                            <year>${current-year}</year>
-                            <website>zodac.net</website>
-                        </properties>
-                        <skip>${skip-linters}</skip>
-                    </configuration>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.mycila</groupId>
-                            <artifactId>licenses</artifactId>
-                            <version>${licenses.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>process-sources</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn checkstyle:checkstyle -Dlint -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>${maven-checkstyle-plugin.version}</version>
-                    <configuration>
-                        <configLocation>${checkstyle-file}</configLocation>
-                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                        <propertyExpansion>checkstyle.config.path=${ci-config-directory}</propertyExpansion>
-                        <skip>${skip-linters}</skip>
-                        <violationSeverity>info</violationSeverity>
-                    </configuration>
-                    <!-- Overwrite the default version of Checkstyle -->
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.puppycrawl.tools</groupId>
-                            <artifactId>checkstyle</artifactId>
-                            <version>${checkstyle.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>${maven-clean-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <!-- Configuration for errorprone compiler checks -->
-                        <annotationProcessorPaths>
-                            <path>
-                                <groupId>com.google.errorprone</groupId>
-                                <artifactId>error_prone_core</artifactId>
-                                <version>${error_prone_core.version}</version>
-                            </path>
-                            <path>
-                                <groupId>com.uber.nullaway</groupId>
-                                <artifactId>nullaway</artifactId>
-                                <version>${nullaway.version}</version>
-                            </path>
-                        </annotationProcessorPaths>
-                        <compilerArgs>
-                            <arg>-Xlint:all</arg>
-                            <!-- Configuration for ErrorProne -->
-                            <arg>-XDcompilePolicy=simple</arg>
-                            <arg>--should-stop=ifError=FLOW</arg>
-                            <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=${project.groupId}</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-                            <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-                        </compilerArgs>
-                        <failOnWarning>true</failOnWarning>
-                        <fork>true</fork>
-                        <release>${java-release}</release>
-                    </configuration>
-                </plugin>
+                <!-- Override: add resolve-dependency-properties execution (provides
+                     ${org.mockito:mockito-core:jar} for the surefire argLine below), and
+                     add log4j-core to the ignored-unused list (runtime-only dependency). -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>${maven-dependency-plugin.version}</version>
-                    <dependencies>
-                        <!-- Forces support for latest Java bytecode -->
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm</artifactId>
-                            <version>${asm-version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm-commons</artifactId>
-                            <version>${asm-version}</version>
-                        </dependency>
-                    </dependencies>
                     <executions>
-                        <!-- Resolves dependency paths into properties so Surefire can reference the agent without hardcoding the local path -->
+                        <execution>
+                            <id>default</id>
+                            <configuration>
+                                <ignoredUnusedDeclaredDependencies combine.children="append">
+                                    <!-- Included so the logging files are on the classpath at runtime - not directly used -->
+                                    <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
+                                </ignoredUnusedDeclaredDependencies>
+                            </configuration>
+                        </execution>
                         <execution>
                             <id>resolve-dependency-properties</id>
                             <goals>
@@ -464,157 +78,17 @@
                             </goals>
                             <phase>initialize</phase>
                         </execution>
-                        <execution>
-                            <id>analyze-dependencies</id>
-                            <goals>
-                                <goal>analyze-only</goal>
-                            </goals>
-                            <!-- Needs to execute after the 'compile' phase, but before 'test-compile', or else test dependencies cause failures -->
-                            <phase>process-classes</phase>
-                            <configuration>
-                                <failOnWarning>true</failOnWarning>
-                                <!-- We're only interested in 'compile' scope dependencies when performing analysis -->
-                                <ignoreNonCompile>true</ignoreNonCompile>
-                                <ignoredUnusedDeclaredDependencies>
-                                    <!-- Included so the logging files are on the classpath at runtime - not directly used -->
-                                    <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
-                                </ignoredUnusedDeclaredDependencies>
-                                <ignoredUsedUndeclaredDependencies>
-                                    <!-- Included with nullaway, which is scoped 'provided' but appears as a false-positive -->
-                                    <ignoredUsedUndeclaredDependency>org.checkerframework:dataflow-nullaway::</ignoredUsedUndeclaredDependency>
-                                </ignoredUsedUndeclaredDependencies>
-                                <skip>${skip-linters}</skip>
-                            </configuration>
-                        </execution>
                     </executions>
                 </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn enforcer:enforce -Dlint -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>${maven-enforcer-plugin.version}</version>
-                    <configuration>
-                        <rules>
-                            <banDynamicVersions>
-                                <excludedScopes/>
-                            </banDynamicVersions>
-                            <bannedDependencies>
-                                <excludes>
-                                    <exclude>junit:junit</exclude>
-                                    <exclude>junit:junit-dep</exclude>
-                                </excludes>
-                                <message>JUnit4 is banned, use JUnit 5</message>
-                            </bannedDependencies>
-                            <dependencyConvergence/>
-                            <requireJavaVersion>
-                                <version>[${java-release},)</version>
-                            </requireJavaVersion>
-                            <requireMavenVersion>
-                                <version>[${maven-release},4.0)</version>
-                            </requireMavenVersion>
-                        </rules>
-                        <skip>${skip-linters}</skip>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>enforce</goal>
-                            </goals>
-                            <phase>validate</phase>
-                        </execution>
-                    </executions>
-                </plugin>
+                <!-- Override: add skip so lints/tests don't install the artifact -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>${maven-install-plugin.version}</version>
                     <configuration>
                         <skip>${skip-artifact-build}</skip>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>${maven-jar-plugin.version}</version>
-                </plugin>
 
-                <!-- Manual execution: -->
-                <!-- mvn javadoc:javadoc -Dlint -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>${maven-javadoc-plugin.version}</version>
-                    <configuration>
-                        <doclint>all,-missing</doclint>
-                        <failOnWarnings>true</failOnWarnings>
-                        <quiet>true</quiet>
-                        <release>${java-release}</release>
-                        <serialwarn>true</serialwarn>
-                        <skip>${skip-linters}</skip>
-                        <validateLinks>true</validateLinks>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <!-- 'javadoc-no-fork' is used when binding to the lifecycle so the earlier phases are not re-executed -->
-                                <goal>javadoc-no-fork</goal>
-                            </goals>
-                            <phase>prepare-package</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn pmd:check -Dlint -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-pmd-plugin</artifactId>
-                    <version>${maven-pmd-plugin.version}</version>
-                    <configuration>
-                        <failOnViolation>true</failOnViolation>
-                        <includeTests>false</includeTests>
-                        <linkXRef>false</linkXRef>
-                        <printFailingErrors>true</printFailingErrors>
-                        <rulesets>
-                            <ruleset>${pmd-ruleset}</ruleset>
-                        </rulesets>
-                        <skip>${skip-linters}</skip>
-                        <targetJdk>${java-release}</targetJdk>
-                    </configuration>
-                    <!-- Overwrite the default version of PMD -->
-                    <dependencies>
-                        <dependency>
-                            <groupId>net.sourceforge.pmd</groupId>
-                            <artifactId>pmd-core</artifactId>
-                            <version>${pmd.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>net.sourceforge.pmd</groupId>
-                            <artifactId>pmd-java</artifactId>
-                            <version>${pmd.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>net.sourceforge.pmd</groupId>
-                            <artifactId>pmd-javascript</artifactId>
-                            <version>${pmd.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>net.sourceforge.pmd</groupId>
-                            <artifactId>pmd-jsp</artifactId>
-                            <version>${pmd.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
@@ -625,143 +99,24 @@
                     </configuration>
                 </plugin>
 
-                <!-- Test Execution -->
+                <!-- Override: load Mockito as a Java agent at JVM startup (avoids dynamic
+                     self-attach warnings on JDK 21+); disable CDS so the javaagent's bootstrap
+                     classpath append does not trigger a JVM warning.
+                     @{argLine} is late-bound so JaCoCo's prepare-agent can prepend its path. -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${maven-surefire-plugin.version}</version>
                     <configuration>
-                        <!-- Load Mockito as a Java agent at JVM startup to avoid dynamic self-attach warnings on JDK 21+ -->
-                        <!-- Disable CDS via -Xshare:off so the javaagent's bootstrap classpath append does not trigger a JVM warning -->
-                        <!-- @{argLine} is late-bound so JaCoCo's prepare-agent can prepend its agent path -->
                         <!--suppress UnresolvedMavenProperty, set by maven-dependency-plugin's 'properties'-->
                         <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
-                        <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-                        <includes>
-                            <include>**/*Test.java</include>
-                        </includes>
-                        <skipTests>${skip-tests}</skipTests>
-                    </configuration>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn sonar:sonar -Dsonarqube -->
-                <plugin>
-                    <groupId>org.sonarsource.scanner.maven</groupId>
-                    <artifactId>sonar-maven-plugin</artifactId>
-                    <version>${sonar-maven-plugin.version}</version>
-                    <configuration>
-                        <sonar.skip>${skip-sonarqube}</sonar.skip>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>sonar</goal>
-                            </goals>
-                            <phase>install</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn sortpom:sort -Dlint -->
-                <plugin>
-                    <groupId>com.github.ekryd.sortpom</groupId>
-                    <artifactId>sortpom-maven-plugin</artifactId>
-                    <version>${sortpom-maven-plugin.version}</version>
-                    <configuration>
-                        <createBackupFile>false</createBackupFile>
-                        <expandEmptyElements>false</expandEmptyElements>
-                        <indentAttribute>schemaLocation</indentAttribute>
-                        <nrOfIndentSpace>4</nrOfIndentSpace>
-                        <skip>${skip-linters}</skip>
-                        <sortDependencies>scope,artifactId</sortDependencies>
-                        <sortDependencyManagement>scope,artifactId</sortDependencyManagement>
-                        <sortExecutions>true</sortExecutions>
-                        <sortModules>true</sortModules>
-                        <sortPlugins>artifactId</sortPlugins>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>sort</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <!-- Manual execution: -->
-                <!-- mvn spotbugs:spotbugs -Dlint -->
-                <plugin>
-                    <groupId>com.github.spotbugs</groupId>
-                    <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>${spotbugs-maven-plugin.version}</version>
-                    <configuration>
-                        <effort>max</effort>
-                        <includeFilterFile>${spotbugs-include-file}</includeFilterFile>
-                        <excludeFilterFile>${spotbugs-exclude-file}</excludeFilterFile>
-                        <skip>${skip-linters}</skip>
-                    </configuration>
-                    <dependencies>
-                        <!-- Overwrite the default version of SpotBugs -->
-                        <dependency>
-                            <groupId>com.github.spotbugs</groupId>
-                            <artifactId>spotbugs</artifactId>
-                            <version>${spotbugs.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>verify</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>versions-maven-plugin</artifactId>
-                    <version>${versions-maven-plugin.version}</version>
-                    <configuration>
-                        <!-- List of dependencies to not be updated, due to incompatible versions -->
-                        <!-- If a valid update becomes available, it can be updated and removed from below -->
-                        <excludes/>
-                        <generateBackupPoms>false</generateBackupPoms>
-                        <ruleSet>
-                            <ignoreVersions>
-                                <!-- Exclude alpha, beta, milestone, release candidate and SNAPSHOT releases -->
-                                <ignoreVersion>
-                                    <type>regex</type>
-                                    <version>.*(-alpha|-beta|-M\d|-RC\d*|-SNAPSHOT).*</version>
-                                </ignoreVersion>
-                            </ignoreVersions>
-                        </ruleSet>
                     </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
-
-        <plugins>
-            <!-- Run to create properties for other plugins -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>com.github.ekryd.sortpom</groupId>
-                <artifactId>sortpom-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 
     <profiles>
-        <!-- Profile to run both tests and lints (as applicable) -->
+        <!-- Override activate_all: also skip artifact builds when running the full quality gate. -->
         <profile>
             <id>activate_all</id>
             <activation>
@@ -770,54 +125,22 @@
                 </property>
             </activation>
             <properties>
-                <build-helper-phase>validate</build-helper-phase>
                 <jar-phase>none</jar-phase>
                 <skip-artifact-build>true</skip-artifact-build>
-                <skip-linters>false</skip-linters>
-                <skip-tests>false</skip-tests>
             </properties>
         </profile>
 
-        <!-- Profile used to execute each module's unit testsuite (if any) -->
+        <!-- Override activate_linters: also skip artifact builds (no JAR needed for lint-only runs). -->
         <profile>
-            <id>activate_tests</id>
-            <activation>
-                <property>
-                    <name>tests</name>
-                </property>
-            </activation>
-            <properties>
-                <skip-tests>false</skip-tests>
-            </properties>
-        </profile>
-
-        <!-- Profile used to execute each module's lints (if any) -->
-        <profile>
-            <id>activate_lints</id>
+            <id>activate_linters</id>
             <activation>
                 <property>
                     <name>lint</name>
                 </property>
             </activation>
             <properties>
-                <build-helper-phase>validate</build-helper-phase>
                 <jar-phase>none</jar-phase>
                 <skip-artifact-build>true</skip-artifact-build>
-                <skip-linters>false</skip-linters>
-            </properties>
-        </profile>
-
-        <!-- Profile used to execute SonarQube analysis on the project -->
-        <!-- Using a separate profile to linters since we only want GitHub to execute this analysis on push -->
-        <profile>
-            <id>activate_sonarqube</id>
-            <activation>
-                <property>
-                    <name>sonarqube</name>
-                </property>
-            </activation>
-            <properties>
-                <skip-sonarqube>false</skip-sonarqube>
             </properties>
         </profile>
     </profiles>

@@ -182,7 +182,7 @@ public final class DriverPool {
     }
 
     private static RemoteWebDriver acquireExtensionDriver(final DriverPool instance, final TrackerType trackerType,
-                                                          final List<Extension> extensions) {
+        final List<Extension> extensions) {
         LOGGER.trace("Creating fresh driver for extension-based {} tracker", trackerType);
         final boolean borrowed = borrowPoolSlot(instance, trackerType);
 

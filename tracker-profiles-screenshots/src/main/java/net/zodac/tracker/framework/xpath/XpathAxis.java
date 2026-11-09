@@ -46,9 +46,7 @@ public final class XpathAxis {
      * @return an {@link XpathNavigation} for the ancestor axis
      */
     public static XpathNavigation parent(final Element element) {
-        return xpath -> xpath.append("/ancestor::")
-            .append(element.tagName())
-            .append("[1]");
+        return xpath -> xpath.append("/ancestor::").append(element.tagName()).append("[1]");
     }
 
     /**

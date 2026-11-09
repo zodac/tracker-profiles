@@ -5,7 +5,7 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/docker.yml'
-      - 'ci/docker/.hadolint.yaml'
+      - 'code-quality-config/docker/.hadolint.yaml'
       - 'docker/Dockerfile'
       - 'docker/entrypoint.sh'
       - 'docker/start.sh'
@@ -24,12 +24,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
+        with:
+          submodules: true # code-quality-config: holds the shared hadolint config
 
       # Docker linting
       - name: Run Hadolint and generate report
         uses: hadolint/hadolint-action@v3.5.0
         with:
-          config: ./ci/docker/.hadolint.yaml
+          config: ./code-quality-config/docker/.hadolint.yaml
           dockerfile: docker/Dockerfile
           output-file: hadolint-report.json
 

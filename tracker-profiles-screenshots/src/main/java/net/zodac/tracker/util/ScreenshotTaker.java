@@ -100,7 +100,7 @@ public final class ScreenshotTaker {
      * @return a {@link Future} that resolves to the saved screenshot {@link File} once PNG encoding is complete
      */
     public static Future<File> takeScreenshot(final RemoteWebDriver driver, final Path outputDirectory, final String baseName,
-                                              final boolean scrollDuringScreenshot, final int index) {
+        final boolean scrollDuringScreenshot, final int index) {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scrollDuringScreenshot);
         final File screenshot = createOutputFileHandle(outputDirectory.toAbsolutePath(), baseName, index);
 

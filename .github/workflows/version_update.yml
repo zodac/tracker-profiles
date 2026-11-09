@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
+          submodules: true # code-quality-config: holds the shared linter configs used by Maven
 
       - name: Set up maven
         uses: s4u/setup-maven-action@v1.22.0
@@ -58,6 +59,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
+          submodules: true # code-quality-config: holds the shared linter configs used by Maven
 
       - name: Download updated workspace
         uses: actions/download-artifact@v8.0.2

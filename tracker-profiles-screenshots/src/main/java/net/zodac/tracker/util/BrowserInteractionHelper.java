@@ -357,7 +357,7 @@ public final class BrowserInteractionHelper {
             LOGGER.trace("Process result: {}", exitValue);
         } catch (final IOException e) {
             LOGGER.debug("Error setting browser as active window", e);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("Error setting browser as active window", e);
         }

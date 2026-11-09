@@ -199,7 +199,7 @@ public final class DisplayUtils {
     }
 
     private void showDialog(final JDialog dialog, final AtomicBoolean userProvidedInput, final AtomicBoolean timedOut,
-                            final @Nullable String initialUrl, final @Nullable String initialTitle) {
+        final @Nullable String initialUrl, final @Nullable String initialTitle) {
         final ScheduledFuture<?> timeoutTask = getTimeoutTask(dialog, timedOut);
         final ScheduledFuture<?> pageChangeTask = getPageChangeTask(dialog, userProvidedInput, initialUrl, initialTitle);
 
@@ -233,7 +233,7 @@ public final class DisplayUtils {
     }
 
     private ScheduledFuture<?> getPageChangeTask(final JDialog dialog, final AtomicBoolean userProvidedInput,
-                                                 final @Nullable String initialUrl, final @Nullable String initialTitle) {
+        final @Nullable String initialUrl, final @Nullable String initialTitle) {
         LOGGER.trace("Starting page change listener (initial url: '{}', initial title: '{}')", initialUrl, initialTitle);
         return TIMEOUT_SCHEDULER.scheduleAtFixedRate(() -> {
             try {

@@ -1,6 +1,0 @@
-failure-threshold: warning
-ignored:
-  - DL3003  # Use WORKDIR instead of 'cd' (suppressed to avoid false positives within RUN chains)
-  - DL3013  # Unversioned 'pip install' (versions are pinned in the requirements.txt)
-no-fail: false
-strict-labels: false

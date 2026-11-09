@@ -105,8 +105,7 @@ public final class ScreenshotOrchestrator {
     }
 
     private static void screenshotTrackerByType(final TrackerType trackerType, final Map<TrackerType, Set<TrackerCredential>> trackersByType,
-                                                final ProgressBarManager progressBarManager, final int maxTrackerNameLength,
-                                                final ResultCollector resultCollector) {
+        final ProgressBarManager progressBarManager, final int maxTrackerNameLength, final ResultCollector resultCollector) {
         if (!trackersByType.containsKey(trackerType)) {
             LOGGER.trace("No trackers of type {}", trackerType);
             return;

@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'ci/java/**'
+      - 'code-quality-config/java/**'
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
       - 'pom.xml'
@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
+          submodules: true # code-quality-config: holds the shared linter configs
 
       - name: Setup Maven Action
         uses: s4u/setup-maven-action@v1.22.0
@@ -32,7 +33,7 @@ jobs:
 
       - name: Run Java lints and tests with Maven (including SonarQube)
         env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONARQUBE_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
         run: mvn clean install -Dall -Dsonarqube
 
@@ -49,6 +50,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0  # Needed for pushing tags
+          submodules: true # code-quality-config: holds the shared linter configs
 
       - name: Fetch tags
         run: git fetch --tags
