@@ -196,27 +196,27 @@ class DriverPoolTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<TrackerType, BlockingDeque<RemoteWebDriver>> getPool() throws Exception {
+    private static Map<TrackerType, BlockingDeque<RemoteWebDriver>> getPool() throws ReflectiveOperationException {
         return (Map<TrackerType, BlockingDeque<RemoteWebDriver>>) getField(getInstance(), "pool");
     }
 
     @SuppressWarnings("unchecked")
-    private static Set<RemoteWebDriver> getAllPooledDrivers() throws Exception {
+    private static Set<RemoteWebDriver> getAllPooledDrivers() throws ReflectiveOperationException {
         return (Set<RemoteWebDriver>) getField(getInstance(), "allPooledDrivers");
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<RemoteWebDriver, TrackerType> getDriverTypeMap() throws Exception {
+    private static Map<RemoteWebDriver, TrackerType> getDriverTypeMap() throws ReflectiveOperationException {
         return (Map<RemoteWebDriver, TrackerType>) getField(getInstance(), "driverTypeMap");
     }
 
-    private static void injectPooledDriver(final RemoteWebDriver driver, final TrackerType type) throws Exception {
+    private static void injectPooledDriver(final RemoteWebDriver driver, final TrackerType type) throws ReflectiveOperationException {
         getAllPooledDrivers().add(driver);
         getDriverTypeMap().put(driver, type);
         getPool().computeIfAbsent(type, _ -> new LinkedBlockingDeque<>()).addLast(driver);
     }
 
-    private static void clearField(final DriverPool instance, final String fieldName) throws Exception {
+    private static void clearField(final DriverPool instance, final String fieldName) throws ReflectiveOperationException {
         final Object value = getField(instance, fieldName);
         if (value instanceof final Map<?, ?> map) {
             map.clear();
@@ -225,16 +225,16 @@ class DriverPoolTest {
         }
     }
 
-    private static Object getField(final DriverPool instance, final String fieldName) throws Exception {
+    private static Object getField(final DriverPool instance, final String fieldName) throws ReflectiveOperationException {
         final Field field = DriverPool.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
+        field.setAccessible(true); // NOPMD: AvoidAccessibilityAlteration - required to read private fields in tests
         return field.get(instance);
     }
 
-    private static DriverPool getInstance() throws Exception {
+    private static DriverPool getInstance() throws ReflectiveOperationException {
         final Class<?> holderClass = Class.forName("net.zodac.tracker.framework.driver.DriverPool$InstanceHolder");
         final Field instanceField = holderClass.getDeclaredField("INSTANCE");
-        instanceField.setAccessible(true);
+        instanceField.setAccessible(true); // NOPMD: AvoidAccessibilityAlteration - required to read private fields in tests
         return (DriverPool) instanceField.get(null);
     }
 }

@@ -19,6 +19,7 @@ package net.zodac.tracker.framework;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import org.apache.commons.csv.CSVFormat;
@@ -77,7 +78,7 @@ class TrackerCredentialTest {
         assertThat(credential.password()).isEqualTo("myPassword");
     }
 
-    private static CSVRecord parseSingleRecord() throws Exception {
+    private static CSVRecord parseSingleRecord() throws IOException {
         final CSVFormat format = CSVFormat.DEFAULT.builder()
             .setHeader("trackerName", "username", "password")
             .setSkipHeaderRecord(false)

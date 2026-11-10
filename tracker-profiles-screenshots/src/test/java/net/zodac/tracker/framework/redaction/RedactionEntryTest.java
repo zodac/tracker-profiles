@@ -71,7 +71,7 @@ class RedactionEntryTest {
         );
     }
 
-    private interface FakeRedaction extends Redaction {
+    private interface FakeRedaction extends Redaction { // NOPMD: ImplicitFunctionalInterface - test helper, not a lambda target
         int selectorsSize();
     }
 

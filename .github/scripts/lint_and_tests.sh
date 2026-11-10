@@ -105,7 +105,7 @@ run_markdown() {
         -w /app \
         "${MARKDOWNLINT_DOCKER_IMAGE}" \
         --config code-quality-config/markdown/.markdownlint.json \
-        "**/*.md" "!RELEASE_NOTES.md" "!ai-sandbox/**" "!code-quality-config/**" "!tracker-profiles-screenshots/target/**" 2>&1); then
+        "**/*.md" "!RELEASE_NOTES.md" "!ai-sandbox/**" "!ai-sandbox-configuration/**" "!code-quality-config/**" "!tracker-profiles-screenshots/target/**" 2>&1); then
         echo "✅ Markdown lint passed"
     else
         echo "${output}"
