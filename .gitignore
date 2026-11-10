@@ -26,4 +26,12 @@ trackers.csv
 *.swp
 
 # Claude config
+# .claude/settings.local.json is deliberately checked in for this project; only the per-session lock is ignored
 !settings.local.json
+.claude/scheduled_tasks.lock
+
+# The sandbox's Claude Code state (login, session history, memory) - see ai-sandbox/README.md#persistence.
+# ai-sandbox/sandbox.sh bind-mounts ai-sandbox-configuration/.claude-history INTO the sandbox container at
+# /home/dev/.claude, so it survives a sandbox teardown. Holds OAuth tokens (.credentials.json), so it must never be
+# committed.
+.claude-history/

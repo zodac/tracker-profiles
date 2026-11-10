@@ -6,7 +6,7 @@
     <parent>
         <groupId>net.zodac</groupId>
         <artifactId>parent-pom</artifactId>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
     </parent>
 
     <artifactId>tracker-profiles</artifactId>
@@ -22,9 +22,12 @@
         <!-- Override parent-pom default: this project started in 2024 -->
         <initial-year>2024</initial-year>
 
-        <!-- Version overrides: tracker-profiles is ahead of parent-pom 1.2.2 -->
-        <error_prone_core.version>2.52.0</error_prone_core.version>
-        <flatlaf.version>3.8</flatlaf.version>
+        <!-- Inherited from parent-pom, but defined here for version update testing
+             (.github/scripts/update_dependency_versions.sh rewrites both) -->
+        <java-release>27</java-release>
+        <maven-release>3.10.0</maven-release>
+
+        <!-- Version overrides: tracker-profiles is ahead of parent-pom 1.2.3 -->
         <jspecify.version>1.0.1</jspecify.version>
         <mockito.version>5.24.0</mockito.version>
 
@@ -32,10 +35,11 @@
         <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
         <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
 
-        <!-- Linter property overrides: use the code-quality-config submodule at the project root.
-             The child module (tracker-profiles-screenshots) overrides these again with
-             ${project.parent.basedir}/code-quality-config/... so they resolve to this root. -->
-        <checkstyle-project-suppression-file>${project.basedir}/ci/java/checkstyle-suppression.xml</checkstyle-project-suppression-file>
+        <!-- Linter path overrides. parent-pom builds these from ${project.basedir}, which is correct for this root POM
+             but resolves to the module's own directory when inherited - so tracker-profiles-screenshots/pom.xml
+             redefines all four against ${project.parent.basedir}. Keep the two blocks in sync. -->
+        <config-overrides-directory>${project.basedir}/code-quality-config-overrides</config-overrides-directory>
+        <checkstyle-project-suppression-file>${config-overrides-directory}/checkstyle-suppression.xml</checkstyle-project-suppression-file>
         <ci-config-directory>${project.basedir}/code-quality-config/java</ci-config-directory>
         <license-file>${project.basedir}/code-quality-config/licenses/bsd0.txt</license-file>
     </properties>

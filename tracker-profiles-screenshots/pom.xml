@@ -14,10 +14,11 @@
     <name>[${project.parent.artifactId}] Screenshots module</name>
 
     <properties>
-        <!-- The linter path properties use ${project.basedir}, which resolves to this module's
-             directory when inherited. Override here so they point to the project root where the
-             code-quality-config submodule lives. -->
-        <checkstyle-project-suppression-file>${project.parent.basedir}/ci/java/checkstyle-suppression.xml</checkstyle-project-suppression-file>
+        <!-- The linter path properties use ${project.basedir}, which resolves to this module's directory when inherited.
+             Redefined here so they point at the project root, where code-quality-config and code-quality-config-overrides
+             live. Keep in sync with the root pom.xml. -->
+        <config-overrides-directory>${project.parent.basedir}/code-quality-config-overrides</config-overrides-directory>
+        <checkstyle-project-suppression-file>${config-overrides-directory}/checkstyle-suppression.xml</checkstyle-project-suppression-file>
         <ci-config-directory>${project.parent.basedir}/code-quality-config/java</ci-config-directory>
         <license-file>${project.parent.basedir}/code-quality-config/licenses/bsd0.txt</license-file>
     </properties>

@@ -182,19 +182,24 @@ detect_changed_steps() {
     echo "Checking changes since tag [${latest_tag}]..." >&2
 
     local run_docker=false run_java=false run_javascript=false run_markdown=false run_python=false
+    local shared_config_changed=false
     local java_changed_files=()
     local file
 
     while IFS= read -r file; do
         [[ -z "${file}" ]] && continue
-        [[ "${file}" =~ ^docker/ || "${file}" =~ ^code-quality-config/docker/ ]] && run_docker=true
-        if [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^code-quality-config/java/ || "${file}" == "pom.xml" || "${file}" == "tracker-profiles-screenshots/pom.xml" ]]; then
+        # The code-quality-config submodule is a gitlink: a bump shows up as this single path, never as the files
+        # inside it, so any change to it must re-run every linter whose config it holds (applied after the
+        # comment-only suppression below, so a submodule bump can never be suppressed)
+        [[ "${file}" == "code-quality-config" ]] && shared_config_changed=true
+        [[ "${file}" =~ ^docker/ ]] && run_docker=true
+        if [[ "${file}" =~ ^tracker-profiles-screenshots/ || "${file}" =~ ^code-quality-config-overrides/ || "${file}" == "pom.xml" ]]; then
             run_java=true
             java_changed_files+=("${file}")
         fi
-        [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/ || "${file}" =~ ^code-quality-config/javascript/ ]] && run_javascript=true
-        [[ "${file}" == "README.md" || "${file}" =~ ^code-quality-config/markdown/ ]] && run_markdown=true
-        [[ "${file}" =~ ^docker/scripts/.*\.py$ || "${file}" =~ ^code-quality-config/python/ ]] && run_python=true
+        [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/ ]] && run_javascript=true
+        [[ "${file}" =~ \.md$ && "${file}" != "RELEASE_NOTES.md" ]] && run_markdown=true
+        [[ "${file}" =~ ^docker/scripts/.*\.py$ ]] && run_python=true
     done < <(
         {
             git diff --name-only "${latest_tag}..HEAD"
@@ -220,6 +225,14 @@ detect_changed_steps() {
             run_java=false
             echo "Skipping java: only comment changes detected" >&2
         fi
+    fi
+
+    if [[ "${shared_config_changed}" == true ]]; then
+        run_docker=true
+        run_java=true
+        run_javascript=true
+        run_markdown=true
+        run_python=true
     fi
 
     # A bump to any docker image pinned in this script must re-trigger the matching step,

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    This project's Checkstyle suppressions, layered ON TOP OF the submodule's shared
+    code-quality-config/java/checkstyle-suppression.xml - which still applies in full, so its entries (generated
+    `gen/` sources, AbbreviationAsWordInName on *IT classes) are deliberately NOT repeated here. The shared
+    checkstyle.xml declares a second, optional SuppressionFilter for exactly this purpose, and pom.xml names this
+    file through parent-pom's <checkstyle-project-suppression-file> property.
+
+    Suppressions are scoped per file rather than per line: a `lines="..."` pin silently stops matching (and the
+    build fails) as soon as anything above the method moves, and Checkstyle's ExecutableStatementCount message
+    does not name the method, so there is no stable per-method key to match on instead.
+-->
+<suppressions>
+    <!-- ApplicationConfiguration is a large configuration record with many env-var-loading methods and a print() method;
+         splitting it further would not improve clarity. -->
+    <suppress checks="JavaNCSS" files="ApplicationConfiguration\.java$"/>
+
+    <!-- JavaWebDriverFactory.createDriver sets up many Chrome options and preferences sequentially; extracting sub-methods
+         would obscure the flat configuration sequence without reducing real complexity. -->
+    <suppress checks="ExecutableStatementCount" files="JavaWebDriverFactory\.java$"/>
+
+    <!-- ProfileScreenshotExecutor:
+         - screenshotTracker has a broad catch chain covering every failure mode; compressing it would hide the
+           per-exception handling that is intentionally explicit.
+         - screenshotProfile orchestrates the full per-tracker screenshot flow; it is the authoritative sequence of steps
+           and splitting it would scatter state across helpers without reducing logic. -->
+    <suppress checks="ExecutableStatementCount" files="ProfileScreenshotExecutor\.java$"/>
+</suppressions>

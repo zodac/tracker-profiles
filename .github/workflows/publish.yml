@@ -4,7 +4,8 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'code-quality-config/java/**'
+      - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
+      - 'code-quality-config-overrides/**'
       - 'docker/**'
       - 'tracker-profiles-screenshots/**'
       - 'pom.xml'
@@ -33,8 +34,8 @@ jobs:
 
       - name: Run Java lints and tests with Maven (including SonarQube)
         env:
-          SONARQUBE_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONARQUBE_PAT: ${{ secrets.SONARQUBE_PAT }}
+          SONARQUBE_HOST_URL: ${{ secrets.SONARQUBE_HOST_URL }}
+          SONARQUBE_PAT: ${{ secrets.SONARQUBE_RW_PAT }}
         run: mvn clean install -Dall -Dsonarqube
 
   docker-publish:

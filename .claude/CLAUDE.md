@@ -253,17 +253,22 @@ non-trivial work beyond field assignment.
 
 ### Linting
 
-Linter configs live in `ci/`:
+Shared linter configs come from the `code-quality-config` git submodule (run `git submodule update --init` after cloning), and are
+wired into Maven by the `net.zodac:parent-pom` parent:
 
-- `ci/java/checkstyle.xml` and `checkstyle-suppression.xml`
-- `ci/java/pmd-ruleset.xml`
-- `ci/java/spotbugs-include/exclude-filter-file.xml`
-- `ci/docker/.hadolint.yaml`
+- `code-quality-config/java/` — Checkstyle, PMD, SpotBugs include/exclude filters, license header definition
+- `code-quality-config/docker/.hadolint.yaml`
+- `code-quality-config/javascript/eslint.config.cjs`
+- `code-quality-config/markdown/.markdownlint.json`
+- `code-quality-config/python/ruff.toml`
+
+Do not edit files inside the submodule. Project-specific overrides live in `code-quality-config-overrides/` (currently only
+`checkstyle-suppression.xml`, layered on top of the shared suppressions).
 
 Suppress only when genuinely necessary. The codebase has very few suppressions — keep it that way.
 
-Markdown files follow `ci/doc/.markdownlint.json`: body lines max 150 characters, heading lines max 120 characters, code block lines max 200
-characters (tables are exempt). Always run the IDE formatter (Ctrl+Shift+F) on any `.md` file after editing.
+Markdown files follow `code-quality-config/markdown/.markdownlint.json`: body lines max 150 characters, heading lines max 120 characters, code
+block lines max 200 characters (tables are exempt). Always run the IDE formatter (Ctrl+Shift+F) on any `.md` file after editing.
 
 ### Concurrency
 

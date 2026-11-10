@@ -7,7 +7,8 @@ on:
       - '.claude/CLAUDE.md'
       - '.claude/agents/*.md'
       - '.github/workflows/doc.yml'
-      - 'code-quality-config/markdown/.markdownlint.json'
+      - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
+      - 'code-quality-config-overrides/*.md'
       - 'README.md'
   workflow_dispatch: # allows manual trigger
 

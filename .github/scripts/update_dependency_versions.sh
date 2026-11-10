@@ -28,6 +28,10 @@
 #       - Overwrites the original requirements.txt with the updated values
 #   - For pom.xml:
 #       - Runs `mvn versions:update-properties`
+#   - For ai-sandbox-configuration/Dockerfile:
+#       - Updates the JDK (`AS jdk`) and Maven (`AS maven`) source stage tags alongside the main Dockerfile
+#       - Updates the pinned versions in its Debian package block IN PLACE (the block's RUN shape is kept), resolved
+#         against the Debian release of the shared ai-sandbox base image, which is what the sandbox actually runs
 #
 # Exit Codes:
 #   - 0: Success
@@ -37,6 +41,10 @@
 set -euo pipefail
 
 DEBIAN_DOCKER_IMAGE_VERSION="13.7"
+
+# The sandbox image's project layer, and the shared ai-sandbox base it builds on (whose Debian release the sandbox runs)
+SANDBOX_DOCKERFILE="./ai-sandbox-configuration/Dockerfile"
+AI_SANDBOX_BASE_DOCKERFILE="./ai-sandbox/image/base/Dockerfile"
 
 get_pypi_version() {
     version=$(curl -fsSL "https://pypi.org/pypi/${1}/json" | jq -r '.info.version // empty')
@@ -185,6 +193,79 @@ update_debian_packages() {
     done
 
     rm -f debian_block.txt
+
+    echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
+}
+
+# The ai-sandbox base's Debian image (`debian:X.Y`), or nothing if the submodule isn't checked out
+ai_sandbox_debian_image() {
+    grep -oP '^FROM\s+\Kdebian:[0-9]+\.[0-9]+' "${AI_SANDBOX_BASE_DOCKERFILE}" 2>/dev/null | tail -1 || true
+}
+
+# Unlike update_debian_packages, this rewrites only the version strings inside the marker block, since the sandbox
+# layer's RUN uses BuildKit cache mounts that the generic block template would drop
+update_sandbox_debian_packages() {
+    local dockerfile="${SANDBOX_DOCKERFILE}"
+    local start_marker="# BEGIN DEBIAN PACKAGES"
+    local end_marker="# END DEBIAN PACKAGES"
+
+    if [[ ! -f "${dockerfile}" ]]; then
+        echo "⚠️ ${dockerfile} not found, skipping"
+        return 0
+    fi
+    if ! grep -q "${start_marker}" "${dockerfile}" || ! grep -q "${end_marker}" "${dockerfile}"; then
+        echo "❌ Could not find Debian marker lines in ${dockerfile}"
+        return 1
+    fi
+
+    local base_image
+    base_image=$(ai_sandbox_debian_image)
+    if [[ -z "${base_image}" ]]; then
+        echo "❌ Could not read the Debian release from ${AI_SANDBOX_BASE_DOCKERFILE} (is the ai-sandbox submodule checked out?)"
+        return 1
+    fi
+
+    echo
+    echo "🔍 Fetching latest sandbox Debian package versions (against ${base_image})..."
+    docker pull "${base_image}" >/dev/null
+
+    local package_block
+    package_block=$(awk -v start="${start_marker}" -v end="${end_marker}" '
+        $0 ~ start { in_block = 1 }
+        in_block
+        $0 ~ end { in_block = 0 }
+    ' "${dockerfile}")
+
+    local package_names
+    mapfile -t package_names < <(echo "${package_block}" | grep -oP '^\s*[a-z0-9.+-]+(?==")' | sed 's/^[[:space:]]*//')
+    if [[ "${#package_names[@]}" -eq 0 ]]; then
+        echo "❌ No package names found in ${dockerfile}"
+        return 1
+    fi
+
+    local versions_raw
+    versions_raw=$(docker run --rm "${base_image}" sh -c \
+        "apt-get update -qq -o Acquire::Languages=none 2>/dev/null && apt-cache policy ${package_names[*]}")
+
+    local -A sandbox_versions
+    local pkg ver
+    while IFS='=' read -r pkg ver; do
+        [[ -n "${pkg}" && -n "${ver}" && "${ver}" != "(none)" ]] && sandbox_versions["${pkg}"]="${ver}"
+    done < <(echo "${versions_raw}" | awk '
+        /^[a-z0-9]/ { pkg=$1; sub(/:$/, "", pkg) }
+        /Candidate:/  { print pkg "=" $2 }
+    ')
+
+    local package version
+    for package in "${package_names[@]}"; do
+        version="${sandbox_versions["${package}"]:-}"
+        if [[ -z "${version}" ]]; then
+            echo "❌ Failed to get version for: ${package}"
+            return 1
+        fi
+        echo "  ${package}=${version}"
+        sed -i "/${start_marker}/,/${end_marker}/ s|^\([[:space:]]*${package}=\)\"[^\"]*\"|\1\"${version}\"|" "${dockerfile}"
+    done
 
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
 }
@@ -505,6 +586,12 @@ update_java_version() {
     # Dockerfile (all FROM lines; [^ ]*-jdk[^ ]* matches bare and OS-variant tags like -jdk-noble)
     sed -i "s|FROM eclipse-temurin:[^ ]*-jdk[^ ]*|FROM eclipse-temurin:${docker_tag}|g" "${dockerfile}"
 
+    # ai-sandbox-configuration/Dockerfile: full tag in the jdk source stage, java major in the maven source stage tag
+    if [[ -f "${SANDBOX_DOCKERFILE}" ]]; then
+        sed -i "s|FROM eclipse-temurin:[^ ]*-jdk AS jdk|FROM eclipse-temurin:${docker_tag} AS jdk|" "${SANDBOX_DOCKERFILE}"
+        sed -i "s|eclipse-temurin-[0-9]* AS maven|eclipse-temurin-${latest_major} AS maven|" "${SANDBOX_DOCKERFILE}"
+    fi
+
     # lint_and_tests.sh (same pattern for OS-variant tags)
     sed -i "s|JDK_DOCKER_IMAGE=\"eclipse-temurin:[^\"]*-jdk[^\"]*\"|JDK_DOCKER_IMAGE=\"eclipse-temurin:${docker_tag}\"|" "${lint_script}"
 
@@ -520,7 +607,7 @@ update_java_version() {
         done
     fi
 
-    echo "✅ Java updated to ${latest_major} (${docker_tag}) in pom.xml, Dockerfile, lint_and_tests.sh, and workflows"
+    echo "✅ Java updated to ${latest_major} (${docker_tag}) in pom.xml, Dockerfiles, lint_and_tests.sh, and workflows"
 }
 
 update_pom_versions() {
@@ -588,6 +675,11 @@ update_maven_version() {
     # Dockerfile
     sed -i "s|FROM maven:[^ ]* AS maven_base|FROM maven:${latest_version} AS maven_base|" "${dockerfile}"
 
+    # ai-sandbox-configuration/Dockerfile: maven version in the maven source stage image tag
+    if [[ -f "${SANDBOX_DOCKERFILE}" ]]; then
+        sed -i "s|FROM maven:[^-]*-eclipse-temurin|FROM maven:${latest_version}-eclipse-temurin|" "${SANDBOX_DOCKERFILE}"
+    fi
+
     # lint_and_tests.sh
     sed -i "s|MAVEN_DOCKER_IMAGE=\"maven:[^\"]*\"|MAVEN_DOCKER_IMAGE=\"maven:${latest_version}\"|" "${lint_script}"
 
@@ -600,7 +692,7 @@ update_maven_version() {
         done
     fi
 
-    echo "✅ Maven updated to ${latest_version} in pom.xml, Dockerfile, lint_and_tests.sh, and workflows"
+    echo "✅ Maven updated to ${latest_version} in pom.xml, Dockerfiles, lint_and_tests.sh, and workflows"
 }
 
 get_github_action_version() {
@@ -685,5 +777,6 @@ update_pom_versions                         || echo "⚠️ Maven versions updat
 update_maven_version "${dockerfile}"        || echo "⚠️ Maven version update failed, continuing..."
 update_java_version "${dockerfile}"         || echo "⚠️ Java version update failed, continuing..."
 update_ubuntu_packages "${dockerfile}"      || echo "⚠️ Ubuntu packages update failed, continuing..."
+update_sandbox_debian_packages              || echo "⚠️ Sandbox Debian packages update failed, continuing..."
 update_lint_tool_versions                   || echo "⚠️ Lint tool versions update failed, continuing..."
 update_github_actions                       || echo "⚠️ GitHub Actions update failed, continuing..."

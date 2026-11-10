@@ -5,7 +5,7 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/python.yml'
-      - 'code-quality-config/python/ruff.toml'
+      - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
       - 'docker/scripts/*.py'
   workflow_dispatch: # allows manual trigger
 

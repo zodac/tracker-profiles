@@ -5,8 +5,8 @@ on:
     branches: [ master ]
     paths:
       - '.github/workflows/javascript.yml'
-      - 'code-quality-config/javascript/eslint.config.cjs'
-      - 'tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/redaction/**/*.js'
+      - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
+      - 'tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js'
   workflow_dispatch: # allows manual trigger
 
 jobs:
