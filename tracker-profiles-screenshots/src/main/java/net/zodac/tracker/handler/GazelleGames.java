@@ -68,7 +68,7 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
             .child(form, atIndex(1))
             .child(table, atIndex(1))
             .build();
-        final WebElement selectionElement = driver().findElement(selectionSelector);
+        final WebElement selectionElement = browserInteractionHelper().waitForElementToBePresent(selectionSelector, pageLoadDuration());
         browserInteractionHelper().highlightElement(selectionElement);
         displayUtils().confirm(trackerDefinition().name(), "Select the correct game");
     }
