@@ -32,7 +32,6 @@ import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import net.zodac.tracker.handler.definition.HasFixedSidebar;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
@@ -45,9 +44,12 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code ABTorrents} tracker.
  */
-@TrackerHandler(name = "LastFiles", type = TrackerType.MANUAL, url = "https://last-torrents.org/")
+@TrackerHandler(name = "LastFiles", type = TrackerType.MANUAL, url = {
+    "https://last-torrents.org/",
+    "https://lastfiles.ro/"
+})
 public class LastFiles extends AbstractTrackerHandler
-    implements HasCloudflareCheck, HasFixedHeader, HasFixedSidebar, RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
+    implements HasFixedHeader, HasFixedSidebar, RedactsEmail, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override
     protected By usernameFieldSelector() {
@@ -57,7 +59,7 @@ public class LastFiles extends AbstractTrackerHandler
     @Override
     protected By loginButtonSelector() {
         return XpathBuilder
-            .from(button, withClass("btn-elite"))
+            .from(button, withClass("lx-btn"))
             .build();
     }
 
@@ -106,9 +108,7 @@ public class LastFiles extends AbstractTrackerHandler
     public Collection<By> emailElements() {
         return List.of(
             XpathBuilder
-                .from(div, withClass("elite-meta"))
-                .child(div)
-                .child(span, atIndex(1))
+                .from(span, withClass("elite-email-text"))
                 .build()
         );
     }
