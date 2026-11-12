@@ -187,6 +187,7 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Hellenic-HD](https://hellenic-hd.cc/)          |
 | [ImmortalSeed](https://immortalseed.me/)        |
 | [InfinityHD](https://infinityhd.net/)           |
+| [IPTorrents](https://iptorrents.com/)           |
 | [ItaTorrents](https://itatorrents.xyz/)         |
 | [JPopsuki](https://jpopsuki.eu/)                |
 
@@ -299,7 +300,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [HDBits](https://hdbits.org/)                        | 2FA, Cloudflare verification, question on login |
 | [HDZero](https://hdzero.org/)                        | Cloudflare verification                         |
 | [Immortal-S](https://immortal-s.me/)                 | Cloudflare verification                         |
-| [IPTorrents](https://iptorrents.com/)                | Cloudflare verification                         |
 | [LastFiles](https://last-torrents.org/)              | Cloudflare verification                         |
 | [Leech24](https://leech24.net/)                      | Captcha                                         |
 | [LetSeed](https://letseed.org/)                      | Captcha                                         |

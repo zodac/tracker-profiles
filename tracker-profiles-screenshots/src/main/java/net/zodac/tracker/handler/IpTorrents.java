@@ -37,7 +37,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code IPTorrents} tracker.
  */
-@TrackerHandler(name = "IPTorrents", type = TrackerType.MANUAL, url = {
+@TrackerHandler(name = "IPTorrents", url = {
     "https://iptorrents.com/",
     "https://iptorrents.me/",
     "https://nemo.iptorrents.com/",
@@ -51,7 +51,7 @@ import org.openqa.selenium.By;
     "https://ipt.world/",
     "https://ipt.octopus.town/"
 })
-public class IpTorrents extends AbstractTrackerHandler implements RedactsTorrentPasskey {
+public class IpTorrents extends AbstractTrackerHandler {
 
     @Override
     protected By loginButtonSelector() {
@@ -70,17 +70,8 @@ public class IpTorrents extends AbstractTrackerHandler implements RedactsTorrent
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(div, withClass("up-header"))
+            .from(div, withClass("upf-id"))
             .build();
-    }
-
-    @Override
-    public Collection<By> torrentPasskeyElements() {
-        return List.of(
-            XpathBuilder
-                .from(code, atIndex(1))
-                .build()
-        );
     }
 
     @Override
