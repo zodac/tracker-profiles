@@ -21,10 +21,6 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.button;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.li;
-import static net.zodac.tracker.framework.xpath.HtmlElement.table;
-import static net.zodac.tracker.framework.xpath.HtmlElement.tbody;
-import static net.zodac.tracker.framework.xpath.HtmlElement.td;
-import static net.zodac.tracker.framework.xpath.HtmlElement.tr;
 import static net.zodac.tracker.framework.xpath.HtmlElement.ul;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
@@ -153,26 +149,23 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     }
 
     @Override
+    protected By profilePageElementSelector() {
+        return By.id("profileShell");
+    }
+
+    @Override
     public Collection<By> emailElements() {
-        return List.of(
-            XpathBuilder
-                .from(ul, withClass("stats"))
-                .child(li)
-                .build()
-        );
+        return List.of();
     }
 
     @Override
     public Collection<By> ipAddressElements() {
-        return List.of(
-            XpathBuilder
-                .from(table, withClass("cgp-table-main"))
-                .child(tbody)
-                .child(tr, atIndex(2))
-                .child(td, atIndex(2))
-                .child(a, atIndex(1))
-                .build()
-        );
+        return List.of();
+    }
+
+    @Override
+    public Collection<By> torrentPasskeyElements() {
+        return List.of();
     }
 
     @Override
