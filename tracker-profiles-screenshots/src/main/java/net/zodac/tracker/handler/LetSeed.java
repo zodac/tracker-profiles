@@ -19,6 +19,11 @@ package net.zodac.tracker.handler;
 
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
+import static net.zodac.tracker.framework.xpath.HtmlElement.input;
+import static net.zodac.tracker.framework.xpath.HtmlElement.table;
+import static net.zodac.tracker.framework.xpath.HtmlElement.tbody;
+import static net.zodac.tracker.framework.xpath.HtmlElement.td;
+import static net.zodac.tracker.framework.xpath.HtmlElement.tr;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
@@ -39,6 +44,38 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 @TrackerHandler(name = "LetSeed", type = TrackerType.MANUAL, url = "https://letseed.org/")
 public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, NeedsExplicitTranslation {
+
+    @Override
+    protected By loginPageSelector() {
+        return XpathBuilder
+            .from(div, withClass("memberArea"))
+            .child(a, atIndex(1))
+            .build();
+    }
+
+    @Override
+    protected By usernameFieldSelector() {
+        return By.id("usernameloginphp");
+    }
+
+    @Override
+    protected By passwordFieldSelector() {
+        return XpathBuilder
+            .from(input, withClass("inputPassword"))
+            .build();
+    }
+
+    @Override
+    protected By loginButtonSelector() {
+        return XpathBuilder
+            .from(div, withId("main"))
+            .descendant(table, atIndex(1))
+            .child(tbody, atIndex(1))
+            .child(tr, atIndex(6))
+            .child(td, atIndex(2))
+            .child(input, atIndex(1))
+            .build();
+    }
 
     /**
      * {@inheritDoc}
@@ -61,6 +98,11 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
         final WebElement captchaElement = driver().findElement(captchaSelector);
         browserInteractionHelper().highlightElement(captchaElement);
         displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+    }
+
+    @Override
+    protected By postLoginSelector() {
+        return By.id("quickprofileview");
     }
 
     @Override
@@ -94,6 +136,15 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
     }
 
     @Override
+    protected By profileLinkSelector() {
+        openUserDropdownMenu();
+        return XpathBuilder
+            .from(div, withClass("qactions"))
+            .descendant(a, atIndex(1))
+            .build();
+    }
+
+    @Override
     protected By logoutButtonSelector() {
         openUserDropdownMenu();
         return XpathBuilder
@@ -104,8 +155,8 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
 
     private void openUserDropdownMenu() {
         LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
-        final By logoutParentSelector = By.id("quickprofileview");
-        final WebElement logoutParent = driver().findElement(logoutParentSelector);
-        clickButton(logoutParent);
+        final By profileParentSelector = By.id("quickprofileview");
+        final WebElement profileParent = driver().findElement(profileParentSelector);
+        clickButton(profileParent);
     }
 }
