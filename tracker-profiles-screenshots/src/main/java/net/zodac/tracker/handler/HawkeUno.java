@@ -21,17 +21,15 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.button;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.form;
+import static net.zodac.tracker.framework.xpath.HtmlElement.nav;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttribute;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
-import java.util.Collection;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
-import net.zodac.tracker.handler.definition.HasProfilePageActions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -40,7 +38,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Implementation of {@link AbstractTrackerHandler} for the {@code Hawke-Uno} tracker.
  */
 @TrackerHandler(name = "Hawke-Uno", type = TrackerType.MANUAL, url = "https://hawke.uno/")
-public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareCheck, HasProfilePageActions {
+public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareCheck {
 
     @Override
     protected By loginButtonSelector() {
@@ -92,47 +90,26 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(div, withClass("deep-space-user-hub"))
+            .from(div, withClass("ds-hub-stats"))
             .build();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * For {@link HawkeUno}, there is no user details page in the 'hub', but there is a dropdown menu which exposes the stats.
-     */
-    @Override
-    public void performActionOnProfilePage() {
-        openUserDropdownMenu();
     }
 
     @Override
     protected By logoutButtonSelector() {
         openUserDropdownMenu();
         return XpathBuilder
-            .from(button, withAttribute("title", "Sign Out"), withType("button"))
+            .from(nav, withClass("deep-space-sidebar-nav"))
+            .child(a, atIndex(10))
             .build();
     }
 
     private void openUserDropdownMenu() {
-        final RemoteWebDriver driver = driver();
-        final By signOutButtonSelector = XpathBuilder
-            .from(button, withAttribute("title", "Sign Out"), withType("button"))
+        LOGGER.debug("\t\t- Clicking user profile dropdown");
+        final By userProfileDropdownSelector = XpathBuilder
+            .from(div, withClass("deep-space-userbar"))
+            .child(button, atIndex(1))
             .build();
-        final Collection<WebElement> signOutButtons = driver.findElements(signOutButtonSelector);
-        final boolean dropdownAlreadyOpen = signOutButtons.stream().anyMatch(WebElement::isDisplayed);
-
-        if (dropdownAlreadyOpen) {
-            LOGGER.debug("\t\t- User dropdown already open, skipping toggle");
-            return;
-        }
-
-        LOGGER.debug("\t\t- Clicking user details toggle");
-        final By userDetailsToggleSelector = XpathBuilder
-            .from(button, withAttribute("title", "Toggle details"), withType("button"))
-            .build();
-        final WebElement userDetailsToggleElement = driver.findElement(userDetailsToggleSelector);
+        final WebElement userDetailsToggleElement = driver().findElement(userProfileDropdownSelector);
         clickButton(userDetailsToggleElement);
     }
 }
