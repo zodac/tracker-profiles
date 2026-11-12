@@ -22,17 +22,13 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.button;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.form;
 import static net.zodac.tracker.framework.xpath.HtmlElement.input;
+import static net.zodac.tracker.framework.xpath.HtmlElement.label;
 import static net.zodac.tracker.framework.xpath.HtmlElement.span;
-import static net.zodac.tracker.framework.xpath.HtmlElement.table;
-import static net.zodac.tracker.framework.xpath.HtmlElement.td;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttribute;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
 
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -49,9 +45,8 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
     @Override
     protected By usernameFieldSelector() {
         return XpathBuilder
-            .from(div, withClass("panel-body"))
-            .child(form, atIndex(1))
-            .child(div, atIndex(1))
+            .from(form, withClass("neural-form"))
+            .child(label, atIndex(1))
             .child(input, atIndex(1))
             .build();
     }
@@ -59,9 +54,8 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
     @Override
     protected By passwordFieldSelector() {
         return XpathBuilder
-            .from(div, withClass("panel-body"))
-            .child(form, atIndex(1))
-            .child(div, atIndex(2))
+            .from(form, withClass("neural-form"))
+            .child(label, atIndex(2))
             .child(input, atIndex(1))
             .build();
     }
@@ -83,9 +77,7 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
     protected void preLoginClickAction() {
         LOGGER.info("\t\t >>> Waiting for user to enter captcha");
 
-        final By captchaSelector = XpathBuilder
-            .from(div, withClass("neural-captcha-group"))
-            .build();
+        final By captchaSelector = By.id("captcha");
         final WebElement captchaElement = driver().findElement(captchaSelector);
         browserInteractionHelper().highlightElement(captchaElement);
         displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
@@ -94,31 +86,31 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
     @Override
     protected By loginButtonSelector() {
         return XpathBuilder
-            .from(button, withAttribute("translate", "LOGIN.TITLE"))
+            .from(div, withClass("auth-actions"))
+            .child(button, atIndex(1))
             .build();
     }
 
     @Override
     protected By profileLinkSelector() {
         return XpathBuilder
-            .from(NamedHtmlElement.of("user"), atIndex(1))
-            .descendant(a, atIndex(1))
+            .from(span, withClass("dc-username-wrap"))
+            .child(a, atIndex(1))
             .build();
     }
 
     @Override
     protected By profilePageElementSelector() {
         return XpathBuilder
-            .from(div, withId("contentContainer"))
-            .descendant(table, atIndex(1))
-            .descendant(td, withAttribute("translate", "STATUS.BONUS"))
+            .from(div, withClass("profile-page"))
             .build();
     }
 
     @Override
     protected By logoutButtonSelector() {
         return XpathBuilder
-            .from(span, withAttribute("translate", "STATUS.LOG_OUT"))
+            .from(div, withClass("dc-site-top-utility-left"))
+            .child(button, atIndex(3))
             .build();
     }
 }

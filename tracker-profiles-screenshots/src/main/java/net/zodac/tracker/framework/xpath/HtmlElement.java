@@ -94,6 +94,11 @@ public enum HtmlElement implements Element {
     input,
 
     /**
+     * Label item {@link Element}: {@code <label>}.
+     */
+    label,
+
+    /**
      * List item {@link Element}: {@code <li>}.
      */
     li,
