@@ -18,29 +18,26 @@
 package net.zodac.tracker.handler;
 
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
+import static net.zodac.tracker.framework.xpath.HtmlElement.button;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
-import static net.zodac.tracker.framework.xpath.HtmlElement.input;
-import static net.zodac.tracker.framework.xpath.HtmlElement.p;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
 import java.util.List;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
-import net.zodac.tracker.handler.definition.DoesNotScrollDuringScreenshot;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasFixedHeader;
 import org.openqa.selenium.By;
-import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.WebElement;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Torrenting} tracker.
  */
 @TrackerHandler(name = "Torrenting", type = TrackerType.MANUAL, url = "https://www.torrenting.com/")
-public class Torrenting extends AbstractTrackerHandler implements DoesNotScrollDuringScreenshot, HasCloudflareCheck, HasFixedHeader {
+public class Torrenting extends AbstractTrackerHandler implements HasCloudflareCheck, HasFixedHeader {
 
     @Override
     public By cloudflareSelector() {
@@ -52,53 +49,43 @@ public class Torrenting extends AbstractTrackerHandler implements DoesNotScrollD
     @Override
     protected By loginButtonSelector() {
         return XpathBuilder
-            .from(input, withClass("button"), withType("submit"))
+            .from(div, withId("tab-login"))
+            .descendant(button, atIndex(1))
             .build();
     }
 
     @Override
     protected By profileLinkSelector() {
-        return By.id("usrnm");
+        return XpathBuilder
+            .from(a, withClass("hdr-stat"))
+            .build();
     }
 
     @Override
     protected By profilePageElementSelector() {
-        return By.id("userDetailsTable");
-    }
-
-    @Override
-    public void unfixHeaders(final RemoteWebDriver driver, final List<By> headerSelectors) {
-        // Special case where the header is made fixed due to JS injection, not HTML/CSS.
-        // To make the header unfixed, we inject some CSS to override the existing logic.
-        final String script = """
-                var style = document.createElement('style');
-                style.innerHTML = `
-                    #navBarOuter {
-                        position: static !important;
-                        top: auto !important;
-                    }
-                    #navBarSpace {
-                        height: 0 !important;
-                    }
-                `;
-                document.head.appendChild(style);
-            """;
-        LOGGER.trace("Using script: {}", script);
-        driver.executeScript(script);
+        return XpathBuilder
+            .from(div, withClass("up-header"))
+            .build();
     }
 
     @Override
     public List<By> headerSelectors() {
-        // Not needed, unfixHeaders() has been overridden and doesn't use the selectors
-        return List.of();
+        return List.of(
+            By.tagName("header")
+        );
     }
 
     @Override
     protected By logoutButtonSelector() {
+        final By userDropdownSelector = XpathBuilder
+            .from(div, withClass("hdr-dropdown"))
+            .build();
+        final WebElement userDropdown = driver().findElement(userDropdownSelector);
+        browserInteractionHelper().addClass(userDropdown, "show");
+
         return XpathBuilder
-            .from(div, withId("userInfoDiv"))
-            .child(p, atIndex(16))
-            .child(a, atIndex(1))
+            .from(div, withClass("hdr-dropdown"))
+            .child(a, atIndex(5))
             .build();
     }
 }
