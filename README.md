@@ -308,7 +308,6 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [PassThePopcorn](https://passthepopcorn.me/)         | Question on login                               |
 | [PornoLab](https://pornolab.net/forum/tracker.php)   | Needs to be explicitly translated               |
 | [PrivateHD](https://privatehd.to/)                   | Captcha & Cloudflare verification               |
-| [PT.GTK](https://pt.gtk.pw/)                         | Captcha                                         |
 | [RUTracker](https://rutracker.org/forum/tracker.php) | Cloudflare verification                         |
 | [SeedCore](https://seedcore.net/)                    | Cloudflare verification                         |
 | [SkyeySnow](https://skyeysnow.com/)                  | Needs to be explicitly translated               |
