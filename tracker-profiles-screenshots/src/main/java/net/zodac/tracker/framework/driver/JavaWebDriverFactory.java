@@ -113,6 +113,8 @@ public final class JavaWebDriverFactory {
         }
 
         chromeOptions.setExperimentalOption("prefs", driverPreferences);
+        chromeOptions.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
+        chromeOptions.setExperimentalOption("useAutomationExtension", false);
 
         // Additional flags to remove unnecessary information on browser
         chromeOptions.addArguments("--disable-blink-features=AutomationControlled");

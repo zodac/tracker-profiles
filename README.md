@@ -293,7 +293,7 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 | [CinemaZ](https://cinemaz.to/)                       | Captcha & Cloudflare verification               |
 | [CZTeam](https://czteam.me/)                         | Cloudflare verification                         |
 | [DigitalCore.Club](https://digitalcore.club/)        | Captcha                                         |
-| [DocsPedia](https://docspedia.world/)                | Captcha                                         |
+| [DocsPedia](https://docspedia.world/)                | Cloudflare verification                         |
 | [ExoticaZ](https://exoticaz.to/)                     | Captcha & Cloudflare verification               |
 | [GazelleGames](https://gazellegames.net/)            | Question on login                               |
 | [Hawke-Uno](https://hawke.uno/)                      | 2FA & Cloudflare verification                   |
