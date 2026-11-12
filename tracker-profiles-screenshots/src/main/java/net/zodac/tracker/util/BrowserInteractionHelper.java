@@ -414,6 +414,28 @@ public final class BrowserInteractionHelper {
     }
 
     /**
+     * Waits for the page that the {@link WebDriver} is loading to find the wanted {@link WebElement} and ensure it has non-empty text content.
+     *
+     * <p>
+     * Unlike {@link #waitForElementToBePresent(By, Duration)}, this method polls until the element's {@code textContent} attribute is non-blank,
+     * which is necessary when the element's text is populated asynchronously by JavaScript after the DOM node is first inserted.
+     *
+     * @param selector the {@link By} selector for the target {@link WebElement}
+     * @param timeout  the maximum {@link Duration} to wait
+     * @return the {@link WebElement} once it has non-empty text
+     * @throws TimeoutException thrown if the {@link WebElement} doesn't have text within the specified {@link Duration}
+     */
+    public WebElement waitForElementToHaveText(final By selector, final Duration timeout) {
+        LOGGER.trace("Waiting {} for [{}] to have text", timeout, selector);
+        final Wait<WebDriver> wait = new WebDriverWait(driver, timeout);
+        return wait.until(d -> {
+            final WebElement element = d.findElement(selector);
+            final String text = element.getAttribute("textContent");
+            return text != null && !text.isBlank() ? element : null;
+        });
+    }
+
+    /**
      * Waits for the page that the {@link WebDriver} is loading to find the wanted {@link WebElement} and ensure it is visible.
      *
      * @param selector the {@link By} selector for the target {@link WebElement}

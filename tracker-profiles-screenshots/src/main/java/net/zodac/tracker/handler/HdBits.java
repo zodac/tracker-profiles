@@ -20,6 +20,7 @@ package net.zodac.tracker.handler;
 import static net.zodac.tracker.framework.xpath.HtmlElement.a;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.HtmlElement.input;
+import static net.zodac.tracker.framework.xpath.HtmlElement.p;
 import static net.zodac.tracker.framework.xpath.HtmlElement.span;
 import static net.zodac.tracker.framework.xpath.HtmlElement.tbody;
 import static net.zodac.tracker.framework.xpath.HtmlElement.td;
@@ -87,7 +88,7 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
             .from(div, withClass("captchaIntro"))
             .descendant(span, withClass("captchaText"))
             .build();
-        final WebElement captchaTextElement = browserInteractionHelper.waitForElementToBePresent(captchaSelector, pageLoadDuration());
+        final WebElement captchaTextElement = browserInteractionHelper.waitForElementToHaveText(captchaSelector, pageLoadDuration());
         final String captchaText = browserInteractionHelper.getTextContent(captchaTextElement);
         LOGGER.info("\t\t >>> Waiting for user to select the '{}' image", captchaText);
 

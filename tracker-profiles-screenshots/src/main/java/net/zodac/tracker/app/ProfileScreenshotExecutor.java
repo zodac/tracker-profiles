@@ -179,7 +179,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.warn("\t- Page element became stale during interaction with tracker '{}'", trackerCredential.name());
         } catch (final NoSuchSessionException | NoSuchWindowException | UnreachableBrowserException e) {
             LOGGER.debug("\t- Browser became unavailable for tracker '{}' (cancelled by user, or browser crash)", trackerCredential.name(), e);
-            LOGGER.warn("\t- Browser became unavailable for tracker '{}' (cancelled by  user, or browser crash)", trackerCredential.name());
+            LOGGER.warn("\t- Browser became unavailable for tracker '{}' (cancelled by user, or browser crash)", trackerCredential.name());
         } catch (final Exception e) {
             screenshotOnError(trackerHandler, trackerCredential.name());
             LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerCredential.name(), e);
