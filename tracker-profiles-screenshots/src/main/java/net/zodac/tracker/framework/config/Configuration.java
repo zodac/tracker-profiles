@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.framework.config;
 
+import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -44,6 +45,22 @@ public final class Configuration {
      */
     public static ApplicationConfiguration init() {
         instance = ApplicationConfiguration.load();
+        return instance;
+    }
+
+    /**
+     * Reloads and stores the {@link ApplicationConfiguration}, with the provided {@code overrides} taking precedence over environment variables.
+     * Used by the web UI before each execution, so that settings changed in the UI take effect without restarting the application.
+     *
+     * <p>
+     * Callers must never cache the result of {@link #get()} in a {@code static} field, otherwise a reload will not be visible to them.
+     *
+     * @param overrides the values that override environment variables, keyed by {@link ConfigurationOption#name()}
+     * @return the loaded {@link ApplicationConfiguration}
+     * @throws IllegalArgumentException if any value is invalid (the previously loaded configuration is retained)
+     */
+    public static ApplicationConfiguration reload(final Map<String, String> overrides) {
+        instance = ApplicationConfiguration.load(overrides);
         return instance;
     }
 

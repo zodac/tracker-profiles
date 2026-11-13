@@ -18,23 +18,29 @@
 package net.zodac.tracker.framework.driver;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.driver.extension.Extension;
+import net.zodac.tracker.framework.exception.ExecutionCancelledException;
 import net.zodac.tracker.handler.definition.UsesExtensions;
 import net.zodac.tracker.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -55,18 +61,22 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * Callers then acquire a driver via {@link #acquire(TrackerType, List)}, use it, and return it via {@link #release(RemoteWebDriver)}.
  *
  * <p>
- * Call {@link #shutdown()} once all work has completed.
+ * Call {@link #shutdown()} once all work has completed. {@link #shutdown()} is also used to cancel an execution: it quits every browser (pooled and
+ * fresh), and once {@link ExecutionCancellation#isCancelled()} is {@code true}, no new browser is created or handed out.
  */
 public final class DriverPool {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String DEFAULT_BROWSER_PAGE = "about:blank";
+    private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(3L);
 
     private final Lock lock = new ReentrantLock();
     private final Map<TrackerType, BlockingDeque<RemoteWebDriver>> pool = new EnumMap<>(TrackerType.class);
     private final Set<RemoteWebDriver> allPooledDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
     private final IdentityHashMap<RemoteWebDriver, TrackerType> driverTypeMap = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
     private final IdentityHashMap<RemoteWebDriver, TrackerType> borrowedSlots = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
+    // Extension-equipped drivers currently in use, which are not pooled but must still be quit if the execution is cancelled
+    private final Set<RemoteWebDriver> freshDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private DriverPool() {
 
@@ -94,6 +104,7 @@ public final class DriverPool {
      * @param numberOfParallelThreads the number of pooled drivers to create
      */
     public static void initialise(final TrackerType trackerType, final int numberOfParallelThreads) {
+        ExecutionCancellation.throwIfCancelled();
         final int count = (trackerType == TrackerType.HEADLESS) ? numberOfParallelThreads : 1;
         LOGGER.debug("Initializing {} pooled {} driver{}", count, trackerType.formattedName(), StringUtils.pluralise(count));
         try {
@@ -103,28 +114,60 @@ public final class DriverPool {
         }
         JavaWebDriverFactory.sweepStaleUserDataDirs();
 
-        final List<RemoteWebDriver> drivers = new ArrayList<>(count);
-        try (final ExecutorService executor = Executors.newFixedThreadPool(count)) {
-            final List<Future<RemoteWebDriver>> futures =
-                executor.invokeAll(Collections.nCopies(count, () -> JavaWebDriverFactory.createDriver(trackerType, List.of())));
-            for (final Future<RemoteWebDriver> future : futures) {
-                drivers.add(future.get());
-            }
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while initialising pooled %s drivers".formatted(trackerType.formattedName()), e);
-        } catch (final ExecutionException e) {
-            throw new IllegalStateException("Failed to create pooled %s driver".formatted(trackerType.formattedName()), e);
-        }
+        final List<RemoteWebDriver> drivers = createDrivers(trackerType, count);
 
         final DriverPool instance = get();
         final BlockingDeque<RemoteWebDriver> deque = new LinkedBlockingDeque<>();
-        for (final RemoteWebDriver driver : drivers) {
-            deque.addLast(driver);
-            instance.allPooledDrivers.add(driver);
-            instance.driverTypeMap.put(driver, trackerType);
+        instance.lock.lock();
+        try {
+            for (final RemoteWebDriver driver : drivers) {
+                deque.addLast(driver);
+                instance.allPooledDrivers.add(driver);
+                instance.driverTypeMap.put(driver, trackerType);
+            }
+            instance.pool.put(trackerType, deque);
+        } finally {
+            instance.lock.unlock();
         }
-        instance.pool.put(trackerType, deque);
+
+        // If cancelled while the drivers were starting, the cancellation's shutdown() may have run before they were registered
+        if (ExecutionCancellation.isCancelled()) {
+            shutdown();
+            throw new ExecutionCancelledException();
+        }
+    }
+
+    // Creates the drivers in parallel. If interrupted (the execution is cancelled), this returns immediately rather than waiting for a creation that
+    // may be stuck. Any driver that has been, or is later, created is then quit, so no browser is left running
+    private static List<RemoteWebDriver> createDrivers(final TrackerType trackerType, final int count) {
+        // Shut down rather than closed: close() waits for every creation, so a cancellation would wait for a stuck browser to start
+        final ExecutorService executor = Executors.newFixedThreadPool(count); // NOPMD: CloseResource - see above
+        final List<CompletableFuture<RemoteWebDriver>> futures = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            futures.add(CompletableFuture.supplyAsync(() -> JavaWebDriverFactory.createDriver(trackerType, List.of()), executor));
+        }
+        executor.shutdown(); // No new tasks; the threads end once their creation completes
+
+        try {
+            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).get();
+            return futures.stream().map(CompletableFuture::join).toList();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            quitWhenCreated(futures);
+            ExecutionCancellation.throwIfCancelled();
+            throw new IllegalStateException("Interrupted while initialising pooled %s drivers".formatted(trackerType.formattedName()), e);
+        } catch (final ExecutionException e) {
+            quitWhenCreated(futures);
+            throw new IllegalStateException("Failed to create pooled %s driver".formatted(trackerType.formattedName()), e);
+        }
+    }
+
+    // Quits each driver now if already created, or as soon as its creation completes
+    private static void quitWhenCreated(final List<CompletableFuture<RemoteWebDriver>> futures) {
+        LOGGER.trace("Quitting created {} driver(s) after a failed initialisation", futures.size());
+        for (final CompletableFuture<RemoteWebDriver> future : futures) {
+            future.thenAccept(DriverPool::quitAndCleanup);
+        }
     }
 
     /**
@@ -145,6 +188,7 @@ public final class DriverPool {
      * @return the {@link RemoteWebDriver}
      */
     public static RemoteWebDriver acquire(final TrackerType trackerType, final List<Extension> extensions) {
+        ExecutionCancellation.throwIfCancelled();
         final DriverPool instance = get();
         if (!extensions.isEmpty()) {
             return acquireExtensionDriver(instance, trackerType, extensions);
@@ -163,6 +207,7 @@ public final class DriverPool {
                 return deque.takeFirst();
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
+                ExecutionCancellation.throwIfCancelled();
                 throw new IllegalStateException("Interrupted while waiting for pooled driver for type %s".formatted(trackerType), e);
             }
         }
@@ -178,6 +223,7 @@ public final class DriverPool {
         } finally {
             instance.lock.unlock();
         }
+        quitIfCancelled(instance, lazyDriver);
         return lazyDriver;
     }
 
@@ -211,15 +257,35 @@ public final class DriverPool {
             throw e;
         }
 
-        if (borrowed) {
-            instance.lock.lock();
-            try {
+        instance.lock.lock();
+        try {
+            instance.freshDrivers.add(driver);
+            if (borrowed) {
                 instance.borrowedSlots.put(driver, trackerType);
-            } finally {
-                instance.lock.unlock();
             }
+        } finally {
+            instance.lock.unlock();
         }
+        quitIfCancelled(instance, driver);
         return driver;
+    }
+
+    // If cancelled while a driver was being created, the cancellation's shutdown() may have run before it was registered, so quit it here
+    private static void quitIfCancelled(final DriverPool instance, final RemoteWebDriver driver) {
+        if (!ExecutionCancellation.isCancelled()) {
+            return;
+        }
+
+        instance.lock.lock();
+        try {
+            instance.freshDrivers.remove(driver);
+            instance.borrowedSlots.remove(driver);
+        } finally {
+            instance.lock.unlock();
+        }
+        removeFromTracking(instance, driver);
+        quitAndCleanup(driver);
+        throw new ExecutionCancelledException();
     }
 
     // Evicts and quits one pooled driver for the given type so an extension-based tracker can run without exceeding the pool size. Blocks until a
@@ -241,6 +307,7 @@ public final class DriverPool {
             evicted = deque.takeFirst();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
+            ExecutionCancellation.throwIfCancelled();
             throw new IllegalStateException("Interrupted while borrowing pooled slot for type %s".formatted(trackerType), e);
         }
         removeFromTracking(instance, evicted);
@@ -279,6 +346,12 @@ public final class DriverPool {
             }
         } else {
             LOGGER.trace("Quitting fresh driver");
+            instance.lock.lock();
+            try {
+                instance.freshDrivers.remove(driver);
+            } finally {
+                instance.lock.unlock();
+            }
             quitAndCleanup(driver);
             replenishBorrowedSlot(instance, driver);
         }
@@ -299,9 +372,16 @@ public final class DriverPool {
     }
 
     private static void replaceDeadDriverInPool(final DriverPool instance, final RemoteWebDriver deadDriver) {
-        LOGGER.warn("Pooled driver is dead, replacing with a fresh driver");
         final TrackerType trackerType = removeFromTracking(instance, deadDriver);
         quitAndCleanup(deadDriver);
+
+        // Every browser is closed when an execution is cancelled, so a dead driver is expected and not replaced
+        if (ExecutionCancellation.isCancelled()) {
+            LOGGER.debug("Pooled driver closed by cancellation, not replacing");
+            return;
+        }
+
+        LOGGER.warn("Pooled driver is dead, replacing with a fresh driver");
 
         if (trackerType == null) {
             LOGGER.warn("Dead driver has no associated TrackerType, cannot replace");
@@ -317,6 +397,11 @@ public final class DriverPool {
 
     // Creates a fresh pooled driver for the given type, registers it, and returns it to the pool. Returns false if no pool exists for the type.
     private static boolean addFreshPooledDriver(final DriverPool instance, final TrackerType trackerType) {
+        if (ExecutionCancellation.isCancelled()) {
+            LOGGER.trace("Execution cancelled, not creating a replacement {} driver", trackerType.formattedName());
+            return false;
+        }
+
         final BlockingDeque<RemoteWebDriver> deque;
         instance.lock.lock();
         try {
@@ -380,7 +465,46 @@ public final class DriverPool {
     }
 
     /**
-     * Shuts down the pool, quitting all pooled {@link RemoteWebDriver} instances and clearing all tracking state.
+     * Immediately stops every browser started by this application, then {@link #shutdown() shuts down} the pool. Used to cancel an execution.
+     *
+     * <p>
+     * Quitting through Selenium only reaches drivers that have finished starting, and waits on each browser. Instead, every browser process
+     * started by this JVM ({@code chromedriver}, the browsers it launched, and {@code selenium-manager}) is terminated directly, including
+     * browsers that are still starting. Processes still running after {@link #TERMINATION_TIMEOUT} are killed forcibly. In-progress Selenium
+     * calls then fail quickly, and the subsequent {@link #shutdown()} has nothing left to wait on.
+     */
+    public static void terminateAll() {
+        final List<ProcessHandle> browserProcesses = ProcessHandle.current()
+            .descendants()
+            .filter(DriverPool::isBrowserProcess)
+            .toList();
+        LOGGER.debug("Terminating {} browser process{}", browserProcesses.size(), browserProcesses.size() == 1 ? "" : "es");
+        browserProcesses.forEach(ProcessHandle::destroy);
+
+        try {
+            CompletableFuture.allOf(browserProcesses.stream().map(ProcessHandle::onExit).toArray(CompletableFuture[]::new))
+                .get(TERMINATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (final TimeoutException | ExecutionException e) {
+            LOGGER.trace("Not all browser processes terminated, killing forcibly", e);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.trace("Interrupted while waiting for browser processes to terminate, killing forcibly", e);
+        }
+        browserProcesses.stream()
+            .filter(ProcessHandle::isAlive)
+            .forEach(ProcessHandle::destroyForcibly);
+
+        shutdown();
+    }
+
+    private static boolean isBrowserProcess(final ProcessHandle processHandle) {
+        final String command = processHandle.info().command().orElse("").toLowerCase(Locale.ROOT);
+        return command.contains("chrom") || command.contains("selenium-manager");
+    }
+
+    /**
+     * Shuts down the pool, quitting all pooled and fresh (extension-equipped) {@link RemoteWebDriver} instances and clearing all tracking state.
+     * Safe to call multiple times, and from any thread (such as when cancelling an execution).
      */
     public static void shutdown() {
         final DriverPool instance = get();
@@ -391,10 +515,14 @@ public final class DriverPool {
             for (final RemoteWebDriver driver : instance.allPooledDrivers) {
                 quitAndCleanup(driver);
             }
+            for (final RemoteWebDriver driver : instance.freshDrivers) {
+                quitAndCleanup(driver);
+            }
             instance.pool.clear();
             instance.allPooledDrivers.clear();
             instance.driverTypeMap.clear();
             instance.borrowedSlots.clear();
+            instance.freshDrivers.clear();
         } finally {
             instance.lock.unlock();
         }

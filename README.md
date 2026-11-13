@@ -98,26 +98,25 @@ Pull the image:
 docker pull zodac/tracker-profiles:latest
 ```
 
-Copy [trackers_example.csv](./trackers_example.csv) to `/tmp/screenshots/trackers.csv`, then populate it with credentials for one or more
-[headless trackers](#headless):
-
-```csv
-trackerName,username,password
-Aither,myusername,mypassword
-```
-
 Run:
 
 ```bash
 docker run \
     --env TRACKER_EXECUTION_ORDER=HEADLESS \
-    -v /tmp/screenshots:/tmp/screenshots \
+    -p 8080:8080 \
+    -v /tmp/screenshots:/app/screenshots \
+    -v tracker-profiles-data:/app/data \
     --name tracker-profiles \
-    --env TRACKER_EXECUTION_ORDER=HEADLESS \
     --rm zodac/tracker-profiles:latest
 ```
 
+Then open [http://localhost:8080](http://localhost:8080), enter credentials for one or more [headless trackers](#headless) on the **Trackers** tab,
+and press **Start** on the **Main** tab. See [Web UI](#web-ui) for more details.
+
 Screenshots are saved to `/tmp/screenshots/<date>/` on your host. See [Configuration Options](#configuration-options) for the full list of settings.
+
+To run without the web UI (screenshot every tracker in a CSV file once, then exit), copy [trackers_example.csv](./trackers_example.csv) to
+`/tmp/screenshots/trackers.csv`, populate it with your credentials, and add `--env WEB_UI_ENABLED=false` to the command above.
 
 ## Trackers
 
@@ -349,11 +348,48 @@ this type of automated access.
 
 ## How To Use
 
+### Web UI
+
+By default, the application starts a web UI on port `8080` (configurable with `WEB_UI_PORT`), which has three tabs:
+
+- **Main**: start an execution, follow its progress, and view the application logs live. A running execution can be cancelled, which closes all
+  browsers and stops immediately (trackers already screenshot are kept), without stopping the container
+- **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with fields for
+  the username/email and password of each tracker
+- **Settings**: every [configuration option](#configuration-options), preloaded from the environment variables. Any value that differs from its
+  default is highlighted, along with whether it was set by an environment variable or saved in the web UI
+
+Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
+light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
+
+Tracker credentials and settings saved in the web UI are stored in a SQLite database (`DATABASE_PATH`), in the `/app/data` volume of the container.
+This is separate from the screenshots, so it can be mounted, backed up or cleared on its own. The examples use a named volume:
+
+- To keep the data across container restarts, mount the same volume each time: `-v tracker-profiles-data:/app/data`
+- To start again with no trackers or saved settings, stop the container and remove the volume: `docker volume rm tracker-profiles-data`
+- To keep the database on the host instead, bind-mount a directory: `-v /tmp/tracker-profiles-data:/app/data` (it must be writable by the
+  container user, UID `1000` by default)
+
+If no volume is mounted, Docker creates an anonymous volume, which is not reused when a new container is created (as with `--rm`).
+
+Settings saved in the web UI take precedence over environment variables (including after a restart) until they are reset, and are applied at the
+start of each execution. See [Configuration Options](#configuration-options) for which options can be changed in the web UI, and which can only be
+set as environment variables.
+
+If the database has no trackers when the application starts, any trackers in the CSV file at `TRACKER_INPUT_FILE_PATH` are imported (and enabled),
+so an existing CSV file can be migrated without retyping credentials.
+
+> **Note:** The web UI has no authentication, and the database stores passwords in plain text (as does the CSV file). Do not expose the port
+> outside your local network. Saved passwords are never sent back to the browser.
+
+Manual trackers still request user input (captcha, 2FA, etc.) through a dialog in the [browser UI](#browser-ui), so `DISPLAY` must be configured
+to execute them.
+
 ### Tracker Definitions
 
-First, copy the [trackers_example.csv](trackers_example.csv) file. This file needs to be updated with your user's login information for each tracker.
-Any unwanted trackers can be deleted, or prefixed by the `CSV_COMMENT_SYMBOL` environment variable so they are excluded. The tracker names are
-case-insensitive.
+When the web UI is disabled (`WEB_UI_ENABLED=false`), the trackers are read from a CSV file instead. First, copy the
+[trackers_example.csv](trackers_example.csv) file. This file needs to be updated with your user's login information for each tracker. Any unwanted
+trackers can be deleted, or prefixed by the `CSV_COMMENT_SYMBOL` environment variable so they are excluded. The tracker names are case-insensitive.
 
 The file can be saved anywhere but needs to be mounted into the Docker container, and it will be referenced by the `TRACKER_INPUT_FILE_PATH`
 environment variable when running the application, so remember where it is saved and what it is named.
@@ -377,6 +413,7 @@ docker run \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
+    --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
     --env FAIL_ON_UNSUPPORTED_TRACKER=true \
@@ -402,9 +439,13 @@ docker run \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
     --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
+    --env WEB_UI_ENABLED=true \
+    --env WEB_UI_PORT=8080 \
+    -p 8080:8080 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/screenshots:/app/screenshots \
     -v tracker-chrome-cache:/tmp/chrome-home \
+    -v tracker-profiles-data:/app/data \
     --name tracker-profiles \
     --rm zodac/tracker-profiles:latest
 ```
@@ -420,6 +461,7 @@ MSYS_NO_PATHCONV=1 docker run \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
+    --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
     --env FAIL_ON_UNSUPPORTED_TRACKER=true \
@@ -445,8 +487,12 @@ MSYS_NO_PATHCONV=1 docker run \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
     --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
+    --env WEB_UI_ENABLED=true \
+    --env WEB_UI_PORT=8080 \
+    -p 8080:8080 \
     -v /c/tmp/screenshots:/app/screenshots \
     -v tracker-chrome-cache:/tmp/chrome-home \
+    -v tracker-profiles-data:/app/data \
     --name tracker-profiles \
     --rm zodac/tracker-profiles:latest
 ```
@@ -489,22 +535,28 @@ exclude **MANUAL** from `TRACKER_EXECUTION_ORDER`.
 
 ### Configuration Options
 
-The following are all possible configuration options, defined as environment variables for the docker image:
+All options are set with environment variables on the docker image. They fall into two groups:
+
+- [Web UI Settings](#web-ui-settings) can also be changed on the **Settings** tab of the [web UI](#web-ui)
+- [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
+
+When the web UI is disabled (`WEB_UI_ENABLED=false`), every option is set as an environment variable.
+
+#### Web UI Settings
+
+These options are loaded from the environment variables (or their defaults) when the web UI starts, and the **Settings** tab shows where each value
+comes from. A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including
+after the container is restarted, until it is reset with the **Reset** button. Changes are applied at the start of the next execution.
 
 | Environment Variable                | Description                                                                                                                                                                                                                                     | Default Value                                                |
 |-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
 | *BROWSER_HEIGHT*                    | The height (in pixels) of the web browser used to take screenshots                                                                                                                                                                              | 1050                                                         |
 | *BROWSER_WIDTH*                     | The width (in pixels) of the web browser used to take screenshots                                                                                                                                                                               | 1680                                                         |
-| *CSV_COMMENT_SYMBOL*                | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                                                                                                                                              | #                                                            |
-| *DISPLAY*                           | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                                                                                                              |                                                              |
 | *ENABLE_ADULT_TRACKERS*             | Whether to take screenshots of trackers that primarily host adult content                                                                                                                                                                       | true                                                         |
 | *ENABLE_TRANSLATION_TO_ENGLISH*     | Whether to translate non-English trackers to English                                                                                                                                                                                            | true                                                         |
-| *FAIL_ON_UNSUPPORTED_TRACKER*       | Whether to fail if a tracker in the CSV file has no matching handler implementation                                                                                                                                                             | true                                                         |
 | *FORCE_UI_BROWSER*                  | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                                                                                                    | false                                                        |
 | *INPUT_TIMEOUT_ENABLED*             | Whether to add a timeout for when a user-input is required, otherwise waits                                                                                                                                                                     | false                                                        |
 | *INPUT_TIMEOUT_SECONDS*             | If *INPUT_TIMEOUT_ENABLED* is enabled, how long to wait for a user-input in [seconds]                                                                                                                                                           | 300                                                          |
-| *JAVA_ADDITIONAL_OPTS*              | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                                                                                                  |                                                              |
-| *JAVA_OPTS*                         | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                                                                                                  |                                                              |
 | *LOG_LEVEL*                         | The logging level for console output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                       | INFO                                                         |
 | *LOG_TRACKER_NAME*                  | Whether to prefix each log message with the name of the tracker being screenshot                                                                                                                                                                | true                                                         |
 | *NUMBER_OF_PARALLEL_THREADS*        | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                                                                                                           | 5                                                            |
@@ -521,7 +573,24 @@ The following are all possible configuration options, defined as environment var
 | *TAKE_SCREENSHOT_ON_ERROR*          | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                                                                                              | false                                                        |
 | *TIMEZONE*                          | The local timezone, used to retrieve the current date to name the output directory                                                                                                                                                              | UTC                                                          |
 | *TRACKER_EXECUTION_ORDER*           | The order in which different tracker types should be executed, at least one must be selected (case-insensitive)                                                                                                                                 | HEADLESS,MANUAL                                              |
+
+#### Startup-Only Options
+
+These options are read once when the container starts, or are only used by the CLI (`WEB_UI_ENABLED=false`) and the initial CSV import. The
+application options are shown on the **Settings** tab of the web UI for reference (marked as *Environment only*), but cannot be changed there.
+`DISPLAY`, `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container itself, so are not shown in the web UI.
+
+| Environment Variable                | Description                                                                                                                                                                                                                                     | Default Value                                                |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
+| *CSV_COMMENT_SYMBOL*                | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                                                                                                                                              | #                                                            |
+| *DATABASE_PATH*                     | The path to the SQLite database storing tracker credentials and settings saved in the [web UI](#web-ui) (inside the `/app/data` docker volume)                                                                                                  | /app/data/tracker-profiles.db                                |
+| *DISPLAY*                           | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                                                                                                              |                                                              |
+| *FAIL_ON_UNSUPPORTED_TRACKER*       | Whether to fail if a tracker in the CSV file has no matching handler implementation                                                                                                                                                             | true                                                         |
+| *JAVA_ADDITIONAL_OPTS*              | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                                                                                                  |                                                              |
+| *JAVA_OPTS*                         | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                                                                                                  |                                                              |
 | *TRACKER_INPUT_FILE_PATH*           | The path to the input tracker definition CSV file (inside the docker container)                                                                                                                                                                 | /tmp/screenshots/trackers.csv                                |
+| *WEB_UI_ENABLED*                    | Whether to start the [web UI](#web-ui), otherwise the trackers in the CSV file are screenshot once and the application exits                                                                                                                    | true                                                         |
+| *WEB_UI_PORT*                       | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                                                                                                          | 8080                                                         |
 
 #### JVM Options
 
@@ -661,6 +730,7 @@ docker run \
     --env BROWSER_HEIGHT=1050 \
     --env BROWSER_WIDTH=1680 \
     --env CSV_COMMENT_SYMBOL='#' \
+    --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
     --env FAIL_ON_UNSUPPORTED_TRACKER=false \
@@ -686,9 +756,13 @@ docker run \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
     --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
+    --env WEB_UI_ENABLED=true \
+    --env WEB_UI_PORT=8080 \
+    -p 8080:8080 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /tmp/screenshots:/app/screenshots \
     -v tracker-chrome-cache:/tmp/chrome-home \
+    -v tracker-profiles-data:/app/data \
     --name tracker-profiles-dev \
     --rm tracker-profiles-dev
 ```
@@ -751,6 +825,7 @@ mvn clean install && \
     TIMEZONE=UTC \
     TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
     TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
+    WEB_UI_ENABLED=false \
     java \
         --enable-preview \
         -Xms128m -Xmx512m \

@@ -7,6 +7,7 @@ on:
       - '.github/workflows/javascript.yml'
       - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
       - 'tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js'
+      - 'tracker-profiles-screenshots/src/main/resources/web/*.js'
   workflow_dispatch: # allows manual trigger
 
 jobs:

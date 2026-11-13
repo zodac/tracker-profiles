@@ -42,6 +42,10 @@
             <artifactId>flatlaf</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
@@ -77,6 +81,11 @@
             <groupId>org.osgi</groupId>
             <artifactId>osgi.annotation</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Test Dependencies -->
@@ -187,6 +196,16 @@
                                 <exclude>META-INF/MANIFEST*</exclude>
                             </excludes>
                         </filter>
+                        <!-- Strip sqlite-jdbc's non-Linux native libraries; the runtime is always a glibc-based Linux image -->
+                        <filter>
+                            <artifact>org.xerial:sqlite-jdbc</artifact>
+                            <excludes>
+                                <exclude>org/sqlite/native/FreeBSD/**</exclude>
+                                <exclude>org/sqlite/native/Linux-Musl/**</exclude>
+                                <exclude>org/sqlite/native/Mac/**</exclude>
+                                <exclude>org/sqlite/native/Windows/**</exclude>
+                            </excludes>
+                        </filter>
                         <!-- Strip selenium-manager's bundled macOS and Windows binaries; the runtime always provides a Linux chromedriver -->
                         <filter>
                             <artifact>org.seleniumhq.selenium:selenium-manager</artifact>
@@ -200,6 +219,10 @@
                         <!-- Ensure the manifest file has the correct main class -->
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                             <mainClass>net.zodac.tracker.ApplicationLauncher</mainClass>
+                            <manifestEntries>
+                                <!-- sqlite-jdbc loads a native library, which otherwise logs a restricted method warning on startup -->
+                                <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                            </manifestEntries>
                         </transformer>
 
                         <!-- Merge Log4j service provider files -->

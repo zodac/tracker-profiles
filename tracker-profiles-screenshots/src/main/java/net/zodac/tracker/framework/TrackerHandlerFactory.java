@@ -19,7 +19,9 @@ package net.zodac.tracker.framework;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -48,6 +50,19 @@ public final class TrackerHandlerFactory {
     public static Optional<TrackerHandler> findMatchingHandler(final String trackerName) {
         return Optional.ofNullable(TRACKER_HANDLES_BY_NAME.get(trackerName.toLowerCase(Locale.ROOT)))
             .map(Map.Entry::getValue);
+    }
+
+    /**
+     * Retrieves every supported {@link TrackerHandler}, ordered by {@link TrackerHandler#name()} (case-insensitive).
+     *
+     * @return all {@link TrackerHandler}s
+     */
+    public static List<TrackerHandler> allHandlers() {
+        return TRACKER_HANDLES_BY_NAME.values()
+            .stream()
+            .map(Map.Entry::getValue)
+            .sorted(Comparator.comparing(trackerHandler -> trackerHandler.name().toLowerCase(Locale.ROOT)))
+            .toList();
     }
 
     /**

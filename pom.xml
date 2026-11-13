@@ -34,6 +34,7 @@
         <!-- tracker-profiles-specific versions not in parent-pom -->
         <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
         <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
+        <sqlite-jdbc.version>3.54.1.0</sqlite-jdbc.version>
 
         <!-- Linter path overrides. parent-pom builds these from ${project.basedir}, which is correct for this root POM
              but resolves to the module's own directory when inherited - so tracker-profiles-screenshots/pom.xml
@@ -52,6 +53,11 @@
                 <artifactId>log4j-transform-maven-shade-plugin-extensions</artifactId>
                 <version>${log4j-transform-maven-shade-plugin-extensions.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite-jdbc.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -61,7 +67,7 @@
 
                 <!-- Override: add resolve-dependency-properties execution (provides
                      ${org.mockito:mockito-core:jar} for the surefire argLine below), and
-                     add log4j-core to the ignored-unused list (runtime-only dependency). -->
+                     add log4j-core and sqlite-jdbc to the ignored-unused list (runtime-only dependencies). -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
@@ -72,6 +78,8 @@
                                 <ignoredUnusedDeclaredDependencies combine.children="append">
                                     <!-- Included so the logging files are on the classpath at runtime - not directly used -->
                                     <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core::</ignoredUnusedDeclaredDependency>
+                                    <!-- JDBC driver loaded through java.sql.DriverManager by the web UI database - not directly used -->
+                                    <ignoredUnusedDeclaredDependency>org.xerial:sqlite-jdbc::</ignoredUnusedDeclaredDependency>
                                 </ignoredUnusedDeclaredDependencies>
                             </configuration>
                         </execution>

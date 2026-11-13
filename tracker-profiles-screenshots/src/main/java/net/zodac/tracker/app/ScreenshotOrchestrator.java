@@ -18,6 +18,7 @@
 package net.zodac.tracker.app;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +26,14 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
+import net.zodac.tracker.framework.exception.ExecutionCancelledException;
 import net.zodac.tracker.framework.progress.ProgressBarManager;
 import net.zodac.tracker.framework.progress.ProgressBarPrintStream;
 import net.zodac.tracker.framework.progress.TrackerStep;
@@ -46,7 +49,6 @@ import org.apache.logging.log4j.Logger;
 public final class ScreenshotOrchestrator {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
 
     private ScreenshotOrchestrator() {
 
@@ -61,11 +63,26 @@ public final class ScreenshotOrchestrator {
      *   <li>Collecting and reporting results</li>
      * </ol>
      *
+     * @param trackersByType the trackers to execute, organised by {@link TrackerType}
      * @return the {@link ExitState} of the execution
      * @throws IOException thrown if the output directories cannot be created
      * @see ScreenshotDirectories#createAll()
      */
     public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType) throws IOException {
+        return start(trackersByType, ExecutionListener.NONE);
+    }
+
+    /**
+     * Orchestrates the profile screenshot process, as with {@link #start(Map)}, notifying the {@link ExecutionListener} of progress.
+     *
+     * @param trackersByType    the trackers to execute, organised by {@link TrackerType}
+     * @param executionListener the {@link ExecutionListener} to notify of progress
+     * @return the {@link ExitState} of the execution
+     * @throws IOException thrown if the output directories cannot be created
+     * @see ScreenshotDirectories#createAll()
+     */
+    public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final ExecutionListener executionListener)
+        throws IOException {
         final int numberOfTrackers = countNumberOfTrackers(trackersByType);
         if (numberOfTrackers == 0) {
             LOGGER.error("No trackers selected!");
@@ -73,28 +90,38 @@ public final class ScreenshotOrchestrator {
         }
 
         ScreenshotDirectories.createAll();
+        executionListener.executionStarted(numberOfTrackers);
         final ResultCollector resultCollector = ResultCollector.start();
         final ProgressBarManager progressBarManager = ProgressBarManager.create();
+        final PrintStream originalOut = System.out; // NOPMD: CloseResource - System.out is restored after execution, never closed
         try (final ProgressBarPrintStream progressBarPrintStream = new ProgressBarPrintStream(progressBarManager)) {
             System.setOut(progressBarPrintStream);  // Override stdout with the progress bar output
             LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers));
 
-            TrackerRetriever.printTrackersInfo(trackersByType, CONFIG.trackerExecutionOrder());
+            TrackerRetriever.printTrackersInfo(trackersByType, Configuration.get().trackerExecutionOrder());
             progressBarManager.start(numberOfTrackers * TrackerStep.NUMBER_OF_STEPS);
 
             // Get the max length so we don't resize the log entry during execution
             final int maxTrackerNameLength = maxTrackerNameLength(trackersByType);
 
             // Execute in the order specified
-            for (final TrackerType trackerType : CONFIG.trackerExecutionOrder()) {
-                screenshotTrackerByType(trackerType, trackersByType, progressBarManager, maxTrackerNameLength, resultCollector);
+            for (final TrackerType trackerType : Configuration.get().trackerExecutionOrder()) {
+                if (ExecutionCancellation.isCancelled()) {
+                    break;
+                }
+                screenshotTrackerByType(trackerType, trackersByType, progressBarManager, maxTrackerNameLength, resultCollector, executionListener);
             }
         } finally {
+            System.setOut(originalOut);  // Restore stdout, so a subsequent run (from the web UI) does not wrap a stale progress bar
             ScreenshotTaker.shutdown();
             DriverPool.shutdown();
         }
 
-        return resultCollector.generateSummary(CONFIG.trackerExecutionOrder());
+        if (ExecutionCancellation.isCancelled()) {
+            LOGGER.debug("Execution cancelled, not generating a summary");
+            return ExitState.FAILURE;
+        }
+        return resultCollector.generateSummary(Configuration.get().trackerExecutionOrder());
     }
 
     private static int countNumberOfTrackers(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
@@ -105,7 +132,8 @@ public final class ScreenshotOrchestrator {
     }
 
     private static void screenshotTrackerByType(final TrackerType trackerType, final Map<TrackerType, Set<TrackerCredential>> trackersByType,
-        final ProgressBarManager progressBarManager, final int maxTrackerNameLength, final ResultCollector resultCollector) {
+        final ProgressBarManager progressBarManager, final int maxTrackerNameLength, final ResultCollector resultCollector,
+        final ExecutionListener executionListener) {
         if (!trackersByType.containsKey(trackerType)) {
             LOGGER.trace("No trackers of type {}", trackerType);
             return;
@@ -123,8 +151,7 @@ public final class ScreenshotOrchestrator {
         final List<Callable<Void>> trackerScreenshotTasks = new ArrayList<>();
         for (final TrackerCredential tracker : trackersByType.get(trackerType)) {
             trackerScreenshotTasks.add(() -> {
-                final boolean success = ProfileScreenshotExecutor.takeScreenshot(tracker, progressBarManager, maxTrackerNameLength);
-                resultCollector.addResult(trackerType, tracker.name(), success);
+                screenshotTracker(tracker, trackerType, progressBarManager, maxTrackerNameLength, resultCollector, executionListener);
                 return null;
             });
         }
@@ -134,12 +161,36 @@ public final class ScreenshotOrchestrator {
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("Parallel execution interrupted for {} trackers", trackerType.formattedName(), e);
-            LOGGER.warn("Parallel execution interrupted for {} trackers: {}", trackerType.formattedName(), e.getMessage());
+            if (!ExecutionCancellation.isCancelled()) {
+                LOGGER.warn("Parallel execution interrupted for {} trackers: {}", trackerType.formattedName(), e.getMessage());
+            }
         }
     }
 
+    // A tracker that is not started, or fails, because the execution was cancelled is not recorded as a result
+    private static void screenshotTracker(final TrackerCredential tracker, final TrackerType trackerType, final ProgressBarManager progressBarManager,
+        final int maxTrackerNameLength, final ResultCollector resultCollector, final ExecutionListener executionListener) {
+        if (ExecutionCancellation.isCancelled()) {
+            return;
+        }
+
+        final boolean success;
+        try {
+            success = ProfileScreenshotExecutor.takeScreenshot(tracker, progressBarManager, maxTrackerNameLength);
+        } catch (final ExecutionCancelledException e) {
+            LOGGER.debug("Execution cancelled for tracker '{}'", tracker.name(), e);
+            return;
+        }
+
+        if (!success && ExecutionCancellation.isCancelled()) {
+            return;
+        }
+        resultCollector.addResult(trackerType, tracker.name(), success);
+        executionListener.trackerCompleted(trackerType, tracker.name(), success);
+    }
+
     private static int getEffectiveThreadCount(final TrackerType trackerType, final int numberOfTrackers) {
-        if (CONFIG.forceUiBrowser()) {
+        if (Configuration.get().forceUiBrowser()) {
             LOGGER.debug("Forcing UI browser, parallelism disabled");
             return 1;
         }
@@ -150,8 +201,8 @@ public final class ScreenshotOrchestrator {
             return 1;
         }
 
-        LOGGER.trace("numberOfParallelThreads: {}, numberOfTrackers: {}", CONFIG.numberOfParallelThreads(), numberOfTrackers);
-        return Math.min(CONFIG.numberOfParallelThreads(), numberOfTrackers);
+        LOGGER.trace("numberOfParallelThreads: {}, numberOfTrackers: {}", Configuration.get().numberOfParallelThreads(), numberOfTrackers);
+        return Math.min(Configuration.get().numberOfParallelThreads(), numberOfTrackers);
     }
 
     private static int maxTrackerNameLength(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {

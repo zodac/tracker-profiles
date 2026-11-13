@@ -17,7 +17,7 @@ RUN jlink --compress=zip-9 \
         --no-header-files \
         --no-man-pages \
         --strip-debug \
-        --add-modules java.base,java.compiler,java.desktop,java.instrument,java.management,java.naming,java.net.http,java.rmi,java.scripting,java.sql,jdk.unsupported \
+        --add-modules java.base,java.compiler,java.desktop,java.instrument,java.management,java.naming,java.net.http,java.rmi,java.scripting,java.sql,jdk.httpserver,jdk.unsupported \
         --output "/opt/jdk" && \
     strip -p --strip-unneeded "/opt/jdk/lib/server/libjvm.so" && \
     { find /opt/jdk/bin -type f -exec strip -p --strip-unneeded {} \; || true; }
@@ -63,10 +63,12 @@ RUN printf 'trackerName,username,password\nAppCdsTraining,user,pass\n' > /tmp/tr
 # java.awt.headless=true returns a HeadlessGraphicsEnvironment without connecting to an X11 display
 # DISPLAY=:0 satisfies ApplicationLauncher's non-null DISPLAY env var check
 # FAIL_ON_UNSUPPORTED_TRACKER=false allows the training-only CSV row to be skipped without error
+# WEB_UI_ENABLED=false executes once from the CSV file and exits, rather than starting the web UI and running forever
 # The command exits with code 1 ("no trackers selected"); the class list is still written on exit
 RUN DISPLAY=":0" \
     TRACKER_INPUT_FILE_PATH=/tmp/trackers.csv \
     FAIL_ON_UNSUPPORTED_TRACKER=false \
+    WEB_UI_ENABLED=false \
     java \
         -Djava.awt.headless=true \
         -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders \
@@ -91,6 +93,7 @@ RUN sed -i '/log4j.*[Aa]sync/d' /app/classes.lst
 RUN DISPLAY=":0" \
     TRACKER_INPUT_FILE_PATH=/tmp/trackers.csv \
     FAIL_ON_UNSUPPORTED_TRACKER=false \
+    WEB_UI_ENABLED=false \
     java \
         -Djava.awt.headless=true \
         -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders \
@@ -161,15 +164,18 @@ COPY --chmod=755 ./docker/scripts/start.sh /app/start.sh
 # Configure nonroot user
 ARG PUID=1000
 ARG PGID=1000
-# Create user and group
+# Create user and group, and the directory for the web UI database (see DATABASE_PATH)
 RUN groupadd -g ${PGID} nonroot && \
     useradd -l -u ${PUID} -g nonroot -d /tmp/chrome-home -m nonroot && \
-    chown -R nonroot:nonroot /tmp/chrome-home
+    mkdir -p /app/data && \
+    chown -R nonroot:nonroot /tmp/chrome-home /app/data
 # Set environment and user
 ENV HOME=/tmp/chrome-home
 # hadolint ignore=DL3066
 USER nonroot
 VOLUME /tmp/chrome-home
+# Web UI database (tracker credentials and saved settings), kept separate from the screenshots so it can be mounted or cleared on its own
+VOLUME /app/data
 
 # Copy JDK & JAR
 COPY --from=jdk_builder /opt/jdk /opt/jdk
@@ -180,6 +186,9 @@ COPY --from=appcds_builder /app/app.jsa app.jsa
 # Copy JUL config so start.sh can pass it via -Djava.util.logging.config.file
 # JUL re-reads this file after every LogManager.reset(), which Selenium triggers on each RemoteWebDriver creation
 COPY --from=java_app_builder /app/tracker-profiles-screenshots/src/main/resources/logging.properties logging.properties
+
+# Web UI (see WEB_UI_ENABLED and WEB_UI_PORT)
+EXPOSE 8080
 
 # Start application
 CMD ["/app/start.sh"]

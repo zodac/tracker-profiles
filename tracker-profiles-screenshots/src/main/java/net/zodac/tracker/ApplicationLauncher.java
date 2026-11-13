@@ -17,6 +17,8 @@
 
 package net.zodac.tracker;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Set;
 import net.zodac.tracker.app.ScreenshotOrchestrator;
@@ -24,10 +26,13 @@ import net.zodac.tracker.app.TrackerRetriever;
 import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
 import net.zodac.tracker.util.ScreenshotTaker;
+import net.zodac.tracker.web.WebServer;
+import net.zodac.tracker.web.log.WebLogAppender;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,26 +48,47 @@ public final class ApplicationLauncher {
     }
 
     /**
-     * Main method for the application. Configures any requirements then launches the application.
+     * Main method for the application. Configures any requirements then launches the application. If
+     * {@link ApplicationConfiguration#webUiEnabled()} is {@code true}, the web UI is started and screenshots are executed on request. Otherwise,
+     * the trackers in the CSV file are screenshot once and the application exits.
      *
      * @see ScreenshotOrchestrator
      */
     // TODO: Investigate whether it's worth not logging out
     static void main() {
-        initApplicationConfiguration();
+        final ApplicationConfiguration applicationConfiguration = initApplicationConfiguration();
         registerShutdownHook();
+
+        if (applicationConfiguration.webUiEnabled()) {
+            startWebUi(applicationConfiguration);
+            return;
+        }
 
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.getTrackers();
         validateDisplay(trackersByType);
         startApplication(trackersByType);
     }
 
-    private static void initApplicationConfiguration() {
+    private static ApplicationConfiguration initApplicationConfiguration() {
         try {
-            Configuration.init();
+            return Configuration.init();
         } catch (final IllegalArgumentException e) {
             LOGGER.debug("Invalid environment variable", e);
             LOGGER.error("Invalid environment variable: {}", e.getMessage());
+            exit(ExitState.FAILURE);
+            throw e; // Unreachable, since exit() terminates the JVM
+        }
+    }
+
+    // The web server's dispatcher thread keeps the JVM running after main() returns, until the application is stopped
+    private static void startWebUi(final ApplicationConfiguration applicationConfiguration) {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        try {
+            final WebServer webServer = WebServer.start(applicationConfiguration, webLogAppender);
+            Runtime.getRuntime().addShutdownHook(new Thread(webServer::stop, "web-server-shutdown-hook"));
+        } catch (final IOException | SQLException e) {
+            LOGGER.debug("Unable to start web UI", e);
+            LOGGER.error("Unable to start web UI: {}", e.getMessage());
             exit(ExitState.FAILURE);
         }
     }

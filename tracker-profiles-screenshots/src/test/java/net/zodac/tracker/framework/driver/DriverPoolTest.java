@@ -18,10 +18,12 @@
 package net.zodac.tracker.framework.driver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,9 +34,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
+import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.extension.Extension;
+import net.zodac.tracker.framework.exception.ExecutionCancelledException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +64,57 @@ class DriverPoolTest {
         clearField(instance, "pool");
         clearField(instance, "allPooledDrivers");
         clearField(instance, "driverTypeMap");
+        clearField(instance, "freshDrivers");
+        ExecutionCancellation.reset();
+    }
+
+    @AfterEach
+    void resetCancellation() {
+        ExecutionCancellation.reset();
+    }
+
+    @Test
+    void givenCancelledExecution_whenAcquire_thenExceptionThrownAndNoDriverCreated() throws Exception {
+        injectPooledDriver(mock(RemoteWebDriver.class), TrackerType.HEADLESS);
+        ExecutionCancellation.requestCancellation();
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            assertThatThrownBy(() -> DriverPool.acquire(TrackerType.HEADLESS, List.of()))
+                .isInstanceOf(ExecutionCancelledException.class);
+            assertThatThrownBy(() -> DriverPool.acquire(TrackerType.MANUAL, List.of()))
+                .isInstanceOf(ExecutionCancelledException.class);
+            factory.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void givenFreshExtensionDriver_whenShutdown_thenFreshDriverAlsoQuit() {
+        final RemoteWebDriver fresh = mock(RemoteWebDriver.class);
+        final Extension extension = mock(Extension.class);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(TrackerType.HEADLESS, List.of(extension))).thenReturn(fresh);
+            DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
+            DriverPool.shutdown();
+        }
+
+        verify(fresh).quit();
+    }
+
+    @Test
+    void givenCancelledExecution_whenDeadPooledDriverReleased_thenNoReplacementCreated() throws Exception {
+        final RemoteWebDriver dead = mock(RemoteWebDriver.class);
+        when(dead.navigate()).thenThrow(new WebDriverException("session closed"));
+        injectPooledDriver(dead, TrackerType.HEADLESS);
+        DriverPool.acquire(TrackerType.HEADLESS, List.of());
+        ExecutionCancellation.requestCancellation();
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            DriverPool.release(dead);
+            factory.verify(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList()), never());
+        }
+
+        verify(dead).quit();
     }
 
     @Test

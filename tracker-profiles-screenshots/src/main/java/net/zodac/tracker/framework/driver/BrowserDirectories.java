@@ -20,7 +20,6 @@ package net.zodac.tracker.framework.driver;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,34 +30,43 @@ import org.apache.logging.log4j.Logger;
 final class BrowserDirectories {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
-
-    /**
-     * The directory under which per-run Chrome user-data (session profile) directories are created.
-     */
-    static final Path SESSIONS = Path.of(CONFIG.browserDataStoragePath(), "tracker-profiles-sessions");
-
-    /**
-     * The directory used as Chrome's disk cache.
-     */
-    static final Path CACHE = Path.of(CONFIG.browserDataStoragePath(), "selenium");
 
     private BrowserDirectories() {
 
     }
 
     /**
-     * Creates {@link #SESSIONS} and {@link #CACHE} if they do not already exist.
+     * The directory under which per-run Chrome user-data (session profile) directories are created.
+     *
+     * @return the sessions directory {@link Path}
+     */
+    static Path sessions() {
+        return Path.of(Configuration.get().browserDataStoragePath(), "tracker-profiles-sessions");
+    }
+
+    /**
+     * The directory used as Chrome's disk cache.
+     *
+     * @return the cache directory {@link Path}
+     */
+    static Path cache() {
+        return Path.of(Configuration.get().browserDataStoragePath(), "selenium");
+    }
+
+    /**
+     * Creates {@link #sessions()} and {@link #cache()} if they do not already exist.
      *
      * @throws IOException if either directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])
      */
     static void createAll() throws IOException {
         try {
-            Files.createDirectories(SESSIONS);
-            LOGGER.trace("Created browser sessions directory: [{}]", SESSIONS);
-            Files.createDirectories(CACHE);
-            LOGGER.trace("Created browser cache directory: [{}]", CACHE);
+            final Path sessions = sessions();
+            Files.createDirectories(sessions);
+            LOGGER.trace("Created browser sessions directory: [{}]", sessions);
+            final Path cache = cache();
+            Files.createDirectories(cache);
+            LOGGER.trace("Created browser cache directory: [{}]", cache);
         } catch (final IOException e) {
             throw new IOException("Unable to create browser directories: %s".formatted(e.getMessage()), e);
         }

@@ -30,6 +30,53 @@ sensitive information, takes a full-page screenshot, and logs out.
 Entry point: `ApplicationLauncher` → `TrackerRetriever` (load CSV) → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` →
 `ProfileScreenshotExecutor` (per tracker) → `AbstractTrackerHandler` subclass.
 
+When `WEB_UI_ENABLED=true` (the default), `ApplicationLauncher` instead starts the web UI (see [Web UI](#web-ui)), and each execution is started from
+the browser by `RunManager`, which loads the enabled trackers from the database rather than the CSV file.
+
+### Web UI
+
+Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServer` (module `jdk.httpserver`, included in the `jlink` list in
+`docker/Dockerfile`) with virtual threads, Gson for JSON, and no web framework.
+
+- **`WebServer`** — opens the database, imports the CSV file if no trackers are stored yet, and registers the handlers.
+- **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogStreamHandler` (`/api/logs`, Server-Sent Events),
+  `TrackerApiHandler` (`/api/trackers`), `SettingsApiHandler` (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
+  which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
+- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials and settings overrides. Passwords are never
+  returned by the API; a `null`/empty password on save keeps the stored one.
+- **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
+  overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track progress.
+- **`SettingsService`** — resolves each setting as saved value → environment variable → default, and validates all values together by calling
+  `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
+  default, until it is reset. `RunManager.reloadConfiguration` only applies saved values for options that are `editableAtRuntime`.
+- **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, retaining recent entries for the log stream.
+
+#### Cancelling an Execution
+
+`POST /api/run/cancel` calls `RunManager.cancel()`, which stops the execution without stopping the application:
+
+1. `ExecutionCancellation.requestCancellation()` sets a global flag. It is checked at checkpoints so no new work starts: before each tracker
+   type (`ScreenshotOrchestrator`), each tracker, each retry attempt (`ProfileScreenshotExecutor`), and whenever a driver is acquired or created
+   (`DriverPool` — including no replacement for a dead pooled driver). Checkpoints throw `ExecutionCancelledException`.
+2. `DriverPool.terminateAll()` kills every browser process descended from the JVM (`chromedriver`, Chrome, `selenium-manager`), including
+   browsers still starting up, so in-flight Selenium calls fail immediately. It then runs `shutdown()` for bookkeeping.
+3. The execution thread is interrupted, which cancels the worker tasks (unblocking any waiting on a pooled driver).
+
+While cancelled, failures are expected and logged at `DEBUG` (not `WARN`), and trackers that fail or never start are not recorded as results.
+The state is `CANCELLING` until the execution thread ends, then `CANCELLED`; a new execution cannot start until then, and
+`ExecutionCancellation.reset()` is called when it does. When adding new long-running work or browser creation, add a checkpoint, and never
+create a driver without registering it in `DriverPool` (or checking `ExecutionCancellation` after creating it).
+
+The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Content-Security-Policy: default-src 'self'`, so no inline scripts or
+styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the shared config, like the redaction scripts.
+
+- There are no save buttons: every change is saved automatically and confirmed with a toast. Text inputs save after a 1s pause in typing (or
+  on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place
+  (not re-rendered) so the focused input is never replaced.
+- The theme is light/dark, following the OS until the user picks one with the header toggle. The choice is stored in `localStorage`, and
+  `theme.js` (a blocking script in `<head>`) applies it before the first paint. Dark colours are defined twice in `style.css`, once for
+  `[data-theme="dark"]` and once for the OS preference when the user has not chosen light; keep the two blocks in sync.
+
 ### Retry and Screenshot Execution
 
 `ProfileScreenshotExecutor` has three layers:
@@ -42,8 +89,8 @@ Entry point: `ApplicationLauncher` → `TrackerRetriever` (load CSV) → `Displa
   `screenshotProfile`, and contains the full per-exception catch chain with tailored log messages. Caught failures fall through
   to a fresh retry; uncaught throws propagate out.
 
-Failure-screenshot writes go to `ScreenshotDirectories.ERRORS` / `ScreenshotDirectories.REDACTION_ERRORS`. Those directories
-are created up-front (and only when `TAKE_SCREENSHOT_ON_ERROR=true`) by `ScreenshotDirectories.createAll()` so the parallel
+Failure-screenshot writes go to `ScreenshotDirectories.errors()`. That directory is
+created up-front (and only when `TAKE_SCREENSHOT_ON_ERROR=true`) by `ScreenshotDirectories.createAll()` so the parallel
 write path never has to create them on demand.
 
 ### Tracker Handler Pattern
@@ -117,10 +164,10 @@ Run `grep -R --include='*.java' '^@TrackerHandler(' . | cut -d '"' -f2 | sort -u
 All runtime configuration is loaded from environment variables in `ApplicationConfiguration`. `Configuration.init()` is called once at startup by
 `ApplicationLauncher`; all subsequent callers use `Configuration.get()`. Any invalid value throws `IllegalArgumentException` at startup.
 
-**`AbstractTrackerHandler` subclasses must never declare a `private static final ApplicationConfiguration CONFIG = Configuration.get()` field.**
-`TrackerHandlerFactory` loads every handler class via reflection at startup, before `Configuration.init()` has been called. A static field on any
-handler class would therefore call `Configuration.get()` before initialisation, throwing `IllegalStateException`. If a handler method needs
-configuration, call `Configuration.get()` inline at the point of use instead:
+**No class may cache the configuration in a static field** (e.g. `private static final ApplicationConfiguration CONFIG = Configuration.get()`,
+or a constant derived from it). The web UI calls `Configuration.reload(...)` before each execution, so a cached value would be stale. For handler
+classes it is also a startup failure: `TrackerHandlerFactory` loads every handler class via reflection before `Configuration.init()` has been called,
+so the static field would throw `IllegalStateException`. Call `Configuration.get()` inline at the point of use instead:
 
 ```java
 // Correct — inline call inside the method body
@@ -136,13 +183,20 @@ protected By usernameFieldSelector() {
 private static final ApplicationConfiguration CONFIG = Configuration.get();
 ```
 
+Every env var is defined once in the `ConfigurationOption` enum (name, group, default value, `OptionType`, allowed values, description, and
+whether it can be changed in the web UI). This drives both loading and the web UI Settings tab. Values are resolved as: override (saved in the web
+UI) → environment variable → `ConfigurationOption.defaultValue()`, via the private `Source` record in `ApplicationConfiguration`.
+
 New env vars must be:
 
-1. Added as a record component (alphabetical order among components)
-2. Loaded via a `getXxx()` private static method using `getOrDefault()` or
+1. Added to `ConfigurationOption` (alphabetical order). Set `editableAtRuntime` to `false` if the value is only read at startup, or only used by
+   the CLI/CSV import (a web UI change would have no effect)
+2. Added as a record component (alphabetical order among components)
+3. Loaded via a `getXxx(source)` private static method using `source.get(ConfigurationOption.XXX)` and, where needed,
    `parseIntegerInRange(input, envVarName, min, max)` (use `Integer.MAX_VALUE` for unbounded positive integers)
-3. Added to the `load()` constructor call and `print()` debug log
-4. Documented in the README `### Configuration Options` table and both Docker run examples (Debian and Windows blocks), all in alphabetical order
+4. Added to the `load()` constructor call and `print()` debug log
+5. Documented in the README `### Configuration Options` section, in the `Web UI Settings` table if `editableAtRuntime`, otherwise the
+   `Startup-Only Options` table, and in all Docker run examples (Debian, Windows and development blocks), all in alphabetical order
 
 ### Redaction
 

@@ -10,6 +10,7 @@ static_categories=(
   "Documentation"
   "Framework"
   "Removal"
+  "UI"
 )
 
 # -----------------------------

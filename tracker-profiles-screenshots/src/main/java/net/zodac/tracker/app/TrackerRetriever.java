@@ -18,6 +18,7 @@
 package net.zodac.tracker.app;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,6 @@ import org.apache.logging.log4j.Logger;
  */
 public final class TrackerRetriever {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
 
     private TrackerRetriever() {
@@ -54,20 +54,12 @@ public final class TrackerRetriever {
      */
     public static Map<TrackerType, Set<TrackerCredential>> getTrackers() {
         LOGGER.trace("Retrieving trackers to execute");
-        final Set<TrackerType> trackerExecutionOrder = CONFIG.trackerExecutionOrder();
+        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
         LOGGER.debug("Tracker execution order: {}", trackerExecutionOrder);
 
         try {
             final Set<TrackerCredential> trackerCredentials = TrackerCsvReader.readTrackerCredentials();
-
-            final Map<TrackerType, Set<TrackerCredential>> trackersByType = new EnumMap<>(TrackerType.class);
-            for (final TrackerCredential trackerCredential : trackerCredentials) {
-                findHandler(trackerCredential, trackerExecutionOrder)
-                    .ifPresent(handler -> trackersByType.computeIfAbsent(handler.type(), _ -> new TreeSet<>()).add(trackerCredential));
-            }
-
-            LOGGER.trace("Trackers by type to be screenshot: {}", trackersByType);
-            return trackersByType;
+            return groupByType(trackerCredentials);
         } catch (final InvalidCsvInputException e) {
             LOGGER.warn("Error with CSV input file content", e);
             return Map.of();
@@ -75,6 +67,26 @@ public final class TrackerRetriever {
             LOGGER.warn("Unable to read CSV input file", e);
             return Map.of();
         }
+    }
+
+    /**
+     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, whose
+     * {@link TrackerType} is not in {@link ApplicationConfiguration#trackerExecutionOrder()}, or is an adult tracker when
+     * {@link ApplicationConfiguration#enableAdultContent()} is {@code false}.
+     *
+     * @param trackerCredentials the {@link TrackerCredential}s to organise
+     * @return {@link Map} of {@link TrackerType} to their credentials
+     */
+    public static Map<TrackerType, Set<TrackerCredential>> groupByType(final Collection<TrackerCredential> trackerCredentials) {
+        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
+        final Map<TrackerType, Set<TrackerCredential>> trackersByType = new EnumMap<>(TrackerType.class);
+        for (final TrackerCredential trackerCredential : trackerCredentials) {
+            findHandler(trackerCredential, trackerExecutionOrder)
+                .ifPresent(handler -> trackersByType.computeIfAbsent(handler.type(), _ -> new TreeSet<>()).add(trackerCredential));
+        }
+
+        LOGGER.trace("Trackers by type to be screenshot: {}", trackersByType);
+        return trackersByType;
     }
 
     private static Optional<TrackerHandler> findHandler(final TrackerCredential trackerCredential, final Set<TrackerType> trackerExecutionOrder) {
@@ -90,7 +102,7 @@ public final class TrackerRetriever {
             return Optional.empty();
         }
 
-        if (!CONFIG.enableAdultContent() && trackerHandler.adult()) {
+        if (!Configuration.get().enableAdultContent() && trackerHandler.adult()) {
             LOGGER.debug("Skipping adult tracker {}", trackerHandler.name());
             return Optional.empty();
         }

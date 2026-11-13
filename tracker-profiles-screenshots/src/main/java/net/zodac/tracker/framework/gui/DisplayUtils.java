@@ -57,7 +57,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 public final class DisplayUtils {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
 
     // UI element constants
@@ -144,10 +143,12 @@ public final class DisplayUtils {
 
     private static JPanel createButtons(final JDialog dialog, final AtomicBoolean userInput) {
         final JButton continueButton = new JButton();
-        final AtomicLong remainingSeconds = new AtomicLong(CONFIG.inputTimeoutEnabled() ? CONFIG.inputTimeoutDuration().toSeconds() : 0);
+        final ApplicationConfiguration applicationConfiguration = Configuration.get();
+        final AtomicLong remainingSeconds = new AtomicLong(
+            applicationConfiguration.inputTimeoutEnabled() ? applicationConfiguration.inputTimeoutDuration().toSeconds() : 0);
 
         // Initial text
-        if (CONFIG.inputTimeoutEnabled()) {
+        if (Configuration.get().inputTimeoutEnabled()) {
             continueButton.setText("%s (%s)".formatted(BUTTON_CONTINUE_TEXT, remainingSeconds.get()));
         } else {
             continueButton.setText(BUTTON_CONTINUE_TEXT);
@@ -179,7 +180,7 @@ public final class DisplayUtils {
     }
 
     private static @Nullable Timer startCountdownTimer(final AtomicLong remainingSeconds, final JButton continueButton) {
-        if (!CONFIG.inputTimeoutEnabled()) {
+        if (!Configuration.get().inputTimeoutEnabled()) {
             return null;
         }
 
@@ -211,18 +212,18 @@ public final class DisplayUtils {
                 return;
             }
 
-            if (CONFIG.inputTimeoutEnabled() && timedOut.get()) {
+            if (Configuration.get().inputTimeoutEnabled() && timedOut.get()) {
                 LOGGER.trace("Dialog timed out and no input received");
-                throw new NoUserInputException(CONFIG.inputTimeoutDuration(), new IllegalStateException());
+                throw new NoUserInputException(Configuration.get().inputTimeoutDuration(), new IllegalStateException());
             }
 
             LOGGER.trace("Dialog still running and no timeout received, assuming the user cancelled execution");
             throw new CancelledInputException();
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new NoUserInputException(CONFIG.inputTimeoutDuration(), e);
+            throw new NoUserInputException(Configuration.get().inputTimeoutDuration(), e);
         } catch (final InvocationTargetException e) {
-            throw new NoUserInputException(CONFIG.inputTimeoutDuration(), e.getCause() == null ? e : e.getCause());
+            throw new NoUserInputException(Configuration.get().inputTimeoutDuration(), e.getCause() == null ? e : e.getCause());
         } finally {
             if (timeoutTask != null) {
                 timeoutTask.cancel(true);
@@ -259,7 +260,7 @@ public final class DisplayUtils {
     }
 
     private static @Nullable ScheduledFuture<?> getTimeoutTask(final JDialog dialog, final AtomicBoolean timedOut) {
-        if (!CONFIG.inputTimeoutEnabled()) {
+        if (!Configuration.get().inputTimeoutEnabled()) {
             LOGGER.trace("Dialog timeouts disabled via TIMEOUT_DIALOGS=false");
             return null;
         }
@@ -270,10 +271,10 @@ public final class DisplayUtils {
                     timedOut.set(true);
                     dialog.dispose();
                 }
-            }), CONFIG.inputTimeoutDuration().toSeconds(), TimeUnit.SECONDS
+            }), Configuration.get().inputTimeoutDuration().toSeconds(), TimeUnit.SECONDS
         );
 
-        LOGGER.trace("Waiting {} for user input", CONFIG.inputTimeoutDuration());
+        LOGGER.trace("Waiting {} for user input", Configuration.get().inputTimeoutDuration());
         return timeoutTask;
     }
 

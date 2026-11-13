@@ -33,7 +33,6 @@ import org.apache.logging.log4j.Logger;
  */
 public final class DisplayValidator {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
 
     private DisplayValidator() {
@@ -55,19 +54,37 @@ public final class DisplayValidator {
      * @return {@code true} if the display state is valid for the trackers to be executed
      */
     public static boolean isValid(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
+        return isValid(trackersByType, true);
+    }
+
+    /**
+     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers, as with {@link #isValid(Map)}.
+     *
+     * <p>
+     * Once AWT is initialised, {@code java.awt.headless} cannot be changed. So when multiple executions run in the same JVM (as from the web UI),
+     * {@code forceHeadlessWhenNotNeeded} should be {@code false}, otherwise a headless-only execution would prevent any later execution from
+     * using a display.
+     *
+     * @param trackersByType             the loaded trackers grouped by {@link TrackerType}
+     * @param forceHeadlessWhenNotNeeded whether to set {@code java.awt.headless} to {@code true} when no display is required
+     * @return {@code true} if the display state is valid for the trackers to be executed
+     */
+    public static boolean isValid(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final boolean forceHeadlessWhenNotNeeded) {
         if (needsDisplay(trackersByType)) {
             LOGGER.trace("DISPLAY needs to be set");
             return isDisplayAvailable();
         }
 
         // If only using headless trackers (and not forcing UI), ignore any DISPLAY value
-        System.setProperty("java.awt.headless", "true");
+        if (forceHeadlessWhenNotNeeded) {
+            System.setProperty("java.awt.headless", "true");
+        }
         return true;
     }
 
     private static boolean needsDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return CONFIG.forceUiBrowser()
-            || (CONFIG.trackerExecutionOrder().contains(TrackerType.MANUAL) && trackersByType.containsKey(TrackerType.MANUAL));
+        return Configuration.get().forceUiBrowser()
+            || (Configuration.get().trackerExecutionOrder().contains(TrackerType.MANUAL) && trackersByType.containsKey(TrackerType.MANUAL));
     }
 
     private static boolean isDisplayAvailable() {

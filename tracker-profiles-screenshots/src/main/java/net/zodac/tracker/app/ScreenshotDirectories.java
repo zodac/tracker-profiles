@@ -31,37 +31,47 @@ import org.apache.logging.log4j.Logger;
 public final class ScreenshotDirectories {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
-
-    /**
-     * The root output directory for the current run.
-     */
-    public static final Path OUTPUT = CONFIG.outputDirectory();
-
-    /**
-     * The directory where failure screenshots are written when a tracker fails.
-     */
-    public static final Path ERRORS = OUTPUT.resolve("errors");
 
     private ScreenshotDirectories() {
 
     }
 
     /**
-     * Creates {@link #OUTPUT}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #ERRORS}. When the flag
-     * is disabled the error directory is intentionally not created.
+     * The root output directory for the current run. Resolved from the current {@link Configuration} on each call, since the configuration may
+     * be reloaded between runs of the web UI.
+     *
+     * @return the output directory {@link Path}
+     */
+    public static Path output() {
+        return Configuration.get().outputDirectory();
+    }
+
+    /**
+     * The directory where failure screenshots are written when a tracker fails.
+     *
+     * @return the error directory {@link Path}
+     */
+    public static Path errors() {
+        return output().resolve("errors");
+    }
+
+    /**
+     * Creates {@link #output()}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #errors()}. When the
+     * flag is disabled the error directory is intentionally not created.
      *
      * @throws IOException if any directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])
      */
     public static void createAll() throws IOException {
         try {
-            Files.createDirectories(OUTPUT);
-            LOGGER.trace("Created screenshot output directory: [{}]", OUTPUT);
+            final Path output = output();
+            Files.createDirectories(output);
+            LOGGER.trace("Created screenshot output directory: [{}]", output);
 
-            if (CONFIG.takeScreenshotOnError()) {
-                Files.createDirectories(ERRORS);
-                LOGGER.trace("Created error screenshot directory: [{}]", ERRORS);
+            if (Configuration.get().takeScreenshotOnError()) {
+                final Path errors = errors();
+                Files.createDirectories(errors);
+                LOGGER.trace("Created error screenshot directory: [{}]", errors);
             }
         } catch (final IOException e) {
             throw new IOException("Unable to create output directories: %s".formatted(e.getMessage()), e);

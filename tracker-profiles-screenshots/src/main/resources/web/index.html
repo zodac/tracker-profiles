@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tracker Profiles</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <!-- Loaded before the stylesheet (not deferred), so the saved theme is applied before the first paint -->
+    <script src="theme.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+<header class="app-header">
+    <div class="brand">
+        <img src="favicon.svg" alt="" class="brand-icon">
+        <span class="brand-name">Tracker Profiles</span>
+    </div>
+    <nav class="tabs" role="tablist">
+        <a href="#main" class="tab" role="tab" data-tab="main">Main</a>
+        <a href="#trackers" class="tab" role="tab" data-tab="trackers">Trackers</a>
+        <a href="#settings" class="tab" role="tab" data-tab="settings">Settings</a>
+    </nav>
+    <div class="header-actions">
+        <span id="header-status" class="status-pill" data-state="IDLE">Idle</span>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.5"/>
+                <path d="M12 1.5v3M12 19.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M1.5 12h3M19.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<main>
+    <!-- Main -->
+    <section id="tab-main" class="tab-panel" role="tabpanel">
+        <div class="card run-card">
+            <div class="run-summary">
+                <div>
+                    <h2>Screenshot trackers</h2>
+                    <p id="run-description" class="muted">Takes a screenshot of the profile page of every enabled tracker.</p>
+                </div>
+                <div class="run-actions">
+                    <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
+                    <button id="start-button" class="button primary large" type="button">Start</button>
+                </div>
+            </div>
+            <div id="run-progress" class="run-progress" hidden>
+                <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+                <div class="progress-counts">
+                    <span id="progress-text"></span>
+                    <span><span class="count success" id="success-count">0</span> succeeded</span>
+                    <span><span class="count failure" id="failure-count">0</span> failed</span>
+                </div>
+                <p id="failed-trackers" class="failed-trackers" hidden></p>
+            </div>
+        </div>
+
+        <div class="card log-card">
+            <div class="log-toolbar">
+                <h2>Logs</h2>
+                <div class="log-controls">
+                    <label class="inline-field">Level
+                        <select id="log-level-filter">
+                            <option value="TRACE">All</option>
+                            <option value="DEBUG">Debug and above</option>
+                            <option value="INFO" selected>Info and above</option>
+                            <option value="WARN">Warnings and errors</option>
+                            <option value="ERROR">Errors only</option>
+                        </select>
+                    </label>
+                    <label class="inline-field"><input type="checkbox" id="log-autoscroll" checked> Auto-scroll</label>
+                    <button id="log-clear" class="button" type="button">Clear view</button>
+                    <span id="log-connection" class="connection" data-connected="false">Disconnected</span>
+                </div>
+            </div>
+            <div id="log-output" class="log-output" role="log" aria-live="polite"></div>
+        </div>
+    </section>
+
+    <!-- Trackers -->
+    <section id="tab-trackers" class="tab-panel" role="tabpanel" hidden>
+        <div class="toolbar">
+            <input type="search" id="tracker-search" class="search" placeholder="Search trackers" aria-label="Search trackers">
+            <span id="tracker-summary" class="muted"></span>
+        </div>
+        <p class="muted hint">
+            Enabled trackers are executed when <strong>Start</strong> is pressed. Changes are saved automatically. Passwords are never sent back to
+            the browser: leave the password blank to keep the saved one.
+        </p>
+        <div id="adult-warning" class="notice" hidden>
+            Adult trackers are currently disabled by the <code>ENABLE_ADULT_TRACKERS</code> setting, so enabled adult trackers will be skipped.
+        </div>
+        <div id="tracker-groups"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
+        <p class="muted hint">
+            Values are loaded from the environment variables of the application. Changes are saved automatically, take precedence over the
+            environment variables, and are applied at the start of the next execution.
+        </p>
+        <div class="legend">
+            <span class="badge changed">Changed</span> value differs from the default
+            <span class="badge source-environment">Environment</span> set by an environment variable
+            <span class="badge source-web_ui">Saved</span> changed in this UI
+        </div>
+        <div id="settings-groups"></div>
+    </section>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

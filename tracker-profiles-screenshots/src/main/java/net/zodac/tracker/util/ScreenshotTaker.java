@@ -25,12 +25,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.imageio.ImageIO;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
@@ -42,10 +45,12 @@ import ru.yandex.qatools.ashot.shooting.ShootingStrategy;
 public final class ScreenshotTaker {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Duration TIME_BETWEEN_SCROLLS = Duration.ofMillis(500L);
-    private static final ExecutorService WRITE_EXECUTOR = Executors.newFixedThreadPool(CONFIG.numberOfParallelThreads());
+    private static final Lock WRITE_EXECUTOR_LOCK = new ReentrantLock();
     private static final Duration SHUTDOWN_DRAIN_TIMEOUT = Duration.ofSeconds(5L);
+
+    // Created on first use and recreated after each shutdown(), so the web UI can execute multiple runs in one JVM
+    private static final AtomicReference<@Nullable ExecutorService> WRITE_EXECUTOR = new AtomicReference<>();
 
     private ScreenshotTaker() {
 
@@ -104,7 +109,7 @@ public final class ScreenshotTaker {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scrollDuringScreenshot);
         final File screenshot = createOutputFileHandle(outputDirectory.toAbsolutePath(), baseName, index);
 
-        return WRITE_EXECUTOR.submit(() -> {
+        return getOrCreateWriteExecutor().submit(() -> {
             ImageIO.write(screenshotImage, "PNG", screenshot);
             return screenshot;
         });
@@ -112,20 +117,49 @@ public final class ScreenshotTaker {
 
     /**
      * Shuts down the bounded PNG write executor and waits up to {@link #SHUTDOWN_DRAIN_TIMEOUT} seconds for queued writes to drain. If the
-     * drain does not complete in time, in-flight writes are cancelled via {@link ExecutorService#shutdownNow()}. Safe to call multiple times.
+     * drain does not complete in time, in-flight writes are cancelled via {@link ExecutorService#shutdownNow()}. Safe to call multiple times, and a
+     * new executor is created for the next screenshot.
      */
     public static void shutdown() {
-        WRITE_EXECUTOR.shutdown();
+        final ExecutorService executorToShutdown; // NOPMD: CloseResource - shut down with a drain timeout below, rather than close()
+        WRITE_EXECUTOR_LOCK.lock();
         try {
-            if (!WRITE_EXECUTOR.awaitTermination(SHUTDOWN_DRAIN_TIMEOUT.toSeconds(), TimeUnit.SECONDS)) {
+            executorToShutdown = WRITE_EXECUTOR.getAndSet(null);
+        } finally {
+            WRITE_EXECUTOR_LOCK.unlock();
+        }
+
+        if (executorToShutdown == null) {
+            return;
+        }
+
+        executorToShutdown.shutdown();
+        try {
+            if (!executorToShutdown.awaitTermination(SHUTDOWN_DRAIN_TIMEOUT.toSeconds(), TimeUnit.SECONDS)) {
                 LOGGER.warn("PNG write executor did not drain within {}, cancelling in-flight writes", SHUTDOWN_DRAIN_TIMEOUT);
-                WRITE_EXECUTOR.shutdownNow();
+                executorToShutdown.shutdownNow();
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("Interrupted while draining PNG write executor", e);
             LOGGER.warn("Interrupted while draining PNG write executor: {}", e.getMessage());
-            WRITE_EXECUTOR.shutdownNow();
+            executorToShutdown.shutdownNow();
+        }
+    }
+
+    private static ExecutorService getOrCreateWriteExecutor() {
+        WRITE_EXECUTOR_LOCK.lock();
+        try {
+            final ExecutorService existingExecutor = WRITE_EXECUTOR.get();
+            if (existingExecutor != null) {
+                return existingExecutor;
+            }
+
+            final ExecutorService newExecutor = Executors.newFixedThreadPool(Configuration.get().numberOfParallelThreads());
+            WRITE_EXECUTOR.set(newExecutor);
+            return newExecutor;
+        } finally {
+            WRITE_EXECUTOR_LOCK.unlock();
         }
     }
 

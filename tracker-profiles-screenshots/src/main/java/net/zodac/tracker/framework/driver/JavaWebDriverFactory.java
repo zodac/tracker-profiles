@@ -52,7 +52,6 @@ public final class JavaWebDriverFactory {
     private static final String HEADLESS_USER_AGENT_MARKER = "HeadlessChrome";
     private static final String HEADLESS_USER_AGENT_REPLACEMENT = "Chrome";
     private static final File CHROMEDRIVER_EXECUTABLE_FILEPATH = new File("/usr/bin/chromedriver");
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<RemoteWebDriver, Path> USER_DATA_DIRS = new ConcurrentHashMap<>();
 
@@ -82,10 +81,10 @@ public final class JavaWebDriverFactory {
     public static RemoteWebDriver createDriver(final TrackerType trackerType, final List<Extension> extensions) {
         LOGGER.trace("Creating Java driver");
         final ChromeOptions chromeOptions = new ChromeOptions();
-        final Path userDataDir = BrowserDirectories.SESSIONS.resolve(UUID.randomUUID().toString());
+        final Path userDataDir = BrowserDirectories.sessions().resolve(UUID.randomUUID().toString());
 
         // User-defined options
-        chromeOptions.addArguments("--window-size=" + CONFIG.browserDimensions());
+        chromeOptions.addArguments("--window-size=" + Configuration.get().browserDimensions());
         if (usesHeadlessBrowser(trackerType)) {
             LOGGER.trace("Using headless browser");
             chromeOptions.addArguments("--headless=new");
@@ -98,7 +97,7 @@ public final class JavaWebDriverFactory {
         }
 
         // Cache to avoid reloading data on subsequent runs
-        chromeOptions.addArguments("--disk-cache-dir=" + BrowserDirectories.CACHE);
+        chromeOptions.addArguments("--disk-cache-dir=" + BrowserDirectories.cache());
 
         // Following 3 options are to ensure there are no conflicting issues running the browser on Linux
         chromeOptions.addArguments("--user-data-dir=" + userDataDir);
@@ -113,7 +112,7 @@ public final class JavaWebDriverFactory {
         driverPreferences.put("credentials_enable_service", false);
         driverPreferences.put("profile.password_manager_enabled", false);
 
-        if (CONFIG.enableTranslationToEnglish()) {
+        if (Configuration.get().enableTranslationToEnglish()) {
             // Translation options
             chromeOptions.addArguments("--lang=en");
             driverPreferences.put("intl.accept_languages", "en,en_US");
@@ -159,7 +158,7 @@ public final class JavaWebDriverFactory {
      * @return {@code true} if the tracker is executed in a headless browser
      */
     public static boolean usesHeadlessBrowser(final TrackerType trackerType) {
-        if (CONFIG.forceUiBrowser()) {
+        if (Configuration.get().forceUiBrowser()) {
             LOGGER.trace("UI browser is forced");
             return false;
         }
@@ -223,14 +222,14 @@ public final class JavaWebDriverFactory {
      * <p>
      * Previous JVM runs may leave UUID-named subdirectories behind if the process was interrupted before {@link #deleteUserDataDir(RemoteWebDriver)}
      * could clean them up. Any UUID-named subdirectory of the sessions path that does not belong to a currently tracked driver is deleted.
-     * Scanning is restricted to the {@link BrowserDirectories#SESSIONS} subdirectory to avoid accidentally deleting unrelated UUID-named directories
-     * that may exist elsewhere in the configured storage path.
+     * Scanning is restricted to the {@link BrowserDirectories#sessions()} subdirectory to avoid accidentally deleting unrelated UUID-named
+     * directories that may exist elsewhere in the configured storage path.
      *
      * <p>
      * Safe to call multiple times, as directories belonging to active drivers are excluded from deletion.
      */
     static void sweepStaleUserDataDirs() {
-        final Path sessionsDirectory = BrowserDirectories.SESSIONS;
+        final Path sessionsDirectory = BrowserDirectories.sessions();
         if (!Files.isDirectory(sessionsDirectory)) {
             return;
         }
@@ -318,7 +317,7 @@ public final class JavaWebDriverFactory {
 
     // No need to perform any validation, browserDimensions has been parsed already
     private static Dimension parseDimensions() {
-        final String[] parts = CONFIG.browserDimensions().split(",", -1);
+        final String[] parts = Configuration.get().browserDimensions().split(",", -1);
         final int width = Integer.parseInt(parts[0].trim());
         final int height = Integer.parseInt(parts[1].trim());
         return new Dimension(width, height);

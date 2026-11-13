@@ -43,7 +43,6 @@ import org.jspecify.annotations.Nullable;
  */
 public final class ProgressBarManager {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Lock progressBarLock = new ReentrantLock();
@@ -74,12 +73,12 @@ public final class ProgressBarManager {
      * @param ticksTotal the total number of fine-grained ticks across all trackers (used for bar fill and percentage)
      */
     public void start(final int ticksTotal) {
-        if (CONFIG.progressBarEnabled()) {
+        if (Configuration.get().progressBarEnabled()) {
             final ProgressBarConfiguration progressBarConfiguration = ProgressBarConfiguration.builder()
-                .length(CONFIG.progressBarLength())
-                .complete(CONFIG.progressBarCompleteCharacter())
-                .incomplete(CONFIG.progressBarIncompleteCharacter())
-                .format(CONFIG.progressBarFormat())
+                .length(Configuration.get().progressBarLength())
+                .complete(Configuration.get().progressBarCompleteCharacter())
+                .incomplete(Configuration.get().progressBarIncompleteCharacter())
+                .format(Configuration.get().progressBarFormat())
                 .ticksPerUnit(TrackerStep.NUMBER_OF_STEPS)
                 .build();
             LOGGER.trace("Starting progress bar with configuration: {}", progressBarConfiguration);

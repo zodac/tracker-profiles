@@ -45,15 +45,8 @@ import org.apache.logging.log4j.Logger;
  */
 public final class TrackerCsvReader {
 
-    private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String[] CSV_HEADERS = {"trackerName", "username", "password"};
-    private static final CSVFormat DEFAULT_FORMAT = CSVFormat.DEFAULT
-        .builder()
-        .setHeader(CSV_HEADERS)
-        .setSkipHeaderRecord(false)
-        .setCommentMarker(CONFIG.csvCommentSymbol())
-        .get();
 
     private TrackerCsvReader() {
 
@@ -67,7 +60,7 @@ public final class TrackerCsvReader {
      * @see TrackerCredential#fromCsv(CSVRecord)
      */
     public static Set<TrackerCredential> readTrackerCredentials() throws IOException {
-        final Path csvPath = CONFIG.trackerInputFilePath();
+        final Path csvPath = Configuration.get().trackerInputFilePath();
         validateFilePath(csvPath);
 
         final Set<TrackerCredential> trackerCredentials = extractTrackerCredentials(csvPath);
@@ -82,7 +75,7 @@ public final class TrackerCsvReader {
 
         if (!trackersWithNoHandlers.isEmpty()) {
             final String plural = StringUtils.pluralise(trackersWithNoHandlers);
-            if (CONFIG.failOnUnsupportedTracker()) {
+            if (Configuration.get().failOnUnsupportedTracker()) {
                 throw new IllegalArgumentException("Unknown tracker%s in CSV: %s".formatted(plural, trackersWithNoHandlers));
             } else {
                 LOGGER.debug("Unknown tracker{} in CSV: {}", plural, trackersWithNoHandlers);
@@ -95,9 +88,9 @@ public final class TrackerCsvReader {
     }
 
     private static Set<TrackerCredential> extractTrackerCredentials(final Path csvPath) throws IOException {
-        try (final InputStream inputStream = Files.newInputStream(CONFIG.trackerInputFilePath());
+        try (final InputStream inputStream = Files.newInputStream(Configuration.get().trackerInputFilePath());
             final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
-            final CSVParser csvParser = DEFAULT_FORMAT.parse(reader)
+            final CSVParser csvParser = csvFormat().parse(reader)
         ) {
             // Ensure file isn't empty
             final List<CSVRecord> records = csvParser.getRecords();
@@ -109,6 +102,16 @@ public final class TrackerCsvReader {
                 .map(TrackerCredential::fromCsv)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         }
+    }
+
+    // Built on each read, since the comment symbol may change when the configuration is reloaded
+    private static CSVFormat csvFormat() {
+        return CSVFormat.DEFAULT
+            .builder()
+            .setHeader(CSV_HEADERS)
+            .setSkipHeaderRecord(false)
+            .setCommentMarker(Configuration.get().csvCommentSymbol())
+            .get();
     }
 
     private static void validateFilePath(final Path csvPath) {

@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -47,6 +48,7 @@ import org.apache.logging.log4j.Logger;
  * @param browserDataStoragePath         the file path in which to store browser data (profiles, caches, etc.)
  * @param browserDimensions              the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param csvCommentSymbol               the {@code char} defining a comment row in the CSV file
+ * @param databasePath                   the {@link Path} to the SQLite database used by the web UI
  * @param enableAdultContent             whether to enable screenshots for trackers primarily hosting adult content
  * @param enableTranslationToEnglish     whether to translate non-English {@link TrackerType}s to English
  * @param existingScreenshotAction       the {@link ExistingScreenshotAction} to perform when a screenshot exists for a tracker
@@ -68,11 +70,14 @@ import org.apache.logging.log4j.Logger;
  * @param takeScreenshotOnError          whether to take a screenshot of the current page if an error occurs during screenshotting
  * @param trackerExecutionOrder          the execution order of the different {@link TrackerType}s
  * @param trackerInputFilePath           the {@link Path} to the input tracker CSV file
+ * @param webUiEnabled                   whether to start the web UI rather than executing once from the CSV file
+ * @param webUiPort                      the port on which the web UI is served
  */
 public record ApplicationConfiguration(
     String browserDataStoragePath,
     String browserDimensions,
     char csvCommentSymbol,
+    Path databasePath,
     boolean enableAdultContent,
     boolean enableTranslationToEnglish,
     ExistingScreenshotAction existingScreenshotAction,
@@ -93,26 +98,14 @@ public record ApplicationConfiguration(
     Set<RedactionType> redactionTypes,
     boolean takeScreenshotOnError,
     Set<TrackerType> trackerExecutionOrder,
-    Path trackerInputFilePath
+    Path trackerInputFilePath,
+    boolean webUiEnabled,
+    int webUiPort
 ) {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    // Default values
     private static final String BROWSER_DATA_STORAGE_PATH = "/tmp/chrome-home";
-    private static final String DEFAULT_BROWSER_WIDTH = "1680";
-    private static final String DEFAULT_BROWSER_HEIGHT = "1050";
-    private static final String DEFAULT_CSV_COMMENT_SYMBOL = "#";
-    private static final String DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT = "yyyy-MM-dd";
-    private static final String DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH = "/app/screenshots";
-    private static final String DEFAULT_PROGRESS_BAR_COMPLETE_CHARACTER = "█";
-    private static final String DEFAULT_PROGRESS_BAR_FORMAT = ":bar :percent% | [:elapsed] | :units/:total-units trackers";
-    private static final String DEFAULT_PROGRESS_BAR_INCOMPLETE_CHARACTER = "░";
-    private static final String DEFAULT_REDACTION_TYPE = "BOX";
-    private static final ExistingScreenshotAction DEFAULT_SCREENSHOT_EXISTS_ACTION = ExistingScreenshotAction.CREATE_ANOTHER;
-    private static final String DEFAULT_TIMEZONE = "UTC";
-    private static final String DEFAULT_TRACKER_EXECUTION_ORDER = "HEADLESS,MANUAL";
-    private static final String DEFAULT_TRACKER_INPUT_FILE_PATH = DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH + "/trackers.csv";
 
     private static final Set<String> VALID_LOG_LEVELS = Arrays.stream(Level.values())
         .map(Level::name)
@@ -135,31 +128,47 @@ public record ApplicationConfiguration(
      * @return the {@link ApplicationConfiguration}
      */
     public static ApplicationConfiguration load() {
+        return load(Map.of());
+    }
+
+    /**
+     * Loads the {@link ApplicationConfiguration}, with each value taken from (in order of precedence): the provided {@code overrides}, the
+     * environment variable, then the {@link ConfigurationOption#defaultValue()}.
+     *
+     * @param overrides the values that override environment variables, keyed by {@link ConfigurationOption#name()}
+     * @return the {@link ApplicationConfiguration}
+     * @throws IllegalArgumentException thrown if any value is invalid
+     */
+    public static ApplicationConfiguration load(final Map<String, String> overrides) {
+        final Source source = new Source(overrides);
         final ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration(
             BROWSER_DATA_STORAGE_PATH,
-            getBrowserDimensions(),
-            getCsvCommentSymbol(),
-            getBooleanEnvironmentVariable("ENABLE_ADULT_TRACKERS", true),
-            getBooleanEnvironmentVariable("ENABLE_TRANSLATION_TO_ENGLISH", true),
-            getScreenshotExistsAction(),
-            getBooleanEnvironmentVariable("FAIL_ON_UNSUPPORTED_TRACKER", true),
-            getBooleanEnvironmentVariable("FORCE_UI_BROWSER", false),
-            getInputTimeoutDuration(),
-            getBooleanEnvironmentVariable("INPUT_TIMEOUT_ENABLED", false),
-            getLogLevel(),
-            getBooleanEnvironmentVariable("LOG_TRACKER_NAME", true),
-            getNumberOfParallelThreads(),
-            getNumberOfScreenshotAttempts(),
-            getOutputDirectory(),
-            getProgressBarCompleteCharacter(),
-            getBooleanEnvironmentVariable("PROGRESS_BAR_ENABLED", true),
-            getProgressBarFormat(),
-            getProgressBarIncompleteCharacter(),
-            getProgressBarLength(),
-            getRedactionTypes(),
-            getBooleanEnvironmentVariable("TAKE_SCREENSHOT_ON_ERROR", false),
-            getTrackerExecutionOrder(),
-            getTrackerInputFilePath()
+            getBrowserDimensions(source),
+            getCsvCommentSymbol(source),
+            Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
+            getBooleanValue(source, ConfigurationOption.ENABLE_ADULT_TRACKERS),
+            getBooleanValue(source, ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
+            getScreenshotExistsAction(source),
+            getBooleanValue(source, ConfigurationOption.FAIL_ON_UNSUPPORTED_TRACKER),
+            getBooleanValue(source, ConfigurationOption.FORCE_UI_BROWSER),
+            getInputTimeoutDuration(source),
+            getBooleanValue(source, ConfigurationOption.INPUT_TIMEOUT_ENABLED),
+            getLogLevel(source),
+            getBooleanValue(source, ConfigurationOption.LOG_TRACKER_NAME),
+            getNumberOfParallelThreads(source),
+            getNumberOfScreenshotAttempts(source),
+            getOutputDirectory(source),
+            parseSingleCharacter(source, ConfigurationOption.PROGRESS_BAR_COMPLETE_CHARACTER),
+            getBooleanValue(source, ConfigurationOption.PROGRESS_BAR_ENABLED),
+            getProgressBarFormat(source),
+            parseSingleCharacter(source, ConfigurationOption.PROGRESS_BAR_INCOMPLETE_CHARACTER),
+            getProgressBarLength(source),
+            getRedactionTypes(source),
+            getBooleanValue(source, ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
+            getTrackerExecutionOrder(source),
+            getTrackerInputFilePath(source),
+            getBooleanValue(source, ConfigurationOption.WEB_UI_ENABLED),
+            getWebUiPort(source)
         );
 
         if (applicationConfiguration.progressBarCompleteCharacter() == applicationConfiguration.progressBarIncompleteCharacter()) {
@@ -171,9 +180,9 @@ public record ApplicationConfiguration(
         return applicationConfiguration;
     }
 
-    private static String getBrowserDimensions() {
-        final String browserWidth = getOrDefault("BROWSER_WIDTH", DEFAULT_BROWSER_WIDTH);
-        final String browserHeight = getOrDefault("BROWSER_HEIGHT", DEFAULT_BROWSER_HEIGHT);
+    private static String getBrowserDimensions(final Source source) {
+        final String browserWidth = source.get(ConfigurationOption.BROWSER_WIDTH);
+        final String browserHeight = source.get(ConfigurationOption.BROWSER_HEIGHT);
         final String resolution = "%sx%s".formatted(browserWidth, browserHeight);
 
         if (VALID_RESOLUTIONS.contains(resolution)) {
@@ -184,18 +193,22 @@ public record ApplicationConfiguration(
             "[BROWSER_WIDTH][BROWSER_HEIGHT] Unsupported browser resolution '%s', must be one of: %s".formatted(resolution, VALID_RESOLUTIONS));
     }
 
-    private static char getCsvCommentSymbol() {
-        return getOrDefault("CSV_COMMENT_SYMBOL", DEFAULT_CSV_COMMENT_SYMBOL).charAt(0);
+    private static char getCsvCommentSymbol(final Source source) {
+        final String csvCommentSymbol = source.get(ConfigurationOption.CSV_COMMENT_SYMBOL);
+        if (csvCommentSymbol.isEmpty()) {
+            throw new IllegalArgumentException("[CSV_COMMENT_SYMBOL] Value must not be empty");
+        }
+        return csvCommentSymbol.charAt(0);
     }
 
-    private static Duration getInputTimeoutDuration() {
-        final String inputTimeoutSeconds = getOrDefault("INPUT_TIMEOUT_SECONDS", "300");
+    private static Duration getInputTimeoutDuration(final Source source) {
+        final String inputTimeoutSeconds = source.get(ConfigurationOption.INPUT_TIMEOUT_SECONDS);
         final int inputTimeoutSecondsValidated = parseIntegerInRange(inputTimeoutSeconds, "INPUT_TIMEOUT_SECONDS", 1, Integer.MAX_VALUE);
         return Duration.ofSeconds(inputTimeoutSecondsValidated);
     }
 
-    private static String getLogLevel() {
-        final String logLevelRaw = getOrDefault("LOG_LEVEL", "INFO").toUpperCase(Locale.ROOT);
+    private static String getLogLevel(final Source source) {
+        final String logLevelRaw = source.get(ConfigurationOption.LOG_LEVEL).toUpperCase(Locale.ROOT);
         if (!VALID_LOG_LEVELS.contains(logLevelRaw)) {
             throw new IllegalArgumentException(
                 "[LOG_LEVEL] Invalid value: '%s', must be one of: %s".formatted(logLevelRaw, VALID_LOG_LEVELS));
@@ -203,20 +216,20 @@ public record ApplicationConfiguration(
         return logLevelRaw;
     }
 
-    private static int getNumberOfParallelThreads() {
-        final String raw = getOrDefault("NUMBER_OF_PARALLEL_THREADS", "5");
+    private static int getNumberOfParallelThreads(final Source source) {
+        final String raw = source.get(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS);
         return parseIntegerInRange(raw, "NUMBER_OF_PARALLEL_THREADS", 1, 32);
     }
 
-    private static int getNumberOfScreenshotAttempts() {
-        final String numberOfRetriesRaw = getOrDefault("NUMBER_OF_SCREENSHOT_ATTEMPTS", "1");
+    private static int getNumberOfScreenshotAttempts(final Source source) {
+        final String numberOfRetriesRaw = source.get(ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS);
         return parseIntegerInRange(numberOfRetriesRaw, "NUMBER_OF_SCREENSHOT_ATTEMPTS", 1, 5);
     }
 
-    private static Path getOutputDirectory() {
-        final String timeZone = getOrDefault("TIMEZONE", DEFAULT_TIMEZONE);
-        final String outputDirectoryNameFormat = getOrDefault("OUTPUT_DIRECTORY_NAME_FORMAT", DEFAULT_OUTPUT_DIRECTORY_NAME_FORMAT);
-        final String outputDirectoryParentPath = getOrDefault("OUTPUT_DIRECTORY_PARENT_PATH", DEFAULT_OUTPUT_DIRECTORY_PARENT_PATH);
+    private static Path getOutputDirectory(final Source source) {
+        final String timeZone = source.get(ConfigurationOption.TIMEZONE);
+        final String outputDirectoryNameFormat = source.get(ConfigurationOption.OUTPUT_DIRECTORY_NAME_FORMAT);
+        final String outputDirectoryParentPath = source.get(ConfigurationOption.OUTPUT_DIRECTORY_PARENT_PATH);
 
         try {
             final LocalDate currentDate = LocalDate.now(ZoneId.of(timeZone));
@@ -229,27 +242,25 @@ public record ApplicationConfiguration(
         }
     }
 
-    private static char getProgressBarCompleteCharacter() {
-        return parseSingleCharacter("PROGRESS_BAR_COMPLETE_CHARACTER", DEFAULT_PROGRESS_BAR_COMPLETE_CHARACTER);
-    }
-
-    private static String getProgressBarFormat() {
-        final String format = getOrDefault("PROGRESS_BAR_FORMAT", DEFAULT_PROGRESS_BAR_FORMAT);
+    private static String getProgressBarFormat(final Source source) {
+        final String format = source.get(ConfigurationOption.PROGRESS_BAR_FORMAT);
         if (format.isBlank()) {
             throw new IllegalArgumentException("[PROGRESS_BAR_FORMAT] Value must not be blank");
         }
         return format;
     }
 
-    private static char getProgressBarIncompleteCharacter() {
-        return parseSingleCharacter("PROGRESS_BAR_INCOMPLETE_CHARACTER", DEFAULT_PROGRESS_BAR_INCOMPLETE_CHARACTER);
-    }
-
-    private static char parseSingleCharacter(final String envVarName, final String defaultValue) {
-        final String raw = getOrDefault(envVarName, defaultValue);
+    private static char parseSingleCharacter(final Source source, final ConfigurationOption option) {
+        final String envVarName = option.name();
+        final String raw = source.get(option);
         // Fast path: JVM decoded the env var correctly as a single Unicode code point
         if (raw.codePointCount(0, raw.length()) == 1) {
             return (char) raw.codePointAt(0);
+        }
+
+        // Overridden values do not come from the environment, so there are no raw bytes to recover
+        if (source.isOverridden(option)) {
+            throw new IllegalArgumentException("[%s] Must be a single character, got: '%s'".formatted(envVarName, raw));
         }
 
         // Slow path A: JVM decoded UTF-8 bytes using ISO-8859-1 (one char per byte)
@@ -303,17 +314,17 @@ public record ApplicationConfiguration(
         return true;
     }
 
-    private static int getProgressBarLength() {
-        final String raw = getOrDefault("PROGRESS_BAR_LENGTH", "35");
+    private static int getProgressBarLength(final Source source) {
+        final String raw = source.get(ConfigurationOption.PROGRESS_BAR_LENGTH);
         return parseIntegerInRange(raw, "PROGRESS_BAR_LENGTH", 10, 80);
     }
 
-    private static Set<RedactionType> getRedactionTypes() {
-        return parseCommaSeparatedEnvVar("REDACTION_TYPE", DEFAULT_REDACTION_TYPE, RedactionType::find);
+    private static Set<RedactionType> getRedactionTypes(final Source source) {
+        return parseCommaSeparatedValue(source, ConfigurationOption.REDACTION_TYPE, RedactionType::find);
     }
 
-    private static ExistingScreenshotAction getScreenshotExistsAction() {
-        final String existingScreenshotActionRaw = getOrDefault("SCREENSHOT_EXISTS_ACTION", DEFAULT_SCREENSHOT_EXISTS_ACTION.toString());
+    private static ExistingScreenshotAction getScreenshotExistsAction(final Source source) {
+        final String existingScreenshotActionRaw = source.get(ConfigurationOption.SCREENSHOT_EXISTS_ACTION);
         final ExistingScreenshotAction existingScreenshotActionInput = ExistingScreenshotAction.get(existingScreenshotActionRaw);
         if (existingScreenshotActionInput == null) {
             throw new IllegalArgumentException("[SCREENSHOT_EXISTS_ACTION] Invalid value: '%s'".formatted(existingScreenshotActionRaw));
@@ -322,12 +333,13 @@ public record ApplicationConfiguration(
         return existingScreenshotActionInput;
     }
 
-    private static Set<TrackerType> getTrackerExecutionOrder() {
-        return parseCommaSeparatedEnvVar("TRACKER_EXECUTION_ORDER", DEFAULT_TRACKER_EXECUTION_ORDER, TrackerType::find);
+    private static Set<TrackerType> getTrackerExecutionOrder(final Source source) {
+        return parseCommaSeparatedValue(source, ConfigurationOption.TRACKER_EXECUTION_ORDER, TrackerType::find);
     }
 
-    private static <T> Set<T> parseCommaSeparatedEnvVar(final String envVarName, final String defaultValue, final Function<String, T> parser) {
-        final String rawValue = getOrDefault(envVarName, defaultValue);
+    private static <T> Set<T> parseCommaSeparatedValue(final Source source, final ConfigurationOption option, final Function<String, T> parser) {
+        final String envVarName = option.name();
+        final String rawValue = source.get(option);
         final Set<T> results = new LinkedHashSet<>();
 
         for (final String token : rawValue.split(",", -1)) {
@@ -345,12 +357,16 @@ public record ApplicationConfiguration(
         return results;
     }
 
-    private static Path getTrackerInputFilePath() {
-        return Paths.get(getOrDefault("TRACKER_INPUT_FILE_PATH", DEFAULT_TRACKER_INPUT_FILE_PATH));
+    private static Path getTrackerInputFilePath(final Source source) {
+        return Paths.get(source.get(ConfigurationOption.TRACKER_INPUT_FILE_PATH));
     }
 
-    private static boolean getBooleanEnvironmentVariable(final String environmentVariableName, final boolean defaultValue) {
-        return Boolean.parseBoolean(getOrDefault(environmentVariableName, Boolean.toString(defaultValue)));
+    private static int getWebUiPort(final Source source) {
+        return parseIntegerInRange(source.get(ConfigurationOption.WEB_UI_PORT), ConfigurationOption.WEB_UI_PORT.name(), 1, 65_535);
+    }
+
+    private static boolean getBooleanValue(final Source source, final ConfigurationOption option) {
+        return Boolean.parseBoolean(source.get(option));
     }
 
     private static int parseIntegerInRange(final String input, final String environmentVariableName, final int min, final int max) {
@@ -366,19 +382,12 @@ public record ApplicationConfiguration(
         }
     }
 
-    private static String getOrDefault(final String environmentVariableName, final String defaultValue) {
-        final String environmentVariable = System.getenv(environmentVariableName);
-        if (environmentVariable != null) {
-            return environmentVariable;
-        }
-        return defaultValue;
-    }
-
     private void print() {
         LOGGER.debug("Loaded application configuration:");
         LOGGER.debug("\t- browserDataStoragePath={}", browserDataStoragePath);
         LOGGER.debug("\t- browserDimensions={}", browserDimensions);
         LOGGER.debug("\t- csvCommentSymbol={}", csvCommentSymbol);
+        LOGGER.debug("\t- databasePath={}", databasePath);
         LOGGER.debug("\t- enableAdultContent={}", enableAdultContent);
         LOGGER.debug("\t- enableTranslationToEnglish={}", enableTranslationToEnglish);
         LOGGER.debug("\t- existingScreenshotAction={}", existingScreenshotAction);
@@ -400,5 +409,23 @@ public record ApplicationConfiguration(
         LOGGER.debug("\t- takeScreenshotOnError={}", takeScreenshotOnError);
         LOGGER.debug("\t- trackerExecutionOrder={}", trackerExecutionOrder);
         LOGGER.debug("\t- trackerInputFilePath={}", trackerInputFilePath);
+        LOGGER.debug("\t- webUiEnabled={}", webUiEnabled);
+        LOGGER.debug("\t- webUiPort={}", webUiPort);
+    }
+
+    // Resolves a value from the overrides, then the environment, then the default value
+    private record Source(Map<String, String> overrides) {
+
+        String get(final ConfigurationOption option) {
+            final String override = overrides.get(option.name());
+            if (override != null) {
+                return override;
+            }
+            return option.environmentValue().orElse(option.defaultValue());
+        }
+
+        boolean isOverridden(final ConfigurationOption option) {
+            return overrides.containsKey(option.name());
+        }
     }
 }
