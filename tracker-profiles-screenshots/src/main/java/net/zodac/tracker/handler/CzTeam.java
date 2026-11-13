@@ -30,7 +30,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -41,7 +40,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code CZTeam} tracker.
  */
-@TrackerHandler(name = "CZTeam", type = TrackerType.MANUAL, url = "https://czteam.me/")
+@TrackerHandler(name = "CZTeam", url = "https://czteam.me/")
 public class CzTeam extends AbstractTrackerHandler implements HasCloudflareCheck, RedactsIpAddress, RedactsTorrentPasskey {
 
     @Override

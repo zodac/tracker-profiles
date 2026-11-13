@@ -36,7 +36,9 @@ import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.extension.Extension;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -47,7 +49,9 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  */
 public final class JavaWebDriverFactory {
 
-    private static final File CHROMEDRIVER_EXECUTABLE_FILEPATH = new File("/usr/local/chromium/chromedriver-linux64/chromedriver");
+    private static final String HEADLESS_USER_AGENT_MARKER = "HeadlessChrome";
+    private static final String HEADLESS_USER_AGENT_REPLACEMENT = "Chrome";
+    private static final File CHROMEDRIVER_EXECUTABLE_FILEPATH = new File("/usr/bin/chromedriver");
     private static final ApplicationConfiguration CONFIG = Configuration.get();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<RemoteWebDriver, Path> USER_DATA_DIRS = new ConcurrentHashMap<>();
@@ -82,9 +86,15 @@ public final class JavaWebDriverFactory {
 
         // User-defined options
         chromeOptions.addArguments("--window-size=" + CONFIG.browserDimensions());
-        if (canTrackerUseHeadlessBrowser(trackerType)) {
+        if (usesHeadlessBrowser(trackerType)) {
             LOGGER.trace("Using headless browser");
             chromeOptions.addArguments("--headless=new");
+
+            // A headless browser identifies itself as such in its user agent, which is all that is needed for a website to block it
+            final String userAgent = HeadlessUserAgentHolder.USER_AGENT;
+            if (userAgent != null) {
+                chromeOptions.addArguments("--user-agent=" + userAgent);
+            }
         }
 
         // Cache to avoid reloading data on subsequent runs
@@ -129,23 +139,82 @@ public final class JavaWebDriverFactory {
         }
         LOGGER.trace("Creating driver with following options: {}", chromeOptions);
 
-        final ChromeDriver driver;
-        if (CHROMEDRIVER_EXECUTABLE_FILEPATH.exists()) {
-            final ChromeDriverService service = new ChromeDriverService  // NOPMD: CloseResource - Not closing since it takes 5 seconds to close
-                .Builder()
-                .usingDriverExecutable(CHROMEDRIVER_EXECUTABLE_FILEPATH)
-                .build();
-            LOGGER.trace("Creating driver with chromedriver executable at '{}'", CHROMEDRIVER_EXECUTABLE_FILEPATH.getAbsolutePath());
-            driver = new ChromeDriver(service, chromeOptions);
-        } else {
-            LOGGER.trace("Creating driver without chromedriver executable filepath");
-            driver = new ChromeDriver(chromeOptions);
-        }
-
+        final ChromeDriver driver = startDriver(chromeOptions);
         applyConfiguredSize(driver);
         LOGGER.trace("Returning created driver");
         USER_DATA_DIRS.put(driver, userDataDir);
         return driver;
+    }
+
+    /**
+     * Whether a tracker of the given {@link TrackerType} is executed in a headless browser, or in a browser with a UI. A headless browser is used
+     * when both of the following conditions are met:
+     *
+     * <ul>
+     *     <li>{@link ApplicationConfiguration#forceUiBrowser()} is not {@code true}</li>
+     *     <li>{@link TrackerType} is not {@link TrackerType#MANUAL}</li>
+     * </ul>
+     *
+     * @param trackerType the {@link TrackerType} of the tracker
+     * @return {@code true} if the tracker is executed in a headless browser
+     */
+    public static boolean usesHeadlessBrowser(final TrackerType trackerType) {
+        if (CONFIG.forceUiBrowser()) {
+            LOGGER.trace("UI browser is forced");
+            return false;
+        }
+
+        return trackerType != TrackerType.MANUAL;
+    }
+
+    private static ChromeDriver startDriver(final ChromeOptions chromeOptions) {
+        if (CHROMEDRIVER_EXECUTABLE_FILEPATH.exists()) {
+            // Not closing the service since it takes 5 seconds to close
+            final ChromeDriverService service = new ChromeDriverService
+                .Builder()
+                .usingDriverExecutable(CHROMEDRIVER_EXECUTABLE_FILEPATH)
+                .build();
+            LOGGER.trace("Creating driver with chromedriver executable at '{}'", CHROMEDRIVER_EXECUTABLE_FILEPATH.getAbsolutePath());
+            return new ChromeDriver(service, chromeOptions);
+        }
+
+        LOGGER.trace("Creating driver without chromedriver executable filepath");
+        return new ChromeDriver(chromeOptions);
+    }
+
+    // Starts a short-lived headless browser to read its user agent, then removes the marker identifying it as headless. Reading the user agent
+    // from the browser (rather than hard-coding it) keeps the rest of the user agent consistent with the installed browser version.
+    private static @Nullable String findHeadlessUserAgent() {
+        LOGGER.trace("Finding user agent to be used for headless browsers");
+        final ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu");
+
+        ChromeDriver driver = null;
+        try {
+            driver = startDriver(chromeOptions);
+            final Object userAgent = driver.executeCdpCommand("Browser.getVersion", Map.of()).get("userAgent");
+            if (userAgent instanceof final String headlessUserAgent && !headlessUserAgent.isBlank()) {
+                final String cleanedUserAgent = headlessUserAgent.replace(HEADLESS_USER_AGENT_MARKER, HEADLESS_USER_AGENT_REPLACEMENT);
+                LOGGER.trace("User agent for headless browsers: '{}'", cleanedUserAgent);
+                return cleanedUserAgent;
+            }
+
+            LOGGER.debug("Browser did not return a user agent, headless browsers will use their default user agent");
+            return null;
+        } catch (final WebDriverException e) {
+            LOGGER.debug("Unable to find the browser's user agent, headless browsers will use their default user agent", e);
+            return null;
+        } finally {
+            if (driver != null) {
+                driver.quit();
+            }
+        }
+    }
+
+    // Initialised on first use, so that the additional browser is only started if a headless browser is actually needed
+    private static final class HeadlessUserAgentHolder {
+
+        private static final @Nullable String USER_AGENT = findHeadlessUserAgent();
     }
 
     /**
@@ -274,14 +343,5 @@ public final class JavaWebDriverFactory {
             translateWhitelists.put(baseLanguage, "en");
         }
         return translateWhitelists;
-    }
-
-    private static boolean canTrackerUseHeadlessBrowser(final TrackerType trackerType) {
-        if (CONFIG.forceUiBrowser()) {
-            LOGGER.trace("UI browser is forced");
-            return false;
-        }
-
-        return trackerType != TrackerType.MANUAL;
     }
 }

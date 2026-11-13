@@ -33,6 +33,7 @@ import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.config.ExistingScreenshotAction;
 import net.zodac.tracker.framework.exception.CancelledInputException;
+import net.zodac.tracker.framework.exception.CloudflareVerificationException;
 import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.framework.exception.ScreenshotWriteError;
 import net.zodac.tracker.framework.exception.TrackerUnavailableException;
@@ -148,6 +149,10 @@ final class ProfileScreenshotExecutor {
         } catch (final CancelledInputException e) {
             LOGGER.debug("\t- User cancelled manual input for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- User cancelled manual input for tracker '{}'", trackerCredential.name());
+        } catch (final CloudflareVerificationException e) {
+            screenshotOnError(trackerHandler, trackerCredential.name());
+            LOGGER.debug("\t- Unable to pass Cloudflare verification for tracker '{}'", trackerCredential.name(), e);
+            LOGGER.warn("\t- {}", e.getMessage());
         } catch (final NoSuchElementException e) {
             LOGGER.debug("\t- No implementation for tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- No implementation for tracker '{}'", trackerCredential.name());
@@ -160,14 +165,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.warn("\t- Error writing screenshot for tracker '{}'", trackerCredential.name());
         } catch (final TimeoutException e) {
             screenshotOnError(trackerHandler, trackerCredential.name());
-            LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerCredential.name(), e);
-
-            final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
-            if (cleanedErrorMessage.isEmpty()) {
-                LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}'", trackerCredential.name());
-            } else {
-                LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerCredential.name(), cleanedErrorMessage);
-            }
+            logTimeoutException(trackerCredential.name(), e);
         } catch (final TrackerUnavailableException e) {
             LOGGER.debug("\t- Unable to connect to tracker '{}'", trackerCredential.name(), e);
             LOGGER.warn("\t- Unable to connect to tracker '{}'", trackerCredential.name());
@@ -198,6 +196,17 @@ final class ProfileScreenshotExecutor {
         }
 
         return successfulSteps;
+    }
+
+    private static void logTimeoutException(final String trackerName, final TimeoutException e) {
+        LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerName, e);
+
+        final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
+        if (cleanedErrorMessage.isEmpty()) {
+            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}'", trackerName);
+        } else {
+            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerName, cleanedErrorMessage);
+        }
     }
 
     // The directory itself is created up-front by prepareErrorDirectories() and is intentionally not deleted on clean-up
@@ -260,7 +269,7 @@ final class ProfileScreenshotExecutor {
 
         LOGGER.info("\t- Opening tracker");
         trackerHandler.openTracker();
-        trackerHandler.navigateToLoginPage(trackerCredential.name());
+        trackerHandler.navigateToLoginPage();
         if (!successfulSteps.contains(TrackerStep.OPEN_TRACKER)) {
             progressBarManager.tick(TrackerStep.OPEN_TRACKER);
             successfulSteps.add(TrackerStep.OPEN_TRACKER);

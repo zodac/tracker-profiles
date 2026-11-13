@@ -31,7 +31,6 @@ import static net.zodac.tracker.framework.xpath.XpathAxis.parent;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -45,7 +44,7 @@ import org.openqa.selenium.WebElement;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code C411} tracker.
  */
-@TrackerHandler(name = "C411", type = TrackerType.MANUAL, url = "https://c411.org/")
+@TrackerHandler(name = "C411", url = "https://c411.org/")
 public class C411 extends AbstractTrackerHandler implements HasCloudflareCheck, HasDismissibleElement, HasFixedHeader {
 
     /**

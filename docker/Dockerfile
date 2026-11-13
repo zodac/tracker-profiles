@@ -1,43 +1,4 @@
-# Stage 1: Patch chromedriver
-FROM python:3.15.2-slim-trixie AS chromedriver_builder
-
-# Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
-# - ca-certificates (SSL)
-# - chromium (web browser)
-# - curl (download chromedriver)
-# - unzip (unzip chromedriver)
-# BEGIN DEBIAN PACKAGES
-RUN apt-get update && \
-    apt-get install -yqq --no-install-recommends \
-        ca-certificates="20250419+deb13u1" \
-        chromium="156.0.8078.79-1~deb13u1" \
-        curl="8.14.1-2+deb13u7" \
-        unzip="6.0-29+deb13u1" \
-    && \
-    apt-get autoremove && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-# END DEBIAN PACKAGES
-
-# Copy Python requirements
-WORKDIR /app
-COPY ./docker/config/requirements.txt .
-# hadolint ignore=DL3013
-RUN python3 -m pip install --no-cache-dir --upgrade pip && python3 -m pip install --no-cache-dir -r ./requirements.txt
-
-# Download latest chromedriver for chromium verison then patch with undetected-chromedriver
-COPY ./docker/scripts/patch_chromedriver.py /usr/local/bin/patch_chromedriver.py
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN mkdir -p /usr/local/chromium && \
-    curl -fL \
-        "https://storage.googleapis.com/chrome-for-testing-public/$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_$(chromium --version | awk '{print $2}' | cut -d. -f1)")/linux64/chromedriver-linux64.zip" \
-        -o /tmp/chromedriver.zip && \
-    unzip /tmp/chromedriver.zip -d /usr/local/chromium && rm -f /tmp/chromedriver.zip && \
-    chmod -R 0755 /usr/local/chromium && \
-    chmod +x /usr/local/bin/patch_chromedriver.py && \
-    python3 /usr/local/bin/patch_chromedriver.py
-
-# Stage 2: Create minimal JDK
+# Stage 1: Create minimal JDK
 FROM eclipse-temurin:27_35-jdk AS jdk_builder
 
 # Hardcoding the required modules instead of using $(jdeps --multi-release BASE --print-module-deps --ignore-missing-deps /tmp/tracker-profiles.jar)
@@ -61,7 +22,7 @@ RUN jlink --compress=zip-9 \
     strip -p --strip-unneeded "/opt/jdk/lib/server/libjvm.so" && \
     { find /opt/jdk/bin -type f -exec strip -p --strip-unneeded {} \; || true; }
 
-# Stage 3: Build the Java artefact
+# Stage 2: Build the Java artefact
 FROM maven:3.10.0 AS maven_base
 FROM eclipse-temurin:27_35-jdk AS java_app_builder
 
@@ -83,7 +44,7 @@ RUN mvn dependency:go-offline
 COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
-# Stage 4: Generate static AppCDS archive to reduce startup time and memory footprint
+# Stage 3: Generate static AppCDS archive to reduce startup time and memory footprint
 FROM eclipse-temurin:27_35-jdk AS appcds_builder
 WORKDIR /app
 
@@ -165,6 +126,7 @@ ENV NO_AT_BRIDGE=1
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
 # - ca-certificates (SSL)
 # - chromium (web browser)
+# - chromium-driver (chromedriver matching the web browser version)
 # - fonts-arphic-ukai (Chinese fonts)
 # - fonts-ipafont (Japanese fonts)
 # - wmctrl (force browser to be active window)
@@ -173,6 +135,7 @@ RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
         ca-certificates="20250419+deb13u1" \
         chromium="156.0.8078.79-1~deb13u1" \
+        chromium-driver="156.0.8078.79-1~deb13u1" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
         wmctrl="1.07+git20240228.1105759-1" \
@@ -182,11 +145,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 # END DEBIAN PACKAGES
 
+# Remove the variables that chromedriver adds to every web page, since websites use them to detect an automated browser
+# The code is replaced by an empty block padded to the same length, so the rest of the binary is not moved
+# The build fails if the code cannot be found, so a change to chromedriver that makes this ineffective is noticed
+RUN grep -qa '{window\.cdc' /usr/bin/chromedriver && \
+    perl -0777 -pi -e 's/\{window\.cdc.*?;\}/"{}" . (" " x (length($&) - 2))/seg' /usr/bin/chromedriver && \
+    ! grep -qa '{window\.cdc' /usr/bin/chromedriver
+
 # Copy Google Chrome extensions
 COPY ./docker/browser_extensions/ublock_origin_lite_ddkjiahejlhfcafbddmgiahcphecmpfh_2026_2_22.crx /app/ublock_origin_lite.crx
-
-# Copy patched chromedriver
-COPY --from=chromedriver_builder /usr/local/chromium/chromedriver-linux64/chromedriver /usr/local/chromium/chromedriver-linux64/chromedriver
 
 # Copy scripts
 COPY --chmod=755 ./docker/scripts/start.sh /app/start.sh

@@ -17,14 +17,13 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 
 /**
  * Extension of the {@link Unit3dHandler} for the {@code HDZero} tracker.
  */
-@TrackerHandler(name = "HDZero", type = TrackerType.MANUAL, url = "https://hdzero.org/")
+@TrackerHandler(name = "HDZero", url = "https://hdzero.org/")
 public class HdZero extends Unit3dHandler implements HasCloudflareCheck {
 
 }

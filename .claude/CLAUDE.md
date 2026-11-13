@@ -86,6 +86,28 @@ Two types control how the browser is created and whether user interaction is nee
 
 Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER` env var.
 
+### Cloudflare Verification
+
+A handler whose login page has a Cloudflare verification check (a full-page challenge, or a Turnstile widget in the login form) implements
+`HasCloudflareCheck`. The check is passed automatically by `CloudflareSolver` (`net.zodac.tracker.framework.cloudflare`) in both headless and UI
+browsers, so a Cloudflare check alone is **not** a reason to make a tracker `MANUAL`.
+
+`CloudflareSolver` must never inspect the challenge with JavaScript executed in the page (`driver.executeScript`, or `findElement` on the
+challenge elements) — Cloudflare detects this and fails the check. It locates the challenge through the CDP `DOM` domain, reads the result from
+an isolated world, and clicks with CDP `Input.dispatchMouseEvent`. Headless browsers also need the `HeadlessChrome` marker removed from the user
+agent (done in `JavaWebDriverFactory`), otherwise the check always fails.
+
+Stricter websites also reject the click unless the `cdc_` variables that `chromedriver` injects into every page are removed. This is done by the
+`perl` step in `docker/Dockerfile`, which blanks that code in the `chromedriver` binary (and fails the build if it cannot find it). Public
+Cloudflare demo pages pass without it, so always verify changes against real tracker login pages.
+
+The challenge announces its progress with `postMessage` events (`interactiveBegin`, `interactiveEnd`, `complete`, `fail`), which the solver records
+from the isolated world. A challenge may pass with no click at all; it must never be clicked after `fail`, as the checkbox is then replaced by a
+"Troubleshoot" link.
+
+If the check cannot be passed automatically, a headless tracker throws `CloudflareVerificationException` (the attempt fails and may be retried),
+while a UI browser falls back to asking the user, highlighting `cloudflareSelector()`.
+
 ### Counting Tracker Handlers
 
 Run `grep -R --include='*.java' '^@TrackerHandler(' . | cut -d '"' -f2 | sort -u | wc -l`
@@ -260,7 +282,6 @@ wired into Maven by the `net.zodac:parent-pom` parent:
 - `code-quality-config/docker/.hadolint.yaml`
 - `code-quality-config/javascript/eslint.config.cjs`
 - `code-quality-config/markdown/.markdownlint.json`
-- `code-quality-config/python/ruff.toml`
 
 Do not edit files inside the submodule. Project-specific overrides live in `code-quality-config-overrides/` (currently only
 `checkstyle-suppression.xml`, layered on top of the shared suppressions).

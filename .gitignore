@@ -14,7 +14,6 @@ target/
 # Python Build
 __pycache__/
 *.pyc
-.ruff_cache
 venv/
 downloaded_files/
 

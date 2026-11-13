@@ -17,14 +17,13 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 
 /**
  * Extension of the {@link TorrentPier} for the {@code PornoLab} tracker.
  */
-@TrackerHandler(name = "RUTracker", type = TrackerType.MANUAL, url = {
+@TrackerHandler(name = "RUTracker", url = {
     "https://rutracker.org/forum/tracker.php",
     "https://rutracker.net/forum/tracker.php"
 })

@@ -24,7 +24,6 @@ import static net.zodac.tracker.framework.xpath.HtmlElement.input;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -35,7 +34,7 @@ import org.openqa.selenium.WebElement;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Speed.CD} tracker.
  */
-@TrackerHandler(name = "Speed.CD", type = TrackerType.MANUAL, url = {
+@TrackerHandler(name = "Speed.CD", url = {
     "https://speed.cd/",
     "https://speed.click/",
     "https://speeders.me/",

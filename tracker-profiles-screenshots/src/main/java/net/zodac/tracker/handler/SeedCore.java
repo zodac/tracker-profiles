@@ -25,7 +25,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 
 import java.util.Collection;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -36,8 +35,7 @@ import org.openqa.selenium.WebElement;
 /**
  * Extension of the {@link Unit3dHandler} for the {@code SeedCore} tracker.
  */
-// TODO: Does this still need to be MANUAL?
-@TrackerHandler(name = "SeedCore", type = TrackerType.MANUAL, url = "https://seedcore.net")
+@TrackerHandler(name = "SeedCore", url = "https://seedcore.net")
 public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
 
     @Override

@@ -43,6 +43,7 @@ or becomes otherwise unavailable.
 
 - Opens the selected trackers and logs in, navigating to the user's profile page
 - Requests user input for trackers with manual inputs (like Captcha, 2FA, etc.)
+- Automatically passes Cloudflare verification checks, without any user input
 - Redacts the user's sensitive information
     - There are several types of redaction:
         - None (no redaction)
@@ -145,6 +146,7 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [Alexandria](https://alxdria.org/)                |
 | [AlphaRatio](https://alpharatio.cc/)              |
 | [AnimeBytes](https://animebytes.tv/)              |
+| [AnimeZ](https://animez.to/)                      |
 | [ArabicSource](https://arabicsource.net/)         |
 | [ArabP2P](https://www.arabp2p.net/)               |
 | [AsianCinema](https://eiga.moi/)                  |
@@ -156,17 +158,21 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [BlueTorrents](https://bluetorrents.com/)         |
 | [Blutopia](https://blutopia.cc/)                  |
 | [BootyTape](https://ssl.bootytape.com/)           |
+| [BroadcasThe.Net](https://broadcasthe.net/)       |
 | [BrokenStones](https://brokenstones.is/)          |
 | [BwTorrents](https://bwtorrents.tv/)              |
+| [C411](https://c411.org/)                         |
 | [CanalStreet](https://canal-street.org/)          |
 | [CapybaraBR](https://capybarabr.com/)             |
 | [Cathode-Ray.Tube](https://www.cathode-ray.tube/) |
 | [Concertos](https://concertos.live/)              |
+| [CZTeam](https://czteam.me/)                      |
 | [D3Si.NET](https://d3si.net/)                     |
 | [DarkPeers](https://darkpeers.org/)               |
 | [DesiTorrents](https://desitorrents.tv/)          |
 | [DICMusic](https://dicmusic.com/)                 |
 | [DimeADozen](http://www.dimeadozen.org/)          |
+| [DocsPedia](https://docspedia.world/)             |
 | [Empornium](https://www.empornium.sx/)            |
 | [eMuwarez](https://emuwarez.com/)                 |
 | [ExtremeBits](https://extremebits.net/)           |
@@ -184,7 +190,9 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [GreatPosterWall](https://greatposterwall.com/) |
 | [HappyFappy](https://www.happyfappy.net/)       |
 | [HDUnited](https://hd-united.vn/)               |
+| [HDZero](https://hdzero.org/)                   |
 | [Hellenic-HD](https://hellenic-hd.cc/)          |
+| [Immortal-S](https://immortal-s.me/)            |
 | [ImmortalSeed](https://immortalseed.me/)        |
 | [InfinityHD](https://infinityhd.net/)           |
 | [IPTorrents](https://iptorrents.com/)           |
@@ -197,6 +205,7 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | Tracker Name (K–O)                             |
 |------------------------------------------------|
 | [Kufirc](https://kufirc.com/)                  |
+| [LastFiles](https://last-torrents.org/)        |
 | [Lat-Team](https://lat-team.com/)              |
 | [LDU](https://theldu.to/)                      |
 | [Libble](https://libble.me/)                   |
@@ -233,20 +242,25 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 | [ReelFlix](https://reelflix.cc/)                     |
 | [RetroMoviesClub](https://retro-movies.club/)        |
 | [RocketHD](https://rocket-hd.cc/)                    |
+| [RUTracker](https://rutracker.org/forum/tracker.php) |
 | [SceneHD](https://scenehd.org/)                      |
 | [SceneTime](https://www.scenetime.com/)              |
 | [SecretCinema](https://secret-cinema.pw/)            |
+| [SeedCore](https://seedcore.net/)                    |
 | [SeedPool](https://seedpool.org/)                    |
 | [SexTorrent](https://sextorrent.myds.me/)            |
 | [Shadowbit](https://shadowbit.cc/)                   |
 | [Shazbat](https://www.shazbat.tube/)                 |
+| [Speed.CD](https://speed.cd/)                        |
 | [SpeedApp](https://speedapp.io/)                     |
 | [SportsCult](https://sportscult.org/)                |
 | [T3nnis](https://t3nnis.tv/)                         |
 | [Tasmanit.es](https://tasmanit.es/)                  |
 | [TeamOS](https://teamos.xyz/)                        |
 | [TheMixingBowl](https://themixingbowl.org/)          |
+| [TorrentDay](https://www.torrentday.com/)            |
 | [Torrenteros](https://torrenteros.org/)              |
+| [Torrenting](https://torrenting.com/)                |
 | [TorrentLeech](https://www.torrentleech.org/)        |
 | [Tr4ker](https://tr4ker.net/)                        |
 | [TVChaosUK](https://tvchaosuk.com/)                  |
@@ -256,7 +270,9 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 
 | Tracker Name (U–Z)                              |
 |-------------------------------------------------|
+| [Ultrabits](https://ultrabits.org/)             |
 | [Unwalled](https://unwalled.cc/)                |
+| [UploadCX](https://upload.cx/)                  |
 | [VietMediaF](https://tracker.vietmediaf.store/) |
 | [XSpeeds](https://www.xspeeds.eu/)              |
 | [XWT-Classics](https://xwt-classics.net/)       |
@@ -277,53 +293,38 @@ a UI must be enabled. Instructions for this in Docker can be seen [below](#brows
 <tr>
 <td valign="top">
 
-| Tracker Name                                         | Reason                                          |
-|------------------------------------------------------|-------------------------------------------------|
-| [52PT](https://52pt.site/)                           | Captcha                                         |
-| [AnimeZ](https://animez.to/)                         | Captcha                                         |
-| [Anthelion](https://anthelion.me/)                   | 2FA                                             |
-| [AsianDVDClub](https://asiandvdclub.org/)            | Question on login                               |
-| [AvistaZ](https://avistaz.to/)                       | Captcha & Cloudflare verificaiton               |
-| [BeyondHD](https://beyond-hd.me/)                    | Captcha                                         |
-| [Baozi](https://p.t-baozi.cc/)                       | Captcha & Cloudflare verification               |
-| [BroadcasThe.Net](https://broadcasthe.net/)          | Captcha & Cloudflare verification               |
-| [BTArg](https://www.btarg.com.ar/tracker/)           | Needs to be explicitly translated               |
-| [C411](https://c411.org/)                            | Cloudslare verification                         |
-| [CGPeers](https://cgpeers.to/)                       | 2FA & Cloudflare verification                   |
-| [CinemaZ](https://cinemaz.to/)                       | Captcha & Cloudflare verification               |
-| [CZTeam](https://czteam.me/)                         | Cloudflare verification                         |
-| [DigitalCore.Club](https://digitalcore.club/)        | Captcha                                         |
-| [DocsPedia](https://docspedia.world/)                | Cloudflare verification                         |
-| [ExoticaZ](https://exoticaz.to/)                     | Captcha & Cloudflare verification               |
-| [GazelleGames](https://gazellegames.net/)            | Question on login                               |
-| [Hawke-Uno](https://hawke.uno/)                      | 2FA & Cloudflare verification                   |
-| [HDBits](https://hdbits.org/)                        | 2FA, Cloudflare verification, question on login |
-| [HDZero](https://hdzero.org/)                        | Cloudflare verification                         |
-| [Immortal-S](https://immortal-s.me/)                 | Cloudflare verification                         |
-| [LastFiles](https://last-torrents.org/)              | Cloudflare verification                         |
-| [Leech24](https://leech24.net/)                      | Captcha                                         |
-| [LetSeed](https://letseed.org/)                      | Captcha                                         |
-| [LP-Bits](https://lp-bits.com/)                      | Captcha                                         |
-| [LST](https://lst.gg/)                               | Question on login                               |
-| [PassThePopcorn](https://passthepopcorn.me/)         | Question on login                               |
-| [PornoLab](https://pornolab.net/forum/tracker.php)   | Needs to be explicitly translated               |
-| [PrivateHD](https://privatehd.to/)                   | Captcha & Cloudflare verification               |
-| [RUTracker](https://rutracker.org/forum/tracker.php) | Cloudflare verification                         |
-| [SeedCore](https://seedcore.net/)                    | Cloudflare verification                         |
-| [SkyeySnow](https://skyeysnow.com/)                  | Needs to be explicitly translated               |
-| [SocietyGlitch](https://stalker.societyglitch.com/)  | Captcha                                         |
-| [Speed.CD](https://speed.cd/)                        | Cloudflare verification                         |
-| [TheEmpire](https://theempire.click/)                | Captcha                                         |
-| [TheGeeks](https://thegeeks.click/)                  | Captcha                                         |
-| [TheKitchen](https://thekitchen.click/)              | Captcha                                         |
-| [TheOccult](https://theoccult.click/)                | Captcha                                         |
-| [ThePlace](https://theplace.click/)                  | Captcha                                         |
-| [TheShow](https://theshow.click/)                    | Captcha                                         |
-| [TheVault](https://thevault.click/)                  | Captcha                                         |
-| [TorrentDay](https://www.torrentday.com/)            | Cloudflare verification                         |
-| [Torrenting](https://torrenting.com/)                | Cloudflare verification                         |
-| [Ultrabits](https://ultrabits.org/)                  | Cloudflare verification                         |
-| [UploadCX](https://upload.cx/)                       | Captcha                                         |
+| Tracker Name                                        | Reason                            |
+|-----------------------------------------------------|-----------------------------------|
+| [52PT](https://52pt.site/)                          | Captcha                           |
+| [Anthelion](https://anthelion.me/)                  | 2FA                               |
+| [AsianDVDClub](https://asiandvdclub.org/)           | Question on login                 |
+| [AvistaZ](https://avistaz.to/)                      | Captcha                           |
+| [Baozi](https://p.t-baozi.cc/)                      | Captcha                           |
+| [BeyondHD](https://beyond-hd.me/)                   | Captcha                           |
+| [BTArg](https://www.btarg.com.ar/tracker/)          | Needs to be explicitly translated |
+| [CGPeers](https://cgpeers.to/)                      | 2FA                               |
+| [CinemaZ](https://cinemaz.to/)                      | Captcha                           |
+| [DigitalCore.Club](https://digitalcore.club/)       | Captcha                           |
+| [ExoticaZ](https://exoticaz.to/)                    | Captcha                           |
+| [GazelleGames](https://gazellegames.net/)           | Question on login                 |
+| [Hawke-Uno](https://hawke.uno/)                     | 2FA                               |
+| [HDBits](https://hdbits.org/)                       | 2FA & question on login           |
+| [Leech24](https://leech24.net/)                     | Captcha                           |
+| [LetSeed](https://letseed.org/)                     | Captcha                           |
+| [LP-Bits](https://lp-bits.com/)                     | Captcha                           |
+| [LST](https://lst.gg/)                              | Question on login                 |
+| [PassThePopcorn](https://passthepopcorn.me/)        | Question on login                 |
+| [PornoLab](https://pornolab.net/forum/tracker.php)  | Needs to be explicitly translated |
+| [PrivateHD](https://privatehd.to/)                  | Captcha                           |
+| [SkyeySnow](https://skyeysnow.com/)                 | Needs to be explicitly translated |
+| [SocietyGlitch](https://stalker.societyglitch.com/) | Captcha                           |
+| [TheEmpire](https://theempire.click/)               | Captcha                           |
+| [TheGeeks](https://thegeeks.click/)                 | Captcha                           |
+| [TheKitchen](https://thekitchen.click/)             | Captcha                           |
+| [TheOccult](https://theoccult.click/)               | Captcha                           |
+| [ThePlace](https://theplace.click/)                 | Captcha                           |
+| [TheShow](https://theshow.click/)                   | Captcha                           |
+| [TheVault](https://thevault.click/)                 | Captcha                           |
 
 </td>
 </tr>
@@ -459,7 +460,7 @@ MSYS_NO_PATHCONV=1 docker run \
 
 There are two ways to execute the application - with a UI browser and without. The default commands will
 execute [trackers that require a UI](#manual-interaction), so the UI will need to be configured to run through Docker. A UI browser is needed for
-trackers that require some user input during login, like a Captcha, Cloudflare verification check, 2FA, etc.
+trackers that require some user input during login, like a Captcha, 2FA, etc.
 
 Below will define how to do this for your host system.
 
@@ -763,8 +764,22 @@ thread behaviour.
 
 ### Cloudflare Verification
 
-Some of the `Manual` trackers listed in [Trackers> Manual Interaction](#manual-interaction) contain a Cloudflare
-verification check. This check cannot be passed simply by opening the browser UI like other `manual` trackers. Instead,
-[undetected-chromedriver](https://github.com/ultrafunkamsterdam/undetected-chromedriver) is used to patch the Google
-Chrome binary, making it possibly to successfully check the Cloudflare box (by a user's manual input), bypassing
-Cloudflare detection.
+Some trackers have a Cloudflare verification check that must be passed before logging in, either as a full-page challenge or as a box in the login
+form. This check is passed automatically without any user input, including when the browser is running in headless mode.
+
+No additional library is used for this. The approach is based on the one used by [zendriver](https://github.com/cdpdriver/zendriver), implemented
+directly on top of the existing Selenium browser:
+
+- The headless browser does not identify itself as headless in its user agent
+- The check is found using the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) instead of JavaScript running in
+  the web page, as Cloudflare can detect the latter
+- The checkbox is clicked with a browser-level mouse event through the Chrome DevTools Protocol, which works without a visible browser window
+- The checkbox is only clicked if the check asks for it, as some websites pass the check without any interaction
+- The variables that `chromedriver` adds to every web page (which websites use to detect an automated browser) are removed from the
+  `chromedriver` binary when the Docker image is built
+
+If Cloudflare rejects the attempt, no further clicks are made and the error code reported by Cloudflare is logged. If the check cannot be passed
+automatically:
+
+- For a tracker running in a headless browser, the attempt fails (and is retried if `NUMBER_OF_SCREENSHOT_ATTEMPTS` allows)
+- For a tracker running in a UI browser (a `Manual` tracker, or when `FORCE_UI_BROWSER` is **true**), the user is asked to pass the check instead

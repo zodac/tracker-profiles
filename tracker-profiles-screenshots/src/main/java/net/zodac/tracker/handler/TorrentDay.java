@@ -24,7 +24,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.atIndex;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -33,7 +32,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code TorrentDay} tracker.
  */
-@TrackerHandler(name = "TorrentDay", type = TrackerType.MANUAL, url = {
+@TrackerHandler(name = "TorrentDay", url = {
     "https://www.torrentday.com/",
     "https://www.torrentday.me/",
     "https://tday.love/",

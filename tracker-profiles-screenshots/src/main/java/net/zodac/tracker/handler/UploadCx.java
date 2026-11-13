@@ -17,7 +17,6 @@
 
 package net.zodac.tracker.handler;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import org.openqa.selenium.By;
@@ -25,7 +24,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link Unit3dHandler} for the {@code UploadCX} tracker.
  */
-@TrackerHandler(name = "UploadCX", type = TrackerType.MANUAL, url = "https://upload.cx/")
+@TrackerHandler(name = "UploadCX", url = "https://upload.cx/")
 public class UploadCx extends Unit3dHandler implements HasCloudflareCheck {
 
     @Override

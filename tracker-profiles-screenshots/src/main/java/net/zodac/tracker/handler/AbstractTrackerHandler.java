@@ -203,9 +203,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * For some trackers the home page does not automatically redirect to the login page. In these cases, we need to explicitly click on the login
      * link to redirect. We'll only do this navigation if {@link #loginPageSelector()} is not {@code null}.
      *
-     * @param trackerName the name of the tracker
+     * <p>
+     * If the tracker {@link HasCloudflareCheck}, the Cloudflare verification check is performed once the login page has been reached.
      */
-    public void navigateToLoginPage(final String trackerName) {
+    public void navigateToLoginPage() {
         LOGGER.debug("\t- Navigating to login page");
         preLoginNavigationAction();
         final By loginLinkSelector = loginPageSelector();
@@ -216,11 +217,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
             final WebElement loginLink = browserInteractionHelper.waitForElementToBeInteractable(loginLinkSelector, pageLoadDuration());
             clickButton(loginLink);
             if (this instanceof final HasCloudflareCheck hasCloudflareCheck) {
-                hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerName);
+                hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerDefinition());
             }
             browserInteractionHelper.waitForElementToBePresent(usernameFieldSelector(), pageLoadDuration());
         } else if (this instanceof final HasCloudflareCheck hasCloudflareCheck) {
-            hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerName);
+            hasCloudflareCheck.cloudflareCheck(driver, pageLoadDuration(), trackerDefinition());
         }
     }
 

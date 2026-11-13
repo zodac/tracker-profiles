@@ -29,7 +29,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClas
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withHref;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
@@ -41,7 +40,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Ultrabits} tracker.
  */
-@TrackerHandler(name = "Ultrabits", type = TrackerType.MANUAL, url = "https://ultrabits.org/")
+@TrackerHandler(name = "Ultrabits", url = "https://ultrabits.org/")
 public class Ultrabits extends AbstractTrackerHandler implements HasCloudflareCheck {
 
     @Override

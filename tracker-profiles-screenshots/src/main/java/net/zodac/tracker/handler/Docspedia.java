@@ -29,7 +29,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withType
 
 import java.util.Collection;
 import java.util.List;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
@@ -41,7 +40,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Docspedia} tracker.
  */
-@TrackerHandler(name = "Docspedia", type = TrackerType.MANUAL, url = "https://docspedia.world/")
+@TrackerHandler(name = "Docspedia", url = "https://docspedia.world/")
 public class Docspedia extends AbstractTrackerHandler implements HasCloudflareCheck, RedactsEmail, RedactsIpAddress {
 
     @Override

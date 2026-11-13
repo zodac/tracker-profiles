@@ -20,7 +20,6 @@ package net.zodac.tracker.handler;
 import static net.zodac.tracker.framework.xpath.HtmlElement.div;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttribute;
 
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
@@ -29,7 +28,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link Unit3dHandler} for the {@code Immortal-S} tracker.
  */
-@TrackerHandler(name = "Immortal-S", type = TrackerType.MANUAL, url = "https://immortal-s.me/login/")
+@TrackerHandler(name = "Immortal-S", url = "https://immortal-s.me/login/")
 public class ImmortalS extends XenForoHandler implements HasCloudflareCheck {
 
     @Override
