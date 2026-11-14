@@ -1,14 +1,24 @@
-// Applies the theme saved by the user (see app.js) before the page is rendered, to avoid a flash of the wrong theme
-// With no saved theme, the operating system preference is used (through the 'prefers-color-scheme' media query in style.css)
+// Applies the theme before the page is rendered, to avoid a flash of the wrong theme: the one saved by the user (see js/theme-toggle.mjs), or
+// otherwise the operating system preference, which is followed while the page is open. style.css only styles the 'data-theme' attribute
 (function () {
     'use strict'
 
-    try {
-        const theme = window.localStorage.getItem('tracker-profiles-theme')
-        if (theme === 'light' || theme === 'dark') {
-            document.documentElement.dataset.theme = theme
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function savedTheme() {
+        try {
+            const theme = window.localStorage.getItem('tracker-profiles-theme')
+            return theme === 'light' || theme === 'dark' ? theme : null
+        } catch {
+            // Storage is unavailable (e.g. blocked by the browser), so follow the operating system preference
+            return null
         }
-    } catch {
-        // Storage is unavailable (e.g. blocked by the browser), so follow the operating system preference
     }
+
+    function applyTheme() {
+        document.documentElement.dataset.theme = savedTheme() || (darkScheme.matches ? 'dark' : 'light')
+    }
+
+    applyTheme()
+    darkScheme.addEventListener('change', applyTheme)
 }())

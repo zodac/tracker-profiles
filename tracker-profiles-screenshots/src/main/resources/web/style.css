@@ -1,5 +1,5 @@
 :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --bg: #f5f6f8;
     --surface: #ffffff;
     --surface-muted: #f0f2f5;
@@ -26,7 +26,7 @@
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-/* Dark theme: used when chosen in the UI, or when the OS prefers dark and no explicit light choice was made */
+/* Dark theme: set by theme.js when chosen in the UI, or when the OS prefers dark and no theme was chosen */
 :root[data-theme="dark"] {
     color-scheme: dark;
     --bg: #0f1218;
@@ -48,35 +48,6 @@
     --changed-soft: #2b2140;
     --log-bg: #0a0d12;
     --shadow: none;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        color-scheme: dark;
-        --bg: #0f1218;
-        --surface: #171b23;
-        --surface-muted: #1e232d;
-        --border: #2b313d;
-        --text: #e4e7ec;
-        --text-muted: #98a1b0;
-        --accent: #5b8ff0;
-        --accent-hover: #7aa5f5;
-        --accent-soft: #1d2a44;
-        --success: #4cc27f;
-        --success-soft: #16301f;
-        --warning: #e3a33b;
-        --warning-soft: #33280f;
-        --danger: #f0675c;
-        --danger-soft: #3a1b19;
-        --changed: #b48af0;
-        --changed-soft: #2b2140;
-        --log-bg: #0a0d12;
-        --shadow: none;
-    }
-}
-
-:root[data-theme="light"] {
-    color-scheme: light;
 }
 
 * {
@@ -244,16 +215,6 @@ main {
 
 :root[data-theme="dark"] .icon-sun {
     display: inline;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .icon-moon {
-        display: none;
-    }
-
-    :root:not([data-theme="light"]) .icon-sun {
-        display: inline;
-    }
 }
 
 /* Status */

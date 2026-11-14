@@ -22,8 +22,12 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,6 +45,7 @@ public final class StaticResourceHandler implements HttpHandler {
     private static final String RESOURCE_DIRECTORY = "/web";
     private static final String INDEX_FILE = "/index.html";
     private static final int OK = 200;
+    private static final int NOT_MODIFIED = 304;
     private static final int NOT_FOUND = 404;
     private static final int METHOD_NOT_ALLOWED = 405;
     private static final int NO_RESPONSE_BODY = -1;
@@ -48,8 +53,14 @@ public final class StaticResourceHandler implements HttpHandler {
         "css", "text/css; charset=utf-8",
         "html", "text/html; charset=utf-8",
         "js", "text/javascript; charset=utf-8",
+        "mjs", "text/javascript; charset=utf-8",
         "svg", "image/svg+xml"
     );
+    // A file in the resource directory, or in its 'js' directory (the JavaScript modules), preventing any traversal outside them
+    private static final Pattern VALID_PATH = Pattern.compile("^/(?:js/)?[A-Za-z0-9_-]+\\.[a-z]+$");
+
+    // The resources never change while the application is running, so each is only read (and its ETag computed) once
+    private final Map<String, Optional<Resource>> resources = new ConcurrentHashMap<>();
 
     private StaticResourceHandler() {
 
@@ -75,34 +86,49 @@ public final class StaticResourceHandler implements HttpHandler {
             final String requestPath = exchange.getRequestURI().getPath();
             final String path = "/".equals(requestPath) ? INDEX_FILE : requestPath;
 
-            // Only serve simple file names, preventing any traversal outside the resource directory
-            if (path.contains("..") || path.contains("\\") || path.indexOf('/', 1) != -1) {
+            if (!VALID_PATH.matcher(path).matches()) {
                 exchange.sendResponseHeaders(NOT_FOUND, NO_RESPONSE_BODY);
                 return;
             }
 
-            final Optional<byte[]> resource = readResource(path);
+            final Optional<Resource> resource = resources.computeIfAbsent(path, StaticResourceHandler::readResource);
             if (resource.isEmpty()) {
                 LOGGER.trace("No web resource found for path '{}'", path);
                 exchange.sendResponseHeaders(NOT_FOUND, NO_RESPONSE_BODY);
                 return;
             }
 
-            final byte[] content = resource.get();
+            // Revalidated on each load (so a new version is used after an upgrade), but only sent again when it has changed
+            final Resource content = resource.get();
             exchange.getResponseHeaders().set("Content-Type", contentType(path));
             exchange.getResponseHeaders().set("Cache-Control", "no-cache");
+            exchange.getResponseHeaders().set("ETag", content.etag());
             exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
             exchange.getResponseHeaders().set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'");
-            exchange.sendResponseHeaders(OK, content.length);
+            if (content.etag().equals(exchange.getRequestHeaders().getFirst("If-None-Match"))) {
+                exchange.sendResponseHeaders(NOT_MODIFIED, NO_RESPONSE_BODY);
+                return;
+            }
+
+            exchange.sendResponseHeaders(OK, content.bytes().length);
             try (final OutputStream outputStream = exchange.getResponseBody()) {
-                outputStream.write(content);
+                outputStream.write(content.bytes());
             }
         }
     }
 
-    private static Optional<byte[]> readResource(final String path) throws IOException {
+    private static Optional<Resource> readResource(final String path) {
         try (final InputStream inputStream = StaticResourceHandler.class.getResourceAsStream(RESOURCE_DIRECTORY + path)) {
-            return inputStream == null ? Optional.empty() : Optional.of(inputStream.readAllBytes());
+            if (inputStream == null) {
+                return Optional.empty();
+            }
+
+            final byte[] bytes = inputStream.readAllBytes();
+            final CRC32 checksum = new CRC32();
+            checksum.update(bytes);
+            return Optional.of(new Resource(bytes, "\"%08x-%d\"".formatted(checksum.getValue(), bytes.length)));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -110,5 +136,10 @@ public final class StaticResourceHandler implements HttpHandler {
         final int extensionIndex = path.lastIndexOf('.');
         final String extension = extensionIndex == -1 ? "" : path.substring(extensionIndex + 1);
         return CONTENT_TYPES.getOrDefault(extension, "application/octet-stream");
+    }
+
+    // The content of a resource, with its (quoted) entity tag
+    private record Resource(byte[] bytes, String etag) {
+
     }
 }

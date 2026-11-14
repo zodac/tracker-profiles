@@ -8,6 +8,8 @@ on:
       - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
       - 'tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js'
       - 'tracker-profiles-screenshots/src/main/resources/web/*.js'
+      - 'tracker-profiles-screenshots/src/main/resources/web/*.mjs'
+      - 'tracker-profiles-screenshots/src/main/resources/web/js/*.mjs'
   workflow_dispatch: # allows manual trigger
 
 jobs:
@@ -35,4 +37,4 @@ jobs:
         run: npm install --save-dev eslint
 
       - name: Run ESLint
-        run: npx eslint --config code-quality-config/javascript/eslint.config.cjs "tracker-profiles-screenshots/src/main/resources/**/*.js"
+        run: npx eslint --config code-quality-config/javascript/eslint.config.cjs "tracker-profiles-screenshots/src/main/resources/**/*.{js,mjs}"

@@ -1,0 +1,49 @@
+export const MAXIMUM_LOG_LINES = 5000
+export const MAXIMUM_TOASTS = 4
+export const STATUS_POLL_INTERVAL_MS = 2000
+export const IDLE_POLL_INTERVAL_MS = 10000
+export const INPUT_POLL_INTERVAL_MS = 1000
+// While the page is hidden, the status is only checked during an execution (so the page title still shows when an input is needed)
+export const HIDDEN_POLL_INTERVAL_MS = 10000
+export const TYPING_SAVE_DELAY_MS = 1000
+export const THEME_STORAGE_KEY = 'tracker-profiles-theme'
+// Shown (masked) in the password field of a tracker with a saved password, which is never sent to the browser. Private-use characters, so it
+// cannot match a password that is typed
+export const SAVED_PASSWORD_VALUE = '\uE000'.repeat(8)
+// How long a tracker whose credentials have just been set stays in its group, while not being changed, before moving
+export const UNSET_MOVE_DELAY_MS = 10000
+export const PAGE_TITLE = document.title
+export const DARK_SCHEME_QUERY = window.matchMedia('(prefers-color-scheme: dark)')
+export const REDUCED_MOTION_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)')
+export const STATE_LABELS = {
+    IDLE: 'Idle',
+    RUNNING: 'Running',
+    WAITING: 'Waiting for you',
+    CANCELLING: 'Cancelling',
+    CANCELLED: 'Cancelled',
+    SUCCESS: 'Succeeded',
+    PARTIAL_FAILURE: 'Partially failed',
+    FAILURE: 'Failed',
+}
+// The steps of each tracker, in order (see TrackerStep)
+export const TRACKER_STEPS = [
+    {name: 'OPEN_TRACKER', label: 'Opening tracker'},
+    {name: 'LOGIN', label: 'Logging in'},
+    {name: 'OPEN_PROFILE_PAGE', label: 'Opening profile'},
+    {name: 'TAKE_SCREENSHOTS', label: 'Taking screenshots'},
+    {name: 'LOGOUT', label: 'Logging out'},
+]
+// The groups of trackers in an execution, in the order they are shown
+export const TRACKER_GROUPS = [
+    {state: 'RUNNING', title: 'In progress', empty: null},
+    {state: 'WAITING', title: 'Waiting', titleWhenFinished: 'Not run'},
+    {state: 'FAILED', title: 'Failed'},
+    {state: 'CANCELLED', title: 'Cancelled'},
+    {state: 'SUCCEEDED', title: 'Succeeded'},
+]
+export const LOG_LEVEL_SETTING = 'LOG_LEVEL'
+export const EXECUTION_ORDER_SETTING = 'TRACKER_EXECUTION_ORDER'
+export const ADULT_TRACKERS_SETTING = 'ENABLE_ADULT_TRACKERS'
+export const INPUT_TIMEOUT_SETTING = 'INPUT_TIMEOUT_SECONDS'
+// The timeout used when the input timeout is switched on, unless another was set before
+export const DEFAULT_INPUT_TIMEOUT_SECONDS = 300

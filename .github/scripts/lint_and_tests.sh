@@ -85,7 +85,7 @@ EOF
         -w /app \
         "${ESLINT_BUILD_IMAGE}" \
         eslint --config code-quality-config/javascript/eslint.config.cjs \
-        "tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/*.js" 2>&1); then
+        "tracker-profiles-screenshots/src/main/resources/**/*.{js,mjs}" 2>&1); then
         echo "✅ JavaScript lint passed"
     else
         echo "${output}"
