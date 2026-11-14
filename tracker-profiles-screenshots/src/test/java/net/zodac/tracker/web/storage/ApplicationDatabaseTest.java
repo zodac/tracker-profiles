@@ -102,8 +102,6 @@ class ApplicationDatabaseTest {
 
     @Test
     void givenNewDatabase_whenQueried_thenNoValuesExist() throws SQLException {
-        assertThat(applicationDatabase.hasCredentials())
-            .isFalse();
         assertThat(applicationDatabase.findAllCredentials())
             .isEmpty();
         assertThat(applicationDatabase.findAllSettings())
@@ -145,8 +143,6 @@ class ApplicationDatabaseTest {
             new StoredTrackerCredential("A", "userA", "passA", false)
         ));
 
-        assertThat(applicationDatabase.hasCredentials())
-            .isTrue();
         assertThat(applicationDatabase.findAllCredentials())
             .extracting(StoredTrackerCredential::name)
             .containsExactly("A", "B");

@@ -19,37 +19,13 @@ package net.zodac.tracker.framework;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Unit tests for {@link TrackerType}.
  */
 class TrackerTypeTest {
-
-    @ParameterizedTest
-    @CsvSource({
-        "HEADLESS,HEADLESS",
-        "headless,HEADLESS",
-    })
-    void givenValidInput_whenFindAnyCase_thenMatchingTrackerTypeReturned(final String input, final TrackerType expected) {
-        assertThat(TrackerType.find(input))
-            .isEqualTo(expected);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-        "",
-        "unknown",
-        "head",
-        "manual_input"
-    })
-    void givenUnknownInput_whenFind_thenNullReturned(final String input) {
-        assertThat(TrackerType.find(input))
-            .isNull();
-    }
 
     @ParameterizedTest
     @CsvSource({
@@ -59,11 +35,5 @@ class TrackerTypeTest {
     void givenTrackerType_whenFormattedName_thenCapitalisedNameReturned(final TrackerType type, final String expected) {
         assertThat(type.formattedName())
             .isEqualTo(expected);
-    }
-
-    @Test
-    void givenTrackerType_whenAllValues_thenAllEnumValuesReturned() {
-        assertThat(TrackerType.ALL_VALUES)
-            .containsExactlyInAnyOrder(TrackerType.HEADLESS, TrackerType.MANUAL);
     }
 }

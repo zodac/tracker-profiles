@@ -80,7 +80,6 @@ public final class ApplicationDatabase implements AutoCloseable {
         )""";
 
     private static final String SELECT_ALL_CREDENTIALS = "SELECT name, username, password, enabled FROM tracker_credentials ORDER BY name";
-    private static final String COUNT_CREDENTIALS = "SELECT COUNT(*) FROM tracker_credentials";
     // A NULL password keeps the existing password, so the UI never needs to send back a password it has not changed
     private static final String UPSERT_CREDENTIAL = """
         INSERT INTO tracker_credentials (name, username, password, enabled) VALUES (?, ?, COALESCE(?, ''), ?)
@@ -265,22 +264,6 @@ public final class ApplicationDatabase implements AutoCloseable {
                 ));
             }
             return credentials;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Checks whether any tracker credentials have been stored.
-     *
-     * @return {@code true} if at least one tracker credential exists
-     * @throws SQLException thrown if the database cannot be queried
-     */
-    public boolean hasCredentials() throws SQLException {
-        lock.lock();
-        try (final PreparedStatement statement = connection.prepareStatement(COUNT_CREDENTIALS);
-            final ResultSet resultSet = statement.executeQuery()) {
-            return resultSet.next() && resultSet.getInt(1) > 0;
         } finally {
             lock.unlock();
         }

@@ -21,38 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Unit tests for {@link RedactionType}.
  */
 class RedactionTypeTest {
-
-    @ParameterizedTest
-    @CsvSource({
-        "NONE,NONE",
-        "none,NONE",
-        "BLUR,BLUR",
-        "blur,BLUR",
-        "Box,BOX",
-        "BOX,BOX"
-    })
-    void givenValidInput_whenFind_thenMatchingRedactionTypeReturned(final String input, final RedactionType expected) {
-        assertThat(RedactionType.find(input))
-            .isEqualTo(expected);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-        "",
-        "unknown",
-        "boxy",
-        "invalid"
-    })
-    void givenUnknownInput_whenFind_thenNullReturned(final String input) {
-        assertThat(RedactionType.find(input))
-            .isNull();
-    }
 
     @ParameterizedTest
     @CsvSource({

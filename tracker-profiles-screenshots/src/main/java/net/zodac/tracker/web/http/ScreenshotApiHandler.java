@@ -92,6 +92,7 @@ public final class ScreenshotApiHandler extends ApiHandler {
         final Map<String, String> query = queryParameters(exchange);
         final String trackerName = query.get("tracker");
         if (trackerName == null) {
+            // Only lists the screenshots that still exist
             sendDownload(exchange, runManager.latestSuccessfulScreenshots());
             return;
         }
@@ -99,7 +100,10 @@ public final class ScreenshotApiHandler extends ApiHandler {
         final List<ScreenshotFile> trackerScreenshots = runManager.trackerScreenshots(trackerName);
         final String id = query.get("id");
         if (id == null) {
-            sendDownload(exchange, trackerScreenshots);
+            sendDownload(exchange, trackerScreenshots
+                .stream()
+                .filter(screenshot -> Files.isRegularFile(screenshot.path()))
+                .toList());
             return;
         }
 
@@ -134,12 +138,8 @@ public final class ScreenshotApiHandler extends ApiHandler {
         }
     }
 
-    private void sendDownload(final HttpExchange exchange, final List<ScreenshotFile> screenshots) throws IOException {
-        final List<ScreenshotFile> existingScreenshots = screenshots
-            .stream()
-            .filter(screenshot -> Files.isRegularFile(screenshot.path()))
-            .toList();
-
+    // The screenshots must all exist
+    private void sendDownload(final HttpExchange exchange, final List<ScreenshotFile> existingScreenshots) throws IOException {
         if (existingScreenshots.isEmpty()) {
             throw new HttpRequestException(HttpStatus.NOT_FOUND, "No screenshots found");
         }

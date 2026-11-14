@@ -17,9 +17,7 @@
 
 package net.zodac.tracker.framework.redactor;
 
-import java.util.Arrays;
 import java.util.Locale;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Enum defining the options for redacting sensitive information on a user profile page.
@@ -49,19 +47,5 @@ public enum RedactionType {
     public String formattedName() {
         final String name = toString();
         return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT);
-    }
-
-    /**
-     * Retrieve a {@link RedactionType} based on the input {@link String}. The search is case-insensitive.
-     *
-     * @param input the {@link RedactionType} as a {@link String}
-     * @return the matching {@link RedactionType}, or {@code null} if none is found
-     */
-    @Nullable
-    public static RedactionType find(final String input) {
-        return Arrays.stream(values())
-            .filter(redactionType -> redactionType.toString().equalsIgnoreCase(input))
-            .findAny()
-            .orElse(null);
     }
 }

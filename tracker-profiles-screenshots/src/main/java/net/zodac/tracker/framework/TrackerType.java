@@ -17,14 +17,11 @@
 
 package net.zodac.tracker.framework;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Enum defining the different types of trackers. This can be used to perform different executions for different trackers.
@@ -41,31 +38,7 @@ public enum TrackerType {
      */
     MANUAL;
 
-    /**
-     * All available {@link TrackerType}s.
-     *
-     * <p>
-     * Should be used instead of {@link TrackerType#values()}, as that recalculates the array for each call,
-     * while this method uses a static {@link Collection}.
-     */
-    public static final Collection<TrackerType> ALL_VALUES = List.of(values());
-
     private static final Logger LOGGER = LogManager.getLogger();
-
-    /**
-     * Retrieve a {@link TrackerType} based on the input {@link String}. The search is case-insensitive.
-     *
-     * @param input the {@link TrackerType} as a {@link String}
-     * @return the matching {@link TrackerType}, or {@code null} if none is found
-     */
-    @Nullable
-    public static TrackerType find(final String input) {
-        return ALL_VALUES
-            .stream()
-            .filter(trackerType -> trackerType.formattedName().equalsIgnoreCase(input))
-            .findAny()
-            .orElse(null);
-    }
 
     /**
      * Prints the information on the user-defined trackers for this {@link TrackerType}.

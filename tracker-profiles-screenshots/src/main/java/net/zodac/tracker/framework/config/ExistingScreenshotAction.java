@@ -17,9 +17,6 @@
 
 package net.zodac.tracker.framework.config;
 
-import java.util.Arrays;
-import org.jspecify.annotations.Nullable;
-
 /**
  * Enum defining the options for what to do when a screenshot already exists.
  */
@@ -38,19 +35,5 @@ public enum ExistingScreenshotAction {
     /**
      * Keep the existing screenshot and skip the screenshot.
      */
-    SKIP;
-
-    /**
-     * Retrieve a {@link ExistingScreenshotAction} based on the input {@link String}. The search is case-insensitive.
-     *
-     * @param input the {@link ExistingScreenshotAction} as a {@link String}
-     * @return the matching {@link ExistingScreenshotAction}, or {@code null} if none is found
-     */
-    @Nullable
-    public static ExistingScreenshotAction get(final String input) {
-        return Arrays.stream(values())
-            .filter(existingScreenshotAction -> existingScreenshotAction.toString().equalsIgnoreCase(input))
-            .findAny()
-            .orElse(null);
-    }
+    SKIP
 }
