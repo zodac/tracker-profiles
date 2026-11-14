@@ -17,6 +17,11 @@
             <AppenderRef ref="CONSOLE"/>
         </Logger>
 
+        <!-- Flyway logs each step of every database migration; ApplicationDatabase logs the migrated version instead -->
+        <Logger name="org.flywaydb" level="warn" additivity="false">
+            <AppenderRef ref="CONSOLE"/>
+        </Logger>
+
         <Root level="${rootLevel}">
             <AppenderRef ref="CONSOLE"/>
         </Root>

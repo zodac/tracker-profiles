@@ -41,6 +41,7 @@ import org.junit.jupiter.api.io.TempDir;
 class ApplicationDatabaseTest {
 
     private static final String SECRET_KEY = "test-secret-key-value";
+    private static final String LATEST_SCHEMA_VERSION = "2";
 
     @TempDir
     private Path tempDirectory;
@@ -58,117 +59,152 @@ class ApplicationDatabaseTest {
     }
 
     @Test
-    void givenSavedCredentials_whenStatusesRead_thenPasswordIsOnlyReportedAsSet() throws SQLException {
-        applicationDatabase.saveCredential("Alpha", "user", "password", true);
-        applicationDatabase.saveCredential("Beta", "other", "", false);
+    void givenNewDatabase_whenOpened_thenSchemaIsMigratedToLatestVersionWithStrictTables() throws SQLException {
+        assertThat(querySingleValue("SELECT MAX(CAST(version AS INTEGER)) FROM flyway_schema_history WHERE success = 1"))
+            .isEqualTo(LATEST_SCHEMA_VERSION);
+        assertThat(querySingleValue("SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND sql LIKE '%STRICT, WITHOUT ROWID'"))
+            .isEqualTo("4");
+    }
 
-        assertThat(applicationDatabase.findAllCredentialStatuses())
+    @Test
+    void givenDatabaseCreatedBeforeVersioning_whenOpened_thenItIsMigratedKeepingItsData() throws IOException, SQLException {
+        final Path unversionedPath = tempDirectory.resolve("unversioned.db");
+        try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + unversionedPath.toAbsolutePath());
+            final Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE tracker_credentials (name TEXT PRIMARY KEY COLLATE NOCASE, username TEXT NOT NULL DEFAULT '', "
+                + "password TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 0)");
+            statement.execute("CREATE TABLE settings (name TEXT PRIMARY KEY COLLATE NOCASE, value TEXT NOT NULL)");
+            statement.execute("INSERT INTO tracker_credentials (name, username, password, enabled) VALUES ('Tracker', 'user', 'plainPassword', 1)");
+            statement.execute("INSERT INTO settings (name, value) VALUES ('LOG_LEVEL', 'DEBUG')");
+        }
+
+        try (final ApplicationDatabase migratedDatabase = ApplicationDatabase.open(unversionedPath, SECRET_KEY)) {
+            assertThat(migratedDatabase.credentials().findAll())
+                .containsExactly(new StoredTrackerCredential("Tracker", "user", "plainPassword", true));
+            assertThat(migratedDatabase.settings().findAll())
+                .containsExactlyEntriesOf(Map.of("LOG_LEVEL", "DEBUG"));
+        }
+    }
+
+    @Test
+    void givenInvalidBooleanValue_whenWritten_thenItIsRejectedByTheSchema() {
+        assertThatThrownBy(() -> executeSql("INSERT INTO tracker_credentials (name, username, password, enabled) VALUES ('Tracker', 'u', '', 2)"))
+            .isInstanceOf(SQLException.class)
+            .hasMessageContaining("CHECK constraint failed");
+    }
+
+    @Test
+    void givenSavedCredentials_whenStatusesRead_thenPasswordIsOnlyReportedAsSet() throws SQLException {
+        applicationDatabase.credentials().save("Alpha", "user", "password", true);
+        applicationDatabase.credentials().save("Beta", "other", "", false);
+
+        assertThat(applicationDatabase.credentials().findAllStatuses())
             .containsExactly(new TrackerCredentialStatus("Alpha", "user", true, true), new TrackerCredentialStatus("Beta", "other", false, false));
-        assertThat(applicationDatabase.hasPassword("alpha"))
+        assertThat(applicationDatabase.credentials().hasPassword("alpha"))
             .isTrue();
-        assertThat(applicationDatabase.hasPassword("Beta"))
+        assertThat(applicationDatabase.credentials().hasPassword("Beta"))
             .isFalse();
-        assertThat(applicationDatabase.hasPassword("Unknown"))
+        assertThat(applicationDatabase.credentials().hasPassword("Unknown"))
             .isFalse();
     }
 
     @Test
     void givenSeveralTrackers_whenEnabledTogether_thenOnlyThoseWithCredentialsAndNotAlreadyEnabledAreChanged() throws SQLException {
-        applicationDatabase.saveCredential("Alpha", "user", "password", false);
-        applicationDatabase.saveCredential("Beta", "user", "", false);
-        applicationDatabase.saveCredential("Gamma", "user", "password", true);
+        applicationDatabase.credentials().save("Alpha", "user", "password", false);
+        applicationDatabase.credentials().save("Beta", "user", "", false);
+        applicationDatabase.credentials().save("Gamma", "user", "password", true);
 
-        assertThat(applicationDatabase.changeEnabled(List.of("Alpha", "Beta", "Gamma", "Unknown"), true))
+        assertThat(applicationDatabase.credentials().changeEnabled(List.of("Alpha", "Beta", "Gamma", "Unknown"), true))
             .containsExactly("Alpha");
-        assertThat(applicationDatabase.findAllCredentialStatuses())
+        assertThat(applicationDatabase.credentials().findAllStatuses())
             .extracting(TrackerCredentialStatus::enabled)
             .containsExactly(true, false, true);
 
-        assertThat(applicationDatabase.changeEnabled(List.of("Alpha", "Beta", "Gamma"), false))
+        assertThat(applicationDatabase.credentials().changeEnabled(List.of("Alpha", "Beta", "Gamma"), false))
             .containsExactly("Alpha", "Gamma");
     }
 
     @Test
     void givenSeveralTrackers_whenDeletedTogether_thenOnlyStoredTrackersAreReported() throws SQLException {
-        applicationDatabase.saveCredential("Alpha", "user", "password", true);
-        applicationDatabase.saveCredential("Beta", "user", "password", true);
+        applicationDatabase.credentials().save("Alpha", "user", "password", true);
+        applicationDatabase.credentials().save("Beta", "user", "password", true);
 
-        assertThat(applicationDatabase.deleteCredentials(List.of("Alpha", "Unknown")))
+        assertThat(applicationDatabase.credentials().deleteAll(List.of("Alpha", "Unknown")))
             .containsExactly("Alpha");
-        assertThat(applicationDatabase.findAllCredentialStatuses())
+        assertThat(applicationDatabase.credentials().findAllStatuses())
             .extracting(TrackerCredentialStatus::name)
             .containsExactly("Beta");
     }
 
     @Test
     void givenNewDatabase_whenQueried_thenNoValuesExist() throws SQLException {
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .isEmpty();
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .isEmpty();
     }
 
     @Test
     void givenSavedCredential_whenSavedWithNullPassword_thenExistingPasswordIsKept() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
-        applicationDatabase.saveCredential("Tracker", "newUser", null, false);
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
+        applicationDatabase.credentials().save("Tracker", "newUser", null, false);
 
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .containsExactly(new StoredTrackerCredential("Tracker", "newUser", "password", false));
     }
 
     @Test
     void givenSavedCredential_whenSavedWithEmptyPassword_thenPasswordIsRemoved() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
-        applicationDatabase.saveCredential("Tracker", "user", "", false);
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
+        applicationDatabase.credentials().save("Tracker", "user", "", false);
 
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .containsExactly(new StoredTrackerCredential("Tracker", "user", "", false));
     }
 
     @Test
     void givenSavedCredential_whenSavedWithDifferentCase_thenSameRowIsUpdated() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
-        applicationDatabase.saveCredential("TRACKER", "user", "newPassword", true);
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
+        applicationDatabase.credentials().save("TRACKER", "user", "newPassword", true);
 
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .extracting(StoredTrackerCredential::password)
             .containsExactly("newPassword");
     }
 
     @Test
     void givenMultipleCredentials_whenSavedTogether_thenAllAreStored() throws SQLException {
-        applicationDatabase.saveCredentials(List.of(
+        applicationDatabase.credentials().saveAll(List.of(
             new StoredTrackerCredential("B", "userB", "passB", true),
             new StoredTrackerCredential("A", "userA", "passA", false)
         ));
 
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .extracting(StoredTrackerCredential::name)
             .containsExactly("A", "B");
     }
 
     @Test
     void givenSavedCredential_whenDeleted_thenNoLongerExists() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
-        applicationDatabase.deleteCredential("Tracker");
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
+        applicationDatabase.credentials().delete("Tracker");
 
-        assertThat(applicationDatabase.findAllCredentials())
+        assertThat(applicationDatabase.credentials().findAll())
             .isEmpty();
     }
 
     @Test
     void givenSavedSettings_whenReplaced_thenOnlyNewSettingsExist() throws SQLException {
-        applicationDatabase.replaceSettings(Map.of("FIRST", "1", "SECOND", "2"));
-        applicationDatabase.replaceSettings(Map.of("SECOND", "22", "THIRD", "3"));
+        applicationDatabase.settings().replaceAll(Map.of("FIRST", "1", "SECOND", "2"));
+        applicationDatabase.settings().replaceAll(Map.of("SECOND", "22", "THIRD", "3"));
 
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .containsExactlyInAnyOrderEntriesOf(Map.of("SECOND", "22", "THIRD", "3"));
     }
 
     @Test
     void givenSavedCredential_whenReadFromDatabaseFile_thenPasswordIsEncrypted() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
 
         assertThat(readStoredPassword("Tracker"))
             .startsWith(PasswordCipher.ENCRYPTED_PREFIX)
@@ -182,14 +218,14 @@ class ApplicationDatabaseTest {
         try (final ApplicationDatabase reopenedDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY)) {
             assertThat(readStoredPassword("Tracker"))
                 .startsWith(PasswordCipher.ENCRYPTED_PREFIX);
-            assertThat(reopenedDatabase.findAllCredentials())
+            assertThat(reopenedDatabase.credentials().findAll())
                 .containsExactly(new StoredTrackerCredential("Tracker", "user", "plainPassword", true));
         }
     }
 
     @Test
     void givenPasswordsEncryptedWithAnotherSecret_whenDatabaseIsOpened_thenExceptionIsThrown() throws SQLException {
-        applicationDatabase.saveCredential("Tracker", "user", "password", true);
+        applicationDatabase.credentials().save("Tracker", "user", "password", true);
 
         assertThatThrownBy(() -> ApplicationDatabase.open(databasePath(), "another-secret-key-value"))
             .isInstanceOf(IllegalStateException.class)
@@ -204,10 +240,10 @@ class ApplicationDatabaseTest {
 
     @Test
     void givenSavedResult_whenSavedAgain_thenOnlyLatestResultIsKept() throws SQLException {
-        applicationDatabase.saveResult(new StoredTrackerResult("Tracker", 1_000L, true));
-        applicationDatabase.saveResult(new StoredTrackerResult("tracker", 2_000L, false));
+        applicationDatabase.results().save(new StoredTrackerResult("Tracker", 1_000L, true));
+        applicationDatabase.results().save(new StoredTrackerResult("tracker", 2_000L, false));
 
-        assertThat(applicationDatabase.findAllResults())
+        assertThat(applicationDatabase.results().findAll())
             .containsExactly(new StoredTrackerResult("Tracker", 2_000L, false));
     }
 
@@ -222,6 +258,14 @@ class ApplicationDatabaseTest {
             try (final ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? resultSet.getString(1) : "";
             }
+        }
+    }
+
+    private String querySingleValue(final String sql) throws SQLException {
+        try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath().toAbsolutePath());
+            final Statement statement = connection.createStatement();
+            final ResultSet resultSet = statement.executeQuery(sql)) {
+            return resultSet.next() ? resultSet.getString(1) : "";
         }
     }
 

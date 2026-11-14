@@ -32,6 +32,7 @@
         <mockito.version>5.24.0</mockito.version>
 
         <!-- tracker-profiles-specific versions not in parent-pom -->
+        <flyway.version>13.12.0</flyway.version>
         <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
         <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
         <sqlite-jdbc.version>3.54.1.0</sqlite-jdbc.version>
@@ -48,6 +49,11 @@
     <dependencyManagement>
         <dependencies>
             <!-- tracker-profiles-specific: not in parent-pom -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-transform-maven-shade-plugin-extensions</artifactId>

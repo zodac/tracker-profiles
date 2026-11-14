@@ -78,7 +78,7 @@ class SettingsServiceTest {
             .returns("3", SettingsService.SettingView::value)
             .returns(SettingsService.Source.WEB_UI, SettingsService.SettingView::source)
             .returns(true, SettingsService.SettingView::changedFromDefault);
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .containsEntry(OPTION.name(), "3");
     }
 
@@ -91,7 +91,7 @@ class SettingsServiceTest {
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value)
             .returns(SettingsService.Source.WEB_UI, SettingsService.SettingView::source)
             .returns(false, SettingsService.SettingView::changedFromDefault);
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .containsEntry(OPTION.name(), OPTION.defaultValue());
     }
 
@@ -121,11 +121,11 @@ class SettingsServiceTest {
 
     @Test
     void givenSavedSettingForRemovedOption_whenUpdated_thenRemovedOptionIsDropped() throws SQLException {
-        applicationDatabase.replaceSettings(Map.of("PROGRESS_BAR_ENABLED", "false"));
+        applicationDatabase.settings().replaceAll(Map.of("PROGRESS_BAR_ENABLED", "false"));
 
         settingsService.updateSettings(Map.of(OPTION.name(), "3"));
 
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .containsExactly(Map.entry(OPTION.name(), "3"));
     }
 
@@ -146,7 +146,7 @@ class SettingsServiceTest {
 
         assertThat(find(settings, OPTION))
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value);
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .isEmpty();
     }
 
@@ -157,7 +157,7 @@ class SettingsServiceTest {
         assertThatThrownBy(() -> settingsService.updateSettings(values))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining(OPTION.name());
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .isEmpty();
     }
 
@@ -178,7 +178,7 @@ class SettingsServiceTest {
         assertThatThrownBy(() -> settingsService.updateSettings(values))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("execution is in progress");
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .isEmpty();
         assertThat(savedSettings)
             .isEmpty();
@@ -192,7 +192,7 @@ class SettingsServiceTest {
         assertThatThrownBy(() -> settingsService.resetSetting(OPTION.name()))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("execution is in progress");
-        assertThat(applicationDatabase.findAllSettings())
+        assertThat(applicationDatabase.settings().findAll())
             .containsEntry(OPTION.name(), "4");
     }
 

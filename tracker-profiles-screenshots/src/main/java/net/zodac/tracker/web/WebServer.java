@@ -114,7 +114,7 @@ public final class WebServer {
     }
 
     private static void removeObsoleteSettings(final ApplicationDatabase applicationDatabase) throws SQLException {
-        final Map<String, String> savedSettings = applicationDatabase.findAllSettings();
+        final Map<String, String> savedSettings = applicationDatabase.settings().findAll();
         final Map<String, String> currentSettings = new LinkedHashMap<>(savedSettings);
         currentSettings.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
 
@@ -123,7 +123,7 @@ public final class WebServer {
                 .stream()
                 .filter(name -> !currentSettings.containsKey(name))
                 .toList());
-            applicationDatabase.replaceSettings(currentSettings);
+            applicationDatabase.settings().replaceAll(currentSettings);
         }
     }
 

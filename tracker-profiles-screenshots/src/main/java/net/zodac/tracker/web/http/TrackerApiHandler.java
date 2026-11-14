@@ -92,12 +92,12 @@ public final class TrackerApiHandler extends ApiHandler {
             if (username.isBlank()) {
                 throw badRequest("A username is required to enable '%s'".formatted(trackerHandler.name()));
             }
-            if (password == null ? !applicationDatabase.hasPassword(trackerHandler.name()) : password.isEmpty()) {
+            if (password == null ? !applicationDatabase.credentials().hasPassword(trackerHandler.name()) : password.isEmpty()) {
                 throw badRequest("A password is required to enable '%s'".formatted(trackerHandler.name()));
             }
         }
 
-        applicationDatabase.saveCredential(trackerHandler.name(), username, password, trackerUpdate.enabled());
+        applicationDatabase.credentials().save(trackerHandler.name(), username, password, trackerUpdate.enabled());
         sendJson(exchange, HttpStatus.OK, listTrackers());
     }
 
@@ -124,7 +124,7 @@ public final class TrackerApiHandler extends ApiHandler {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, e);
         }
 
-        final Set<String> existingNames = applicationDatabase.findAllCredentialStatuses()
+        final Set<String> existingNames = applicationDatabase.credentials().findAllStatuses()
             .stream()
             .map(credential -> credential.name().toLowerCase(Locale.ROOT))
             .collect(Collectors.toSet());
@@ -134,7 +134,7 @@ public final class TrackerApiHandler extends ApiHandler {
             .stream()
             .map(credential -> new StoredTrackerCredential(canonicalName(credential), credential.username(), credential.password(), true))
             .toList();
-        applicationDatabase.saveCredentials(credentials);
+        applicationDatabase.credentials().saveAll(credentials);
 
         final int updated = (int) credentials.stream()
             .filter(credential -> existingNames.contains(credential.name().toLowerCase(Locale.ROOT)))
@@ -160,9 +160,9 @@ public final class TrackerApiHandler extends ApiHandler {
             .toList();
 
         final List<String> changed = switch (bulkChange.action()) {
-            case ENABLE -> applicationDatabase.changeEnabled(names, true);
-            case DISABLE -> applicationDatabase.changeEnabled(names, false);
-            case REMOVE -> applicationDatabase.deleteCredentials(names);
+            case ENABLE -> applicationDatabase.credentials().changeEnabled(names, true);
+            case DISABLE -> applicationDatabase.credentials().changeEnabled(names, false);
+            case REMOVE -> applicationDatabase.credentials().deleteAll(names);
         };
         sendJson(exchange, HttpStatus.OK, new BulkResult(changed, listTrackers()));
     }
@@ -180,16 +180,16 @@ public final class TrackerApiHandler extends ApiHandler {
         }
 
         final TrackerHandler trackerHandler = findHandler(pathParameter);
-        applicationDatabase.deleteCredential(trackerHandler.name());
+        applicationDatabase.credentials().delete(trackerHandler.name());
         sendJson(exchange, HttpStatus.OK, listTrackers());
     }
 
     private List<TrackerView> listTrackers() throws SQLException {
-        final Map<String, TrackerCredentialStatus> credentialsByName = applicationDatabase.findAllCredentialStatuses()
+        final Map<String, TrackerCredentialStatus> credentialsByName = applicationDatabase.credentials().findAllStatuses()
             .stream()
             .collect(Collectors.toMap(credential -> credential.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
-        final Map<String, StoredTrackerResult> resultsByName = applicationDatabase.findAllResults()
+        final Map<String, StoredTrackerResult> resultsByName = applicationDatabase.results().findAll()
             .stream()
             .collect(Collectors.toMap(result -> result.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 

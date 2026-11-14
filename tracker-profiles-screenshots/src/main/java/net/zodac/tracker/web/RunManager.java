@@ -120,7 +120,7 @@ public final class RunManager implements ExecutionListener {
      * @throws SQLException             thrown if the settings cannot be read from the database
      */
     public static ApplicationConfiguration reloadConfiguration(final ApplicationDatabase applicationDatabase) throws SQLException {
-        final ApplicationConfiguration applicationConfiguration = Configuration.reload(editableOverrides(applicationDatabase.findAllSettings()));
+        final ApplicationConfiguration applicationConfiguration = Configuration.reload(editableOverrides(applicationDatabase.settings().findAll()));
         applyLogLevel(applicationConfiguration);
         return applicationConfiguration;
     }
@@ -322,7 +322,7 @@ public final class RunManager implements ExecutionListener {
         }
         reloadConfiguration(applicationDatabase).print();
 
-        final List<TrackerCredential> enabledTrackers = applicationDatabase.findAllCredentials()
+        final List<TrackerCredential> enabledTrackers = applicationDatabase.credentials().findAll()
             .stream()
             .filter(StoredTrackerCredential::enabled)
             .filter(credential -> !failedTrackersOnly || failedTrackerNames.contains(credential.name()))
@@ -592,7 +592,7 @@ public final class RunManager implements ExecutionListener {
         }
 
         try {
-            applicationDatabase.saveResult(new StoredTrackerResult(trackerName, completedAt, wasSuccessful));
+            applicationDatabase.results().save(new StoredTrackerResult(trackerName, completedAt, wasSuccessful));
         } catch (final SQLException e) {
             LOGGER.debug("Unable to save the result for tracker '{}'", trackerName, e);
             LOGGER.warn("Unable to save the result for tracker '{}': {}", trackerName, e.getMessage());

@@ -69,7 +69,7 @@ public final class SettingsService {
      * @throws SQLException thrown if the saved settings cannot be read
      */
     public List<SettingView> listSettings() throws SQLException {
-        final Map<String, String> overrides = applicationDatabase.findAllSettings();
+        final Map<String, String> overrides = applicationDatabase.settings().findAll();
         return ConfigurationOption.ALL_VALUES
             .stream()
             .map(option -> SettingView.of(option, overrides.get(option.name())))
@@ -89,7 +89,7 @@ public final class SettingsService {
      */
     public List<SettingView> updateSettings(final Map<String, String> values) throws SQLException {
         checkNoExecutionInProgress();
-        final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
+        final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.settings().findAll());
 
         // Settings saved for an option that no longer exists are dropped
         overrides.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
@@ -114,7 +114,7 @@ public final class SettingsService {
     public List<SettingView> resetSetting(final String name) throws SQLException {
         checkNoExecutionInProgress();
         final ConfigurationOption option = findEditableOption(name);
-        final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
+        final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.settings().findAll());
         overrides.remove(option.name());
         overrides.keySet().removeIf(savedName -> ConfigurationOption.find(savedName) == null);
 
@@ -131,7 +131,7 @@ public final class SettingsService {
     private void validateAndSave(final Map<String, String> overrides) throws SQLException {
         // Throws IllegalArgumentException if invalid, so nothing is saved
         ApplicationConfiguration.load(overrides);
-        applicationDatabase.replaceSettings(overrides);
+        applicationDatabase.settings().replaceAll(overrides);
         savedSettingsListener.settingsSaved(Map.copyOf(overrides));
     }
 
