@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>tracker-profiles</artifactId>
-    <version>12.1.1-SNAPSHOT</version>
+    <version>13.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>[${project.artifactId}] project</name>
 
