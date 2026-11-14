@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.web.http.LogApiHandler;
@@ -46,13 +47,17 @@ public final class WebServer {
     private static final int STOP_DELAY_SECONDS = 1;
 
     private final HttpServer httpServer;
+    private final ApplicationDatabase applicationDatabase;
+    private final AtomicBoolean stopped = new AtomicBoolean();
 
-    private WebServer(final HttpServer httpServer) {
+    private WebServer(final HttpServer httpServer, final ApplicationDatabase applicationDatabase) {
         this.httpServer = httpServer;
+        this.applicationDatabase = applicationDatabase;
     }
 
     /**
-     * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists), then starts the web UI server.
+     * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists), then starts the web UI server. The
+     * database is closed again if the server cannot be started, and otherwise by {@link #stop()}.
      *
      * @param applicationConfiguration the {@link ApplicationConfiguration} loaded from environment variables
      * @param webLogAppender           the {@link WebLogAppender} capturing the log messages shown in the web UI
@@ -64,32 +69,48 @@ public final class WebServer {
         throws IOException, SQLException {
         final ApplicationDatabase applicationDatabase = ApplicationDatabase.open(applicationConfiguration.databasePath(),
             applicationConfiguration.secretKey());
-        removeObsoleteSettings(applicationDatabase);
-        applyStoredSettings(applicationDatabase);
+        try {
+            removeObsoleteSettings(applicationDatabase);
+            applyStoredSettings(applicationDatabase);
 
-        final RunManager runManager = RunManager.create(applicationDatabase, webLogAppender);
-        final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::isExecutionInProgress,
-            runManager::applySavedSettings);
+            final RunManager runManager = RunManager.create(applicationDatabase, webLogAppender);
+            final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::isExecutionInProgress,
+                runManager::applySavedSettings);
 
-        final HttpServer httpServer = HttpServer.create(new InetSocketAddress(applicationConfiguration.webUiPort()), 0);
-        httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
-        httpServer.createContext(RunApiHandler.CONTEXT_PATH, RunApiHandler.create(runManager));
-        httpServer.createContext(LogApiHandler.CONTEXT_PATH, LogApiHandler.create(webLogAppender));
-        httpServer.createContext(ScreenshotApiHandler.CONTEXT_PATH, ScreenshotApiHandler.create(runManager));
-        httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase));
-        httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
-        httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());
-        httpServer.start();
+            final HttpServer httpServer = HttpServer.create(new InetSocketAddress(applicationConfiguration.webUiPort()), 0);
+            httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+            httpServer.createContext(RunApiHandler.CONTEXT_PATH, RunApiHandler.create(runManager));
+            httpServer.createContext(LogApiHandler.CONTEXT_PATH, LogApiHandler.create(webLogAppender));
+            httpServer.createContext(ScreenshotApiHandler.CONTEXT_PATH, ScreenshotApiHandler.create(runManager));
+            httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase));
+            httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
+            httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());
+            httpServer.start();
 
-        LOGGER.info("Web UI available on port {}", applicationConfiguration.webUiPort());
-        return new WebServer(httpServer);
+            LOGGER.info("Web UI available on port {}", applicationConfiguration.webUiPort());
+            return new WebServer(httpServer, applicationDatabase);
+        } catch (final IOException | SQLException | RuntimeException e) {
+            applicationDatabase.close();
+            throw e;
+        }
     }
 
     /**
-     * Stops the server, allowing a short delay for in-flight requests to complete.
+     * Stops the server, allowing a short delay for in-flight requests to complete, then closes the {@link ApplicationDatabase}. Only the first call
+     * has any effect.
      */
     public void stop() {
+        if (!stopped.compareAndSet(false, true)) {
+            return;
+        }
+
         httpServer.stop(STOP_DELAY_SECONDS);
+        try {
+            applicationDatabase.close();
+        } catch (final SQLException e) {
+            LOGGER.debug("Unable to close the database", e);
+            LOGGER.warn("Unable to close the database: {}", e.getMessage());
+        }
     }
 
     private static void removeObsoleteSettings(final ApplicationDatabase applicationDatabase) throws SQLException {

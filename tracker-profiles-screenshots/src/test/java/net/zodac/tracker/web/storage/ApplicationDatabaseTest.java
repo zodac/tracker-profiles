@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -49,6 +50,54 @@ class ApplicationDatabaseTest {
     @BeforeEach
     void setUp() throws IOException, SQLException {
         applicationDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY);
+    }
+
+    @AfterEach
+    void tearDown() throws SQLException {
+        applicationDatabase.close();
+    }
+
+    @Test
+    void givenSavedCredentials_whenStatusesRead_thenPasswordIsOnlyReportedAsSet() throws SQLException {
+        applicationDatabase.saveCredential("Alpha", "user", "password", true);
+        applicationDatabase.saveCredential("Beta", "other", "", false);
+
+        assertThat(applicationDatabase.findAllCredentialStatuses())
+            .containsExactly(new TrackerCredentialStatus("Alpha", "user", true, true), new TrackerCredentialStatus("Beta", "other", false, false));
+        assertThat(applicationDatabase.hasPassword("alpha"))
+            .isTrue();
+        assertThat(applicationDatabase.hasPassword("Beta"))
+            .isFalse();
+        assertThat(applicationDatabase.hasPassword("Unknown"))
+            .isFalse();
+    }
+
+    @Test
+    void givenSeveralTrackers_whenEnabledTogether_thenOnlyThoseWithCredentialsAndNotAlreadyEnabledAreChanged() throws SQLException {
+        applicationDatabase.saveCredential("Alpha", "user", "password", false);
+        applicationDatabase.saveCredential("Beta", "user", "", false);
+        applicationDatabase.saveCredential("Gamma", "user", "password", true);
+
+        assertThat(applicationDatabase.changeEnabled(List.of("Alpha", "Beta", "Gamma", "Unknown"), true))
+            .containsExactly("Alpha");
+        assertThat(applicationDatabase.findAllCredentialStatuses())
+            .extracting(TrackerCredentialStatus::enabled)
+            .containsExactly(true, false, true);
+
+        assertThat(applicationDatabase.changeEnabled(List.of("Alpha", "Beta", "Gamma"), false))
+            .containsExactly("Alpha", "Gamma");
+    }
+
+    @Test
+    void givenSeveralTrackers_whenDeletedTogether_thenOnlyStoredTrackersAreReported() throws SQLException {
+        applicationDatabase.saveCredential("Alpha", "user", "password", true);
+        applicationDatabase.saveCredential("Beta", "user", "password", true);
+
+        assertThat(applicationDatabase.deleteCredentials(List.of("Alpha", "Unknown")))
+            .containsExactly("Alpha");
+        assertThat(applicationDatabase.findAllCredentialStatuses())
+            .extracting(TrackerCredentialStatus::name)
+            .containsExactly("Beta");
     }
 
     @Test
@@ -134,12 +183,12 @@ class ApplicationDatabaseTest {
     void givenPlainTextPassword_whenDatabaseIsOpened_thenPasswordIsEncryptedAndReadable() throws IOException, SQLException {
         executeSql("INSERT INTO tracker_credentials (name, username, password, enabled) VALUES ('Tracker', 'user', 'plainPassword', 1)");
 
-        final ApplicationDatabase reopenedDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY);
-
-        assertThat(readStoredPassword("Tracker"))
-            .startsWith(PasswordCipher.ENCRYPTED_PREFIX);
-        assertThat(reopenedDatabase.findAllCredentials())
-            .containsExactly(new StoredTrackerCredential("Tracker", "user", "plainPassword", true));
+        try (final ApplicationDatabase reopenedDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY)) {
+            assertThat(readStoredPassword("Tracker"))
+                .startsWith(PasswordCipher.ENCRYPTED_PREFIX);
+            assertThat(reopenedDatabase.findAllCredentials())
+                .containsExactly(new StoredTrackerCredential("Tracker", "user", "plainPassword", true));
+        }
     }
 
     @Test

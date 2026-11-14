@@ -46,7 +46,7 @@ import org.jspecify.annotations.Nullable;
  * A new {@link Connection} is opened for each operation, and all operations are serialised by a {@link Lock}, since the expected load is a single
  * user editing values in a browser.
  */
-public final class ApplicationDatabase {
+public final class ApplicationDatabase implements AutoCloseable {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -89,6 +89,13 @@ public final class ApplicationDatabase {
             password = COALESCE(?, tracker_credentials.password),
             enabled  = excluded.enabled""";
     private static final String DELETE_CREDENTIAL = "DELETE FROM tracker_credentials WHERE name = ?";
+    private static final String SELECT_ALL_CREDENTIAL_STATUSES =
+        "SELECT name, username, password <> '' AS has_password, enabled FROM tracker_credentials ORDER BY name";
+    private static final String SELECT_HAS_PASSWORD = "SELECT 1 FROM tracker_credentials WHERE name = ? AND password <> ''";
+    // A tracker can only be enabled with a username and password
+    private static final String UPDATE_ENABLED = """
+        UPDATE tracker_credentials SET enabled = ?
+        WHERE name = ? AND enabled <> ? AND (? = 0 OR (username <> '' AND password <> ''))""";
     private static final String UPDATE_PASSWORD = "UPDATE tracker_credentials SET password = ? WHERE name = ?";
 
     private static final String SELECT_ALL_SETTINGS = "SELECT name, value FROM settings ORDER BY name";
@@ -104,11 +111,12 @@ public final class ApplicationDatabase {
             successful  = excluded.successful""";
 
     private final Lock lock = new ReentrantLock();
-    private final String jdbcUrl;
+    // The only connection, opened with the database and used while holding the lock. SQLite allows a single writer, so a pool would not help
+    private final Connection connection;
     private final PasswordCipher passwordCipher;
 
-    private ApplicationDatabase(final String jdbcUrl, final PasswordCipher passwordCipher) {
-        this.jdbcUrl = jdbcUrl;
+    private ApplicationDatabase(final Connection connection, final PasswordCipher passwordCipher) {
+        this.connection = connection;
         this.passwordCipher = passwordCipher;
     }
 
@@ -131,19 +139,46 @@ public final class ApplicationDatabase {
             Files.createDirectories(parent);
         }
 
-        final String jdbcUrl = "jdbc:sqlite:" + absolutePath;
-        final byte[] salt;
-        try (final Connection connection = DriverManager.getConnection(jdbcUrl)) {
+        final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + absolutePath); // NOPMD: CloseResource - closed by close()
+        try {
+            configure(connection);
             createTables(connection);
-            salt = findOrCreateSalt(connection);
-        }
+            final byte[] salt = findOrCreateSalt(connection);
 
-        final ApplicationDatabase applicationDatabase = new ApplicationDatabase(jdbcUrl, PasswordCipher.fromSecretKey(secretKey, salt));
-        applicationDatabase.encryptPlainTextPasswords();
-        // Fails at startup (rather than on the next execution) if the secret was changed
-        applicationDatabase.findAllCredentials();
-        LOGGER.debug("Opened database at '{}'", absolutePath);
-        return applicationDatabase;
+            final ApplicationDatabase applicationDatabase = new ApplicationDatabase(connection, PasswordCipher.fromSecretKey(secretKey, salt));
+            applicationDatabase.encryptPlainTextPasswords();
+            // Fails at startup (rather than on the next execution) if the secret was changed
+            applicationDatabase.findAllCredentials();
+            LOGGER.debug("Opened database at '{}'", absolutePath);
+            return applicationDatabase;
+        } catch (final SQLException | RuntimeException e) {
+            connection.close();
+            throw e;
+        }
+    }
+
+    // WAL with NORMAL synchronisation makes each (small, frequent) autosave from the web UI much cheaper than the default rollback journal, and
+    // is still safe from corruption on a crash (only the last transactions may be lost on a power failure)
+    private static void configure(final Connection connection) throws SQLException {
+        try (final Statement statement = connection.createStatement()) {
+            statement.execute("PRAGMA journal_mode = WAL");
+            statement.execute("PRAGMA synchronous = NORMAL");
+        }
+    }
+
+    /**
+     * Closes the connection to the database. The {@link ApplicationDatabase} cannot be used afterwards.
+     *
+     * @throws SQLException thrown if the connection cannot be closed
+     */
+    @Override
+    public void close() throws SQLException {
+        lock.lock();
+        try {
+            connection.close();
+        } finally {
+            lock.unlock();
+        }
     }
 
     // The salt used to derive the key from the secret, created with the database
@@ -168,7 +203,7 @@ public final class ApplicationDatabase {
 
     private void encryptPlainTextPasswords() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect()) {
+        try {
             connection.setAutoCommit(false);
             try (final PreparedStatement selectStatement = connection.prepareStatement(SELECT_ALL_CREDENTIALS);
                 final ResultSet resultSet = selectStatement.executeQuery();
@@ -192,6 +227,8 @@ public final class ApplicationDatabase {
             } catch (final SQLException e) {
                 connection.rollback();
                 throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } finally {
             lock.unlock();
@@ -215,8 +252,7 @@ public final class ApplicationDatabase {
      */
     public List<StoredTrackerCredential> findAllCredentials() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_CREDENTIALS);
+        try (final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_CREDENTIALS);
             final ResultSet resultSet = statement.executeQuery()) {
             final List<StoredTrackerCredential> credentials = new ArrayList<>();
             while (resultSet.next()) {
@@ -242,8 +278,7 @@ public final class ApplicationDatabase {
      */
     public boolean hasCredentials() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(COUNT_CREDENTIALS);
+        try (final PreparedStatement statement = connection.prepareStatement(COUNT_CREDENTIALS);
             final ResultSet resultSet = statement.executeQuery()) {
             return resultSet.next() && resultSet.getInt(1) > 0;
         } finally {
@@ -263,8 +298,7 @@ public final class ApplicationDatabase {
     public void saveCredential(final String name, final String username, final @Nullable String password, final boolean enabled)
         throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(UPSERT_CREDENTIAL)) {
+        try (final PreparedStatement statement = connection.prepareStatement(UPSERT_CREDENTIAL)) {
             bindCredential(statement, name, username, password, enabled);
             statement.executeUpdate();
         } finally {
@@ -280,7 +314,7 @@ public final class ApplicationDatabase {
      */
     public void saveCredentials(final Collection<StoredTrackerCredential> credentials) throws SQLException {
         lock.lock();
-        try (final Connection connection = connect()) {
+        try {
             connection.setAutoCommit(false);
             try (final PreparedStatement statement = connection.prepareStatement(UPSERT_CREDENTIAL)) {
                 for (final StoredTrackerCredential credential : credentials) {
@@ -292,6 +326,8 @@ public final class ApplicationDatabase {
             } catch (final SQLException e) {
                 connection.rollback();
                 throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } finally {
             lock.unlock();
@@ -326,8 +362,7 @@ public final class ApplicationDatabase {
      */
     public Map<String, String> findAllSettings() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_SETTINGS);
+        try (final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_SETTINGS);
             final ResultSet resultSet = statement.executeQuery()) {
             final Map<String, String> settings = new LinkedHashMap<>();
             while (resultSet.next()) {
@@ -347,7 +382,7 @@ public final class ApplicationDatabase {
      */
     public void replaceSettings(final Map<String, String> settings) throws SQLException {
         lock.lock();
-        try (final Connection connection = connect()) {
+        try {
             connection.setAutoCommit(false);
             try (final PreparedStatement deleteStatement = connection.prepareStatement(DELETE_SETTING);
                 final PreparedStatement upsertStatement = connection.prepareStatement(UPSERT_SETTING)) {
@@ -368,6 +403,8 @@ public final class ApplicationDatabase {
             } catch (final SQLException e) {
                 connection.rollback();
                 throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } finally {
             lock.unlock();
@@ -382,8 +419,7 @@ public final class ApplicationDatabase {
      */
     public List<StoredTrackerResult> findAllResults() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_RESULTS);
+        try (final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_RESULTS);
             final ResultSet resultSet = statement.executeQuery()) {
             final List<StoredTrackerResult> results = new ArrayList<>();
             while (resultSet.next()) {
@@ -407,8 +443,7 @@ public final class ApplicationDatabase {
      */
     public void saveResult(final StoredTrackerResult trackerResult) throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(UPSERT_RESULT)) {
+        try (final PreparedStatement statement = connection.prepareStatement(UPSERT_RESULT)) {
             statement.setString(1, trackerResult.name());
             statement.setLong(2, trackerResult.finishedAt());
             statement.setInt(3, trackerResult.successful() ? 1 : 0);
@@ -429,10 +464,121 @@ public final class ApplicationDatabase {
         }
     }
 
+    /**
+     * Retrieves the {@link TrackerCredentialStatus} of every stored tracker, without decrypting any password.
+     *
+     * @return the {@link TrackerCredentialStatus} of each tracker, ordered by name
+     * @throws SQLException thrown if the database cannot be read
+     */
+    public List<TrackerCredentialStatus> findAllCredentialStatuses() throws SQLException {
+        lock.lock();
+        try (final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_CREDENTIAL_STATUSES);
+            final ResultSet resultSet = statement.executeQuery()) {
+            final List<TrackerCredentialStatus> statuses = new ArrayList<>();
+            while (resultSet.next()) {
+                statuses.add(new TrackerCredentialStatus(
+                    resultSet.getString("name"),
+                    resultSet.getString("username"),
+                    resultSet.getInt("has_password") != 0,
+                    resultSet.getInt("enabled") != 0
+                ));
+            }
+            return statuses;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Whether a password is stored for the tracker, without decrypting it.
+     *
+     * @param name the tracker name (case-insensitive)
+     * @return {@code true} if a password is stored
+     * @throws SQLException thrown if the database cannot be read
+     */
+    public boolean hasPassword(final String name) throws SQLException {
+        lock.lock();
+        try (final PreparedStatement statement = connection.prepareStatement(SELECT_HAS_PASSWORD)) {
+            statement.setString(1, name);
+            try (final ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Enables or disables several trackers in a single transaction. A tracker without both a username and a password is not enabled, and a tracker
+     * already in the requested state is not changed.
+     *
+     * @param names   the tracker names (case-insensitive)
+     * @param enabled whether to enable the trackers
+     * @return the names of the trackers that were changed, in the order provided
+     * @throws SQLException thrown if the database cannot be updated, in which case no tracker is changed
+     */
+    public List<String> changeEnabled(final Collection<String> names, final boolean enabled) throws SQLException {
+        final int enabledValue = enabled ? 1 : 0;
+        return updateEach(UPDATE_ENABLED, names, (statement, name) -> {
+            statement.setInt(1, enabledValue);
+            statement.setString(2, name);
+            statement.setInt(3, enabledValue);
+            statement.setInt(4, enabledValue);
+        });
+    }
+
+    /**
+     * Deletes the stored credentials of several trackers in a single transaction.
+     *
+     * @param names the tracker names (case-insensitive)
+     * @return the names of the trackers whose credentials were deleted, in the order provided
+     * @throws SQLException thrown if the database cannot be updated, in which case no credentials are deleted
+     */
+    public List<String> deleteCredentials(final Collection<String> names) throws SQLException {
+        return updateEach(DELETE_CREDENTIAL, names, (statement, name) -> statement.setString(1, name));
+    }
+
+    // Executes the statement once per name in a single transaction, returning the names for which a row was changed
+    private List<String> updateEach(final String sql, final Collection<String> names, final StatementBinder binder) throws SQLException {
+        lock.lock();
+        try {
+            connection.setAutoCommit(false);
+            try (final PreparedStatement statement = connection.prepareStatement(sql)) {
+                final List<String> orderedNames = List.copyOf(names);
+                for (final String name : orderedNames) {
+                    binder.bind(statement, name);
+                    statement.addBatch();
+                }
+                final int[] updateCounts = statement.executeBatch();
+                connection.commit();
+
+                final List<String> changed = new ArrayList<>();
+                for (int i = 0; i < updateCounts.length; i++) {
+                    if (updateCounts[i] > 0) {
+                        changed.add(orderedNames.get(i));
+                    }
+                }
+                return changed;
+            } catch (final SQLException e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @FunctionalInterface
+    private interface StatementBinder {
+
+        void bind(PreparedStatement statement, String name) throws SQLException;
+    }
+
     private void executeUpdate(final String sql, final String parameter) throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (final PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, parameter);
             statement.executeUpdate();
         } finally {
@@ -440,7 +586,4 @@ public final class ApplicationDatabase {
         }
     }
 
-    private Connection connect() throws SQLException {
-        return DriverManager.getConnection(jdbcUrl);
-    }
 }

@@ -17,12 +17,14 @@
 
 package net.zodac.tracker.web.http;
 
+import com.google.gson.annotations.SerializedName;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,6 +36,7 @@ import net.zodac.tracker.framework.exception.InvalidCsvInputException;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
+import net.zodac.tracker.web.storage.TrackerCredentialStatus;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -52,6 +55,7 @@ public final class TrackerApiHandler extends ApiHandler {
     public static final String CONTEXT_PATH = "/api/trackers";
 
     private static final String IMPORT_PATH = "import";
+    private static final String BULK_PATH = "bulk";
 
     private final ApplicationDatabase applicationDatabase;
 
@@ -88,7 +92,7 @@ public final class TrackerApiHandler extends ApiHandler {
             if (username.isBlank()) {
                 throw badRequest("A username is required to enable '%s'".formatted(trackerHandler.name()));
             }
-            if (password == null ? !hasStoredPassword(trackerHandler.name()) : password.isEmpty()) {
+            if (password == null ? !applicationDatabase.hasPassword(trackerHandler.name()) : password.isEmpty()) {
                 throw badRequest("A password is required to enable '%s'".formatted(trackerHandler.name()));
             }
         }
@@ -99,6 +103,11 @@ public final class TrackerApiHandler extends ApiHandler {
 
     @Override
     protected void handlePost(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException, SQLException {
+        if (BULK_PATH.equals(pathParameter)) {
+            handleBulkChange(exchange);
+            return;
+        }
+
         if (!IMPORT_PATH.equals(pathParameter)) {
             throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown action: '%s'".formatted(pathParameter));
         }
@@ -115,7 +124,7 @@ public final class TrackerApiHandler extends ApiHandler {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, e);
         }
 
-        final Set<String> existingNames = applicationDatabase.findAllCredentials()
+        final Set<String> existingNames = applicationDatabase.findAllCredentialStatuses()
             .stream()
             .map(credential -> credential.name().toLowerCase(Locale.ROOT))
             .collect(Collectors.toSet());
@@ -132,6 +141,30 @@ public final class TrackerApiHandler extends ApiHandler {
             .count();
         sendJson(exchange, HttpStatus.OK,
             new ImportResult(credentials.size() - updated, updated, List.copyOf(csvContent.unsupportedTrackers()), listTrackers()));
+    }
+
+    // Enables, disables or removes several trackers in a single transaction, with a single response
+    private void handleBulkChange(final HttpExchange exchange) throws IOException, SQLException {
+        final BulkChange bulkChange = readJson(exchange, BulkChange.class);
+        if (bulkChange.action() == null) {
+            throw badRequest("An action is required (one of: enable, disable, remove)");
+        }
+
+        // Unsupported trackers are skipped, using the name defined by the handler of the others
+        final List<String> names = bulkChange.names() == null ? List.of() : bulkChange.names()
+            .stream()
+            .map(TrackerHandlerFactory::findMatchingHandler)
+            .flatMap(Optional::stream)
+            .map(TrackerHandler::name)
+            .distinct()
+            .toList();
+
+        final List<String> changed = switch (bulkChange.action()) {
+            case ENABLE -> applicationDatabase.changeEnabled(names, true);
+            case DISABLE -> applicationDatabase.changeEnabled(names, false);
+            case REMOVE -> applicationDatabase.deleteCredentials(names);
+        };
+        sendJson(exchange, HttpStatus.OK, new BulkResult(changed, listTrackers()));
     }
 
     private static String canonicalName(final TrackerCredential credential) {
@@ -152,7 +185,7 @@ public final class TrackerApiHandler extends ApiHandler {
     }
 
     private List<TrackerView> listTrackers() throws SQLException {
-        final Map<String, StoredTrackerCredential> credentialsByName = applicationDatabase.findAllCredentials()
+        final Map<String, TrackerCredentialStatus> credentialsByName = applicationDatabase.findAllCredentialStatuses()
             .stream()
             .collect(Collectors.toMap(credential -> credential.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
@@ -167,12 +200,6 @@ public final class TrackerApiHandler extends ApiHandler {
                 return TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key));
             })
             .toList();
-    }
-
-    private boolean hasStoredPassword(final String trackerName) throws SQLException {
-        return applicationDatabase.findAllCredentials()
-            .stream()
-            .anyMatch(credential -> credential.name().equalsIgnoreCase(trackerName) && credential.hasPassword());
     }
 
     private static HttpRequestException badRequest(final String message) {
@@ -206,6 +233,50 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param csv the content of the CSV file, with the header row {@code trackerName,username,password}
      */
     record CsvImport(@Nullable String csv) {
+
+    }
+
+    /**
+     * The request body to change several trackers at once.
+     *
+     * @param action the {@link BulkAction} to apply
+     * @param names  the names of the trackers to change
+     */
+    record BulkChange(@Nullable BulkAction action, @Nullable List<String> names) {
+
+    }
+
+    /**
+     * A change applied to several trackers at once.
+     */
+    enum BulkAction {
+
+        /**
+         * Enables the trackers that have a username and password.
+         */
+        @SerializedName("enable")
+        ENABLE,
+
+        /**
+         * Disables the trackers.
+         */
+        @SerializedName("disable")
+        DISABLE,
+
+        /**
+         * Removes the stored credentials of the trackers.
+         */
+        @SerializedName("remove")
+        REMOVE
+    }
+
+    /**
+     * The result of changing several trackers at once.
+     *
+     * @param changed  the names of the trackers that were changed (the others were skipped)
+     * @param trackers every supported tracker, after the change
+     */
+    record BulkResult(List<String> changed, List<TrackerView> trackers) {
 
     }
 
@@ -245,7 +316,7 @@ public final class TrackerApiHandler extends ApiHandler {
          * @param result         the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
          * @return the {@link TrackerView}
          */
-        static TrackerView of(final TrackerHandler trackerHandler, final @Nullable StoredTrackerCredential credential,
+        static TrackerView of(final TrackerHandler trackerHandler, final @Nullable TrackerCredentialStatus credential,
             final @Nullable StoredTrackerResult result) {
             return new TrackerView(
                 trackerHandler.name(),
