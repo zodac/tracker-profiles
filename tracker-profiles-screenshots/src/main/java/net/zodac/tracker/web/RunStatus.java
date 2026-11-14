@@ -25,13 +25,17 @@ import org.jspecify.annotations.Nullable;
 /**
  * A snapshot of the state of the current (or most recent) execution started from the web UI.
  *
- * @param state               the {@link State} of the execution
- * @param startedAt           the start time of the execution as epoch milliseconds, or {@code null} if never started
- * @param finishedAt          the end time of the execution as epoch milliseconds, or {@code null} if not finished
- * @param totalTrackers       the number of trackers in {@code trackers}
- * @param startedTrackerTypes the tracker types that have started executing, in order (the last one is in progress while running)
- * @param trackers            every tracker of the tracker types already started, and (while running) of those still in the execution order
- * @param pendingInputs       the requests waiting for the user to provide an input
+ * @param state                   the {@link State} of the execution
+ * @param startedAt               the start time of the execution as epoch milliseconds, or {@code null} if never started
+ * @param finishedAt              the end time of the execution as epoch milliseconds, or {@code null} if not finished
+ * @param totalTrackers           the number of trackers in {@code trackers}
+ * @param startedTrackerTypes     the tracker types that have started executing, in order (the last one is in progress while running)
+ * @param trackers                every tracker of the tracker types already started, and (while running) of those still in the execution order
+ * @param failedTrackers          the names of the trackers that failed in the execution, which can be executed again on their own (empty while an
+ *                                execution is in progress)
+ * @param downloadableTrackers    the number of trackers with screenshots from their latest successful execution, across all executions
+ * @param downloadableScreenshots the number of screenshots from the latest successful execution of each tracker, across all executions
+ * @param pendingInputs           the requests waiting for the user to provide an input
  */
 public record RunStatus(
     State state,
@@ -40,6 +44,9 @@ public record RunStatus(
     int totalTrackers,
     List<String> startedTrackerTypes,
     List<TrackerProgress> trackers,
+    List<String> failedTrackers,
+    int downloadableTrackers,
+    int downloadableScreenshots,
     List<PendingUserInput> pendingInputs
 ) {
 

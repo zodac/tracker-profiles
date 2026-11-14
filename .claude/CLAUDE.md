@@ -57,6 +57,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
   (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
   UI along with any pending user inputs.
+- **Failures only** — `POST /api/run/failed` calls `RunManager.startFailedTrackers()`, which executes only the trackers that are `FAILED` in the
+  current (or most recent) execution (`RunStatus.failedTrackers`, empty while one is in progress) and are still enabled. The UI shows the button
+  next to Start only when that list is not empty.
 - **No setting changes during an execution** — `SettingsService` rejects every save or reset with `IllegalStateException` (HTTP 409) while
   `RunManager.isExecutionInProgress()`, and the web UI locks every setting, so an execution always uses the configuration loaded when it started.
   After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.
@@ -81,7 +84,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest one per `RedactionType` (a retry replaces it) and the latest failure
 screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
-execution is kept, in memory.
+execution is kept, in memory, except that `RunManager.latestSuccessfulScreenshots()` keeps the profile screenshots of each tracker's latest success
+across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button.
 
 `ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
 `?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment). `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
@@ -89,7 +93,7 @@ execution is kept, in memory.
 from `web.screenshot.ScreenshotPreviews`, which never decodes a whole screenshot (an 8K full-page PNG needs over 600MB, more than the default
 512MB heap): it decodes every `n`th pixel (keeping twice the target width, then scaling smoothly) in strips of at most 64MB, one image at a time,
 and caches up to 64MB of images by path, last-modified time and kind. `?tracker=X` downloads all of a
-tracker's screenshots, and no parameters downloads the profile screenshots of every succeeded tracker. A download of one screenshot is the PNG
+tracker's screenshots, and no parameters downloads `latestSuccessfulScreenshots()`. A download of one screenshot is the PNG
 itself, and several are a zip (`ScreenshotArchive`, failure screenshots under `errors/`) named `tracker-profiles_v<version>_<yyyy-MM-dd_HH:mm:ss>`
 from the execution start in `TIMEZONE`. The version is the `Implementation-Version` of the JAR manifest (set by the shade plugin), read by
 `ApplicationVersion`, and `unknown` outside the JAR. The UI adds each screenshot's `savedAt` to its image URLs, so images can be cached by the

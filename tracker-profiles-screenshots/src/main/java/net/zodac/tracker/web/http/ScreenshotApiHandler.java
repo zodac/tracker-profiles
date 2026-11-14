@@ -34,12 +34,13 @@ import net.zodac.tracker.web.screenshot.ScreenshotPreviews;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Serves the screenshots of the current (or most recent) execution.
+ * Serves the screenshots of the current (or most recent) execution, and the latest screenshots of every successful tracker across all executions.
  *
  * <p>
  * Handles {@code GET} requests to:
  * <ul>
- *     <li>{@code /api/screenshots}: downloads the profile screenshots of every successful tracker</li>
+ *     <li>{@code /api/screenshots}: downloads the profile screenshots of the latest successful execution of every tracker, across all
+ *     executions (so a tracker that failed and then succeeded is included, and a tracker executed again only has its latest screenshots)</li>
  *     <li>{@code /api/screenshots?tracker={name}}: downloads every screenshot of the tracker</li>
  *     <li>{@code /api/screenshots?tracker={name}&id={id}}: a single screenshot, shown in the browser, or downloaded with {@code &download=true}.
  *     Its thumbnail is retrieved with {@code &thumbnail=true}, and its preview (scaled to 1080p, or the screenshot itself if it is not wider)
@@ -48,8 +49,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>
  * A download of a single screenshot is the {@code .png} file, while several screenshots are downloaded as a {@code .zip} archive (see
- * {@link ScreenshotArchive#fileName(long, java.time.ZoneId)}). Only screenshots listed in the {@link net.zodac.tracker.web.RunStatus} are served,
- * so no other file can be requested.
+ * {@link ScreenshotArchive#fileName(long, java.time.ZoneId)}). Only screenshots listed by the {@link RunManager} are served, so no other file
+ * can be requested.
  */
 public final class ScreenshotApiHandler extends ApiHandler {
 
@@ -91,7 +92,7 @@ public final class ScreenshotApiHandler extends ApiHandler {
         final Map<String, String> query = queryParameters(exchange);
         final String trackerName = query.get("tracker");
         if (trackerName == null) {
-            sendDownload(exchange, runManager.successfulScreenshots());
+            sendDownload(exchange, runManager.latestSuccessfulScreenshots());
             return;
         }
 

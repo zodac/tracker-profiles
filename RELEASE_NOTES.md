@@ -6,8 +6,9 @@ exiting. The container keeps running, and each execution is started from the bro
 - **Main**: start or cancel an execution and follow its progress. Each tracker is listed with its current step, attempt and duration, and can be
   expanded to see its own logs, grouped by step. The run options you are most likely to change (tracker order, attempts, log level, etc.) are
   shown here, and are locked while an execution is in progress. An expanded tracker shows thumbnails of its screenshots (or its failure
-  screenshot), which open in a gallery to move between the redaction types. Each screenshot can be downloaded, as can all screenshots of a tracker
-  or of the whole execution (as a `.zip` file)
+  screenshot), which open in a gallery to move between the redaction types. Each screenshot can be downloaded, as can all screenshots of a tracker,
+  or the latest screenshots of every tracker that has succeeded in any execution (as a `.zip` file). After an execution in which some trackers
+  failed, **Failures only** executes just those trackers again
 - **Trackers**: the credentials of every supported tracker, grouped as enabled, disabled or unset, with the result of its most recent execution.
   Credentials can be imported from a CSV file, and several trackers can be selected (`Ctrl`+click, or `Ctrl`+`Shift`+click for a range) to
   enable, disable or remove them together

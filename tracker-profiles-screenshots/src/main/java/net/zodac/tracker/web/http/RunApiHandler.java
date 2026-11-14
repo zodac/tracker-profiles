@@ -24,7 +24,8 @@ import net.zodac.tracker.web.RunManager;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Handles requests to start an execution ({@code POST /api/run}), cancel the running execution ({@code POST /api/run/cancel}), respond to a
+ * Handles requests to start an execution ({@code POST /api/run}), start an execution of only the trackers that failed in the previous execution
+ * ({@code POST /api/run/failed}), cancel the running execution ({@code POST /api/run/cancel}), respond to a
  * request for a user input ({@code POST /api/run/input/{id}/continue}, {@code .../skip} or {@code .../extend}), and retrieve the status of the
  * execution ({@code GET /api/run}).
  */
@@ -36,6 +37,7 @@ public final class RunApiHandler extends ApiHandler {
     public static final String CONTEXT_PATH = "/api/run";
 
     private static final String CANCEL_PATH = "cancel";
+    private static final String FAILED_PATH = "failed";
     private static final String INPUT_PATH_PREFIX = "input/";
     private static final int INPUT_PATH_PARTS = 2;
 
@@ -66,6 +68,17 @@ public final class RunApiHandler extends ApiHandler {
         if (CANCEL_PATH.equals(pathParameter)) {
             if (!runManager.cancel()) {
                 throw new HttpRequestException(HttpStatus.CONFLICT, "No execution is in progress");
+            }
+            sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
+            return;
+        }
+
+        if (FAILED_PATH.equals(pathParameter)) {
+            if (!runManager.startFailedTrackers()) {
+                final String message = runManager.isExecutionInProgress()
+                    ? "An execution is already in progress"
+                    : "No tracker failed in the previous execution";
+                throw new HttpRequestException(HttpStatus.CONFLICT, message);
             }
             sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
             return;

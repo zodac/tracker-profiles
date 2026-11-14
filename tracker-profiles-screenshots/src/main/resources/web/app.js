@@ -283,6 +283,15 @@
         startButton.disabled = active
         startButton.textContent = active ? 'Running…' : 'Start'
 
+        // Only the trackers that failed in the previous execution can be executed again, once it has ended
+        const failedTrackers = status.failedTrackers
+        const startFailedButton = byId('start-failed-button')
+        startFailedButton.hidden = active || failedTrackers.length === 0
+        startFailedButton.disabled = active
+        startFailedButton.textContent = `Failures only (${failedTrackers.length})`
+        startFailedButton.title = `Execute only the ${pluralise(failedTrackers.length, 'tracker')} that failed in the previous execution: `
+            + failedTrackers.join(', ')
+
         const cancelButton = byId('cancel-button')
         cancelButton.hidden = !active
         cancelButton.disabled = cancelling
@@ -344,10 +353,11 @@
             })
     }
 
-    function startRun() {
+    function startRun(failedTrackersOnly) {
         byId('start-button').disabled = true
+        byId('start-failed-button').disabled = true
         byId('run-options-panel').open = false
-        request('POST', '/api/run', {})
+        request('POST', failedTrackersOnly ? '/api/run/failed' : '/api/run', {})
             .then(renderStatus)
             .catch(function (error) {
                 showToast(error.message, 'error')
@@ -621,20 +631,16 @@
         )
     }
 
-    // The profile screenshots of every successful tracker can be downloaded together
+    // The latest profile screenshots of every tracker that has succeeded (in any execution) can be downloaded together
     function updateExecutionDownload(status) {
-        const successful = status.trackers.filter(function (tracker) {
-            return tracker.state === 'SUCCEEDED' && tracker.screenshots.length > 0
-        })
-        const count = successful.reduce(function (total, tracker) {
-            return total + tracker.screenshots.length
-        }, 0)
+        const count = status.downloadableScreenshots
         const link = byId('download-screenshots')
         link.hidden = count === 0
         link.querySelector('.download-text').textContent = count > 1 ? `Download all (${count})` : 'Download screenshot'
         link.title = count > 1
-            ? `Download the ${count} screenshots of the ${pluralise(successful.length, 'successful tracker')} as a .zip file`
-            : 'Download the screenshot of the successful tracker'
+            ? `Download the latest ${count} screenshots of the ${pluralise(status.downloadableTrackers, 'successful tracker')}`
+                + ' (from any execution) as a .zip file'
+            : 'Download the latest screenshot of the successful tracker'
     }
 
     function openGallery(trackerName, screenshots, index) {
@@ -2304,7 +2310,12 @@
         updateThemeToggle()
         DARK_SCHEME_QUERY.addEventListener('change', updateThemeToggle)
         byId('theme-toggle').addEventListener('click', toggleTheme)
-        byId('start-button').addEventListener('click', startRun)
+        byId('start-button').addEventListener('click', function () {
+            startRun(false)
+        })
+        byId('start-failed-button').addEventListener('click', function () {
+            startRun(true)
+        })
         byId('cancel-button').addEventListener('click', cancelRun)
         setUpGallery()
         const executionLog = byId('execution-log')

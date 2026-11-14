@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -30,6 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -70,6 +70,11 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * Settings cannot be changed while an execution is in progress (see {@link #isExecutionInProgress()}), so an execution always uses the
  * {@link Configuration} loaded when it started.
+ *
+ * <p>
+ * An execution either includes every enabled tracker ({@link #start()}), or only the trackers that failed in the previous execution
+ * ({@link #startFailedTrackers()}). The profile screenshots of the latest successful execution of each tracker are kept across executions (in
+ * memory), so they can all be downloaded together (see {@link #latestSuccessfulScreenshots()}).
  */
 public final class RunManager implements ExecutionListener {
 
@@ -86,6 +91,8 @@ public final class RunManager implements ExecutionListener {
     private long finishedAt;
     private final Set<TrackerType> startedTrackerTypes = new LinkedHashSet<>();
     private final Map<String, TrackerProgressState> trackers = new LinkedHashMap<>();
+    // Kept across executions, replaced each time a tracker succeeds, ordered by tracker name
+    private final Map<String, List<ScreenshotFile>> latestSuccessfulScreenshots = new TreeMap<>();
     private @Nullable Thread executionThread;
 
     private RunManager(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) {
@@ -166,7 +173,7 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Starts a new execution in the background, unless one is already running.
+     * Starts a new execution of every enabled tracker in the background, unless one is already running.
      *
      * @return {@code true} if an execution was started, {@code false} if one is already running
      */
@@ -177,20 +184,62 @@ public final class RunManager implements ExecutionListener {
                 return false;
             }
 
-            state = RunStatus.State.RUNNING;
-            startedAt = System.currentTimeMillis();
-            finishedAt = 0L;
-            startedTrackerTypes.clear();
-            trackers.clear();
-            webLogAppender.clear();
-            ExecutionCancellation.reset();
-            executionThread = Thread.ofPlatform()
-                .name("web-execution")
-                .start(this::execute);
+            startExecution(Set.of(), false);
         } finally {
             lock.unlock();
         }
         return true;
+    }
+
+    /**
+     * Starts a new execution in the background of only the trackers that failed in the current (or most recent) execution, unless an execution is
+     * already running or no tracker failed. A failed tracker that has since been disabled (or had its credentials removed) is not executed.
+     *
+     * @return {@code true} if an execution was started, {@code false} if one is already running or no tracker failed
+     */
+    public boolean startFailedTrackers() {
+        lock.lock();
+        try {
+            if (state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING) {
+                return false;
+            }
+
+            final Set<String> failedTrackerNames = new LinkedHashSet<>(failedTrackerNames());
+            if (failedTrackerNames.isEmpty()) {
+                return false;
+            }
+            startExecution(failedTrackerNames, true);
+        } finally {
+            lock.unlock();
+        }
+        return true;
+    }
+
+    // Must be called while holding the lock
+    private void startExecution(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) {
+        state = RunStatus.State.RUNNING;
+        startedAt = System.currentTimeMillis();
+        finishedAt = 0L;
+        startedTrackerTypes.clear();
+        trackers.clear();
+        webLogAppender.clear();
+        ExecutionCancellation.reset();
+        executionThread = Thread.ofPlatform()
+            .name("web-execution")
+            .start(() -> execute(failedTrackerNames, failedTrackersOnly));
+    }
+
+    // The trackers that failed in the current (or most recent) execution, only while no execution is in progress
+    // Must be called while holding the lock
+    private List<String> failedTrackerNames() {
+        if (state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING) {
+            return List.of();
+        }
+        return trackers.values()
+            .stream()
+            .filter(tracker -> tracker.state == RunStatus.TrackerState.FAILED)
+            .map(tracker -> tracker.name)
+            .toList();
     }
 
     /**
@@ -249,10 +298,10 @@ public final class RunManager implements ExecutionListener {
         return UserInputRequests.extend(inputId, INPUT_EXTENSION);
     }
 
-    private void execute() {
+    private void execute(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) {
         ExitState exitState = ExitState.FAILURE;
         try {
-            exitState = executeTrackers();
+            exitState = executeTrackers(failedTrackerNames, failedTrackersOnly);
         } catch (final Exception e) {
             if (ExecutionCancellation.isCancelled()) {
                 LOGGER.debug("Execution ended by cancellation", e);
@@ -265,15 +314,24 @@ public final class RunManager implements ExecutionListener {
         }
     }
 
-    private ExitState executeTrackers() throws IOException, SQLException {
-        LOGGER.info("Starting execution");
+    private ExitState executeTrackers(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) throws IOException, SQLException {
+        if (failedTrackersOnly) {
+            LOGGER.info("Starting execution of the {} tracker(s) that failed in the previous execution", failedTrackerNames.size());
+        } else {
+            LOGGER.info("Starting execution");
+        }
         reloadConfiguration(applicationDatabase).print();
 
         final List<TrackerCredential> enabledTrackers = applicationDatabase.findAllCredentials()
             .stream()
             .filter(StoredTrackerCredential::enabled)
+            .filter(credential -> !failedTrackersOnly || failedTrackerNames.contains(credential.name()))
             .map(StoredTrackerCredential::toTrackerCredential)
             .toList();
+
+        if (failedTrackersOnly && enabledTrackers.size() < failedTrackerNames.size()) {
+            LOGGER.warn("{} failed tracker(s) no longer enabled, not executed", failedTrackerNames.size() - enabledTrackers.size());
+        }
 
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.groupByType(enabledTrackers);
         if (!DisplayValidator.isValid(trackersByType)) {
@@ -343,6 +401,9 @@ public final class RunManager implements ExecutionListener {
                 shownTrackers.size(),
                 startedTrackerTypes.stream().map(Enum::name).toList(),
                 shownTrackers,
+                failedTrackerNames(),
+                latestSuccessfulScreenshots.size(),
+                latestSuccessfulScreenshots.values().stream().mapToInt(List::size).sum(),
                 UserInputRequests.pending()
             );
         } finally {
@@ -391,19 +452,16 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Retrieves the profile screenshots of every tracker that succeeded in the current (or most recent) execution, ordered by tracker name.
+     * Retrieves the profile screenshots of the latest successful execution of every tracker, across all executions since the application started,
+     * ordered by tracker name. A tracker that succeeds again replaces its earlier screenshots, while one that fails keeps those of its last success.
      *
-     * @return the {@link ScreenshotFile}s of the successful trackers
+     * @return the latest {@link ScreenshotFile}s of each successful tracker
      */
-    public List<ScreenshotFile> successfulScreenshots() {
+    public List<ScreenshotFile> latestSuccessfulScreenshots() {
         lock.lock();
         try {
             final List<ScreenshotFile> screenshots = new ArrayList<>();
-            trackers.values()
-                .stream()
-                .filter(tracker -> tracker.state == RunStatus.TrackerState.SUCCEEDED)
-                .sorted(Comparator.comparing(tracker -> tracker.name))
-                .forEach(tracker -> screenshots.addAll(tracker.shownScreenshots()));
+            latestSuccessfulScreenshots.values().forEach(screenshots::addAll);
             return screenshots;
         } finally {
             lock.unlock();
@@ -519,6 +577,7 @@ public final class RunManager implements ExecutionListener {
             if (wasSuccessful) {
                 // Deleted once the tracker succeeds
                 tracker.failureScreenshot.clear();
+                latestSuccessfulScreenshots.put(trackerName, List.copyOf(tracker.screenshots.values()));
             }
         } finally {
             lock.unlock();

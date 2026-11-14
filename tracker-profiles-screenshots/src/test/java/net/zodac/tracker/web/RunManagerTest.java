@@ -123,7 +123,7 @@ class RunManagerTest {
 
         assertThat(screenshotIds(runManager, "Tracker"))
             .containsExactly("failure");
-        assertThat(runManager.successfulScreenshots())
+        assertThat(runManager.latestSuccessfulScreenshots())
             .isEmpty();
     }
 
@@ -138,11 +138,64 @@ class RunManagerTest {
             runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, !"Failed".equals(trackerName));
         }
 
-        assertThat(runManager.successfulScreenshots())
+        assertThat(runManager.latestSuccessfulScreenshots())
             .extracting(ScreenshotFile::fileName)
             .containsExactly("Alpha.png", "Zeta.png");
         assertThat(runManager.trackerScreenshots("Unknown"))
             .isEmpty();
+    }
+
+    @Test
+    void givenTrackersSucceededInDifferentExecutions_whenLatestScreenshotsRetrieved_thenOnlyLatestScreenshotOfEachTrackerIsIncluded()
+        throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta", "Gamma")));
+        completeTracker(runManager, "Alpha", "Alpha_1.png", true);
+        completeTracker(runManager, "Beta", "Beta_1.png", false);
+        completeTracker(runManager, "Gamma", "Gamma_1.png", true);
+
+        // Later executions: Beta now succeeds, Alpha succeeds again, and Gamma fails (keeping the screenshot of its last success)
+        completeTracker(runManager, "Beta", "Beta_2.png", true);
+        completeTracker(runManager, "Alpha", "Alpha_2.png", true);
+        completeTracker(runManager, "Gamma", "Gamma_2.png", false);
+
+        assertThat(runManager.latestSuccessfulScreenshots())
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha_2.png", "Beta_2.png", "Gamma_1.png");
+        assertThat(runManager.status())
+            .returns(3, RunStatus::downloadableTrackers)
+            .returns(3, RunStatus::downloadableScreenshots);
+    }
+
+    @Test
+    void givenTrackersFailed_whenStatusRetrieved_thenFailedTrackersAreListed() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta", "Gamma")));
+        completeTracker(runManager, "Alpha", "Alpha.png", false);
+        completeTracker(runManager, "Beta", "Beta.png", true);
+        completeTracker(runManager, "Gamma", "Gamma.png", false);
+
+        assertThat(runManager.status().failedTrackers())
+            .containsExactly("Alpha", "Gamma");
+    }
+
+    @Test
+    void givenNoTrackerFailed_whenFailedTrackersStarted_thenNoExecutionIsStarted() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+        completeTracker(runManager, "Alpha", "Alpha.png", true);
+
+        assertThat(runManager.startFailedTrackers())
+            .isFalse();
+        assertThat(runManager.status())
+            .returns(RunStatus.State.IDLE, RunStatus::state)
+            .returns(List.of(), RunStatus::failedTrackers);
+    }
+
+    private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful) {
+        runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
+        runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, tempDirectory.resolve(fileName));
+        runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, wasSuccessful);
     }
 
     private static List<String> screenshotIds(final RunManager runManager, final String trackerName) {
