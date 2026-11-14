@@ -484,7 +484,9 @@
 
     function trackerDetail(tracker) {
         const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
-        const attempt = tracker.attempt > 1 ? `Attempt ${tracker.attempt}${attempts ? `/${attempts}` : ''} · ` : ''
+        // The total is left out if the number of attempts has been lowered below the current attempt during the execution
+        const total = attempts && Number(attempts) >= tracker.attempt ? `/${attempts}` : ''
+        const attempt = tracker.attempt > 1 ? `Attempt ${tracker.attempt}${total} · ` : ''
         if (tracker.state === 'RUNNING') {
             const nextStep = TRACKER_STEPS.find(function (step) {
                 return !tracker.completedSteps.includes(step.name)

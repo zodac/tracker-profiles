@@ -812,7 +812,8 @@ select:disabled {
     color: var(--danger);
 }
 
-.tracker-log {
+/* More specific than .log-output (defined later), so the panel only grows as tall as its messages */
+.log-output.tracker-log {
     height: auto;
     min-height: 0;
     max-height: 360px;
