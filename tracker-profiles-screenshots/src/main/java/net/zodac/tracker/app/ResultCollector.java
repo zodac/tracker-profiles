@@ -17,12 +17,9 @@
 
 package net.zodac.tracker.app;
 
-import io.github.kusoroadeolu.clique.Clique;
-import io.github.kusoroadeolu.clique.style.Ink;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantLock;
 import net.zodac.tracker.framework.ExitState;
@@ -86,10 +83,10 @@ final class ResultCollector {
     /**
      * Generates a summary of all results and returns the appropriate {@link ExitState}.
      *
-     * @param trackerExecutionOrder the execution order of the {@link TrackerType}s
+     * @param executedTrackerTypes the {@link TrackerType}s that were executed, in the order they were executed
      * @return the {@link ExitState} based on success/failure counts
      */
-    ExitState generateSummary(final Set<TrackerType> trackerExecutionOrder) {
+    ExitState generateSummary(final Collection<TrackerType> executedTrackerTypes) {
         final int totalSuccessful = successfulTrackers.values()
             .stream()
             .mapToInt(Collection::size)
@@ -115,7 +112,7 @@ final class ResultCollector {
             return success;
         }
 
-        return handlePartialFailure(trackerExecutionOrder, totalSuccessful, totalUnsuccessful);
+        return handlePartialFailure(executedTrackerTypes, totalSuccessful, totalUnsuccessful);
     }
 
     private @Nullable ExitState handleFailure(final int totalSuccessful, final int totalUnsuccessful) {
@@ -124,11 +121,10 @@ final class ResultCollector {
         }
 
         LOGGER.error("");
-        LOGGER.error(Clique.ink().red().on("%s selected tracker%s failed in %s:"
-            .formatted(totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime())));
+        LOGGER.error("{} selected tracker{} failed in {}:", totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
         unsuccessfulTrackers.forEach((type, trackers) -> {
-            LOGGER.error(Clique.ink().red().on("- %s:".formatted(type.formattedName())));
-            trackers.forEach(name -> LOGGER.error(Clique.ink().red().on("\t- %s".formatted(name))));
+            LOGGER.error("- {}:", type.formattedName());
+            trackers.forEach(name -> LOGGER.error("\t- {}", name));
         });
         return ExitState.FAILURE;
     }
@@ -139,25 +135,24 @@ final class ResultCollector {
         }
 
         LOGGER.info("");
-        LOGGER.info(Clique.ink().green().on("%s selected tracker%s successfully screenshot in %s"
-            .formatted(totalSuccessful, StringUtils.pluralise(totalSuccessful), executionTime())));
+        LOGGER.info("{} selected tracker{} successfully screenshot in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful), executionTime());
         successfulTrackers.forEach((type, trackers) -> LOGGER.debug("- {} ({}): {}", type.formattedName(), trackers.size(), trackers));
         return ExitState.SUCCESS;
     }
 
-    private ExitState handlePartialFailure(final Set<TrackerType> trackerExecutionOrder, final int totalSuccessful, final int totalUnsuccessful) {
+    private ExitState handlePartialFailure(final Collection<TrackerType> executedTrackerTypes, final int totalSuccessful,
+        final int totalUnsuccessful) {
         LOGGER.warn("");
-        final Ink orangePrinter = Clique.ink().rgb(181, 137, 0);  // Same colour as the WARN log level defined in log4j2.xml
-        LOGGER.warn(orangePrinter.on("%s tracker%s successfully screenshot, %s tracker%s failed in %s".formatted(totalSuccessful,
-            StringUtils.pluralise(totalSuccessful), totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime())));
+        LOGGER.warn("{} tracker{} successfully screenshot, {} tracker{} failed in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful),
+            totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
 
-        for (final TrackerType trackerType : trackerExecutionOrder) {
+        for (final TrackerType trackerType : executedTrackerTypes) {
             final Collection<String> trackers = unsuccessfulTrackers.get(trackerType);
             if (trackers == null || trackers.isEmpty()) {
                 continue;
             }
-            LOGGER.warn(orangePrinter.on("- %s:".formatted(trackerType.formattedName())));
-            trackers.forEach(name -> LOGGER.warn(orangePrinter.on("\t- %s".formatted(name))));
+            LOGGER.warn("- {}:", trackerType.formattedName());
+            trackers.forEach(name -> LOGGER.warn("\t- {}", name));
         }
         return ExitState.PARTIAL_FAILURE;
     }

@@ -54,23 +54,16 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 COPY --from=java_app_builder /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar /app/tracker-profiles.jar
 
-# One unrecognised tracker name triggers TrackerHandlerFactory's reflection scan, which loads all
-# handler classes via Class.forName(), then the app exits cleanly with "no trackers selected"
-RUN printf 'trackerName,username,password\nAppCdsTraining,user,pass\n' > /tmp/trackers.csv
-
 # Step 1: Collect the list of all classes loaded during a representative run
 # -Xshare:off disables any existing archive so the class list reflects actual class-loading order
 # java.awt.headless=true returns a HeadlessGraphicsEnvironment without connecting to an X11 display
-# DISPLAY=:0 satisfies ApplicationLauncher's non-null DISPLAY env var check
-# FAIL_ON_UNSUPPORTED_TRACKER=false allows the training-only CSV row to be skipped without error
-# WEB_UI_ENABLED=false executes once from the CSV file and exits, rather than starting the web UI and running forever
-# The command exits with code 1 ("no trackers selected"); the class list is still written on exit
-RUN DISPLAY=":0" \
-    TRACKER_INPUT_FILE_PATH=/tmp/trackers.csv \
-    FAIL_ON_UNSUPPORTED_TRACKER=false \
-    WEB_UI_ENABLED=false \
+# tracker-profiles.appcds-training=true starts the web UI (loading every tracker handler via TrackerHandlerFactory's reflection scan), then
+# stops it and exits, rather than running forever
+# DATABASE_PATH points to a throwaway database, so nothing is written to /app/data
+RUN DATABASE_PATH=/tmp/appcds-training.db \
     java \
         -Djava.awt.headless=true \
+        -Dtracker-profiles.appcds-training=true \
         -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders \
         -Xshare:off \
         -XX:DumpLoadedClassList=/app/classes.lst \
@@ -86,16 +79,14 @@ RUN sed -i '/log4j.*[Aa]sync/d' /app/classes.lst
 
 # Step 2: Dump the static AppCDS archive from the collected class list
 # Classes that cannot be resolved or fail to initialise are silently excluded from the archive
-# The same env vars as step 1 ensure static initialisers that call Configuration.get() succeed
+# The same settings as step 1 ensure static initialisers that call Configuration.get() succeed
 # The command exits with code 1 (Xshare:dump exits after creating the archive, before main runs); the fallback touch
 # ensures a file always exists so the COPY in the runtime stage never fails \
 # At runtime, -Xshare:auto silently ignores an empty or incompatible archive
-RUN DISPLAY=":0" \
-    TRACKER_INPUT_FILE_PATH=/tmp/trackers.csv \
-    FAIL_ON_UNSUPPORTED_TRACKER=false \
-    WEB_UI_ENABLED=false \
+RUN DATABASE_PATH=/tmp/appcds-training.db \
     java \
         -Djava.awt.headless=true \
+        -Dtracker-profiles.appcds-training=true \
         -XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders \
         -Xshare:dump \
         -XX:SharedClassListFile=/app/classes.lst \
@@ -187,7 +178,7 @@ COPY --from=appcds_builder /app/app.jsa app.jsa
 # JUL re-reads this file after every LogManager.reset(), which Selenium triggers on each RemoteWebDriver creation
 COPY --from=java_app_builder /app/tracker-profiles-screenshots/src/main/resources/logging.properties logging.properties
 
-# Web UI (see WEB_UI_ENABLED and WEB_UI_PORT)
+# Web UI (see WEB_UI_PORT)
 EXPOSE 8080
 
 # Start application

@@ -20,6 +20,8 @@ package net.zodac.tracker.app;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +33,8 @@ import org.apache.logging.log4j.Logger;
 public final class ScreenshotDirectories {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    // Parallel trackers may fail at the same time, so the error directory is only created by one of them
+    private static final Lock ERRORS_DIRECTORY_LOCK = new ReentrantLock();
 
     private ScreenshotDirectories() {
 
@@ -57,7 +61,7 @@ public final class ScreenshotDirectories {
 
     /**
      * Creates {@link #output()}. If {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, also creates {@link #errors()}. When the
-     * flag is disabled the error directory is intentionally not created.
+     * flag is disabled the error directory is not created, unless it is enabled during the execution (see {@link #createErrorsDirectory()}).
      *
      * @throws IOException if any directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])
@@ -69,12 +73,29 @@ public final class ScreenshotDirectories {
             LOGGER.trace("Created screenshot output directory: [{}]", output);
 
             if (Configuration.get().takeScreenshotOnError()) {
-                final Path errors = errors();
-                Files.createDirectories(errors);
-                LOGGER.trace("Created error screenshot directory: [{}]", errors);
+                createErrorsDirectory();
             }
         } catch (final IOException e) {
             throw new IOException("Unable to create output directories: %s".formatted(e.getMessage()), e);
+        }
+    }
+
+    /**
+     * Creates {@link #errors()}, if it does not already exist. Called before each failure screenshot, since
+     * {@link ApplicationConfiguration#takeScreenshotOnError()} can be enabled in the web UI during an execution.
+     *
+     * @throws IOException if the directory cannot be created
+     */
+    public static void createErrorsDirectory() throws IOException {
+        ERRORS_DIRECTORY_LOCK.lock();
+        try {
+            final Path errors = errors();
+            if (!Files.isDirectory(errors)) {
+                Files.createDirectories(errors);
+                LOGGER.trace("Created error screenshot directory: [{}]", errors);
+            }
+        } finally {
+            ERRORS_DIRECTORY_LOCK.unlock();
         }
     }
 }

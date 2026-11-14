@@ -19,12 +19,14 @@ package net.zodac.tracker.web.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.web.RunManager;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Handles requests to start an execution ({@code POST /api/run}), cancel the running execution ({@code POST /api/run/cancel}), and retrieve the
- * status of the execution ({@code GET /api/run}).
+ * Handles requests to start an execution ({@code POST /api/run}), cancel the running execution ({@code POST /api/run/cancel}), respond to a
+ * request for a user input ({@code POST /api/run/input/{id}/continue}, {@code .../skip} or {@code .../extend}), and retrieve the status of the
+ * execution ({@code GET /api/run}).
  */
 public final class RunApiHandler extends ApiHandler {
 
@@ -34,6 +36,8 @@ public final class RunApiHandler extends ApiHandler {
     public static final String CONTEXT_PATH = "/api/run";
 
     private static final String CANCEL_PATH = "cancel";
+    private static final String INPUT_PATH_PREFIX = "input/";
+    private static final int INPUT_PATH_PARTS = 2;
 
     private final RunManager runManager;
 
@@ -67,6 +71,12 @@ public final class RunApiHandler extends ApiHandler {
             return;
         }
 
+        if (pathParameter != null && pathParameter.startsWith(INPUT_PATH_PREFIX)) {
+            respondToInput(pathParameter.substring(INPUT_PATH_PREFIX.length()));
+            sendJson(exchange, HttpStatus.OK, runManager.status());
+            return;
+        }
+
         if (pathParameter != null) {
             throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown action: '%s'".formatted(pathParameter));
         }
@@ -75,5 +85,31 @@ public final class RunApiHandler extends ApiHandler {
             throw new HttpRequestException(HttpStatus.CONFLICT, "An execution is already in progress");
         }
         sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
+    }
+
+    // Path is '{id}/{action}'
+    private void respondToInput(final String inputPath) {
+        final String[] parts = inputPath.split("/", -1);
+        if (parts.length != INPUT_PATH_PARTS) {
+            throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown input action: '%s'".formatted(inputPath));
+        }
+
+        final long inputId;
+        try {
+            inputId = Long.parseLong(parts[0]);
+        } catch (final NumberFormatException e) {
+            throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Invalid input ID: '%s'".formatted(parts[0]), e);
+        }
+
+        final boolean waiting = switch (parts[1]) {
+            case "continue" -> runManager.respondToInput(inputId, UserInputResponse.CONTINUE);
+            case "skip" -> runManager.respondToInput(inputId, UserInputResponse.SKIP);
+            case "extend" -> runManager.extendInput(inputId);
+            default -> throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown input action: '%s'".formatted(parts[1]));
+        };
+
+        if (!waiting) {
+            throw new HttpRequestException(HttpStatus.CONFLICT, "The tracker is no longer waiting for this input");
+        }
     }
 }

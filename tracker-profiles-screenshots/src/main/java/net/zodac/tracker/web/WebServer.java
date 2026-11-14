@@ -20,16 +20,12 @@ package net.zodac.tracker.web;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
-import net.zodac.tracker.framework.TrackerCredential;
-import net.zodac.tracker.framework.TrackerCsvReader;
-import net.zodac.tracker.framework.TrackerHandlerFactory;
-import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
+import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.web.http.LogStreamHandler;
 import net.zodac.tracker.web.http.RunApiHandler;
 import net.zodac.tracker.web.http.SettingsApiHandler;
@@ -37,7 +33,6 @@ import net.zodac.tracker.web.http.StaticResourceHandler;
 import net.zodac.tracker.web.http.TrackerApiHandler;
 import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
-import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,7 +51,7 @@ public final class WebServer {
     }
 
     /**
-     * Opens the {@link ApplicationDatabase} (importing the tracker CSV file if no trackers are stored yet), then starts the web UI server.
+     * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists), then starts the web UI server.
      *
      * @param applicationConfiguration the {@link ApplicationConfiguration} loaded from environment variables
      * @param webLogAppender           the {@link WebLogAppender} capturing log messages to stream to the web UI
@@ -67,11 +62,11 @@ public final class WebServer {
     public static WebServer start(final ApplicationConfiguration applicationConfiguration, final WebLogAppender webLogAppender)
         throws IOException, SQLException {
         final ApplicationDatabase applicationDatabase = ApplicationDatabase.open(applicationConfiguration.databasePath());
-        importCsvIfNoTrackersStored(applicationDatabase, applicationConfiguration.trackerInputFilePath());
+        removeObsoleteSettings(applicationDatabase);
         applyStoredSettings(applicationDatabase);
 
         final RunManager runManager = RunManager.create(applicationDatabase);
-        final SettingsService settingsService = SettingsService.create(applicationDatabase);
+        final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::applySavedSettings);
 
         final HttpServer httpServer = HttpServer.create(new InetSocketAddress(applicationConfiguration.webUiPort()), 0);
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
@@ -93,44 +88,26 @@ public final class WebServer {
         httpServer.stop(STOP_DELAY_SECONDS);
     }
 
+    private static void removeObsoleteSettings(final ApplicationDatabase applicationDatabase) throws SQLException {
+        final Map<String, String> savedSettings = applicationDatabase.findAllSettings();
+        final Map<String, String> currentSettings = new LinkedHashMap<>(savedSettings);
+        currentSettings.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
+
+        if (currentSettings.size() != savedSettings.size()) {
+            LOGGER.debug("Removing saved settings for options that no longer exist: {}", savedSettings.keySet()
+                .stream()
+                .filter(name -> !currentSettings.containsKey(name))
+                .toList());
+            applicationDatabase.replaceSettings(currentSettings);
+        }
+    }
+
     private static void applyStoredSettings(final ApplicationDatabase applicationDatabase) throws SQLException {
         try {
             RunManager.reloadConfiguration(applicationDatabase);
         } catch (final IllegalArgumentException e) {
             LOGGER.warn("Settings saved in the web UI are invalid with the current environment variables (checked again on each execution): {}",
                 e.getMessage());
-        }
-    }
-
-    // Stores trackers using the name defined by their handler, rather than the casing used in the CSV file
-    private static String canonicalName(final String trackerName) {
-        return TrackerHandlerFactory.findMatchingHandler(trackerName)
-            .map(TrackerHandler::name)
-            .orElse(trackerName);
-    }
-
-    private static void importCsvIfNoTrackersStored(final ApplicationDatabase applicationDatabase, final Path trackerInputFilePath)
-        throws SQLException {
-        if (applicationDatabase.hasCredentials()) {
-            LOGGER.trace("Trackers already stored, not importing CSV file");
-            return;
-        }
-
-        if (!Files.isRegularFile(trackerInputFilePath)) {
-            LOGGER.debug("No trackers stored and no CSV file at '{}' to import", trackerInputFilePath);
-            return;
-        }
-
-        try {
-            final Set<TrackerCredential> trackerCredentials = TrackerCsvReader.readTrackerCredentials();
-            applicationDatabase.saveCredentials(trackerCredentials
-                .stream()
-                .map(credential -> new StoredTrackerCredential(canonicalName(credential.name()), credential.username(), credential.password(), true))
-                .toList());
-            LOGGER.info("Imported {} trackers from '{}'", trackerCredentials.size(), trackerInputFilePath);
-        } catch (final IOException | RuntimeException e) {
-            LOGGER.debug("Unable to import trackers from CSV file '{}'", trackerInputFilePath, e);
-            LOGGER.warn("Unable to import trackers from CSV file '{}': {}", trackerInputFilePath, e.getMessage());
         }
     }
 }

@@ -20,7 +20,7 @@ package net.zodac.tracker.framework.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,8 +39,7 @@ class ApplicationConfigurationTest {
             "NUMBER_OF_PARALLEL_THREADS", "7",
             "REDACTION_TYPE", "BLUR,BOX",
             "TRACKER_EXECUTION_ORDER", "MANUAL",
-            "TRACKER_INPUT_FILE_PATH", "/data/trackers.csv",
-            "PROGRESS_BAR_COMPLETE_CHARACTER", "#"
+            "BROWSER_RESOLUTION", "1920x1080"
         ));
 
         assertThat(applicationConfiguration.numberOfParallelThreads())
@@ -49,10 +48,8 @@ class ApplicationConfigurationTest {
             .containsExactly(RedactionType.BLUR, RedactionType.BOX);
         assertThat(applicationConfiguration.trackerExecutionOrder())
             .isEqualTo(Set.of(TrackerType.MANUAL));
-        assertThat(applicationConfiguration.trackerInputFilePath())
-            .isEqualTo(Path.of("/data/trackers.csv"));
-        assertThat(applicationConfiguration.progressBarCompleteCharacter())
-            .isEqualTo('#');
+        assertThat(applicationConfiguration.browserDimensions())
+            .isEqualTo("1920,1080");
     }
 
     @Test
@@ -66,7 +63,7 @@ class ApplicationConfigurationTest {
 
     @Test
     void givenUnsupportedResolutionOverride_whenLoad_thenExceptionIsThrown() {
-        final Map<String, String> overrides = Map.of("BROWSER_WIDTH", "1920", "BROWSER_HEIGHT", "1050");
+        final Map<String, String> overrides = Map.of("BROWSER_RESOLUTION", "1920x1050");
 
         assertThatThrownBy(() -> ApplicationConfiguration.load(overrides))
             .isInstanceOf(IllegalArgumentException.class)
@@ -74,21 +71,65 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void givenMultipleCharacterOverride_whenLoad_thenExceptionIsThrown() {
-        final Map<String, String> overrides = Map.of("PROGRESS_BAR_COMPLETE_CHARACTER", "ab");
+    void givenZeroInputTimeout_whenLoad_thenInputTimeoutIsDisabled() {
+        final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of("INPUT_TIMEOUT_SECONDS", "0"));
 
-        assertThatThrownBy(() -> ApplicationConfiguration.load(overrides))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("PROGRESS_BAR_COMPLETE_CHARACTER");
+        assertThat(applicationConfiguration.inputTimeoutEnabled())
+            .isFalse();
     }
 
     @Test
-    void givenEmptyCsvCommentSymbolOverride_whenLoad_thenExceptionIsThrown() {
-        final Map<String, String> overrides = Map.of("CSV_COMMENT_SYMBOL", "");
+    void givenPositiveInputTimeout_whenLoad_thenInputTimeoutIsEnabled() {
+        final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of("INPUT_TIMEOUT_SECONDS", "120"));
+
+        assertThat(applicationConfiguration.inputTimeoutEnabled())
+            .isTrue();
+        assertThat(applicationConfiguration.inputTimeoutDuration())
+            .isEqualTo(Duration.ofSeconds(120L));
+    }
+
+    @Test
+    void givenNegativeInputTimeout_whenLoad_thenExceptionIsThrown() {
+        final Map<String, String> overrides = Map.of("INPUT_TIMEOUT_SECONDS", "-1");
 
         assertThatThrownBy(() -> ApplicationConfiguration.load(overrides))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("CSV_COMMENT_SYMBOL");
+            .hasMessageContaining("INPUT_TIMEOUT_SECONDS");
+    }
+
+    @Test
+    void givenLiveValues_whenApplied_thenOnlyLiveOptionsChange() {
+        final ApplicationConfiguration original = ApplicationConfiguration.load(Map.of(
+            "NUMBER_OF_PARALLEL_THREADS", "2",
+            "NUMBER_OF_SCREENSHOT_ATTEMPTS", "1",
+            "OUTPUT_DIRECTORY_PARENT_PATH", "/original"
+        ));
+        final ApplicationConfiguration changed = ApplicationConfiguration.load(Map.of(
+            "NUMBER_OF_PARALLEL_THREADS", "9",
+            "NUMBER_OF_SCREENSHOT_ATTEMPTS", "4",
+            "OUTPUT_DIRECTORY_PARENT_PATH", "/changed",
+            "LOG_LEVEL", "DEBUG",
+            "TAKE_SCREENSHOT_ON_ERROR", "true",
+            "INPUT_TIMEOUT_SECONDS", "60",
+            "TRACKER_EXECUTION_ORDER", "MANUAL,HEADLESS"
+        ));
+
+        final ApplicationConfiguration updated = original.withLiveValuesFrom(changed);
+
+        assertThat(updated.numberOfParallelThreads())
+            .isEqualTo(2);
+        assertThat(updated.outputDirectory())
+            .isEqualTo(original.outputDirectory());
+        assertThat(updated.numberOfScreenshotAttempts())
+            .isEqualTo(4);
+        assertThat(updated.logLevel())
+            .isEqualTo("DEBUG");
+        assertThat(updated.takeScreenshotOnError())
+            .isTrue();
+        assertThat(updated.inputTimeoutDuration())
+            .isEqualTo(Duration.ofSeconds(60L));
+        assertThat(updated.trackerExecutionOrder())
+            .containsExactly(TrackerType.MANUAL, TrackerType.HEADLESS);
     }
 
     @Test
@@ -100,11 +141,11 @@ class ApplicationConfigurationTest {
 
         final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(defaults);
 
-        assertThat(applicationConfiguration.webUiEnabled())
-            .isTrue();
         assertThat(applicationConfiguration.webUiPort())
             .isEqualTo(8080);
         assertThat(applicationConfiguration.browserDimensions())
             .isEqualTo("1680,1050");
+        assertThat(applicationConfiguration.inputTimeoutEnabled())
+            .isFalse();
     }
 }

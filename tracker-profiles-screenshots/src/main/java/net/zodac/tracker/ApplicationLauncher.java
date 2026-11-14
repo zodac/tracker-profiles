@@ -20,16 +20,11 @@ package net.zodac.tracker;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.Set;
-import net.zodac.tracker.app.ScreenshotOrchestrator;
-import net.zodac.tracker.app.TrackerRetriever;
 import net.zodac.tracker.framework.ExitState;
-import net.zodac.tracker.framework.TrackerCredential;
-import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
-import net.zodac.tracker.framework.gui.DisplayValidator;
 import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.web.WebServer;
 import net.zodac.tracker.web.log.WebLogAppender;
@@ -43,30 +38,48 @@ public final class ApplicationLauncher {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    /**
+     * The system property that, when {@code true}, starts and immediately stops the application, loading the classes used by a normal start. Used
+     * only when building the Docker image, to generate the AppCDS archive.
+     */
+    private static final String APPCDS_TRAINING_PROPERTY = "tracker-profiles.appcds-training";
+
+    // Environment variables that are no longer used, with what replaces them
+    private static final Map<String, String> REMOVED_ENVIRONMENT_VARIABLES = Map.ofEntries(
+        Map.entry("BROWSER_HEIGHT", "use BROWSER_RESOLUTION"),
+        Map.entry("BROWSER_WIDTH", "use BROWSER_RESOLUTION"),
+        Map.entry("CSV_COMMENT_SYMBOL", "import trackers from the web UI"),
+        Map.entry("FAIL_ON_UNSUPPORTED_TRACKER", "import trackers from the web UI"),
+        Map.entry("INPUT_TIMEOUT_ENABLED", "set INPUT_TIMEOUT_SECONDS to 0 to disable the timeout"),
+        Map.entry("LOG_TRACKER_NAME", "filter the logs by tracker in the web UI"),
+        Map.entry("PROGRESS_BAR_COMPLETE_CHARACTER", "progress is shown in the web UI"),
+        Map.entry("PROGRESS_BAR_ENABLED", "progress is shown in the web UI"),
+        Map.entry("PROGRESS_BAR_FORMAT", "progress is shown in the web UI"),
+        Map.entry("PROGRESS_BAR_INCOMPLETE_CHARACTER", "progress is shown in the web UI"),
+        Map.entry("PROGRESS_BAR_LENGTH", "progress is shown in the web UI"),
+        Map.entry("TRACKER_INPUT_FILE_PATH", "import trackers from the web UI"),
+        Map.entry("WEB_UI_ENABLED", "the web UI is always started")
+    );
+
     private ApplicationLauncher() {
 
     }
 
     /**
-     * Main method for the application. Configures any requirements then launches the application. If
-     * {@link ApplicationConfiguration#webUiEnabled()} is {@code true}, the web UI is started and screenshots are executed on request. Otherwise,
-     * the trackers in the CSV file are screenshot once and the application exits.
-     *
-     * @see ScreenshotOrchestrator
+     * Main method for the application. Loads the configuration, then starts the web UI, from which screenshots are executed on request.
      */
     // TODO: Investigate whether it's worth not logging out
     static void main() {
         final ApplicationConfiguration applicationConfiguration = initApplicationConfiguration();
+        warnOfRemovedEnvironmentVariables();
         registerShutdownHook();
 
-        if (applicationConfiguration.webUiEnabled()) {
-            startWebUi(applicationConfiguration);
-            return;
+        final WebServer webServer = startWebUi(applicationConfiguration);
+        if (Boolean.getBoolean(APPCDS_TRAINING_PROPERTY)) {
+            LOGGER.info("AppCDS training: loaded {} tracker handlers, stopping", TrackerHandlerFactory.allHandlers().size());
+            webServer.stop();
+            exit(ExitState.SUCCESS);
         }
-
-        final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.getTrackers();
-        validateDisplay(trackersByType);
-        startApplication(trackersByType);
     }
 
     private static ApplicationConfiguration initApplicationConfiguration() {
@@ -80,16 +93,26 @@ public final class ApplicationLauncher {
         }
     }
 
+    private static void warnOfRemovedEnvironmentVariables() {
+        REMOVED_ENVIRONMENT_VARIABLES.forEach((name, replacement) -> {
+            if (System.getenv(name) != null) {
+                LOGGER.warn("Environment variable '{}' is no longer used ({})", name, replacement);
+            }
+        });
+    }
+
     // The web server's dispatcher thread keeps the JVM running after main() returns, until the application is stopped
-    private static void startWebUi(final ApplicationConfiguration applicationConfiguration) {
+    private static WebServer startWebUi(final ApplicationConfiguration applicationConfiguration) {
         final WebLogAppender webLogAppender = WebLogAppender.install();
         try {
             final WebServer webServer = WebServer.start(applicationConfiguration, webLogAppender);
             Runtime.getRuntime().addShutdownHook(new Thread(webServer::stop, "web-server-shutdown-hook"));
+            return webServer;
         } catch (final IOException | SQLException e) {
             LOGGER.debug("Unable to start web UI", e);
             LOGGER.error("Unable to start web UI: {}", e.getMessage());
             exit(ExitState.FAILURE);
+            throw new IllegalStateException(e); // Unreachable, since exit() terminates the JVM
         }
     }
 
@@ -100,23 +123,6 @@ public final class ApplicationLauncher {
             ScreenshotTaker.shutdown();
             DriverPool.shutdown();
         }, "application-shutdown-hook"));
-    }
-
-    private static void validateDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        if (!DisplayValidator.isValid(trackersByType)) {
-            exit(ExitState.FAILURE);
-        }
-    }
-
-    private static void startApplication(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        try {
-            final ExitState exitState = ScreenshotOrchestrator.start(trackersByType);
-            exit(exitState);
-        } catch (final Exception e) {
-            LOGGER.debug("Error abruptly ended execution", e);
-            LOGGER.error("Error abruptly ended execution: {}", e.getMessage());
-            exit(ExitState.FAILURE);
-        }
     }
 
     private static void exit(final ExitState exitState) {

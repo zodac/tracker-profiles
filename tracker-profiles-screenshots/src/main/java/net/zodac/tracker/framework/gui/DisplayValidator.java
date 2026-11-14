@@ -40,44 +40,22 @@ public final class DisplayValidator {
     }
 
     /**
-     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers. There are three possible outcomes:
+     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers. If
+     * {@link ApplicationConfiguration#forceUiBrowser()} is {@code true}, or the loaded trackers include at least one {@link TrackerType#MANUAL}
+     * tracker in the execution order, a display is required, so {@link #isDisplayAvailable()} is called to verify the {@code DISPLAY} environment
+     * variable is set and a connection to the X11 server can be established.
      *
-     * <ul>
-     *   <li>If {@link ApplicationConfiguration#forceUiBrowser()} is {@code true}, or the loaded trackers include at least one
-     *       {@link TrackerType#MANUAL} tracker, a display is required. {@link #isDisplayAvailable()} is called to verify the
-     *       {@code DISPLAY} environment variable is set and a connection to the X11 server can be established.</li>
-     *   <li>If no display is required, {@code java.awt.headless} is set to {@code true} so that AWT image operations (used during
-     *       screenshotting) work without an X11 connection, even if a {@code DISPLAY} value is set in the environment.</li>
-     * </ul>
+     * <p>
+     * {@code java.awt.headless} is never set, since it cannot be changed once AWT is initialised, and a later execution in the same JVM may need a
+     * display.
      *
      * @param trackersByType the loaded trackers grouped by {@link TrackerType}
      * @return {@code true} if the display state is valid for the trackers to be executed
      */
     public static boolean isValid(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return isValid(trackersByType, true);
-    }
-
-    /**
-     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers, as with {@link #isValid(Map)}.
-     *
-     * <p>
-     * Once AWT is initialised, {@code java.awt.headless} cannot be changed. So when multiple executions run in the same JVM (as from the web UI),
-     * {@code forceHeadlessWhenNotNeeded} should be {@code false}, otherwise a headless-only execution would prevent any later execution from
-     * using a display.
-     *
-     * @param trackersByType             the loaded trackers grouped by {@link TrackerType}
-     * @param forceHeadlessWhenNotNeeded whether to set {@code java.awt.headless} to {@code true} when no display is required
-     * @return {@code true} if the display state is valid for the trackers to be executed
-     */
-    public static boolean isValid(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final boolean forceHeadlessWhenNotNeeded) {
         if (needsDisplay(trackersByType)) {
             LOGGER.trace("DISPLAY needs to be set");
             return isDisplayAvailable();
-        }
-
-        // If only using headless trackers (and not forcing UI), ignore any DISPLAY value
-        if (forceHeadlessWhenNotNeeded) {
-            System.setProperty("java.awt.headless", "true");
         }
         return true;
     }

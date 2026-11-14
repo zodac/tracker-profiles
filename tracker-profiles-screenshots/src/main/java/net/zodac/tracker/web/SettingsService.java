@@ -29,23 +29,29 @@ import org.jspecify.annotations.Nullable;
 /**
  * Lists and updates the application settings shown in the web UI. Each setting's value is resolved from (in order of precedence): a value saved in
  * the web UI, the environment variable, then the {@link ConfigurationOption#defaultValue()}.
+ *
+ * <p>
+ * Every saved change is passed to a {@link SavedSettingsListener}, so it can be applied straight away (including to an execution in progress).
  */
 public final class SettingsService {
 
     private final ApplicationDatabase applicationDatabase;
+    private final SavedSettingsListener savedSettingsListener;
 
-    private SettingsService(final ApplicationDatabase applicationDatabase) {
+    private SettingsService(final ApplicationDatabase applicationDatabase, final SavedSettingsListener savedSettingsListener) {
         this.applicationDatabase = applicationDatabase;
+        this.savedSettingsListener = savedSettingsListener;
     }
 
     /**
      * Creates a {@link SettingsService}.
      *
-     * @param applicationDatabase the {@link ApplicationDatabase} storing settings saved in the web UI
+     * @param applicationDatabase   the {@link ApplicationDatabase} storing settings saved in the web UI
+     * @param savedSettingsListener the {@link SavedSettingsListener} notified each time settings are saved
      * @return the {@link SettingsService}
      */
-    public static SettingsService create(final ApplicationDatabase applicationDatabase) {
-        return new SettingsService(applicationDatabase);
+    public static SettingsService create(final ApplicationDatabase applicationDatabase, final SavedSettingsListener savedSettingsListener) {
+        return new SettingsService(applicationDatabase, savedSettingsListener);
     }
 
     /**
@@ -75,6 +81,8 @@ public final class SettingsService {
     public List<SettingView> updateSettings(final Map<String, String> values) throws SQLException {
         final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
 
+        // Settings saved for an option that no longer exists are dropped
+        overrides.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
         for (final Map.Entry<String, String> entry : values.entrySet()) {
             final ConfigurationOption option = findEditableOption(entry.getKey());
             overrides.put(option.name(), entry.getValue() == null ? "" : entry.getValue());
@@ -96,6 +104,7 @@ public final class SettingsService {
         final ConfigurationOption option = findEditableOption(name);
         final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
         overrides.remove(option.name());
+        overrides.keySet().removeIf(savedName -> ConfigurationOption.find(savedName) == null);
 
         validateAndSave(overrides);
         return listSettings();
@@ -105,6 +114,7 @@ public final class SettingsService {
         // Throws IllegalArgumentException if invalid, so nothing is saved
         ApplicationConfiguration.load(overrides);
         applicationDatabase.replaceSettings(overrides);
+        savedSettingsListener.settingsSaved(Map.copyOf(overrides));
     }
 
     private static ConfigurationOption findEditableOption(final String name) {
@@ -123,7 +133,9 @@ public final class SettingsService {
      * A {@link ConfigurationOption} and its current value, as returned to the web UI.
      *
      * @param name               the environment variable name
+     * @param tab                the {@link ConfigurationOption.Tab} the setting is displayed on
      * @param group              the group the setting is displayed under
+     * @param label              the user-facing name of the setting
      * @param type               the {@link ConfigurationOption.OptionType}
      * @param description        the description
      * @param allowedValues      the allowed values, for selection types
@@ -134,10 +146,13 @@ public final class SettingsService {
      * @param source             where {@code value} comes from
      * @param changedFromDefault whether {@code value} differs from {@code defaultValue}
      * @param editable           whether the setting can be changed in the web UI
+     * @param scope              the {@link ConfigurationOption.Scope}, defining when a change takes effect
      */
     public record SettingView(
         String name,
+        ConfigurationOption.Tab tab,
         String group,
+        String label,
         ConfigurationOption.OptionType type,
         String description,
         List<String> allowedValues,
@@ -147,7 +162,8 @@ public final class SettingsService {
         String value,
         Source source,
         boolean changedFromDefault,
-        boolean editable
+        boolean editable,
+        ConfigurationOption.Scope scope
     ) {
 
         /**
@@ -174,7 +190,9 @@ public final class SettingsService {
 
             return new SettingView(
                 option.name(),
+                option.tab(),
                 option.group(),
+                option.label(),
                 option.type(),
                 option.description(),
                 option.allowedValues(),
@@ -184,9 +202,24 @@ public final class SettingsService {
                 value,
                 source,
                 !value.equals(option.defaultValue()),
-                option.editableAtRuntime()
+                option.editableAtRuntime(),
+                option.scope()
             );
         }
+    }
+
+    /**
+     * Notified each time settings are saved in the web UI.
+     */
+    @FunctionalInterface
+    public interface SavedSettingsListener {
+
+        /**
+         * Called after settings have been validated and saved.
+         *
+         * @param savedSettings every setting saved in the web UI, keyed by environment variable name
+         */
+        void settingsSaved(Map<String, String> savedSettings);
     }
 
     /**

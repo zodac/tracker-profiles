@@ -20,7 +20,7 @@ package net.zodac.tracker.framework.exception;
 import java.io.Serial;
 
 /**
- * Exception used to indicate an error with the input CSV file.
+ * Exception used to indicate an error with the content of an imported CSV file.
  */
 public class InvalidCsvInputException extends RuntimeException {
 
@@ -34,5 +34,15 @@ public class InvalidCsvInputException extends RuntimeException {
      */
     public InvalidCsvInputException(final String message) {
         super(message);
+    }
+
+    /**
+     * Constructor that takes an error message and the cause.
+     *
+     * @param message the error message
+     * @param cause   the cause {@link Throwable}
+     */
+    public InvalidCsvInputException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 }

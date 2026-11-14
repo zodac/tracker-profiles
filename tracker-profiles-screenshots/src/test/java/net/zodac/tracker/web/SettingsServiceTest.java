@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.config.ConfigurationOption;
@@ -42,13 +43,14 @@ class SettingsServiceTest {
     @TempDir
     private Path tempDirectory;
 
+    private final List<Map<String, String>> savedSettings = new ArrayList<>();
     private ApplicationDatabase applicationDatabase;
     private SettingsService settingsService;
 
     @BeforeEach
     void setUp() throws IOException, SQLException {
         applicationDatabase = ApplicationDatabase.open(tempDirectory.resolve("test.db"));
-        settingsService = SettingsService.create(applicationDatabase);
+        settingsService = SettingsService.create(applicationDatabase, savedSettings::add);
     }
 
     @Test
@@ -94,7 +96,8 @@ class SettingsServiceTest {
         settingsService.updateSettings(Map.of(OPTION.name(), "4", ConfigurationOption.LOG_LEVEL.name(), "DEBUG"));
 
         // Simulates restarting the application, by opening the same database file again
-        final SettingsService restartedService = SettingsService.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")));
+        final SettingsService restartedService = SettingsService.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")),
+            savedSettings::add);
         final List<SettingsService.SettingView> settings = restartedService.listSettings();
 
         assertThat(find(settings, OPTION))
@@ -105,12 +108,31 @@ class SettingsServiceTest {
     }
 
     @Test
-    void givenCsvOption_whenUpdated_thenExceptionIsThrown() {
-        final Map<String, String> values = Map.of(ConfigurationOption.TRACKER_INPUT_FILE_PATH.name(), "/data/trackers.csv");
+    void givenChangedValue_whenUpdated_thenListenerReceivesSavedSettings() throws SQLException {
+        settingsService.updateSettings(Map.of(OPTION.name(), "3"));
+
+        assertThat(savedSettings)
+            .containsExactly(Map.of(OPTION.name(), "3"));
+    }
+
+    @Test
+    void givenSavedSettingForRemovedOption_whenUpdated_thenRemovedOptionIsDropped() throws SQLException {
+        applicationDatabase.replaceSettings(Map.of("PROGRESS_BAR_ENABLED", "false"));
+
+        settingsService.updateSettings(Map.of(OPTION.name(), "3"));
+
+        assertThat(applicationDatabase.findAllSettings())
+            .containsExactly(Map.entry(OPTION.name(), "3"));
+    }
+
+    @Test
+    void givenInvalidValue_whenUpdated_thenListenerIsNotNotified() {
+        final Map<String, String> values = Map.of(OPTION.name(), "100");
 
         assertThatThrownBy(() -> settingsService.updateSettings(values))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("environment variable");
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThat(savedSettings)
+            .isEmpty();
     }
 
     @Test

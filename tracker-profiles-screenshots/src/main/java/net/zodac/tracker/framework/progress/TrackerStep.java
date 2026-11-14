@@ -17,10 +17,8 @@
 
 package net.zodac.tracker.framework.progress;
 
-import java.util.Locale;
-
 /**
- * Enum defining the discrete steps taken when processing a tracker, used for {@link ProgressBarManager#tick(TrackerStep)}.
+ * Enum defining the discrete steps taken when processing a tracker, reported to the web UI as each one completes.
  */
 public enum TrackerStep {
 
@@ -53,19 +51,4 @@ public enum TrackerStep {
      * The number of {@link TrackerStep} values.
      */
     public static final int NUMBER_OF_STEPS = values().length;
-
-    private final String name;
-
-    TrackerStep() {
-        this.name = name().toLowerCase(Locale.ROOT).replace('_', ' ');
-    }
-
-    /**
-     * The logger-friendly name of the {@link TrackerStep}.
-     *
-     * @return the {@link TrackerStep} name
-     */
-    String formattedName() {
-        return name;
-    }
 }

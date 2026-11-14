@@ -38,7 +38,8 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
 /**
- * SQLite-backed storage for the web UI, holding tracker credentials and settings that override environment variables.
+ * SQLite-backed storage for the web UI, holding tracker credentials, settings that override environment variables, and the result of the most recent
+ * execution of each tracker.
  *
  * <p>
  * A new {@link Connection} is opened for each operation, and all operations are serialised by a {@link Lock}, since the expected load is a single
@@ -61,6 +62,13 @@ public final class ApplicationDatabase {
             value TEXT NOT NULL
         )""";
 
+    private static final String CREATE_RESULTS_TABLE = """
+        CREATE TABLE IF NOT EXISTS tracker_results (
+            name        TEXT PRIMARY KEY COLLATE NOCASE,
+            finished_at INTEGER NOT NULL,
+            successful  INTEGER NOT NULL
+        )""";
+
     private static final String SELECT_ALL_CREDENTIALS = "SELECT name, username, password, enabled FROM tracker_credentials ORDER BY name";
     private static final String COUNT_CREDENTIALS = "SELECT COUNT(*) FROM tracker_credentials";
     // A NULL password keeps the existing password, so the UI never needs to send back a password it has not changed
@@ -76,6 +84,13 @@ public final class ApplicationDatabase {
     private static final String UPSERT_SETTING =
         "INSERT INTO settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value";
     private static final String DELETE_SETTING = "DELETE FROM settings WHERE name = ?";
+
+    private static final String SELECT_ALL_RESULTS = "SELECT name, finished_at, successful FROM tracker_results ORDER BY name";
+    private static final String UPSERT_RESULT = """
+        INSERT INTO tracker_results (name, finished_at, successful) VALUES (?, ?, ?)
+        ON CONFLICT(name) DO UPDATE SET
+            finished_at = excluded.finished_at,
+            successful  = excluded.successful""";
 
     private final Lock lock = new ReentrantLock();
     private final String jdbcUrl;
@@ -111,6 +126,7 @@ public final class ApplicationDatabase {
             final Statement statement = connection.createStatement()) {
             statement.execute(CREATE_TRACKERS_TABLE);
             statement.execute(CREATE_SETTINGS_TABLE);
+            statement.execute(CREATE_RESULTS_TABLE);
         } finally {
             lock.unlock();
         }
@@ -276,6 +292,50 @@ public final class ApplicationDatabase {
                 connection.rollback();
                 throw e;
             }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Retrieves the result of the most recent execution of each tracker, ordered by name.
+     *
+     * @return the {@link StoredTrackerResult}s
+     * @throws SQLException thrown if the database cannot be queried
+     */
+    public List<StoredTrackerResult> findAllResults() throws SQLException {
+        lock.lock();
+        try (final Connection connection = connect();
+            final PreparedStatement statement = connection.prepareStatement(SELECT_ALL_RESULTS);
+            final ResultSet resultSet = statement.executeQuery()) {
+            final List<StoredTrackerResult> results = new ArrayList<>();
+            while (resultSet.next()) {
+                results.add(new StoredTrackerResult(
+                    resultSet.getString("name"),
+                    resultSet.getLong("finished_at"),
+                    resultSet.getInt("successful") != 0
+                ));
+            }
+            return results;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Saves the result of the most recent execution of a tracker, replacing any previous result.
+     *
+     * @param trackerResult the {@link StoredTrackerResult}
+     * @throws SQLException thrown if the database cannot be updated
+     */
+    public void saveResult(final StoredTrackerResult trackerResult) throws SQLException {
+        lock.lock();
+        try (final Connection connection = connect();
+            final PreparedStatement statement = connection.prepareStatement(UPSERT_RESULT)) {
+            statement.setString(1, trackerResult.name());
+            statement.setLong(2, trackerResult.finishedAt());
+            statement.setInt(3, trackerResult.successful() ? 1 : 0);
+            statement.executeUpdate();
         } finally {
             lock.unlock();
         }

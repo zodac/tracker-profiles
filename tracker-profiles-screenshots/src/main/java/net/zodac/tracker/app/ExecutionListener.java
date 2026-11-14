@@ -17,11 +17,13 @@
 
 package net.zodac.tracker.app;
 
+import java.util.Map;
 import net.zodac.tracker.framework.TrackerType;
+import net.zodac.tracker.framework.progress.TrackerStep;
 
 /**
  * Receives progress updates from {@link ScreenshotOrchestrator} during an execution. Used by the web UI to display progress. Implementations must
- * be thread-safe, as {@link #trackerCompleted(TrackerType, String, boolean)} is called concurrently for parallel trackers.
+ * be thread-safe, as the per-tracker methods are called concurrently for parallel trackers.
  */
 public interface ExecutionListener {
 
@@ -29,23 +31,46 @@ public interface ExecutionListener {
      * An {@link ExecutionListener} that ignores all updates.
      */
     ExecutionListener NONE = new ExecutionListener() {
-        @Override
-        public void executionStarted(final int numberOfTrackers) {
-            // Do nothing
-        }
-
-        @Override
-        public void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
-            // Do nothing
-        }
     };
 
     /**
-     * Called once the trackers to be executed are known, before any are executed.
+     * Called once the trackers to be executed are known, before any are executed. Every {@link TrackerType} with an enabled tracker is included,
+     * since {@link net.zodac.tracker.framework.config.ApplicationConfiguration#trackerExecutionOrder()} can be changed during the execution.
      *
-     * @param numberOfTrackers the total number of trackers to be executed
+     * @param numberOfTrackersByType the number of trackers of each {@link TrackerType}
      */
-    void executionStarted(int numberOfTrackers);
+    default void executionStarted(final Map<TrackerType, Integer> numberOfTrackersByType) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called when the trackers of a {@link TrackerType} start executing.
+     *
+     * @param trackerType the {@link TrackerType}
+     */
+    default void trackerTypeStarted(final TrackerType trackerType) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called when a tracker starts executing.
+     *
+     * @param trackerType the {@link TrackerType} of the tracker
+     * @param trackerName the name of the tracker
+     */
+    default void trackerStarted(final TrackerType trackerType, final String trackerName) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called the first time a {@link TrackerStep} succeeds for a tracker (a step is not reported again on a later attempt).
+     *
+     * @param trackerName the name of the tracker
+     * @param trackerStep the completed {@link TrackerStep}
+     */
+    default void trackerStepCompleted(final String trackerName, final TrackerStep trackerStep) {
+        // Do nothing by default
+    }
 
     /**
      * Called each time a tracker has finished executing.
@@ -54,5 +79,7 @@ public interface ExecutionListener {
      * @param trackerName   the name of the tracker
      * @param wasSuccessful whether the screenshot was successful
      */
-    void trackerCompleted(TrackerType trackerType, String trackerName, boolean wasSuccessful);
+    default void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
+        // Do nothing by default
+    }
 }

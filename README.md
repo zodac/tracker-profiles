@@ -8,14 +8,18 @@
     - [Headless](#headless)
     - [Manual Interaction](#manual-interaction)
 - [How To Use](#how-to-use)
-    - [Tracker Definitions](#tracker-definitions)
+    - [Web UI](#web-ui)
+    - [Importing Trackers](#importing-trackers)
     - [Running In Docker](#running-in-docker)
     - [Browser UI](#browser-ui)
         - [UI In Debian](#ui-in-debian)
         - [UI In Windows](#ui-in-windows)
         - [Disable UI](#disable-ui)
     - [Configuration Options](#configuration-options)
-        - [Progress Bar](#progress-bar)
+        - [Run Options](#run-options)
+        - [Settings](#settings)
+        - [Startup-Only Options](#startup-only-options)
+        - [JVM Options](#jvm-options)
 - [Versioning](#versioning)
 - [AI Usage](#ai-usage)
     - [AI Agents](#ai-agents)
@@ -23,7 +27,6 @@
     - [Human Review](#human-review)
     - [Exceptions](#exceptions)
         - [JavaScript Redaction](#javascript-redaction)
-        - [Progress Bar PrintStream](#progress-bar-printstream)
 - [Contributing](#contributing)
     - [Requirements](#requirements)
     - [Install Git Hooks](#install-git-hooks)
@@ -115,8 +118,8 @@ and press **Start** on the **Main** tab. See [Web UI](#web-ui) for more details.
 
 Screenshots are saved to `/tmp/screenshots/<date>/` on your host. See [Configuration Options](#configuration-options) for the full list of settings.
 
-To run without the web UI (screenshot every tracker in a CSV file once, then exit), copy [trackers_example.csv](./trackers_example.csv) to
-`/tmp/screenshots/trackers.csv`, populate it with your credentials, and add `--env WEB_UI_ENABLED=false` to the command above.
+To add many trackers at once, copy [trackers_example.csv](./trackers_example.csv), fill in your credentials, and upload it with **Import CSV** on the
+**Trackers** tab (see [Importing Trackers](#importing-trackers)).
 
 ## Trackers
 
@@ -285,8 +288,9 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 
 ### Manual Interaction
 
-If the following trackers are enabled (either uncommented in `TRACKER_INPUT_FILE_PATH`, or **MANUAL** is included in `TRACKER_EXECUTION_ORDER`), then
-a UI must be enabled. Instructions for this in Docker can be seen [below](#browser-ui).
+If any of the following trackers are enabled, and **MANUAL** is included in the tracker order, then a browser UI must be available, since they open a
+visible browser window for you to complete the step below. Instructions for this in Docker can be seen [below](#browser-ui). The web UI asks you
+when to complete each step (see [Web UI](#web-ui)).
 
 <table>
 <tr>
@@ -350,20 +354,29 @@ this type of automated access.
 
 ### Web UI
 
-By default, the application starts a web UI on port `8080` (configurable with `WEB_UI_PORT`), which has three tabs:
+The application is used through a web UI on port `8080` (configurable with `WEB_UI_PORT`), which has three tabs:
 
-- **Main**: start an execution, follow its progress, and view the application logs live. A running execution can be cancelled, which closes all
-  browsers and stops immediately (trackers already screenshot are kept), without stopping the container
+- **Main**: start an execution, follow its progress, and view the application logs live
+    - The progress bar counts completed trackers, and each tracker in progress shows which step it is on (opening the tracker, logging in, opening the
+      profile page, taking the screenshots, logging out)
+    - **Run options** holds the [options](#configuration-options) you are most likely to change for an execution, such as the tracker order or the
+      number of attempts per tracker. Options marked with a green dot can be changed while an execution is in progress and apply to it straight away;
+      the others are locked until it finishes
+    - The log level is changed in the log toolbar, and applies immediately. The logs can also be filtered to a single tracker
+    - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
+      the container
 - **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with fields for
-  the username/email and password of each tracker
-- **Settings**: every [configuration option](#configuration-options), preloaded from the environment variables. Any value that differs from its
-  default is highlighted, along with whether it was set by an environment variable or saved in the web UI
+  the username/email and password of each tracker, and the result of its most recent execution. Trackers can also be
+  [imported from a CSV file](#importing-trackers)
+- **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
+  from its default is highlighted, along with whether it was set by an environment variable or saved in the web UI
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
 
-Tracker credentials and settings saved in the web UI are stored in a SQLite database (`DATABASE_PATH`), in the `/app/data` volume of the container.
-This is separate from the screenshots, so it can be mounted, backed up or cleared on its own. The examples use a named volume:
+Tracker credentials, settings saved in the web UI and the result of each tracker's most recent execution are stored in a SQLite database
+(`DATABASE_PATH`), in the `/app/data` volume of the container. This is separate from the screenshots, so it can be mounted, backed up or cleared on
+its own. The examples use a named volume:
 
 - To keep the data across container restarts, mount the same volume each time: `-v tracker-profiles-data:/app/data`
 - To start again with no trackers or saved settings, stop the container and remove the volume: `docker volume rm tracker-profiles-data`
@@ -372,27 +385,26 @@ This is separate from the screenshots, so it can be mounted, backed up or cleare
 
 If no volume is mounted, Docker creates an anonymous volume, which is not reused when a new container is created (as with `--rm`).
 
-Settings saved in the web UI take precedence over environment variables (including after a restart) until they are reset, and are applied at the
-start of each execution. See [Configuration Options](#configuration-options) for which options can be changed in the web UI, and which can only be
-set as environment variables.
+Settings saved in the web UI take precedence over environment variables (including after a restart) until they are reset. See
+[Configuration Options](#configuration-options) for when a change to each option takes effect, and which can only be set as environment variables.
 
-If the database has no trackers when the application starts, any trackers in the CSV file at `TRACKER_INPUT_FILE_PATH` are imported (and enabled),
-so an existing CSV file can be migrated without retyping credentials.
+> **Note:** The web UI has no authentication, and the database stores passwords in plain text. Do not expose the port outside your local network.
+> Saved passwords are never sent back to the browser.
 
-> **Note:** The web UI has no authentication, and the database stores passwords in plain text (as does the CSV file). Do not expose the port
-> outside your local network. Saved passwords are never sent back to the browser.
+When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
+tab (and the tab title changes). Complete the step in the tracker's browser window, then select **Continue**; the execution also continues by itself
+if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS` is set, the prompt shows
+how long is left, and **+5 min** gives you more time. The browser window itself still needs a display, so `DISPLAY` must be configured to execute
+manual trackers (see [Browser UI](#browser-ui)).
 
-Manual trackers still request user input (captcha, 2FA, etc.) through a dialog in the [browser UI](#browser-ui), so `DISPLAY` must be configured
-to execute them.
+### Importing Trackers
 
-### Tracker Definitions
+Credentials for many trackers can be added at once with **Import CSV** on the **Trackers** tab. Copy the
+[trackers_example.csv](trackers_example.csv) file and update it with your login information for each tracker. Any unwanted trackers can be deleted,
+or prefixed with `#` so they are ignored. The tracker names are case-insensitive.
 
-When the web UI is disabled (`WEB_UI_ENABLED=false`), the trackers are read from a CSV file instead. First, copy the
-[trackers_example.csv](trackers_example.csv) file. This file needs to be updated with your user's login information for each tracker. Any unwanted
-trackers can be deleted, or prefixed by the `CSV_COMMENT_SYMBOL` environment variable so they are excluded. The tracker names are case-insensitive.
-
-The file can be saved anywhere but needs to be mounted into the Docker container, and it will be referenced by the `TRACKER_INPUT_FILE_PATH`
-environment variable when running the application, so remember where it is saved and what it is named.
+Each imported tracker is enabled, and replaces any credentials already saved for it. Trackers in the file that are not supported are listed after
+the import, and are not saved.
 
 ### Running In Docker
 
@@ -410,36 +422,24 @@ The application is run using Docker, and below are the commands to run the `late
 ```bash
 docker run \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_HEIGHT=1050 \
-    --env BROWSER_WIDTH=1680 \
-    --env CSV_COMMENT_SYMBOL='#' \
+    --env BROWSER_RESOLUTION=1680x1050 \
     --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FAIL_ON_UNSUPPORTED_TRACKER=true \
     --env FORCE_UI_BROWSER=false \
-    --env INPUT_TIMEOUT_ENABLED=false \
-    --env INPUT_TIMEOUT_SECONDS=300 \
+    --env INPUT_TIMEOUT_SECONDS=0 \
     --env JAVA_ADDITIONAL_OPTS= \
     --env JAVA_OPTS= \
     --env LOG_LEVEL=INFO \
-    --env LOG_TRACKER_NAME=true \
     --env NUMBER_OF_PARALLEL_THREADS=5 \
     --env NUMBER_OF_SCREENSHOT_ATTEMPTS=1 \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env PROGRESS_BAR_COMPLETE_CHARACTER='█' \
-    --env PROGRESS_BAR_ENABLED=true \
-    --env PROGRESS_BAR_FORMAT=":bar :percent% | [:elapsed] | :units/:total-units trackers" \
-    --env PROGRESS_BAR_INCOMPLETE_CHARACTER='░' \
-    --env PROGRESS_BAR_LENGTH=35 \
     --env REDACTION_TYPE=BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
     --env TAKE_SCREENSHOT_ON_ERROR=false \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
-    --env WEB_UI_ENABLED=true \
     --env WEB_UI_PORT=8080 \
     -p 8080:8080 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -458,36 +458,24 @@ docker run \
 ```bash
 MSYS_NO_PATHCONV=1 docker run \
     --env DISPLAY=host.docker.internal:0 \
-    --env BROWSER_HEIGHT=1050 \
-    --env BROWSER_WIDTH=1680 \
-    --env CSV_COMMENT_SYMBOL='#' \
+    --env BROWSER_RESOLUTION=1680x1050 \
     --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FAIL_ON_UNSUPPORTED_TRACKER=true \
     --env FORCE_UI_BROWSER=false \
-    --env INPUT_TIMEOUT_ENABLED=false \
-    --env INPUT_TIMEOUT_SECONDS=300 \
+    --env INPUT_TIMEOUT_SECONDS=0 \
     --env JAVA_ADDITIONAL_OPTS= \
     --env JAVA_OPTS= \
     --env LOG_LEVEL=INFO \
-    --env LOG_TRACKER_NAME=true \
     --env NUMBER_OF_PARALLEL_THREADS=5 \
     --env NUMBER_OF_SCREENSHOT_ATTEMPTS=1 \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env PROGRESS_BAR_COMPLETE_CHARACTER='█' \
-    --env PROGRESS_BAR_ENABLED=true \
-    --env PROGRESS_BAR_FORMAT=":bar :percent% | [:elapsed] | :units/:total-units trackers" \
-    --env PROGRESS_BAR_INCOMPLETE_CHARACTER='░' \
-    --env PROGRESS_BAR_LENGTH=35 \
     --env REDACTION_TYPE=BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
     --env TAKE_SCREENSHOT_ON_ERROR=false \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
-    --env WEB_UI_ENABLED=true \
     --env WEB_UI_PORT=8080 \
     -p 8080:8080 \
     -v /c/tmp/screenshots:/app/screenshots \
@@ -535,62 +523,59 @@ exclude **MANUAL** from `TRACKER_EXECUTION_ORDER`.
 
 ### Configuration Options
 
-All options are set with environment variables on the docker image. They fall into two groups:
+All options are set with environment variables on the docker image, and most can also be changed in the [web UI](#web-ui). They fall into three
+groups:
 
-- [Web UI Settings](#web-ui-settings) can also be changed on the **Settings** tab of the [web UI](#web-ui)
+- [Run Options](#run-options) are shown on the **Main** tab, next to the controls to start an execution
+- [Settings](#settings) are shown on the **Settings** tab
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
 
-When the web UI is disabled (`WEB_UI_ENABLED=false`), every option is set as an environment variable.
+A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including after the
+container is restarted, until it is reset with the **Reset** button.
 
-#### Web UI Settings
+#### Run Options
 
-These options are loaded from the environment variables (or their defaults) when the web UI starts, and the **Settings** tab shows where each value
-comes from. A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including
-after the container is restarted, until it is reset with the **Reset** button. Changes are applied at the start of the next execution.
+Options that apply *Immediately* also change an execution that is in progress. Options that apply at *Execution start* are locked in the web UI while
+an execution is in progress.
 
-| Environment Variable                | Description                                                                                                                                                                                                                                     | Default Value                                                |
-|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| *BROWSER_HEIGHT*                    | The height (in pixels) of the web browser used to take screenshots                                                                                                                                                                              | 1050                                                         |
-| *BROWSER_WIDTH*                     | The width (in pixels) of the web browser used to take screenshots                                                                                                                                                                               | 1680                                                         |
-| *ENABLE_ADULT_TRACKERS*             | Whether to take screenshots of trackers that primarily host adult content                                                                                                                                                                       | true                                                         |
-| *ENABLE_TRANSLATION_TO_ENGLISH*     | Whether to translate non-English trackers to English                                                                                                                                                                                            | true                                                         |
-| *FORCE_UI_BROWSER*                  | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                                                                                                    | false                                                        |
-| *INPUT_TIMEOUT_ENABLED*             | Whether to add a timeout for when a user-input is required, otherwise waits                                                                                                                                                                     | false                                                        |
-| *INPUT_TIMEOUT_SECONDS*             | If *INPUT_TIMEOUT_ENABLED* is enabled, how long to wait for a user-input in [seconds]                                                                                                                                                           | 300                                                          |
-| *LOG_LEVEL*                         | The logging level for console output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                       | INFO                                                         |
-| *LOG_TRACKER_NAME*                  | Whether to prefix each log message with the name of the tracker being screenshot                                                                                                                                                                | true                                                         |
-| *NUMBER_OF_PARALLEL_THREADS*        | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                                                                                                           | 5                                                            |
-| *NUMBER_OF_SCREENSHOT_ATTEMPTS*     | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1                                                            |
-| *OUTPUT_DIRECTORY_NAME_FORMAT*      | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html))                                        | yyyy-MM-dd                                                   |
-| *OUTPUT_DIRECTORY_PARENT_PATH*      | The output location of the new directory created for the screenshots, relative to the project root                                                                                                                                              | /tmp/screenshots                                             |
-| *PROGRESS_BAR_COMPLETE_CHARACTER*   | The character used to render the completed portion of the [progress bar](#progress-bar) (must differ from *PROGRESS_BAR_INCOMPLETE_CHARACTER*)                                                                                                  | █                                                            |
-| *PROGRESS_BAR_ENABLED*              | Whether to render a progress bar at the bottom of the console output                                                                                                                                                                            | true                                                         |
-| *PROGRESS_BAR_FORMAT*               | The format string for the [progress bar](#progress-bar) (must not be blank)                                                                                                                                                                     | :bar :percent% \| [:elapsed] \| :units/:total-units trackers |
-| *PROGRESS_BAR_INCOMPLETE_CHARACTER* | The character used to render the incomplete portion of the [progress bar](#progress-bar) (must differ from *PROGRESS_BAR_COMPLETE_CHARACTER*)                                                                                                   | ░                                                            |
-| *PROGRESS_BAR_LENGTH*               | The length (in characters) of the [progress bar](#progress-bar) [min: 10, max: 80]                                                                                                                                                              | 35                                                           |
-| *REDACTION_TYPE*                    | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX                                                          |
-| *SCREENSHOT_EXISTS_ACTION*          | What to do when a screenshot for the tracker for the given date already exists [CREATE_ANOTHER, OVERWRITE, SKIP](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/config/ExistingScreenshotAction.java)                 | CREATE_ANOTHER                                               |
-| *TAKE_SCREENSHOT_ON_ERROR*          | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                                                                                              | false                                                        |
-| *TIMEZONE*                          | The local timezone, used to retrieve the current date to name the output directory                                                                                                                                                              | UTC                                                          |
-| *TRACKER_EXECUTION_ORDER*           | The order in which different tracker types should be executed, at least one must be selected (case-insensitive)                                                                                                                                 | HEADLESS,MANUAL                                              |
+| Environment Variable            | Description                                                                                                                                                                 | Applies         | Default Value   |
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------|
+| *ENABLE_ADULT_TRACKERS*         | Whether to take screenshots of trackers that primarily host adult content                                                                                                   | Execution start | true            |
+| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                                | Execution start | false           |
+| *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)                       | Immediately     | 0               |
+| *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)               | Immediately     | INFO            |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                                       | Execution start | 5               |
+| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                         | Immediately     | 1               |
+| *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                          | Immediately     | false           |
+| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed, at least one must be selected (case-insensitive). During an execution, a type can be changed until it starts | Immediately     | HEADLESS,MANUAL |
+
+#### Settings
+
+Changes to these options apply from the next execution.
+
+| Environment Variable            | Description                                                                                                                                                                                                                                     | Default Value    |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|
+| *BROWSER_RESOLUTION*            | The resolution (`widthxheight`, in pixels) of the web browser used to take screenshots [1280x1024, 1600x1000, 1600x1200, 1680x1050, 1920x1080, 1920x1200, 2560x1440, 7680x4320]                                                                 | 1680x1050        |
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true             |
+| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html))                                        | yyyy-MM-dd       |
+| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of the new directory created for the screenshots                                                                                                                                                                            | /app/screenshots |
+| *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX              |
+| *SCREENSHOT_EXISTS_ACTION*      | What to do when a screenshot for the tracker for the given date already exists [CREATE_ANOTHER, OVERWRITE, SKIP](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/config/ExistingScreenshotAction.java)                 | CREATE_ANOTHER   |
+| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                                                                                                                                              | UTC              |
 
 #### Startup-Only Options
 
-These options are read once when the container starts, or are only used by the CLI (`WEB_UI_ENABLED=false`) and the initial CSV import. The
-application options are shown on the **Settings** tab of the web UI for reference (marked as *Environment only*), but cannot be changed there.
-`DISPLAY`, `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container itself, so are not shown in the web UI.
+These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference (marked
+as *Environment only*), but cannot be changed there. `DISPLAY`, `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container itself, so are not
+shown in the web UI.
 
-| Environment Variable                | Description                                                                                                                                                                                                                                     | Default Value                                                |
-|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| *CSV_COMMENT_SYMBOL*                | If this character is the first in a CSV row, the CSV row is considered a comment and not processed                                                                                                                                              | #                                                            |
-| *DATABASE_PATH*                     | The path to the SQLite database storing tracker credentials and settings saved in the [web UI](#web-ui) (inside the `/app/data` docker volume)                                                                                                  | /app/data/tracker-profiles.db                                |
-| *DISPLAY*                           | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                                                                                                              |                                                              |
-| *FAIL_ON_UNSUPPORTED_TRACKER*       | Whether to fail if a tracker in the CSV file has no matching handler implementation                                                                                                                                                             | true                                                         |
-| *JAVA_ADDITIONAL_OPTS*              | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                                                                                                  |                                                              |
-| *JAVA_OPTS*                         | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                                                                                                  |                                                              |
-| *TRACKER_INPUT_FILE_PATH*           | The path to the input tracker definition CSV file (inside the docker container)                                                                                                                                                                 | /tmp/screenshots/trackers.csv                                |
-| *WEB_UI_ENABLED*                    | Whether to start the [web UI](#web-ui), otherwise the trackers in the CSV file are screenshot once and the application exits                                                                                                                    | true                                                         |
-| *WEB_UI_PORT*                       | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                                                                                                          | 8080                                                         |
+| Environment Variable   | Description                                                                                                                                                     | Default Value                 |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| *DATABASE_PATH*        | The path to the SQLite database storing tracker credentials, settings saved in the [web UI](#web-ui) and tracker results (inside the `/app/data` docker volume) | /app/data/tracker-profiles.db |
+| *DISPLAY*              | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                              |                               |
+| *JAVA_ADDITIONAL_OPTS* | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                  |                               |
+| *JAVA_OPTS*            | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                  |                               |
+| *WEB_UI_PORT*          | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                          | 8080                          |
 
 #### JVM Options
 
@@ -606,34 +591,6 @@ The following options are passed to the Java process by default:
 
 Set `JAVA_OPTS` to replace all defaults entirely (e.g., to swap the GC algorithm or remove experimental flags). Set `JAVA_ADDITIONAL_OPTS` to append
 extra flags on top of whichever options are active, which can be useful for enabling JFR recording, GC logging, or similar diagnostics.
-
-#### Progress Bar
-
-The progress bar is rendered at the bottom of the console output during execution, showing overall screenshot progress. It is powered by
-the [Clique](https://github.com/kusoroadeolu/Clique) library.
-
-The bar advances in fine-grained steps (login, profile page, each screenshot, logout) so the fill and percentage move smoothly. The format
-string controls everything shown; the default includes a tracker counter (`X/Y trackers`) via the `:units` and `:total-units` tokens.
-
-The format string supports the following tokens, as defined in the
-[Clique source](https://github.com/kusoroadeolu/Clique/blob/main/docs/progress-bars.md):
-
-| Token          | Description                                                              |
-|----------------|--------------------------------------------------------------------------|
-| `:bar`         | The rendered progress bar itself                                         |
-| `:elapsed`     | Time elapsed since the bar was started                                   |
-| `:percent`     | Completion percentage (0–100), based on workflow steps not tracker count |
-| `:progress`    | Number of completed internal ticks (workflow steps, not trackers)        |
-| `:total`       | Total number of internal ticks (workflow steps, not trackers)            |
-| `:units`       | Number of fully completed trackers (completed ticks ÷ steps per tracker) |
-| `:total-units` | Total number of trackers (total ticks ÷ steps per tracker)               |
-
-> **Note:** `:progress` and `:total` reflect the internal tick count used to drive the bar fill (workflow steps), not the number of trackers.
-> Use `:units` and `:total-units` for a tracker-level counter.
-
-> **Note:** When the JVM's native encoding is not UTF-8, multibyte characters passed via environment variable (such as `█` and `░`) may arrive as
-> individual bytes rather than a single character. I try to convert these appropriately, but it doesn't always work. If you're having issues, try to
-> use plain ASCII characters, or use the defaults. Feel free to raise an issue and I can look into it.
 
 ## Versioning
 
@@ -697,12 +654,6 @@ in [JavaScriptRedactor](./tracker-profiles-screenshots/src/main/java/net/zodac/t
 created with little input from me. I don't know JavaScript well enough to perform this overlay-based redaction, but I verify against all tracker
 handlers when updates are made, to cover as many cases as possible.
 
-#### Progress Bar PrintStream
-
-The [ProgressBarPrintStream](tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/progress/ProgressBarPrintStream.java) contains
-some code for handling print streams to override the default console printing of the [Clique progress bar](#progress-bar). I'm not super well-versed
-in handling streams, so I use AI to make updates and then verify manually afterwards.
-
 ## Contributing
 
 ### Requirements
@@ -727,36 +678,24 @@ defined](#browser-ui)):
 docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
 docker run \
     --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_HEIGHT=1050 \
-    --env BROWSER_WIDTH=1680 \
-    --env CSV_COMMENT_SYMBOL='#' \
+    --env BROWSER_RESOLUTION=1680x1050 \
     --env DATABASE_PATH=/app/data/tracker-profiles.db \
     --env ENABLE_ADULT_TRACKERS=true \
     --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FAIL_ON_UNSUPPORTED_TRACKER=false \
     --env FORCE_UI_BROWSER=true \
-    --env INPUT_TIMEOUT_ENABLED=true \
     --env INPUT_TIMEOUT_SECONDS=300 \
     --env JAVA_ADDITIONAL_OPTS= \
     --env JAVA_OPTS= \
     --env LOG_LEVEL=TRACE \
-    --env LOG_TRACKER_NAME=true \
     --env NUMBER_OF_PARALLEL_THREADS=5 \
     --env NUMBER_OF_SCREENSHOT_ATTEMPTS=5 \
     --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env PROGRESS_BAR_COMPLETE_CHARACTER='█' \
-    --env PROGRESS_BAR_ENABLED=true \
-    --env PROGRESS_BAR_FORMAT=":bar :percent% | [:elapsed] | :units/:total-units trackers" \
-    --env PROGRESS_BAR_INCOMPLETE_CHARACTER='░' \
-    --env PROGRESS_BAR_LENGTH=35 \
     --env REDACTION_TYPE=NONE,BLUR,BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
     --env TAKE_SCREENSHOT_ON_ERROR=true \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env TRACKER_INPUT_FILE_PATH=/app/screenshots/trackers.csv \
-    --env WEB_UI_ENABLED=true \
     --env WEB_UI_PORT=8080 \
     -p 8080:8080 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -785,7 +724,7 @@ use IDE debugging tools in IntelliJ as follows. Click on **Run**> **Edit Configu
 Once done, open the [ApplicationLauncher.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/ApplicationLauncher.java) and run the
 `main` method from the IDE.
 The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/handler/AbstractTrackerHandler.java) implementation
-for each tracker is retrieved by the *trackerName* field within the CSV file.
+for each tracker is retrieved by the tracker name saved in the web UI.
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to
 take screenshots. While the application usually runs in headless mode, this can be changed by updating the
@@ -795,47 +734,36 @@ launch when taking a screenshot, and can be used for debugging a new implementat
 ### Performance Analysis
 
 To generate a `.jfr` file for profiling with [Java Mission Control (JMC)](https://jdk.java.net/jmc/), build and run the JAR with JFR flags
-(environment variables are prefixed before `java`, equivalent to `--env` in the [Docker commands](#building-and-developing-in-docker)):
+(environment variables are prefixed before `java`, equivalent to `--env` in the [Docker commands](#building-and-developing-in-docker)), then start an
+execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost:8080):
 
 ```bash
 mvn clean install && \
-    BROWSER_HEIGHT=1050 \
-    BROWSER_WIDTH=1680 \
-    CSV_COMMENT_SYMBOL='#' \
+    BROWSER_RESOLUTION=1680x1050 \
     ENABLE_ADULT_TRACKERS=true \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
-    FAIL_ON_UNSUPPORTED_TRACKER=false \
     FORCE_UI_BROWSER=true \
-    INPUT_TIMEOUT_ENABLED=true \
     INPUT_TIMEOUT_SECONDS=300 \
     LOG_LEVEL=TRACE \
-    LOG_TRACKER_NAME=true \
     NUMBER_OF_PARALLEL_THREADS=5 \
     NUMBER_OF_SCREENSHOT_ATTEMPTS=5 \
     OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
-    PROGRESS_BAR_COMPLETE_CHARACTER='█' \
-    PROGRESS_BAR_ENABLED=true \
-    PROGRESS_BAR_FORMAT=":bar :percent% | [:elapsed] | :units/:total-units trackers" \
-    PROGRESS_BAR_INCOMPLETE_CHARACTER='░' \
-    PROGRESS_BAR_LENGTH=35 \
     REDACTION_TYPE=NONE,BLUR,BOX \
     SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
     TAKE_SCREENSHOT_ON_ERROR=true \
     TIMEZONE=UTC \
     TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    TRACKER_INPUT_FILE_PATH=/tmp/screenshots/trackers.csv \
-    WEB_UI_ENABLED=false \
     java \
         --enable-preview \
         -Xms128m -Xmx512m \
         -XX:+UseG1GC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:MaxGCPauseMillis=200 \
-        -XX:StartFlightRecording=filename=recording_$(date +%Y%m%d_%H%M%S).jfr,settings=profile \
+        -XX:StartFlightRecording=filename=recording_$(date +%Y%m%d_%H%M%S).jfr,settings=profile,dumponexit=true \
         -jar ./tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar
 ```
 
-Once the application completes, open the generated `.jfr` file in Java Mission Control to analyse CPU usage, memory allocation, GC activity, and
-thread behaviour.
+Once the execution completes, stop the application (`Ctrl+C`), then open the generated `.jfr` file in Java Mission Control to analyse CPU usage,
+memory allocation, GC activity, and thread behaviour.
 
 ### Cloudflare Verification
 

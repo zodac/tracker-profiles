@@ -18,122 +18,87 @@
 package net.zodac.tracker.framework;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.StringReader;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
-import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.exception.InvalidCsvInputException;
-import net.zodac.tracker.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
- * Utility class to read the {@link ApplicationConfiguration#trackerInputFilePath()} file.
+ * Utility class to read tracker credentials from CSV content (such as a file uploaded in the web UI), with the header row
+ * {@code trackerName,username,password}. Rows starting with {@value #COMMENT_SYMBOL} are ignored.
  */
 public final class TrackerCsvReader {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    /**
+     * The character that marks a CSV row as a comment.
+     */
+    public static final char COMMENT_SYMBOL = '#';
+
     private static final String[] CSV_HEADERS = {"trackerName", "username", "password"};
+    private static final CSVFormat CSV_FORMAT = CSVFormat.DEFAULT
+        .builder()
+        .setHeader(CSV_HEADERS)
+        .setSkipHeaderRecord(false)
+        .setCommentMarker(COMMENT_SYMBOL)
+        .get();
 
     private TrackerCsvReader() {
 
     }
 
     /**
-     * Reads the input file {@link ApplicationConfiguration#trackerInputFilePath()}, and converts each row into a {@link TrackerCredential}.
+     * Reads the CSV content, and converts each row into a {@link TrackerCredential}. Rows for a tracker with no matching handler are not returned
+     * as credentials, but are listed in {@link CsvContent#unsupportedTrackers()}.
      *
-     * @return the {@link Set} of {@link TrackerCredential}s
-     * @throws IOException thrown if there is a problem reading the file or skipping the first record
+     * @param csvContent the CSV content
+     * @return the {@link CsvContent}
+     * @throws InvalidCsvInputException thrown if the content is empty, has no header row, or cannot be parsed
      * @see TrackerCredential#fromCsv(CSVRecord)
      */
-    public static Set<TrackerCredential> readTrackerCredentials() throws IOException {
-        final Path csvPath = Configuration.get().trackerInputFilePath();
-        validateFilePath(csvPath);
+    public static CsvContent read(final String csvContent) {
+        final Set<TrackerCredential> trackerCredentials = extractTrackerCredentials(csvContent);
 
-        final Set<TrackerCredential> trackerCredentials = extractTrackerCredentials(csvPath);
-        return validateCredentials(trackerCredentials);
-    }
-
-    private static Set<TrackerCredential> validateCredentials(final Set<TrackerCredential> trackerCredentials) {
-        final Set<String> trackersWithNoHandlers = trackerCredentials.stream()
+        final Set<String> unsupportedTrackers = trackerCredentials.stream()
             .map(TrackerCredential::name)
             .filter(name -> TrackerHandlerFactory.findMatchingHandler(name).isEmpty())
             .collect(Collectors.toCollection(TreeSet::new));
 
-        if (!trackersWithNoHandlers.isEmpty()) {
-            final String plural = StringUtils.pluralise(trackersWithNoHandlers);
-            if (Configuration.get().failOnUnsupportedTracker()) {
-                throw new IllegalArgumentException("Unknown tracker%s in CSV: %s".formatted(plural, trackersWithNoHandlers));
-            } else {
-                LOGGER.debug("Unknown tracker{} in CSV: {}", plural, trackersWithNoHandlers);
-            }
-        }
-
-        final Set<TrackerCredential> result = new LinkedHashSet<>(trackerCredentials);
-        result.removeIf(credential -> trackersWithNoHandlers.contains(credential.name()));
-        return result;
+        final Set<TrackerCredential> supportedCredentials = new LinkedHashSet<>(trackerCredentials);
+        supportedCredentials.removeIf(credential -> unsupportedTrackers.contains(credential.name()));
+        return new CsvContent(supportedCredentials, unsupportedTrackers);
     }
 
-    private static Set<TrackerCredential> extractTrackerCredentials(final Path csvPath) throws IOException {
-        try (final InputStream inputStream = Files.newInputStream(Configuration.get().trackerInputFilePath());
-            final Reader reader = new InputStreamReader(Objects.requireNonNull(inputStream), StandardCharsets.UTF_8);
-            final CSVParser csvParser = csvFormat().parse(reader)
+    private static Set<TrackerCredential> extractTrackerCredentials(final String csvContent) {
+        try (final Reader reader = new StringReader(csvContent);
+            final CSVParser csvParser = CSV_FORMAT.parse(reader)
         ) {
-            // Ensure file isn't empty
             final List<CSVRecord> records = csvParser.getRecords();
-            validateCsvFileContent(records, csvPath);
+            validateCsvContent(records);
 
             return records
                 .stream()
                 .skip(1) // Skip header row
                 .map(TrackerCredential::fromCsv)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        } catch (final IOException | IllegalArgumentException | IllegalStateException e) {
+            throw new InvalidCsvInputException("Unable to read the CSV file: %s".formatted(e.getMessage()), e);
         }
     }
 
-    // Built on each read, since the comment symbol may change when the configuration is reloaded
-    private static CSVFormat csvFormat() {
-        return CSVFormat.DEFAULT
-            .builder()
-            .setHeader(CSV_HEADERS)
-            .setSkipHeaderRecord(false)
-            .setCommentMarker(Configuration.get().csvCommentSymbol())
-            .get();
-    }
-
-    private static void validateFilePath(final Path csvPath) {
-        if (!Files.exists(csvPath)) {
-            throw new InvalidCsvInputException("Tracker CSV file '%s' does not exist".formatted(csvPath.toAbsolutePath()));
-        }
-
-        if (!Files.isRegularFile(csvPath)) {
-            throw new InvalidCsvInputException("Tracker CSV path '%s' is not a file".formatted(csvPath.toAbsolutePath()));
-        }
-    }
-
-    private static void validateCsvFileContent(final List<CSVRecord> records, final Path csvPath) {
+    private static void validateCsvContent(final List<CSVRecord> records) {
         if (records.isEmpty()) {
-            throw new InvalidCsvInputException("CSV file '%s' is empty".formatted(csvPath.toAbsolutePath()));
+            throw new InvalidCsvInputException("The CSV file is empty");
         }
 
-        // Validate header row
-        final CSVRecord firstRecord = records.getFirst();
-        if (!isHeaderRow(firstRecord)) {
-            throw new InvalidCsvInputException(
-                "CSV header row in '%s' is missing, expected: '%s'".formatted(csvPath.toAbsolutePath(), String.join(",", CSV_HEADERS)));
+        if (!isHeaderRow(records.getFirst())) {
+            throw new InvalidCsvInputException("The CSV header row is missing, expected: '%s'".formatted(String.join(",", CSV_HEADERS)));
         }
     }
 
@@ -149,5 +114,15 @@ public final class TrackerCsvReader {
         }
 
         return true;
+    }
+
+    /**
+     * The trackers read from CSV content.
+     *
+     * @param credentials         the {@link TrackerCredential}s of the supported trackers
+     * @param unsupportedTrackers the names of the trackers in the CSV content with no matching handler
+     */
+    public record CsvContent(Set<TrackerCredential> credentials, Set<String> unsupportedTrackers) {
+
     }
 }

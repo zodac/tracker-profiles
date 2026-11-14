@@ -19,7 +19,12 @@ package net.zodac.tracker.web;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,8 +43,12 @@ import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
+import net.zodac.tracker.framework.input.UserInputRequests;
+import net.zodac.tracker.framework.input.UserInputResponse;
+import net.zodac.tracker.framework.progress.TrackerStep;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
+import net.zodac.tracker.web.storage.StoredTrackerResult;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,10 +61,15 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * An execution can be cancelled with {@link #cancel()}, which stops it without stopping the application. A new execution cannot be started until
  * a cancelled one has fully stopped.
+ *
+ * <p>
+ * Settings saved during an execution are applied with {@link #applySavedSettings(Map)}: only {@link ConfigurationOption.Scope#LIVE} options
+ * change the running execution, the others apply from the next execution.
  */
 public final class RunManager implements ExecutionListener {
 
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Duration INPUT_EXTENSION = Duration.ofMinutes(5L);
 
     private final Lock lock = new ReentrantLock();
     private final ApplicationDatabase applicationDatabase;
@@ -64,9 +78,11 @@ public final class RunManager implements ExecutionListener {
     // 0 when not set, since PMD flags assigning null to a field
     private long startedAt;
     private long finishedAt;
-    private int totalTrackers;
+    private final Map<TrackerType, Integer> numberOfTrackersByType = new EnumMap<>(TrackerType.class);
+    private final Set<TrackerType> startedTrackerTypes = new LinkedHashSet<>();
     private final List<String> successfulTrackers = new ArrayList<>();
     private final List<String> failedTrackers = new ArrayList<>();
+    private final Map<String, ActiveTrackerState> activeTrackers = new LinkedHashMap<>();
     private @Nullable Thread executionThread;
 
     private RunManager(final ApplicationDatabase applicationDatabase) {
@@ -92,8 +108,14 @@ public final class RunManager implements ExecutionListener {
      * @throws SQLException             thrown if the settings cannot be read from the database
      */
     public static ApplicationConfiguration reloadConfiguration(final ApplicationDatabase applicationDatabase) throws SQLException {
-        // Only apply settings that can be changed at runtime, ignoring any saved for an option that has since become environment-only
-        final Map<String, String> overrides = applicationDatabase.findAllSettings()
+        final ApplicationConfiguration applicationConfiguration = Configuration.reload(editableOverrides(applicationDatabase.findAllSettings()));
+        applyLogLevel(applicationConfiguration);
+        return applicationConfiguration;
+    }
+
+    // Only apply settings that can be changed at runtime, ignoring any saved for an option that has since become environment-only (or removed)
+    private static Map<String, String> editableOverrides(final Map<String, String> savedSettings) {
+        return savedSettings
             .entrySet()
             .stream()
             .filter(setting -> {
@@ -101,10 +123,37 @@ public final class RunManager implements ExecutionListener {
                 return option != null && option.editableAtRuntime();
             })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
-        final ApplicationConfiguration applicationConfiguration = Configuration.reload(overrides);
+    private static void applyLogLevel(final ApplicationConfiguration applicationConfiguration) {
         Configurator.setRootLevel(Level.toLevel(applicationConfiguration.logLevel(), Level.INFO));
-        return applicationConfiguration;
+    }
+
+    /**
+     * Applies settings that have just been saved in the web UI. While an execution is in progress, only the {@link ConfigurationOption.Scope#LIVE}
+     * options are applied, so the options read when the execution started do not change part-way through it. Otherwise, the whole
+     * {@link Configuration} is reloaded.
+     *
+     * @param savedSettings every setting saved in the web UI, keyed by environment variable name
+     * @throws IllegalArgumentException thrown if the combination of environment variables and saved settings is invalid
+     */
+    public void applySavedSettings(final Map<String, String> savedSettings) {
+        final boolean active = isActive();
+        final Map<String, String> overrides = editableOverrides(savedSettings);
+        final ApplicationConfiguration applicationConfiguration = active
+            ? Configuration.applyLiveChanges(overrides)
+            : Configuration.reload(overrides);
+        applyLogLevel(applicationConfiguration);
+        LOGGER.debug("Applied saved settings{}", active ? " to the execution in progress" : "");
+    }
+
+    private boolean isActive() {
+        lock.lock();
+        try {
+            return state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -122,9 +171,11 @@ public final class RunManager implements ExecutionListener {
             state = RunStatus.State.RUNNING;
             startedAt = System.currentTimeMillis();
             finishedAt = 0L;
-            totalTrackers = 0;
+            numberOfTrackersByType.clear();
+            startedTrackerTypes.clear();
             successfulTrackers.clear();
             failedTrackers.clear();
+            activeTrackers.clear();
             ExecutionCancellation.reset();
             executionThread = Thread.ofPlatform()
                 .name("web-execution")
@@ -170,6 +221,27 @@ public final class RunManager implements ExecutionListener {
         return true;
     }
 
+    /**
+     * Responds to a request waiting for a user input.
+     *
+     * @param inputId  the {@link UserInputRequests.PendingUserInput#id()}
+     * @param response the {@link UserInputResponse}
+     * @return {@code true} if the request was waiting for a response
+     */
+    public boolean respondToInput(final long inputId, final UserInputResponse response) {
+        return UserInputRequests.respond(inputId, response);
+    }
+
+    /**
+     * Gives the user five more minutes to respond to a request waiting for a user input.
+     *
+     * @param inputId the {@link UserInputRequests.PendingUserInput#id()}
+     * @return {@code true} if the request was waiting for a response
+     */
+    public boolean extendInput(final long inputId) {
+        return UserInputRequests.extend(inputId, INPUT_EXTENSION);
+    }
+
     private void execute() {
         ExitState exitState = ExitState.FAILURE;
         try {
@@ -187,8 +259,8 @@ public final class RunManager implements ExecutionListener {
     }
 
     private ExitState executeTrackers() throws IOException, SQLException {
-        LOGGER.info("Starting execution from web UI");
-        reloadConfiguration(applicationDatabase);
+        LOGGER.info("Starting execution");
+        reloadConfiguration(applicationDatabase).print();
 
         final List<TrackerCredential> enabledTrackers = applicationDatabase.findAllCredentials()
             .stream()
@@ -197,7 +269,7 @@ public final class RunManager implements ExecutionListener {
             .toList();
 
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.groupByType(enabledTrackers);
-        if (!DisplayValidator.isValid(trackersByType, false)) {
+        if (!DisplayValidator.isValid(trackersByType)) {
             return ExitState.FAILURE;
         }
 
@@ -223,6 +295,7 @@ public final class RunManager implements ExecutionListener {
             }
             state = finalState;
             finishedAt = System.currentTimeMillis();
+            activeTrackers.clear();
         } finally {
             lock.unlock();
         }
@@ -242,11 +315,36 @@ public final class RunManager implements ExecutionListener {
     public RunStatus status() {
         lock.lock();
         try {
-            return new RunStatus(state, nullIfUnset(startedAt), nullIfUnset(finishedAt), totalTrackers, List.copyOf(successfulTrackers),
-                List.copyOf(failedTrackers));
+            return new RunStatus(
+                state,
+                nullIfUnset(startedAt),
+                nullIfUnset(finishedAt),
+                totalTrackers(),
+                List.copyOf(successfulTrackers),
+                List.copyOf(failedTrackers),
+                startedTrackerTypes.stream().map(Enum::name).toList(),
+                activeTrackers.values().stream().map(ActiveTrackerState::toView).toList(),
+                UserInputRequests.pending()
+            );
         } finally {
             lock.unlock();
         }
+    }
+
+    // Types already started always count, plus the types still to come in the (current) execution order, which may change during the execution
+    private int totalTrackers() {
+        if (numberOfTrackersByType.isEmpty()) {
+            return 0;
+        }
+
+        final Set<TrackerType> counted = EnumSet.noneOf(TrackerType.class);
+        counted.addAll(startedTrackerTypes);
+        if (state == RunStatus.State.RUNNING) {
+            counted.addAll(Configuration.get().trackerExecutionOrder());
+        }
+        return counted.stream()
+            .mapToInt(trackerType -> numberOfTrackersByType.getOrDefault(trackerType, 0))
+            .sum();
     }
 
     private static @Nullable Long nullIfUnset(final long epochMillis) {
@@ -254,10 +352,43 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void executionStarted(final int numberOfTrackers) {
+    public void executionStarted(final Map<TrackerType, Integer> numberOfTrackersByType) {
         lock.lock();
         try {
-            totalTrackers = numberOfTrackers;
+            this.numberOfTrackersByType.putAll(numberOfTrackersByType);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void trackerTypeStarted(final TrackerType trackerType) {
+        lock.lock();
+        try {
+            startedTrackerTypes.add(trackerType);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void trackerStarted(final TrackerType trackerType, final String trackerName) {
+        lock.lock();
+        try {
+            activeTrackers.put(trackerName, new ActiveTrackerState(trackerName, trackerType, System.currentTimeMillis()));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void trackerStepCompleted(final String trackerName, final TrackerStep trackerStep) {
+        lock.lock();
+        try {
+            final ActiveTrackerState activeTracker = activeTrackers.get(trackerName);
+            if (activeTracker != null) {
+                activeTracker.completedSteps.add(trackerStep);
+            }
         } finally {
             lock.unlock();
         }
@@ -265,8 +396,10 @@ public final class RunManager implements ExecutionListener {
 
     @Override
     public void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
+        final long completedAt = System.currentTimeMillis();
         lock.lock();
         try {
+            activeTrackers.remove(trackerName);
             if (wasSuccessful) {
                 successfulTrackers.add(trackerName);
             } else {
@@ -274,6 +407,32 @@ public final class RunManager implements ExecutionListener {
             }
         } finally {
             lock.unlock();
+        }
+
+        try {
+            applicationDatabase.saveResult(new StoredTrackerResult(trackerName, completedAt, wasSuccessful));
+        } catch (final SQLException e) {
+            LOGGER.debug("Unable to save the result for tracker '{}'", trackerName, e);
+            LOGGER.warn("Unable to save the result for tracker '{}': {}", trackerName, e.getMessage());
+        }
+    }
+
+    // Mutable progress of a tracker being executed, only accessed while holding the lock
+    private static final class ActiveTrackerState {
+
+        private final String name;
+        private final TrackerType trackerType;
+        private final long startedAt;
+        private final Set<TrackerStep> completedSteps = EnumSet.noneOf(TrackerStep.class);
+
+        private ActiveTrackerState(final String name, final TrackerType trackerType, final long startedAt) {
+            this.name = name;
+            this.trackerType = trackerType;
+            this.startedAt = startedAt;
+        }
+
+        private RunStatus.ActiveTracker toView() {
+            return new RunStatus.ActiveTracker(name, trackerType.name(), startedAt, completedSteps.stream().map(Enum::name).toList());
         }
     }
 }

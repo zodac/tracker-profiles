@@ -27,209 +27,141 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Definition of every environment variable that configures the application, used as the single source of truth for each variable's name, default
- * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render the settings page.
+ * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render each option on the tab
+ * given by its {@link Tab}.
  */
 public enum ConfigurationOption { // NOPMD: DataClass - definitions of each environment variable, with accessors for the web UI
 
     /**
-     * The height (in pixels) of the web browser.
+     * The resolution of the web browser.
      */
-    BROWSER_HEIGHT("Browser", "1050", OptionType.INTEGER, List.of(),
-        "The height (in pixels) of the web browser used to take screenshots (must be a supported resolution with BROWSER_WIDTH)"),
-
-    /**
-     * The width (in pixels) of the web browser.
-     */
-    BROWSER_WIDTH("Browser", "1680", OptionType.INTEGER, List.of(),
-        "The width (in pixels) of the web browser used to take screenshots (must be a supported resolution with BROWSER_HEIGHT)"),
-
-    /**
-     * The comment character for the tracker CSV file.
-     */
-    CSV_COMMENT_SYMBOL("Tracker Input", "#", OptionType.CHARACTER, List.of(),
-        "If this character is the first in a CSV row, the CSV row is considered a comment and not processed", false),
+    BROWSER_RESOLUTION(Tab.SETTINGS, "Browser", "Resolution", "1680x1050", OptionType.SELECT, ApplicationConfiguration.VALID_RESOLUTIONS,
+        "The resolution (width x height, in pixels) of the web browser used to take screenshots", Scope.EXECUTION),
 
     /**
      * The path to the SQLite database used by the web UI.
      */
-    DATABASE_PATH("Web UI", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
-        "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)", false),
+    DATABASE_PATH(Tab.SETTINGS, "System", "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
+        "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)",
+        Scope.STARTUP),
 
     /**
      * Whether to screenshot adult trackers.
      */
-    ENABLE_ADULT_TRACKERS("Execution", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to take screenshots of trackers that primarily host adult content"),
+    ENABLE_ADULT_TRACKERS(Tab.MAIN, "Execution", "Include adult trackers", "true", OptionType.BOOLEAN, List.of(),
+        "Whether to take screenshots of trackers that primarily host adult content", Scope.EXECUTION),
 
     /**
      * Whether to translate non-English trackers.
      */
-    ENABLE_TRANSLATION_TO_ENGLISH("Browser", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to translate non-English trackers to English"),
-
-    /**
-     * Whether to fail on an unsupported tracker in the CSV file.
-     */
-    FAIL_ON_UNSUPPORTED_TRACKER("Tracker Input", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to fail if a tracker in the CSV file has no matching handler implementation", false),
+    ENABLE_TRANSLATION_TO_ENGLISH(Tab.SETTINGS, "Browser", "Translate to English", "true", OptionType.BOOLEAN, List.of(),
+        "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
      * Whether to force a UI browser for all trackers.
      */
-    FORCE_UI_BROWSER("Browser", "false", OptionType.BOOLEAN, List.of(),
-        "Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)"),
-
-    /**
-     * Whether to time out user inputs.
-     */
-    INPUT_TIMEOUT_ENABLED("Execution", "false", OptionType.BOOLEAN, List.of(),
-        "Whether to add a timeout for when a user-input is required, otherwise waits"),
+    FORCE_UI_BROWSER(Tab.MAIN, "Execution", "Show browser windows", "false", OptionType.BOOLEAN, List.of(),
+        "Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)", Scope.EXECUTION),
 
     /**
      * The user input timeout in seconds.
      */
-    INPUT_TIMEOUT_SECONDS("Execution", "300", OptionType.INTEGER, List.of(),
-        "If INPUT_TIMEOUT_ENABLED is enabled, how long to wait for a user-input in seconds"),
+    INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", OptionType.INTEGER, List.of(),
+        "How long to wait for a user input for a manual tracker, in seconds, before the attempt fails (0 waits until the user responds)",
+        Scope.LIVE),
 
     /**
      * The application log level.
      */
-    LOG_LEVEL("Logging", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
-        "The logging level for application output"),
-
-    /**
-     * Whether to prefix log messages with the tracker name.
-     */
-    LOG_TRACKER_NAME("Logging", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to prefix each log message with the name of the tracker being screenshot"),
+    LOG_LEVEL(Tab.MAIN, "Logging", "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
+        "The logging level for application output", Scope.LIVE),
 
     /**
      * The number of parallel threads for headless trackers.
      */
-    NUMBER_OF_PARALLEL_THREADS("Execution", "5", OptionType.INTEGER, List.of(),
-        "The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]"),
+    NUMBER_OF_PARALLEL_THREADS(Tab.MAIN, "Execution", "Parallel browsers", "5", OptionType.INTEGER, List.of(),
+        "The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.
      */
-    NUMBER_OF_SCREENSHOT_ATTEMPTS("Execution", "1", OptionType.INTEGER, List.of(),
-        "The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]"),
+    NUMBER_OF_SCREENSHOT_ATTEMPTS(Tab.MAIN, "Execution", "Attempts per tracker", "1", OptionType.INTEGER, List.of(),
+        "The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]", Scope.LIVE),
 
     /**
      * The date format used to name the output directory.
      */
-    OUTPUT_DIRECTORY_NAME_FORMAT("Output", "yyyy-MM-dd", OptionType.STRING, List.of(),
-        "The date format used to name the output directory created for the screenshots"),
+    OUTPUT_DIRECTORY_NAME_FORMAT(Tab.SETTINGS, "Output", "Folder name format", "yyyy-MM-dd", OptionType.STRING, List.of(),
+        "The date format used to name the output directory created for the screenshots", Scope.EXECUTION),
 
     /**
      * The parent path of the output directory.
      */
-    OUTPUT_DIRECTORY_PARENT_PATH("Output", "/app/screenshots", OptionType.STRING, List.of(),
-        "The location in which the dated output directory for the screenshots is created"),
-
-    /**
-     * The progress bar complete character.
-     */
-    PROGRESS_BAR_COMPLETE_CHARACTER("Progress Bar", "█", OptionType.CHARACTER, List.of(),
-        "The character used to render the completed portion of the console progress bar (must differ from the incomplete character)"),
-
-    /**
-     * Whether the progress bar is enabled.
-     */
-    PROGRESS_BAR_ENABLED("Progress Bar", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to render a progress bar at the bottom of the console output"),
-
-    /**
-     * The progress bar format.
-     */
-    PROGRESS_BAR_FORMAT("Progress Bar", ":bar :percent% | [:elapsed] | :units/:total-units trackers", OptionType.STRING, List.of(),
-        "The format string for the console progress bar (must not be blank)"),
-
-    /**
-     * The progress bar incomplete character.
-     */
-    PROGRESS_BAR_INCOMPLETE_CHARACTER("Progress Bar", "░", OptionType.CHARACTER, List.of(),
-        "The character used to render the incomplete portion of the console progress bar (must differ from the complete character)"),
-
-    /**
-     * The progress bar length.
-     */
-    PROGRESS_BAR_LENGTH("Progress Bar", "35", OptionType.INTEGER, List.of(),
-        "The length (in characters) of the console progress bar [min: 10, max: 80]"),
+    OUTPUT_DIRECTORY_PARENT_PATH(Tab.SETTINGS, "Output", "Screenshot folder", "/app/screenshots", OptionType.STRING, List.of(),
+        "The location in which the dated output directory for the screenshots is created", Scope.EXECUTION),
 
     /**
      * The redaction types to apply.
      */
-    REDACTION_TYPE("Output", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
-        "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)"),
+    REDACTION_TYPE(Tab.SETTINGS, "Output", "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
+        "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
 
     /**
      * The action when a screenshot already exists.
      */
-    SCREENSHOT_EXISTS_ACTION("Output", ExistingScreenshotAction.CREATE_ANOTHER.name(), OptionType.SELECT, names(ExistingScreenshotAction.values()),
-        "What to do when a screenshot for the tracker for the given date already exists"),
+    SCREENSHOT_EXISTS_ACTION(Tab.SETTINGS, "Output", "If a screenshot already exists", ExistingScreenshotAction.CREATE_ANOTHER.name(),
+        OptionType.SELECT, names(ExistingScreenshotAction.values()),
+        "What to do when a screenshot for the tracker for the given date already exists", Scope.EXECUTION),
 
     /**
      * Whether to take a screenshot on error.
      */
-    TAKE_SCREENSHOT_ON_ERROR("Output", "false", OptionType.BOOLEAN, List.of(),
-        "Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called 'errors')"),
+    TAKE_SCREENSHOT_ON_ERROR(Tab.MAIN, "Execution", "Screenshot on error", "false", OptionType.BOOLEAN, List.of(),
+        "Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called 'errors')", Scope.LIVE),
 
     /**
      * The local timezone.
      */
-    TIMEZONE("Output", "UTC", OptionType.STRING, List.of(),
-        "The local timezone, used to retrieve the current date to name the output directory"),
+    TIMEZONE(Tab.SETTINGS, "Output", "Timezone", "UTC", OptionType.STRING, List.of(),
+        "The local timezone, used to retrieve the current date to name the output directory", Scope.EXECUTION),
 
     /**
      * The execution order of tracker types.
      */
-    TRACKER_EXECUTION_ORDER("Execution", "HEADLESS,MANUAL", OptionType.MULTI_SELECT, names(TrackerType.values()),
-        "The order in which different tracker types should be executed, at least one must be selected"),
-
-    /**
-     * The path to the tracker CSV file.
-     */
-    TRACKER_INPUT_FILE_PATH("Tracker Input", "/app/screenshots/trackers.csv", OptionType.STRING, List.of(),
-        "The path to the input tracker CSV file (used by the CLI, and imported into the database on first start of the web UI)", false),
-
-    /**
-     * Whether to start the web UI.
-     */
-    WEB_UI_ENABLED("Web UI", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to start the web UI, rather than executing once from the CSV file and exiting", false),
+    TRACKER_EXECUTION_ORDER(Tab.MAIN, "Execution", "Tracker order", "HEADLESS,MANUAL", OptionType.MULTI_SELECT, names(TrackerType.values()),
+        "The order in which different tracker types should be executed, at least one must be selected (a type can be changed during an execution"
+            + " until it starts)", Scope.LIVE),
 
     /**
      * The web UI port.
      */
-    WEB_UI_PORT("Web UI", "8080", OptionType.INTEGER, List.of(),
-        "The port on which the web UI is served [min: 1, max: 65535]", false);
+    WEB_UI_PORT(Tab.SETTINGS, "System", "Port", "8080", OptionType.INTEGER, List.of(),
+        "The port on which the web UI is served [min: 1, max: 65535]", Scope.STARTUP);
 
     /**
      * All available {@link ConfigurationOption}s.
      */
     public static final Collection<ConfigurationOption> ALL_VALUES = List.of(values());
 
+    private final Tab tab;
     private final String group;
+    private final String label;
     private final String defaultValue;
     private final OptionType type;
     private final List<String> allowedValues;
     private final String description;
-    private final boolean editableAtRuntime;
+    private final Scope scope;
 
-    ConfigurationOption(final String group, final String defaultValue, final OptionType type, final List<String> allowedValues,
-        final String description) {
-        this(group, defaultValue, type, allowedValues, description, true);
-    }
-
-    ConfigurationOption(final String group, final String defaultValue, final OptionType type, final List<String> allowedValues,
-        final String description, final boolean editableAtRuntime) {
+    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final OptionType type,
+        final List<String> allowedValues, final String description, final Scope scope) {
+        this.tab = tab;
         this.group = group;
+        this.label = label;
         this.defaultValue = defaultValue;
         this.type = type;
         this.allowedValues = allowedValues;
         this.description = description;
-        this.editableAtRuntime = editableAtRuntime;
+        this.scope = scope;
     }
 
     /**
@@ -266,12 +198,30 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
     }
 
     /**
+     * The web UI {@link Tab} the option is displayed on.
+     *
+     * @return the {@link Tab}
+     */
+    public Tab tab() {
+        return tab;
+    }
+
+    /**
      * The group the option is displayed under in the web UI.
      *
      * @return the group name
      */
     public String group() {
         return group;
+    }
+
+    /**
+     * The user-facing name of the option, displayed in the web UI.
+     *
+     * @return the label
+     */
+    public String label() {
+        return label;
     }
 
     /**
@@ -302,18 +252,63 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
     }
 
     /**
-     * Whether the option can be overridden from the web UI. Options that are only read when the application starts (such as the web UI port, or
-     * the CSV file options, which are only used by the CLI and the initial import into the web UI database) can only be set through environment
-     * variables.
+     * The {@link Scope} of the option, defining when a changed value takes effect.
+     *
+     * @return the {@link Scope}
+     */
+    public Scope scope() {
+        return scope;
+    }
+
+    /**
+     * Whether the option can be overridden from the web UI. Options with {@link Scope#STARTUP} (such as the web UI port) are only read when the
+     * application starts, so can only be set through environment variables.
      *
      * @return {@code true} if the option can be changed at runtime
      */
     public boolean editableAtRuntime() {
-        return editableAtRuntime;
+        return scope != Scope.STARTUP;
     }
 
     private static List<String> names(final Enum<?>[] values) {
         return Arrays.stream(values).map(Enum::name).toList();
+    }
+
+    /**
+     * When a changed value of a {@link ConfigurationOption} takes effect.
+     */
+    public enum Scope {
+
+        /**
+         * Only read when the application starts, so can only be set as an environment variable.
+         */
+        STARTUP,
+
+        /**
+         * Read when an execution starts, so a change made during an execution applies from the next one.
+         */
+        EXECUTION,
+
+        /**
+         * Applied immediately, including to an execution that is in progress.
+         */
+        LIVE
+    }
+
+    /**
+     * The web UI tab on which a {@link ConfigurationOption} is displayed.
+     */
+    public enum Tab {
+
+        /**
+         * The main tab, alongside the controls to start an execution, for options likely to be changed for (or during) an execution.
+         */
+        MAIN,
+
+        /**
+         * The settings tab, for preferences that are rarely changed.
+         */
+        SETTINGS
     }
 
     /**
@@ -325,11 +320,6 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
          * A {@code true}/{@code false} value.
          */
         BOOLEAN,
-
-        /**
-         * A single character.
-         */
-        CHARACTER,
 
         /**
          * A whole number.

@@ -23,17 +23,23 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import net.zodac.tracker.framework.TrackerCredential;
+import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
+import net.zodac.tracker.framework.exception.InvalidCsvInputException;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
+import net.zodac.tracker.web.storage.StoredTrackerResult;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Handles requests to list every supported tracker with its stored credentials ({@code GET}), save the credentials for a tracker ({@code PUT}),
- * and remove the stored credentials for a tracker ({@code DELETE /api/trackers/{name}}).
+ * Handles requests to list every supported tracker with its stored credentials and most recent result ({@code GET}), save the credentials for a
+ * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), and remove the stored credentials for a tracker
+ * ({@code DELETE /api/trackers/{name}}).
  *
  * <p>
  * Passwords are never returned to the client; only whether a password has been saved.
@@ -44,6 +50,8 @@ public final class TrackerApiHandler extends ApiHandler {
      * The context path for this handler.
      */
     public static final String CONTEXT_PATH = "/api/trackers";
+
+    private static final String IMPORT_PATH = "import";
 
     private final ApplicationDatabase applicationDatabase;
 
@@ -89,6 +97,49 @@ public final class TrackerApiHandler extends ApiHandler {
     }
 
     @Override
+    protected void handlePost(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException, SQLException {
+        if (!IMPORT_PATH.equals(pathParameter)) {
+            throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown action: '%s'".formatted(pathParameter));
+        }
+
+        final CsvImport csvImport = readJson(exchange, CsvImport.class);
+        if (csvImport.csv() == null || csvImport.csv().isBlank()) {
+            throw badRequest("The CSV file is empty");
+        }
+
+        final TrackerCsvReader.CsvContent csvContent;
+        try {
+            csvContent = TrackerCsvReader.read(csvImport.csv());
+        } catch (final InvalidCsvInputException e) {
+            throw new HttpRequestException(HttpStatus.BAD_REQUEST, e);
+        }
+
+        final Set<String> existingNames = applicationDatabase.findAllCredentials()
+            .stream()
+            .map(credential -> credential.name().toLowerCase(Locale.ROOT))
+            .collect(Collectors.toSet());
+
+        // Stores trackers using the name defined by their handler, rather than the casing used in the CSV file
+        final List<StoredTrackerCredential> credentials = csvContent.credentials()
+            .stream()
+            .map(credential -> new StoredTrackerCredential(canonicalName(credential), credential.username(), credential.password(), true))
+            .toList();
+        applicationDatabase.saveCredentials(credentials);
+
+        final int updated = (int) credentials.stream()
+            .filter(credential -> existingNames.contains(credential.name().toLowerCase(Locale.ROOT)))
+            .count();
+        sendJson(exchange, HttpStatus.OK,
+            new ImportResult(credentials.size() - updated, updated, List.copyOf(csvContent.unsupportedTrackers()), listTrackers()));
+    }
+
+    private static String canonicalName(final TrackerCredential credential) {
+        return TrackerHandlerFactory.findMatchingHandler(credential.name())
+            .map(TrackerHandler::name)
+            .orElse(credential.name());
+    }
+
+    @Override
     protected void handleDelete(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException, SQLException {
         if (pathParameter == null) {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Tracker name must be provided");
@@ -104,9 +155,16 @@ public final class TrackerApiHandler extends ApiHandler {
             .stream()
             .collect(Collectors.toMap(credential -> credential.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
+        final Map<String, StoredTrackerResult> resultsByName = applicationDatabase.findAllResults()
+            .stream()
+            .collect(Collectors.toMap(result -> result.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
+
         return TrackerHandlerFactory.allHandlers()
             .stream()
-            .map(trackerHandler -> TrackerView.of(trackerHandler, credentialsByName.get(trackerHandler.name().toLowerCase(Locale.ROOT))))
+            .map(trackerHandler -> {
+                final String key = trackerHandler.name().toLowerCase(Locale.ROOT);
+                return TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key));
+            })
             .toList();
     }
 
@@ -142,6 +200,27 @@ public final class TrackerApiHandler extends ApiHandler {
     }
 
     /**
+     * The request body to import tracker credentials.
+     *
+     * @param csv the content of the CSV file, with the header row {@code trackerName,username,password}
+     */
+    record CsvImport(@Nullable String csv) {
+
+    }
+
+    /**
+     * The result of importing tracker credentials.
+     *
+     * @param added       the number of trackers added
+     * @param updated     the number of trackers whose existing credentials were replaced
+     * @param unsupported the names of the trackers in the CSV file that are not supported, and were not imported
+     * @param trackers    every supported tracker, after the import
+     */
+    record ImportResult(int added, int updated, List<String> unsupported, List<TrackerView> trackers) {
+
+    }
+
+    /**
      * A supported tracker and its stored credentials, as returned to the web UI.
      *
      * @param name        the tracker name
@@ -151,17 +230,22 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param username    the stored username or email (empty if not set)
      * @param hasPassword whether a password has been stored
      * @param enabled     whether the tracker is enabled for execution
+     * @param lastRunAt   when the tracker last finished executing, as epoch milliseconds, or {@code null} if it has never been executed
+     * @param lastRunOk   whether the most recent execution was successful, or {@code null} if it has never been executed
      */
-    record TrackerView(String name, String type, boolean adult, List<String> urls, String username, boolean hasPassword, boolean enabled) {
+    record TrackerView(String name, String type, boolean adult, List<String> urls, String username, boolean hasPassword, boolean enabled,
+        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk) {
 
         /**
          * Creates a {@link TrackerView} from a {@link TrackerHandler} and its stored credentials.
          *
          * @param trackerHandler the {@link TrackerHandler}
          * @param credential     the {@link StoredTrackerCredential}, or {@code null} if none are stored
+         * @param result         the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
          * @return the {@link TrackerView}
          */
-        static TrackerView of(final TrackerHandler trackerHandler, final @Nullable StoredTrackerCredential credential) {
+        static TrackerView of(final TrackerHandler trackerHandler, final @Nullable StoredTrackerCredential credential,
+            final @Nullable StoredTrackerResult result) {
             return new TrackerView(
                 trackerHandler.name(),
                 trackerHandler.type().name(),
@@ -169,7 +253,9 @@ public final class TrackerApiHandler extends ApiHandler {
                 List.of(trackerHandler.url()),
                 credential == null ? "" : credential.username(),
                 credential != null && credential.hasPassword(),
-                credential != null && credential.enabled()
+                credential != null && credential.enabled(),
+                result == null ? null : result.finishedAt(),
+                result == null ? null : result.successful()
             );
         }
     }

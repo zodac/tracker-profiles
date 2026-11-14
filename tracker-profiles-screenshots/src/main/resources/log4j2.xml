@@ -7,7 +7,7 @@
 
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT" follow="true">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}{${env:TIMEZONE:-UTC}} [%highlight{%-5level}{FATAL=red, ERROR=bold red, WARN=bold yellow, INFO=bold blue, DEBUG=bold green, TRACE=bold magenta}] %X{tracker}%msg%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}{${env:TIMEZONE:-UTC}} [%highlight{%-5level}{FATAL=red, ERROR=bold red, WARN=bold yellow, INFO=bold blue, DEBUG=bold green, TRACE=bold magenta}] %notEmpty{[%X{tracker}] }%msg%n" />
         </Console>
     </Appenders>
 

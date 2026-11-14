@@ -109,4 +109,13 @@ class ApplicationDatabaseTest {
         assertThat(new StoredTrackerCredential("Tracker", "user", "secret", true))
             .hasToString("StoredTrackerCredential[name=Tracker, username=user, password=****, enabled=true]");
     }
+
+    @Test
+    void givenSavedResult_whenSavedAgain_thenOnlyLatestResultIsKept() throws SQLException {
+        applicationDatabase.saveResult(new StoredTrackerResult("Tracker", 1_000L, true));
+        applicationDatabase.saveResult(new StoredTrackerResult("tracker", 2_000L, false));
+
+        assertThat(applicationDatabase.findAllResults())
+            .containsExactly(new StoredTrackerResult("Tracker", 2_000L, false));
+    }
 }

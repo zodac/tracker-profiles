@@ -36,47 +36,66 @@
 <main>
     <!-- Main -->
     <section id="tab-main" class="tab-panel" role="tabpanel">
-        <div class="card run-card">
-            <div class="run-summary">
-                <div>
-                    <h2>Screenshot trackers</h2>
-                    <p id="run-description" class="muted">Takes a screenshot of the profile page of every enabled tracker.</p>
-                </div>
-                <div class="run-actions">
-                    <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
-                    <button id="start-button" class="button primary large" type="button">Start</button>
-                </div>
-            </div>
-            <div id="run-progress" class="run-progress" hidden>
-                <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
-                <div class="progress-counts">
-                    <span id="progress-text"></span>
-                    <span><span class="count success" id="success-count">0</span> succeeded</span>
-                    <span><span class="count failure" id="failure-count">0</span> failed</span>
-                </div>
-                <p id="failed-trackers" class="failed-trackers" hidden></p>
-            </div>
-        </div>
+        <div id="pending-inputs" class="pending-inputs" aria-live="assertive"></div>
 
-        <div class="card log-card">
-            <div class="log-toolbar">
-                <h2>Logs</h2>
-                <div class="log-controls">
-                    <label class="inline-field">Level
-                        <select id="log-level-filter">
-                            <option value="TRACE">All</option>
-                            <option value="DEBUG">Debug and above</option>
-                            <option value="INFO" selected>Info and above</option>
-                            <option value="WARN">Warnings and errors</option>
-                            <option value="ERROR">Errors only</option>
-                        </select>
-                    </label>
-                    <label class="inline-field"><input type="checkbox" id="log-autoscroll" checked> Auto-scroll</label>
-                    <button id="log-clear" class="button" type="button">Clear view</button>
-                    <span id="log-connection" class="connection" data-connected="false">Disconnected</span>
+        <div class="main-layout">
+            <div class="main-column">
+                <div class="card run-card">
+                    <div class="run-summary">
+                        <div>
+                            <h2>Screenshot trackers</h2>
+                            <p id="run-description" class="muted">Takes a screenshot of the profile page of every enabled tracker.</p>
+                        </div>
+                        <div class="run-actions">
+                            <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
+                            <button id="start-button" class="button primary large" type="button">Start</button>
+                        </div>
+                    </div>
+                    <div id="run-progress" class="run-progress" hidden>
+                        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+                        <div class="progress-counts">
+                            <span id="progress-text"></span>
+                            <span><span class="count success" id="success-count">0</span> succeeded</span>
+                            <span><span class="count failure" id="failure-count">0</span> failed</span>
+                        </div>
+                        <p id="failed-trackers" class="failed-trackers" hidden></p>
+                    </div>
+                </div>
+
+                <div id="active-card" class="card active-card" hidden>
+                    <div class="card-header">
+                        <h2>In progress</h2>
+                        <span class="muted step-legend">Open · Login · Profile · Screenshot · Logout</span>
+                    </div>
+                    <div id="active-trackers"></div>
+                </div>
+
+                <div class="card log-card">
+                    <div class="log-toolbar">
+                        <h2>Logs</h2>
+                        <div class="log-controls">
+                            <label class="inline-field" title="Saved straight away, and applies immediately (including to an execution in progress)">
+                                Level <span id="log-level-control"></span>
+                            </label>
+                            <label class="inline-field">Tracker
+                                <select id="log-tracker-filter">
+                                    <option value="">All</option>
+                                </select>
+                            </label>
+                            <label class="inline-field"><input type="checkbox" id="log-autoscroll" checked> Auto-scroll</label>
+                            <button id="log-clear" class="button" type="button">Clear view</button>
+                            <span id="log-connection" class="connection" data-connected="false">Disconnected</span>
+                        </div>
+                    </div>
+                    <div id="log-output" class="log-output" role="log" aria-live="polite"></div>
                 </div>
             </div>
-            <div id="log-output" class="log-output" role="log" aria-live="polite"></div>
+
+            <aside class="card options-card" aria-labelledby="run-options-title">
+                <h2 id="run-options-title">Run options</h2>
+                <div id="run-options"></div>
+                <p class="options-legend muted"><span class="live-dot" aria-hidden="true"></span> Can be changed during an execution</p>
+            </aside>
         </div>
     </section>
 
@@ -85,13 +104,18 @@
         <div class="toolbar">
             <input type="search" id="tracker-search" class="search" placeholder="Search trackers" aria-label="Search trackers">
             <span id="tracker-summary" class="muted"></span>
+            <button id="import-button" class="button primary" type="button">Import CSV</button>
+            <input type="file" id="import-file" accept=".csv,text/csv" hidden>
         </div>
         <p class="muted hint">
             Enabled trackers are executed when <strong>Start</strong> is pressed. Changes are saved automatically. Passwords are never sent back to
-            the browser: leave the password blank to keep the saved one.
+            the browser: leave the password blank to keep the saved one. An imported CSV file needs the header row
+            <code>trackerName,username,password</code>, and rows starting with <code>#</code> are ignored.
         </p>
+        <div id="import-result" class="notice" hidden></div>
         <div id="adult-warning" class="notice" hidden>
-            Adult trackers are currently disabled by the <code>ENABLE_ADULT_TRACKERS</code> setting, so enabled adult trackers will be skipped.
+            Adult trackers are excluded by the <strong>Include adult trackers</strong> run option on the Main tab, so enabled adult trackers will be
+            skipped.
         </div>
         <div id="tracker-groups"></div>
     </section>
@@ -100,7 +124,7 @@
     <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
         <p class="muted hint">
             Values are loaded from the environment variables of the application. Changes are saved automatically, take precedence over the
-            environment variables, and are applied at the start of the next execution.
+            environment variables, and apply from the next execution. Options you are likely to change for an execution are on the Main tab.
         </p>
         <div class="legend">
             <span class="badge changed">Changed</span> value differs from the default

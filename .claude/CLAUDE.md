@@ -26,31 +26,44 @@ mvn test -Dtests -pl tracker-profiles-screenshots -Dtest=TextSearcherTest
 
 ### Execution Flow
 
-The application reads a CSV of tracker credentials, then for each tracker: opens a browser, logs in, navigates to the user profile page, redacts
-sensitive information, takes a full-page screenshot, and logs out.
+The application is used only through its web UI (there is no CLI mode). Each execution is started from the browser, and for each enabled tracker:
+opens a browser, logs in, navigates to the user profile page, redacts sensitive information, takes a full-page screenshot, and logs out.
 
-Entry point: `ApplicationLauncher` → `TrackerRetriever` (load CSV) → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` →
-`ProfileScreenshotExecutor` (per tracker) → `AbstractTrackerHandler` subclass.
+Entry point: `ApplicationLauncher` (starts the web UI, see [Web UI](#web-ui)) → `RunManager.start()` (loads the enabled trackers from the database) →
+`TrackerRetriever.groupByType` → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` → `ProfileScreenshotExecutor` (per tracker) →
+`AbstractTrackerHandler` subclass.
 
-When `WEB_UI_ENABLED=true` (the default), `ApplicationLauncher` instead starts the web UI (see [Web UI](#web-ui)), and each execution is started from
-the browser by `RunManager`, which loads the enabled trackers from the database rather than the CSV file.
+With the system property `tracker-profiles.appcds-training=true`, `ApplicationLauncher` starts and immediately stops the web UI; this is only used by
+`docker/Dockerfile` to generate the AppCDS archive.
 
 ### Web UI
 
 Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServer` (module `jdk.httpserver`, included in the `jlink` list in
 `docker/Dockerfile`) with virtual threads, Gson for JSON, and no web framework.
 
-- **`WebServer`** — opens the database, imports the CSV file if no trackers are stored yet, and registers the handlers.
+- **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers.
 - **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogStreamHandler` (`/api/logs`, Server-Sent Events),
-  `TrackerApiHandler` (`/api/trackers`), `SettingsApiHandler` (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
+  `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`), `SettingsApiHandler`
+  (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
   which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
-- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials and settings overrides. Passwords are never
-  returned by the API; a `null`/empty password on save keeps the stored one.
+- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each
+  tracker's most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null`/empty password on save keeps the
+  stored one.
 - **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
-  overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track progress.
+  overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track progress (tracker types
+  started, trackers in progress and their completed `TrackerStep`s, results), which `RunStatus` returns to the UI along with any pending user inputs.
+- **Live settings** — `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`) after every save. While an execution is
+  running, only `Scope.LIVE` options are applied (`Configuration.applyLiveChanges`, which uses `ApplicationConfiguration.withLiveValuesFrom`), so
+  options read at execution start (such as the output directory) never change part-way through. Code reading a `LIVE` option must read it at the
+  point of use (e.g. the attempts limit is read before each attempt, and `ScreenshotOrchestrator` reads `trackerExecutionOrder()` before each tracker
+  type starts). When adding a `LIVE` option, add it to `withLiveValuesFrom`.
 - **`SettingsService`** — resolves each setting as saved value → environment variable → default, and validates all values together by calling
   `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
-  default, until it is reset. `RunManager.reloadConfiguration` only applies saved values for options that are `editableAtRuntime`.
+  default, until it is reset. `RunManager.reloadConfiguration` only applies saved values for options that are `editableAtRuntime` (not
+  `Scope.STARTUP`).
+- **User input** — manual trackers call `displayUtils().confirm(trackerName, message)`, which waits in `framework.input.UserInputRequests` until
+  the user responds in the web UI (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS`
+  passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, retaining recent entries for the log stream.
 
 #### Cancelling an Execution
@@ -58,8 +71,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 `POST /api/run/cancel` calls `RunManager.cancel()`, which stops the execution without stopping the application:
 
 1. `ExecutionCancellation.requestCancellation()` sets a global flag. It is checked at checkpoints so no new work starts: before each tracker
-   type (`ScreenshotOrchestrator`), each tracker, each retry attempt (`ProfileScreenshotExecutor`), and whenever a driver is acquired or created
-   (`DriverPool` — including no replacement for a dead pooled driver). Checkpoints throw `ExecutionCancelledException`.
+   type (`ScreenshotOrchestrator`), each tracker, each retry attempt (`ProfileScreenshotExecutor`), while waiting for a user input
+   (`UserInputRequests`), and whenever a driver is acquired or created (`DriverPool` — including no replacement for a dead pooled driver).
+   Checkpoints throw `ExecutionCancelledException`.
 2. `DriverPool.terminateAll()` kills every browser process descended from the JVM (`chromedriver`, Chrome, `selenium-manager`), including
    browsers still starting up, so in-flight Selenium calls fail immediately. It then runs `shutdown()` for bookkeeping.
 3. The execution thread is interrupted, which cancels the worker tasks (unblocking any waiting on a pooled driver).
@@ -72,6 +86,9 @@ create a driver without registering it in `DriverPool` (or checking `ExecutionCa
 The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Content-Security-Policy: default-src 'self'`, so no inline scripts or
 styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the shared config, like the redaction scripts.
 
+- The Main tab shows the options with `Tab.MAIN` as "Run options" (`LOG_LEVEL` is shown in the log toolbar instead); while an execution is running,
+  options that are not `Scope.LIVE` are locked, and tracker types that have started cannot be changed in the tracker order. The Settings tab shows the
+  `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last.
 - There are no save buttons: every change is saved automatically and confirmed with a toast. Text inputs save after a 1s pause in typing (or
   on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place
   (not re-rendered) so the focused input is never replaced.
@@ -91,9 +108,9 @@ styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the share
   `screenshotProfile`, and contains the full per-exception catch chain with tailored log messages. Caught failures fall through
   to a fresh retry; uncaught throws propagate out.
 
-Failure-screenshot writes go to `ScreenshotDirectories.errors()`. That directory is
-created up-front (and only when `TAKE_SCREENSHOT_ON_ERROR=true`) by `ScreenshotDirectories.createAll()` so the parallel
-write path never has to create them on demand.
+Failure-screenshot writes go to `ScreenshotDirectories.errors()`. That directory is created up-front by `ScreenshotDirectories.createAll()` when
+`TAKE_SCREENSHOT_ON_ERROR=true`, and otherwise by `ScreenshotDirectories.createErrorsDirectory()` (under a lock, since trackers run in parallel) before
+a failure screenshot, as the option can be enabled during an execution.
 
 ### Tracker Handler Pattern
 
@@ -130,10 +147,12 @@ implementation class, after all other `@Override` methods and private helpers.
 Two types control how the browser is created and whether user interaction is needed:
 
 - **`HEADLESS`** — Runs Chrome without a UI. Default for most trackers.
-- **`MANUAL`** — Runs Chrome with a UI; pauses execution via `DisplayUtils.userInputConfirmation()` for captcha or 2FA entry.
+- **`MANUAL`** — Runs Chrome with a UI; pauses execution via `displayUtils().confirm(...)` for captcha or 2FA entry, which the user answers in the
+  web UI.
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
-Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER` env var.
+Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`, including during an execution for types not yet started
+(so `TrackerRetriever.groupByType` keeps every type, and `ScreenshotOrchestrator` only executes those in the order).
 
 ### Cloudflare Verification
 
@@ -155,7 +174,7 @@ from the isolated world. A challenge may pass with no click at all; it must neve
 "Troubleshoot" link.
 
 If the check cannot be passed automatically, a headless tracker throws `CloudflareVerificationException` (the attempt fails and may be retried),
-while a UI browser falls back to asking the user, highlighting `cloudflareSelector()`.
+while a UI browser falls back to asking the user (in the web UI), highlighting `cloudflareSelector()`.
 
 ### Counting Tracker Handlers
 
@@ -185,20 +204,23 @@ protected By usernameFieldSelector() {
 private static final ApplicationConfiguration CONFIG = Configuration.get();
 ```
 
-Every env var is defined once in the `ConfigurationOption` enum (name, group, default value, `OptionType`, allowed values, description, and
-whether it can be changed in the web UI). This drives both loading and the web UI Settings tab. Values are resolved as: override (saved in the web
+Every env var is defined once in the `ConfigurationOption` enum (web UI `Tab`, group, label, default value, `OptionType`, allowed values,
+description, and `Scope`: `STARTUP` (environment only), `EXECUTION` (read when an execution starts) or `LIVE` (applies during an execution)). This
+drives both loading and the web UI. Values are resolved as: override (saved in the web
 UI) → environment variable → `ConfigurationOption.defaultValue()`, via the private `Source` record in `ApplicationConfiguration`.
 
 New env vars must be:
 
-1. Added to `ConfigurationOption` (alphabetical order). Set `editableAtRuntime` to `false` if the value is only read at startup, or only used by
-   the CLI/CSV import (a web UI change would have no effect)
+1. Added to `ConfigurationOption` (alphabetical order). Use `Tab.MAIN` for options likely to be changed for (or during) an execution, otherwise
+   `Tab.SETTINGS`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect), `Scope.LIVE` only if every use
+   reads it at the point of use (and add it to `ApplicationConfiguration.withLiveValuesFrom`), otherwise `Scope.EXECUTION`
 2. Added as a record component (alphabetical order among components)
 3. Loaded via a `getXxx(source)` private static method using `source.get(ConfigurationOption.XXX)` and, where needed,
    `parseIntegerInRange(input, envVarName, min, max)` (use `Integer.MAX_VALUE` for unbounded positive integers)
 4. Added to the `load()` constructor call and `print()` debug log
-5. Documented in the README `### Configuration Options` section, in the `Web UI Settings` table if `editableAtRuntime`, otherwise the
-   `Startup-Only Options` table, and in all Docker run examples (Debian, Windows and development blocks), all in alphabetical order
+5. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Tab.MAIN`, the `Settings` table for other editable
+   options, otherwise the `Startup-Only Options` table, and in all Docker run examples (Debian, Windows, development and performance analysis
+   blocks), all in alphabetical order
 
 ### Redaction
 
@@ -240,20 +262,12 @@ Log4j2 is used throughout. Apply levels as follows:
 
 `logging.properties` is used to suppress irrelevant Selenium log entries.
 
-### Progress Bar
+### Progress
 
-The progress bar is managed by `ProgressBarManager` and kept pinned to the bottom of the console by `ProgressBarPrintStream`, which replaces
-`System.out` at startup and intercepts every write. Any new code that produces console output must go through the standard logger — writing directly
-to `System.out` or `System.err` will corrupt the bar rendering.
-
-The Clique bar is driven by exactly multiple ticks per tracker (see `TrackerStep` for values). A separate tracker counter (`X/Y`) is appended by
-`ProgressBarManager.getProgressBarContent()`. Call `tick()` at each of the tracker steps inside `ProfileScreenshotExecutor`, and `tickTracker()` in
-`ScreenshotOrchestrator` after each tracker completes. The `:progress`/`:total` Clique tokens reflect raw tick counts, not tracker counts — users
-should rely on the appended `X/Y` suffix for tracker-level progress.
-
-The screenshot phase is always one tick regardless of how many redaction types are configured — this is intentional, because
-whether a handler has any non-empty redaction interface (`RedactionRegistry.hasAnyRedaction(handler)`) is determined at runtime,
-making the actual screenshot count unknowable upfront.
+Progress is reported to the web UI through `ExecutionListener` (implemented by `RunManager`): `executionStarted`, `trackerTypeStarted`,
+`trackerStarted`, `trackerStepCompleted` (once per `TrackerStep`, the first time it succeeds, even across retries) and `trackerCompleted`. The log
+messages of a tracker carry its name in the Log4j `ThreadContext` (key `tracker`), which the console pattern prints as a prefix and the web UI uses to
+filter the logs, so do not add the tracker name to log messages. Never write directly to `System.out` or `System.err`; use the logger.
 
 ## Coding Standards
 

@@ -1,24 +1,38 @@
 (function () {
     'use strict'
 
-    const LOG_LEVEL_ORDER = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']
     const MAXIMUM_LOG_LINES = 5000
     const MAXIMUM_TOASTS = 4
     const STATUS_POLL_INTERVAL_MS = 2000
+    const INPUT_POLL_INTERVAL_MS = 1000
     const TYPING_SAVE_DELAY_MS = 1000
     const THEME_STORAGE_KEY = 'tracker-profiles-theme'
     const SAVED_PASSWORD_PLACEHOLDER = '•••••••• (saved)'
+    const PAGE_TITLE = document.title
     const DARK_SCHEME_QUERY = window.matchMedia('(prefers-color-scheme: dark)')
     const REDUCED_MOTION_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)')
     const STATE_LABELS = {
         IDLE: 'Idle',
         RUNNING: 'Running',
+        WAITING: 'Waiting for you',
         CANCELLING: 'Cancelling',
         CANCELLED: 'Cancelled',
         SUCCESS: 'Succeeded',
         PARTIAL_FAILURE: 'Partially failed',
         FAILURE: 'Failed',
     }
+    // The steps of each tracker, in order (see TrackerStep)
+    const TRACKER_STEPS = [
+        {name: 'OPEN_TRACKER', label: 'Opening'},
+        {name: 'LOGIN', label: 'Logging in'},
+        {name: 'OPEN_PROFILE_PAGE', label: 'Opening profile'},
+        {name: 'TAKE_SCREENSHOTS', label: 'Taking screenshots'},
+        {name: 'LOGOUT', label: 'Logging out'},
+    ]
+    // Settings shown in their own place on the Main tab, rather than in the run options
+    const LOG_LEVEL_SETTING = 'LOG_LEVEL'
+    const EXECUTION_ORDER_SETTING = 'TRACKER_EXECUTION_ORDER'
+    const ADULT_TRACKERS_SETTING = 'ENABLE_ADULT_TRACKERS'
 
     // ---------------------------------------------------------------------------------------------------------------
     // Helpers
@@ -143,7 +157,7 @@
 
     const TAB_LOADERS = {
         main: function () {
-            return Promise.resolve()
+            return loadSettings()
         },
         trackers: function () {
             return loadTrackers()
@@ -174,14 +188,77 @@
     // ---------------------------------------------------------------------------------------------------------------
 
     let statusTimer = null
+    let latestStatus = null
+
+    function isActive(status) {
+        return Boolean(status) && (status.state === 'RUNNING' || status.state === 'CANCELLING')
+    }
+
+    function formatDuration(milliseconds) {
+        const totalSeconds = Math.max(0, Math.round(milliseconds / 1000))
+        const minutes = Math.floor(totalSeconds / 60)
+        const seconds = totalSeconds % 60
+        return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, '0')}s` : `${seconds}s`
+    }
+
+    function formatTypeName(value) {
+        const words = value.toLowerCase().replace(/_/g, ' ')
+        return words.charAt(0).toUpperCase() + words.slice(1)
+    }
+
+    function enabledTrackersDescription() {
+        if (!trackersLoaded) {
+            return 'Takes a screenshot of the profile page of every enabled tracker.'
+        }
+
+        const enabled = trackers.filter(function (tracker) {
+            return tracker.enabled
+        })
+        if (enabled.length === 0) {
+            return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab.'
+        }
+
+        const manual = enabled.filter(function (tracker) {
+            return tracker.type === 'MANUAL'
+        }).length
+        return `${pluralise(enabled.length, 'enabled tracker')}: ${enabled.length - manual} headless, ${manual} manual.`
+    }
+
+    function runDescription(status) {
+        if (status.state === 'CANCELLING') {
+            return 'Cancelling: closing all browsers and stopping in-progress trackers…'
+        }
+        if (status.state === 'RUNNING') {
+            const currentType = status.startedTrackerTypes[status.startedTrackerTypes.length - 1]
+            const elapsed = formatDuration(Date.now() - status.startedAt)
+            const typeDescription = currentType ? ` · ${formatTypeName(currentType)} trackers` : ''
+            return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed${typeDescription}`
+        }
+
+        const description = enabledTrackersDescription()
+        if (status.state === 'CANCELLED' && status.finishedAt) {
+            return `${description} Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}.`
+        }
+        if (status.finishedAt) {
+            return `${description} Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
+                + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${formatDuration(status.finishedAt - status.startedAt)}).`
+        }
+        return description
+    }
 
     function renderStatus(status) {
+        const wasActive = isActive(latestStatus)
+        latestStatus = status
         const running = status.state === 'RUNNING'
         const cancelling = status.state === 'CANCELLING'
         const active = running || cancelling
+        const waiting = running && status.pendingInputs.length > 0
+
+        const headerState = waiting ? 'WAITING' : status.state
         const headerStatus = byId('header-status')
-        headerStatus.dataset.state = status.state
-        headerStatus.textContent = STATE_LABELS[status.state] || status.state
+        headerStatus.dataset.state = headerState
+        headerStatus.textContent = STATE_LABELS[headerState] || headerState
+        document.title = waiting ? `(Input needed) ${PAGE_TITLE}` : PAGE_TITLE
 
         const startButton = byId('start-button')
         startButton.disabled = active
@@ -192,20 +269,7 @@
         cancelButton.disabled = cancelling
         cancelButton.textContent = cancelling ? 'Cancelling…' : 'Cancel'
 
-        const description = byId('run-description')
-        if (cancelling) {
-            description.textContent = 'Cancelling: closing all browsers and stopping in-progress trackers…'
-        } else if (running) {
-            description.textContent = `Started at ${new Date(status.startedAt).toLocaleTimeString()}`
-        } else if (status.state === 'CANCELLED' && status.finishedAt) {
-            description.textContent = `Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}`
-        } else if (status.finishedAt) {
-            const seconds = Math.round((status.finishedAt - status.startedAt) / 1000)
-            description.textContent = `Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
-                + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${seconds}s)`
-        } else {
-            description.textContent = 'Takes a screenshot of the profile page of every enabled tracker.'
-        }
+        byId('run-description').textContent = runDescription(status)
 
         const completed = status.successfulTrackers.length + status.failedTrackers.length
         byId('run-progress').hidden = status.state === 'IDLE'
@@ -226,8 +290,23 @@
         failedTrackers.hidden = status.failedTrackers.length === 0
         failedTrackers.textContent = `Failed: ${status.failedTrackers.join(', ')}`
 
+        renderPendingInputs(running ? status.pendingInputs : [])
+        renderActiveTrackers(active ? status.activeTrackers : [])
+        applyRunStateToOptions(status)
+
+        // The results of the trackers are shown on the Trackers tab, so are reloaded once an execution ends
+        if (wasActive && !active && trackersLoaded) {
+            loadTrackers().catch(function (error) {
+                showToast(error.message, 'error')
+            })
+        }
+
         clearTimeout(statusTimer)
-        statusTimer = active ? setTimeout(refreshStatus, cancelling ? 500 : STATUS_POLL_INTERVAL_MS) : null
+        if (active) {
+            statusTimer = setTimeout(refreshStatus, cancelling ? 500 : (waiting ? INPUT_POLL_INTERVAL_MS : STATUS_POLL_INTERVAL_MS))
+        } else {
+            statusTimer = null
+        }
     }
 
     function refreshStatus() {
@@ -266,17 +345,139 @@
     }
 
     // ---------------------------------------------------------------------------------------------------------------
+    // Main: requests for a user input (manual trackers)
+    // ---------------------------------------------------------------------------------------------------------------
+
+    function respondToInput(input, action, button) {
+        button.disabled = true
+        request('POST', `/api/run/input/${input.id}/${action}`, {})
+            .then(function (status) {
+                if (action === 'extend') {
+                    showToast(`Gave you 5 more minutes for ${input.trackerName}`)
+                } else if (action === 'skip') {
+                    showToast(`Skipped ${input.trackerName}`)
+                } else {
+                    showToast(`Continuing ${input.trackerName}`)
+                }
+                renderStatus(status)
+            })
+            .catch(function (error) {
+                showToast(error.message, 'error')
+                refreshStatus()
+            })
+            .finally(function () {
+                button.disabled = false
+            })
+    }
+
+    function createInputCard(input) {
+        const timer = el('span', {className: 'input-timer', 'aria-label': 'Time remaining'})
+        const extendButton = el('button', {className: 'button', type: 'button', text: '+5 min', title: 'Wait 5 more minutes before timing out'})
+        const skipButton = el('button', {
+            className: 'button', type: 'button', text: 'Skip tracker', title: 'Fail this attempt for the tracker, and move on',
+        })
+        const continueButton = el('button', {className: 'button primary', type: 'button', text: 'Continue'})
+        extendButton.addEventListener('click', function () {
+            respondToInput(input, 'extend', extendButton)
+        })
+        skipButton.addEventListener('click', function () {
+            respondToInput(input, 'skip', skipButton)
+        })
+        continueButton.addEventListener('click', function () {
+            respondToInput(input, 'continue', continueButton)
+        })
+
+        const card = el('div', {className: 'input-card', role: 'alert', dataset: {id: String(input.id)}}, [
+            el('div', {className: 'input-text'}, [
+                el('h2', {text: `${input.trackerName} needs you`}),
+                el('p', {text: `${input.message} in the ${input.trackerName} browser window, then select Continue.`}),
+                el('p', {className: 'muted', text: 'Skipping fails this attempt for the tracker. Continuing is automatic if the page changes.'}),
+            ]),
+            el('div', {className: 'input-actions'}, [timer, extendButton, skipButton, continueButton]),
+        ])
+        card.inputTimer = timer
+        card.extendButton = extendButton
+        return card
+    }
+
+    // Cards are updated in place (not re-rendered), so a focused button is never replaced
+    function renderPendingInputs(pendingInputs) {
+        const container = byId('pending-inputs')
+        const pendingIds = pendingInputs.map(function (input) {
+            return String(input.id)
+        })
+        Array.from(container.children).forEach(function (card) {
+            if (!pendingIds.includes(card.dataset.id)) {
+                card.remove()
+            }
+        })
+
+        pendingInputs.forEach(function (input) {
+            let card = container.querySelector(`[data-id="${input.id}"]`)
+            if (!card) {
+                card = createInputCard(input)
+                container.append(card)
+            }
+            card.dataset.expiresAt = input.expiresAt === null ? '' : String(input.expiresAt)
+            card.extendButton.hidden = input.expiresAt === null
+        })
+        updateInputTimers()
+    }
+
+    function updateInputTimers() {
+        byId('pending-inputs').querySelectorAll('.input-card').forEach(function (card) {
+            const expiresAt = card.dataset.expiresAt
+            card.inputTimer.hidden = !expiresAt
+            if (expiresAt) {
+                card.inputTimer.textContent = formatDuration(Number(expiresAt) - Date.now())
+            }
+        })
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Main: trackers in progress
+    // ---------------------------------------------------------------------------------------------------------------
+
+    function renderActiveTrackers(activeTrackers) {
+        byId('active-card').hidden = activeTrackers.length === 0
+        byId('active-trackers').replaceChildren.apply(byId('active-trackers'), activeTrackers.map(function (tracker) {
+            const nextStep = TRACKER_STEPS.find(function (step) {
+                return !tracker.completedSteps.includes(step.name)
+            })
+            const segments = TRACKER_STEPS.map(function (step) {
+                let state = ''
+                if (tracker.completedSteps.includes(step.name)) {
+                    state = 'done'
+                } else if (step === nextStep) {
+                    state = 'current'
+                }
+                return el('span', {className: `step ${state}`, title: step.label})
+            })
+            return el('div', {className: 'active-row'}, [
+                el('span', {className: 'active-name'}, [
+                    tracker.name,
+                    tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
+                ]),
+                el('span', {className: 'steps', 'aria-label': `${tracker.completedSteps.length} of ${TRACKER_STEPS.length} steps complete`}, segments),
+                el('span', {className: 'active-step muted', text: `${nextStep ? nextStep.label : 'Finishing'} · ${formatDuration(Date.now() - tracker.startedAt)}`}),
+            ])
+        }))
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
     // Main: logs
     // ---------------------------------------------------------------------------------------------------------------
 
-    function levelIsVisible(level, minimumLevel) {
-        return LOG_LEVEL_ORDER.indexOf(level) >= LOG_LEVEL_ORDER.indexOf(minimumLevel)
+    const loggedTrackers = new Set()
+
+    function isLogLineVisible(tracker) {
+        const filter = byId('log-tracker-filter').value
+        return !filter || tracker === filter
     }
 
     function applyLogFilter() {
-        const minimumLevel = byId('log-level-filter').value
         byId('log-output').querySelectorAll('.log-line').forEach(function (line) {
-            line.hidden = !levelIsVisible(line.dataset.level, minimumLevel)
+            line.hidden = !isLogLineVisible(line.dataset.tracker)
         })
         scrollLogsIfNeeded()
     }
@@ -288,6 +489,21 @@
         }
     }
 
+    // Adds any new tracker to the filter, keeping the options in alphabetical order
+    function addTrackerToFilter(tracker) {
+        if (!tracker || loggedTrackers.has(tracker)) {
+            return
+        }
+        loggedTrackers.add(tracker)
+
+        const filter = byId('log-tracker-filter')
+        const option = el('option', {value: tracker, text: tracker})
+        const next = Array.from(filter.options).find(function (existing) {
+            return existing.value && existing.value.localeCompare(tracker) > 0
+        })
+        filter.insertBefore(option, next || null)
+    }
+
     function appendLogEntries(entries) {
         const output = byId('log-output')
         const placeholder = output.querySelector('.log-empty')
@@ -295,18 +511,18 @@
             placeholder.remove()
         }
 
-        const minimumLevel = byId('log-level-filter').value
         const fragment = document.createDocumentFragment()
         entries.forEach(function (entry) {
-            const line = el('div', {className: 'log-line', dataset: {level: entry.level}}, [
+            addTrackerToFilter(entry.tracker)
+            const line = el('div', {className: 'log-line', dataset: {level: entry.level, tracker: entry.tracker}}, [
                 el('span', {className: 'log-time', text: formatTime(entry.timestamp)}),
                 el('span', {className: 'log-level', text: entry.level}),
                 el('span', {className: 'log-message'}, [
-                    entry.tracker ? el('span', {className: 'log-tracker', text: entry.tracker}) : null,
+                    entry.tracker ? el('span', {className: 'log-tracker', text: `[${entry.tracker}]`}) : null,
                     entry.message,
                 ]),
             ])
-            line.hidden = !levelIsVisible(entry.level, minimumLevel)
+            line.hidden = !isLogLineVisible(entry.tracker)
             fragment.append(line)
         })
         output.append(fragment)
@@ -361,20 +577,24 @@
     // ---------------------------------------------------------------------------------------------------------------
 
     let trackers = []
-    let adultTrackersEnabled = true
+    let trackersLoaded = false
     // Input not yet saved, per tracker, so re-rendering (when searching or moving another tracker) does not lose it
     const trackerDrafts = {}
 
+    function adultTrackersEnabled() {
+        const setting = findSetting(ADULT_TRACKERS_SETTING)
+        return !setting || setting.value.toLowerCase() === 'true'
+    }
+
     function loadTrackers() {
-        return Promise.all([request('GET', '/api/trackers'), request('GET', '/api/settings')])
-            .then(function (results) {
-                trackers = results[0]
-                const adultSetting = results[1].find(function (setting) {
-                    return setting.name === 'ENABLE_ADULT_TRACKERS'
-                })
-                adultTrackersEnabled = !adultSetting || adultSetting.value.toLowerCase() === 'true'
-                renderTrackers()
-            })
+        return request('GET', '/api/trackers').then(function (loaded) {
+            trackers = loaded
+            trackersLoaded = true
+            renderTrackers()
+            if (latestStatus) {
+                byId('run-description').textContent = runDescription(latestStatus)
+            }
+        })
     }
 
     function findTracker(name) {
@@ -405,7 +625,7 @@
             return tracker.enabled
         }).length
         byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(trackers.length, 'supported tracker')} enabled`
-        byId('adult-warning').hidden = adultTrackersEnabled || !enabled.some(function (tracker) {
+        byId('adult-warning').hidden = adultTrackersEnabled() || !enabled.some(function (tracker) {
             return tracker.adult
         })
 
@@ -434,6 +654,59 @@
             fragment.append(renderTrackerRow(tracker))
         })
         return fragment
+    }
+
+    function formatLastRun(epochMillis) {
+        const date = new Date(epochMillis)
+        if (date.toDateString() === new Date().toDateString()) {
+            return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+        }
+        return date.toLocaleDateString([], {day: 'numeric', month: 'short'})
+    }
+
+    function lastRunCell(tracker) {
+        if (tracker.lastRunAt === null) {
+            return el('span', {className: 'last-run muted', text: 'Never run'})
+        }
+
+        const succeeded = tracker.lastRunOk === true
+        return el('span', {
+            className: `last-run ${succeeded ? 'success' : 'failure'}`,
+            title: `Last run ${succeeded ? 'succeeded' : 'failed'} at ${new Date(tracker.lastRunAt).toLocaleString()}`,
+        }, [
+            el('span', {'aria-hidden': 'true', text: succeeded ? '✓ ' : '✕ '}),
+            el('span', {className: 'visually-hidden', text: succeeded ? 'Succeeded ' : 'Failed '}),
+            formatLastRun(tracker.lastRunAt),
+        ])
+    }
+
+    function importTrackers(file) {
+        const importButton = byId('import-button')
+        importButton.disabled = true
+        file.text()
+            .then(function (csv) {
+                return request('POST', '/api/trackers/import', {csv: csv})
+            })
+            .then(function (result) {
+                trackers = result.trackers
+                renderTrackers()
+
+                let message = `Imported ${file.name}: ${result.added} added, ${result.updated} updated.`
+                if (result.unsupported.length > 0) {
+                    message += ` Not imported, since they are not supported: ${result.unsupported.join(', ')}.`
+                }
+                const notice = byId('import-result')
+                notice.textContent = message
+                notice.hidden = false
+                showToast(`Imported ${pluralise(result.added + result.updated, 'tracker')}`)
+            })
+            .catch(function (error) {
+                showToast(`${file.name} was not imported: ${error.message}`, 'error')
+            })
+            .finally(function () {
+                importButton.disabled = false
+                byId('import-file').value = ''
+            })
     }
 
     function trackerRowPositions() {
@@ -624,13 +897,14 @@
         ])
         const enabledCell = el('label', {className: 'switch', title: 'Enabled'}, [enabledInput, el('span', {className: 'switch-track'})])
 
-        row.append(nameCell, usernameInput, passwordInput, enabledCell, el('div', {className: 'tracker-actions'}, [removeButton]), errorMessage)
+        row.append(nameCell, usernameInput, passwordInput, lastRunCell(tracker), enabledCell, el('div', {className: 'tracker-actions'}, [removeButton]),
+            errorMessage)
         refreshRow()
         return row
     }
 
     // ---------------------------------------------------------------------------------------------------------------
-    // Settings
+    // Settings (shown as run options on the Main tab, or on the Settings tab)
     // ---------------------------------------------------------------------------------------------------------------
 
     let settings = []
@@ -646,27 +920,54 @@
         })
     }
 
+    function hasPendingSettingChanges() {
+        return Object.keys(unsavedSettings).length > 0 || Object.keys(settingTimers).length > 0
+    }
+
     function loadSettings() {
+        // Reloading replaces the inputs, so is skipped while a change is waiting to be saved
+        if (hasPendingSettingChanges()) {
+            return Promise.resolve()
+        }
+
         return request('GET', '/api/settings').then(function (loaded) {
             settings = loaded
-            Object.keys(unsavedSettings).forEach(function (name) {
-                delete unsavedSettings[name]
-            })
             renderSettings()
+            renderRunOptions()
+            if (latestStatus) {
+                applyRunStateToOptions(latestStatus)
+            }
+            if (trackersLoaded) {
+                renderTrackers()
+            }
         })
     }
 
     function renderSettings() {
         const groups = []
-        settings.forEach(function (setting) {
-            let group = groups.find(function (existing) {
-                return existing.name === setting.group
+        settings
+            .filter(function (setting) {
+                return setting.tab === 'SETTINGS'
             })
-            if (!group) {
-                group = {name: setting.group, settings: []}
-                groups.push(group)
-            }
-            group.settings.push(setting)
+            .forEach(function (setting) {
+                let group = groups.find(function (existing) {
+                    return existing.name === setting.group
+                })
+                if (!group) {
+                    group = {name: setting.group, settings: []}
+                    groups.push(group)
+                }
+                group.settings.push(setting)
+            })
+
+        // Groups that cannot be changed in the UI (only set as environment variables) are shown last
+        const isReadOnly = function (group) {
+            return group.settings.every(function (setting) {
+                return !setting.editable
+            })
+        }
+        groups.sort(function (first, second) {
+            return Number(isReadOnly(first)) - Number(isReadOnly(second))
         })
 
         const container = byId('settings-groups')
@@ -675,10 +976,150 @@
         }))
     }
 
+    function renderRunOptions() {
+        const container = byId('run-options')
+        container.replaceChildren.apply(container, settings
+            .filter(function (setting) {
+                return setting.tab === 'MAIN' && setting.name !== LOG_LEVEL_SETTING
+            })
+            .map(renderOptionRow))
+
+        const logLevel = findSetting(LOG_LEVEL_SETTING)
+        if (logLevel) {
+            renderLogLevelControl(logLevel)
+        }
+    }
+
+    // Options read when an execution starts cannot change the execution in progress, so are locked until it ends
+    function applyRunStateToOptions(status) {
+        const active = isActive(status)
+        settings.forEach(function (setting) {
+            const row = settingRows[setting.name]
+            if (!row || !row.setLocked || setting.tab !== 'MAIN') {
+                return
+            }
+            row.setLocked(active && setting.scope !== 'LIVE')
+        })
+
+        const order = settingRows[EXECUTION_ORDER_SETTING]
+        if (order && order.setFixedValues) {
+            order.setFixedValues(active ? status.startedTrackerTypes : [])
+        }
+    }
+
+    // An ordered selection of the allowed values: each can be switched on or off, and moved earlier. Values in 'fixed' (tracker types that have
+    // already started) cannot be changed or moved
+    function orderedChoiceInput(setting, onChange, label) {
+        const container = el('div', {className: 'chips', role: 'group', 'aria-label': label})
+        let order = setting.allowedValues.slice()
+        let selected = new Set()
+        let fixed = new Set()
+        let disabled = !setting.editable
+
+        function value() {
+            return order.filter(function (item) {
+                return selected.has(item)
+            }).join(',')
+        }
+
+        function changed() {
+            render()
+            onChange(value(), true)
+        }
+
+        function render() {
+            const focused = document.activeElement && container.contains(document.activeElement) ? document.activeElement.dataset : null
+            container.replaceChildren.apply(container, order.map(function (item, index) {
+                const isSelected = selected.has(item)
+                const isFixed = fixed.has(item)
+                const toggle = el('button', {
+                    type: 'button',
+                    className: `chip${isSelected ? ' selected' : ''}${isFixed ? ' fixed' : ''}`,
+                    'aria-pressed': String(isSelected),
+                    disabled: disabled || isFixed,
+                    title: isFixed ? 'Already started, so cannot be changed' : `${isSelected ? 'Exclude' : 'Include'} ${formatTypeName(item)}`,
+                    dataset: {item: item, control: 'toggle'},
+                    text: formatTypeName(item),
+                })
+                toggle.addEventListener('click', function () {
+                    if (isSelected && selected.size === 1) {
+                        showToast(`${setting.label}: at least one must be selected`, 'error')
+                        return
+                    }
+                    if (isSelected) {
+                        selected.delete(item)
+                    } else {
+                        selected.add(item)
+                    }
+                    changed()
+                })
+
+                const children = [toggle]
+                if (index > 0) {
+                    const previous = order[index - 1]
+                    const move = el('button', {
+                        type: 'button',
+                        className: 'chip-move',
+                        'aria-label': `Move ${formatTypeName(item)} before ${formatTypeName(previous)}`,
+                        title: `Move before ${formatTypeName(previous)}`,
+                        disabled: disabled || isFixed || fixed.has(previous),
+                        dataset: {item: item, control: 'move'},
+                        text: '‹',
+                    })
+                    move.addEventListener('click', function () {
+                        order = order.slice()
+                        order[index - 1] = item
+                        order[index] = previous
+                        changed()
+                    })
+                    children.unshift(move)
+                }
+                return el('span', {className: 'chip-item'}, children)
+            }))
+
+            // Rendering replaces the buttons, so keep the keyboard focus on the same control
+            if (focused) {
+                const refocus = container.querySelector(`[data-item="${focused.item}"][data-control="${focused.control}"]`)
+                    || container.querySelector(`[data-item="${focused.item}"]`)
+                if (refocus && !refocus.disabled) {
+                    refocus.focus()
+                }
+            }
+        }
+
+        return {
+            element: container,
+            setValue: function (newValue) {
+                const values = newValue.split(',').map(function (item) {
+                    return item.trim().toUpperCase()
+                }).filter(Boolean)
+                selected = new Set(values)
+                order = values.concat(setting.allowedValues.filter(function (item) {
+                    return !selected.has(item)
+                }))
+                render()
+            },
+            setDisabled: function (isDisabled) {
+                disabled = isDisabled || !setting.editable
+                render()
+            },
+            setFixedValues: function (values) {
+                const updated = new Set(values)
+                if (updated.size === fixed.size && values.every(function (item) {
+                    return fixed.has(item)
+                })) {
+                    return
+                }
+                fixed = updated
+                render()
+            },
+        }
+    }
+
     // Creates the input for a setting. 'onChange' is called with the new value and whether to save it immediately (rather than after typing)
     function settingInput(setting, onChange, onFlush) {
         const disabled = !setting.editable
-        const label = `${setting.name} value`
+        const label = setting.label
 
         if (setting.type === 'BOOLEAN') {
             const checkbox = el('input', {type: 'checkbox', role: 'switch', disabled: disabled, 'aria-label': label})
@@ -689,6 +1130,9 @@
                 element: el('label', {className: 'switch'}, [checkbox, el('span', {className: 'switch-track'})]),
                 setValue: function (value) {
                     checkbox.checked = value.toLowerCase() === 'true'
+                },
+                setDisabled: function (isDisabled) {
+                    checkbox.disabled = isDisabled || disabled
                 },
             }
         }
@@ -703,15 +1147,26 @@
             return {
                 element: select,
                 setValue: function (value) {
-                    select.value = value.toUpperCase()
+                    // Values set as environment variables may not use the same case as the allowed values
+                    select.value = value
+                    if (select.value !== value) {
+                        select.value = value.toUpperCase()
+                    }
+                },
+                setDisabled: function (isDisabled) {
+                    select.disabled = isDisabled || disabled
                 },
             }
         }
 
+        if (setting.type === 'MULTI_SELECT') {
+            return orderedChoiceInput(setting, onChange, label)
+        }
+
         const input = el('input', {
             type: setting.type === 'INTEGER' ? 'number' : 'text',
+            min: setting.type === 'INTEGER' ? '0' : null,
             disabled: disabled,
-            maxlength: setting.type === 'CHARACTER' ? '2' : null,
             'aria-label': label,
         })
         input.addEventListener('input', function () {
@@ -723,30 +1178,19 @@
                 onFlush()
             }
         })
-
-        const setValue = function (value) {
-            input.value = value
+        return {
+            element: input,
+            setValue: function (value) {
+                input.value = value
+            },
+            setDisabled: function (isDisabled) {
+                input.disabled = isDisabled || disabled
+            },
         }
-        if (setting.type === 'MULTI_SELECT') {
-            return {
-                element: el('div', {className: 'setting-input'}, [
-                    input,
-                    el('span', {className: 'muted', text: `Comma-separated, in order. Allowed: ${setting.allowedValues.join(', ')}`}),
-                ]),
-                setValue: setValue,
-            }
-        }
-        return {element: input, setValue: setValue}
     }
 
-    function renderSettingRow(setting) {
+    function createControl(setting) {
         const name = setting.name
-        const row = el('div', {className: 'setting-row'})
-        const nameLine = el('div', {className: 'setting-name'})
-        const meta = el('p', {className: 'setting-meta'})
-        const actions = el('div', {className: 'setting-actions'})
-        const errorMessage = el('p', {className: 'setting-error', hidden: true})
-
         const control = settingInput(setting, function (value, immediate) {
             onSettingChanged(name, value, immediate)
         }, function () {
@@ -755,6 +1199,95 @@
             }
         })
         control.setValue(setting.value)
+        return control
+    }
+
+    function resetButton(name) {
+        const current = findSetting(name)
+        const resetTarget = current.environmentValue !== null ? 'environment value' : 'default'
+        return el('button', {
+            className: 'button small', type: 'button', text: 'Reset', title: `Reset to the ${resetTarget}`,
+            onclick: function () {
+                resetSetting(name)
+            },
+        })
+    }
+
+    // A run option on the Main tab
+    function renderOptionRow(setting) {
+        const name = setting.name
+        const row = el('div', {className: `option-row${setting.type === 'MULTI_SELECT' ? ' wide' : ''}`, title: name})
+        const lock = el('span', {className: 'lock-badge', text: 'Locked', title: 'Read when an execution starts, so locked until it finishes', hidden: true})
+        const actions = el('div', {className: 'option-actions'})
+        const errorMessage = el('p', {className: 'setting-error', hidden: true})
+        const control = createControl(setting)
+
+        function refresh() {
+            const current = findSetting(name)
+            row.classList.toggle('changed', current.changedFromDefault)
+            row.classList.toggle('editing', hasKey(unsavedSettings, name))
+            actions.replaceChildren()
+            if (current.source === 'WEB_UI' && current.changedFromDefault) {
+                actions.append(resetButton(name))
+            }
+        }
+
+        function showError(message) {
+            row.classList.toggle('invalid', Boolean(message))
+            errorMessage.textContent = message || ''
+            errorMessage.hidden = !message
+        }
+
+        settingRows[name] = {
+            refresh: refresh,
+            setValue: control.setValue,
+            showError: showError,
+            setLocked: function (locked) {
+                lock.hidden = !locked
+                row.classList.toggle('locked', locked)
+                control.setDisabled(locked)
+            },
+            setFixedValues: control.setFixedValues,
+        }
+        refresh()
+
+        row.append(
+            el('div', {className: 'option-label'}, [
+                setting.scope === 'LIVE' ? el('span', {className: 'live-dot', title: 'Can be changed during an execution'}) : null,
+                el('span', {text: setting.label}),
+                lock,
+            ]),
+            el('div', {className: 'option-control'}, [control.element, actions]),
+            el('p', {className: 'option-description', text: setting.description}),
+            errorMessage
+        )
+        return row
+    }
+
+    // The log level is a setting, shown in the log toolbar
+    function renderLogLevelControl(setting) {
+        const control = createControl(setting)
+        settingRows[setting.name] = {
+            refresh: function () {
+                // The select already shows the saved value
+            },
+            setValue: control.setValue,
+            showError: function () {
+                // Errors are shown as a toast
+            },
+        }
+        byId('log-level-control').replaceChildren(control.element)
+    }
+
+    // A setting on the Settings tab
+    function renderSettingRow(setting) {
+        const name = setting.name
+        const row = el('div', {className: 'setting-row'})
+        const nameLine = el('div', {className: 'setting-name'})
+        const meta = el('p', {className: 'setting-meta'})
+        const actions = el('div', {className: 'setting-actions'})
+        const errorMessage = el('p', {className: 'setting-error', hidden: true})
+        const control = createControl(setting)
 
         // Updates the badges, default value and reset button, without replacing the input (which may have focus)
         function refresh() {
@@ -762,7 +1295,7 @@
             row.classList.toggle('changed', current.changedFromDefault)
             row.classList.toggle('editing', hasKey(unsavedSettings, name))
 
-            const badges = [el('code', {text: name})]
+            const badges = [el('strong', {className: 'setting-label', text: current.label}), el('code', {text: name})]
             if (current.changedFromDefault) {
                 badges.push(el('span', {className: 'badge changed', text: 'Changed', title: `Default: ${current.defaultValue}`}))
             }
@@ -783,13 +1316,7 @@
 
             actions.replaceChildren()
             if (current.source === 'WEB_UI') {
-                const resetTarget = current.environmentValue !== null ? 'environment value' : 'default'
-                actions.append(el('button', {
-                    className: 'button small', type: 'button', text: 'Reset', title: `Reset to the ${resetTarget}`,
-                    onclick: function () {
-                        resetSetting(name)
-                    },
-                }))
+                actions.append(resetButton(name))
             }
         }
 
@@ -847,8 +1374,21 @@
         })
     }
 
-    // Saves the changed setting together with any other unsaved values, since some settings are only valid together (e.g. the browser width
-    // and height). If that fails, the changed setting is saved on its own, so an invalid value elsewhere does not block it.
+    function settingsSavedMessage(names) {
+        const labels = names.map(function (savedName) {
+            const setting = findSetting(savedName)
+            return setting ? setting.label : savedName
+        })
+        const live = names.every(function (savedName) {
+            const setting = findSetting(savedName)
+            return setting && setting.scope === 'LIVE'
+        })
+        const suffix = isActive(latestStatus) ? (live ? ' (applied to this execution)' : ' (applies from the next execution)') : ''
+        return `Saved ${labels.join(', ')}${suffix}`
+    }
+
+    // Saves the changed setting together with any other unsaved values, since some settings may only be valid together. If that fails, the
+    // changed setting is saved on its own, so an invalid value elsewhere does not block it.
     function saveSetting(name) {
         if (!hasKey(unsavedSettings, name)) {
             return Promise.resolve()
@@ -874,11 +1414,18 @@
                 Object.keys(settingRows).forEach(function (rowName) {
                     settingRows[rowName].refresh()
                 })
-                showToast(`Saved ${savedNames.join(', ')}`)
+                if (savedNames.includes(ADULT_TRACKERS_SETTING) && trackersLoaded) {
+                    renderTrackers()
+                }
+                showToast(settingsSavedMessage(savedNames))
+                if (latestStatus && savedNames.includes(EXECUTION_ORDER_SETTING)) {
+                    refreshStatus()
+                }
             })
             .catch(function (error) {
+                const setting = findSetting(name)
                 settingRows[name].showError(error.message)
-                showToast(`${name} was not saved: ${error.message}`, 'error')
+                showToast(`${setting ? setting.label : name} was not saved: ${error.message}`, 'error')
             })
     }
 
@@ -892,7 +1439,7 @@
                 Object.keys(settingRows).forEach(function (rowName) {
                     settingRows[rowName].refresh()
                 })
-                showToast(`Reset ${name}`)
+                showToast(`Reset ${findSetting(name).label}`)
             })
             .catch(function (error) {
                 showToast(error.message, 'error')
@@ -909,10 +1456,19 @@
         byId('theme-toggle').addEventListener('click', toggleTheme)
         byId('start-button').addEventListener('click', startRun)
         byId('cancel-button').addEventListener('click', cancelRun)
-        byId('log-level-filter').addEventListener('change', applyLogFilter)
+        byId('log-tracker-filter').addEventListener('change', applyLogFilter)
         byId('log-autoscroll').addEventListener('change', scrollLogsIfNeeded)
         byId('log-clear').addEventListener('click', clearLogs)
         byId('tracker-search').addEventListener('input', renderTrackers)
+        byId('import-button').addEventListener('click', function () {
+            byId('import-file').click()
+        })
+        byId('import-file').addEventListener('change', function () {
+            const file = byId('import-file').files[0]
+            if (file) {
+                importTrackers(file)
+            }
+        })
         window.addEventListener('hashchange', showTab)
         // Warn before leaving while a change is waiting to be saved, or was rejected
         window.addEventListener('beforeunload', function (event) {
@@ -920,10 +1476,19 @@
                 event.preventDefault()
             }
         })
+        setInterval(function () {
+            updateInputTimers()
+            if (isActive(latestStatus)) {
+                byId('run-description').textContent = runDescription(latestStatus)
+            }
+        }, 1000)
 
         clearLogs()
         showTab()
         refreshStatus()
         connectLogs()
+        loadTrackers().catch(function (error) {
+            showToast(error.message, 'error')
+        })
     })
 }())
