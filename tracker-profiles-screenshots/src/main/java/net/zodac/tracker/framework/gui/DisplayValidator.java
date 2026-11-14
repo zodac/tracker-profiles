@@ -61,8 +61,7 @@ public final class DisplayValidator {
     }
 
     private static boolean needsDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return Configuration.get().forceUiBrowser()
-            || (Configuration.get().trackerExecutionOrder().contains(TrackerType.MANUAL) && trackersByType.containsKey(TrackerType.MANUAL));
+        return Configuration.get().forceUiBrowser() || trackersByType.containsKey(TrackerType.MANUAL);
     }
 
     private static boolean isDisplayAvailable() {

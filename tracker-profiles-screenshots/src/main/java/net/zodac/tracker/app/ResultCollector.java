@@ -83,7 +83,7 @@ final class ResultCollector {
     /**
      * Generates a summary of all results and returns the appropriate {@link ExitState}.
      *
-     * @param executedTrackerTypes the {@link TrackerType}s that were executed, in the order they were executed
+     * @param executedTrackerTypes the {@link TrackerType}s that were executed, in execution order
      * @return the {@link ExitState} based on success/failure counts
      */
     ExitState generateSummary(final Collection<TrackerType> executedTrackerTypes) {

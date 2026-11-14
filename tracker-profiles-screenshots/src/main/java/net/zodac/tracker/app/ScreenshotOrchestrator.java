@@ -20,10 +20,8 @@ package net.zodac.tracker.app;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -60,10 +58,6 @@ public final class ScreenshotOrchestrator {
      *   <li>Collecting and reporting results</li>
      * </ol>
      *
-     * <p>
-     * The execution order is read again before each {@link TrackerType} starts, since it can be changed in the web UI during an execution. A
-     * {@link TrackerType} is executed at most once, and a {@link TrackerType} removed from the order before it starts is not executed.
-     *
      * @param trackersByType    the trackers to execute, organised by {@link TrackerType}
      * @param executionListener the {@link ExecutionListener} to notify of progress
      * @return the {@link ExitState} of the execution
@@ -72,7 +66,8 @@ public final class ScreenshotOrchestrator {
      */
     public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final ExecutionListener executionListener)
         throws IOException {
-        final int numberOfTrackers = countTrackersToExecute(trackersByType, Configuration.get().trackerExecutionOrder());
+        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
+        final int numberOfTrackers = countTrackersToExecute(trackersByType, trackerExecutionOrder);
         if (numberOfTrackers == 0) {
             LOGGER.error("No trackers selected!");
             return ExitState.FAILURE;
@@ -81,18 +76,16 @@ public final class ScreenshotOrchestrator {
         ScreenshotDirectories.createAll();
         executionListener.executionStarted(namesByType(trackersByType));
         final ResultCollector resultCollector = ResultCollector.start();
-        final Set<TrackerType> executedTrackerTypes = new LinkedHashSet<>();
         try {
             LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers));
-            TrackerRetriever.printTrackersInfo(trackersByType, Configuration.get().trackerExecutionOrder());
+            TrackerRetriever.printTrackersInfo(trackersByType, trackerExecutionOrder);
 
-            Optional<TrackerType> nextTrackerType = nextTrackerType(executedTrackerTypes);
-            while (nextTrackerType.isPresent() && !ExecutionCancellation.isCancelled()) {
-                final TrackerType trackerType = nextTrackerType.get();
-                executedTrackerTypes.add(trackerType);
+            for (final TrackerType trackerType : trackerExecutionOrder) {
+                if (ExecutionCancellation.isCancelled()) {
+                    break;
+                }
                 executionListener.trackerTypeStarted(trackerType);
                 screenshotTrackerByType(trackerType, trackersByType, resultCollector, executionListener);
-                nextTrackerType = nextTrackerType(executedTrackerTypes);
             }
         } finally {
             ScreenshotTaker.shutdown();
@@ -103,15 +96,7 @@ public final class ScreenshotOrchestrator {
             LOGGER.debug("Execution cancelled, not generating a summary");
             return ExitState.FAILURE;
         }
-        return resultCollector.generateSummary(executedTrackerTypes);
-    }
-
-    // The first type in the (current) execution order that has not yet been executed
-    private static Optional<TrackerType> nextTrackerType(final Set<TrackerType> executedTrackerTypes) {
-        return Configuration.get().trackerExecutionOrder()
-            .stream()
-            .filter(trackerType -> !executedTrackerTypes.contains(trackerType))
-            .findFirst();
+        return resultCollector.generateSummary(trackerExecutionOrder);
     }
 
     private static int countTrackersToExecute(final Map<TrackerType, Set<TrackerCredential>> trackersByType,

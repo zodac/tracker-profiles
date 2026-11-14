@@ -44,20 +44,19 @@ public final class TrackerRetriever {
     }
 
     /**
-     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, or is an
-     * adult tracker when {@link ApplicationConfiguration#enableAdultContent()} is {@code false}.
-     *
-     * <p>
-     * Trackers whose {@link TrackerType} is not in {@link ApplicationConfiguration#trackerExecutionOrder()} are still included, since the order can
-     * be changed during an execution; {@link ScreenshotOrchestrator} only executes the types in the order.
+     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, is an
+     * adult tracker when {@link ApplicationConfiguration#enableAdultContent()} is {@code false}, or whose {@link TrackerType} is not in
+     * {@link ApplicationConfiguration#trackerExecutionOrder()}.
      *
      * @param trackerCredentials the {@link TrackerCredential}s to organise
      * @return {@link Map} of {@link TrackerType} to their credentials
      */
     public static Map<TrackerType, Set<TrackerCredential>> groupByType(final Collection<TrackerCredential> trackerCredentials) {
+        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = new EnumMap<>(TrackerType.class);
         for (final TrackerCredential trackerCredential : trackerCredentials) {
             findHandler(trackerCredential)
+                .filter(handler -> trackerExecutionOrder.contains(handler.type()))
                 .ifPresent(handler -> trackersByType.computeIfAbsent(handler.type(), _ -> new TreeSet<>()).add(trackerCredential));
         }
 

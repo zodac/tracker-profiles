@@ -41,8 +41,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>
  * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves), and
- * fails if {@link net.zodac.tracker.framework.config.ApplicationConfiguration#inputTimeoutDuration()} passes first. The timeout is read while
- * waiting, so a change made in the web UI applies to a request that is already waiting.
+ * fails if {@link net.zodac.tracker.framework.config.ApplicationConfiguration#inputTimeoutDuration()} passes first.
  */
 public final class UserInputRequests {
 
@@ -93,7 +92,7 @@ public final class UserInputRequests {
         try {
             final long id = nextId;
             nextId++;
-            PENDING.put(id, new Request(id, trackerName, message, System.currentTimeMillis()));
+            PENDING.put(id, new Request(id, trackerName, message, System.currentTimeMillis(), Configuration.get().inputTimeoutDuration()));
             return id;
         } finally {
             LOCK.unlock();
@@ -223,19 +222,20 @@ public final class UserInputRequests {
         private final String trackerName;
         private final String message;
         private final long requestedAt;
+        private final Duration timeout;
         private long extensionMillis;
         private @Nullable UserInputResponse response;
 
-        private Request(final long id, final String trackerName, final String message, final long requestedAt) {
+        private Request(final long id, final String trackerName, final String message, final long requestedAt, final Duration timeout) {
             this.id = id;
             this.trackerName = trackerName;
             this.message = message;
             this.requestedAt = requestedAt;
+            this.timeout = timeout;
         }
 
-        // Read on each call, so a timeout changed in the web UI applies to a request that is already waiting
+        // No expiry when the timeout is disabled (zero)
         private @Nullable Long expiresAt() {
-            final Duration timeout = Configuration.get().inputTimeoutDuration();
             if (timeout.isZero()) {
                 return null;
             }
