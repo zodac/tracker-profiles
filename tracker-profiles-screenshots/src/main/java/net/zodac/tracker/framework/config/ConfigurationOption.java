@@ -130,7 +130,7 @@ public enum ConfigurationOption {
      * The local timezone.
      */
     TIMEZONE(Tab.SETTINGS, "Output", "Timezone", "UTC", OptionType.STRING, List.of(),
-        "The local timezone, used to retrieve the current date to name the output directory", Scope.EXECUTION),
+        "The local timezone, used for the date in the names of the output directory and of downloaded screenshots", Scope.EXECUTION),
 
     /**
      * The execution order of tracker types.

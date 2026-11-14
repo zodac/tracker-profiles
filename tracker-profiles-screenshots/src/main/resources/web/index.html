@@ -55,6 +55,9 @@
                     <span id="progress-text"></span>
                     <span><span class="count success" id="success-count">0</span> succeeded</span>
                     <span><span class="count failure" id="failure-count">0</span> failed</span>
+                    <a id="download-screenshots" class="button small download-link" href="/api/screenshots" download hidden>
+                        <span class="download-icon" aria-hidden="true"></span><span class="download-text">Download all</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -123,6 +126,34 @@
         <div id="settings-groups"></div>
     </section>
 </main>
+
+<dialog id="screenshot-gallery" class="gallery" aria-labelledby="gallery-title">
+    <div class="gallery-header">
+        <div class="gallery-heading">
+            <h2 id="gallery-title"></h2>
+            <span id="gallery-counter" class="muted"></span>
+        </div>
+        <div id="gallery-tabs" class="gallery-tabs" role="tablist" aria-label="Screenshots"></div>
+        <div class="gallery-actions">
+            <a id="gallery-full-size" class="button small" href="#" target="_blank" rel="noopener">Full size</a>
+            <a id="gallery-download" class="button small download-link" href="#" download>
+                <span class="download-icon" aria-hidden="true"></span>Download
+            </a>
+            <button id="gallery-close" class="icon-button" type="button" aria-label="Close" title="Close (Esc)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
+    </div>
+    <div class="gallery-body">
+        <button id="gallery-previous" class="icon-button gallery-nav" type="button" aria-label="Previous screenshot" title="Previous (&larr;)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div id="gallery-viewport" class="gallery-viewport"></div>
+        <button id="gallery-next" class="icon-button gallery-nav" type="button" aria-label="Next screenshot" title="Next (&rarr;)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+</dialog>
 
 <div id="toasts" class="toasts" aria-live="polite"></div>
 </body>

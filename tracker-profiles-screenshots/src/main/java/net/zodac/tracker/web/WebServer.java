@@ -28,6 +28,7 @@ import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.web.http.LogApiHandler;
 import net.zodac.tracker.web.http.RunApiHandler;
+import net.zodac.tracker.web.http.ScreenshotApiHandler;
 import net.zodac.tracker.web.http.SettingsApiHandler;
 import net.zodac.tracker.web.http.StaticResourceHandler;
 import net.zodac.tracker.web.http.TrackerApiHandler;
@@ -74,6 +75,7 @@ public final class WebServer {
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.createContext(RunApiHandler.CONTEXT_PATH, RunApiHandler.create(runManager));
         httpServer.createContext(LogApiHandler.CONTEXT_PATH, LogApiHandler.create(webLogAppender));
+        httpServer.createContext(ScreenshotApiHandler.CONTEXT_PATH, ScreenshotApiHandler.create(runManager));
         httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase));
         httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
         httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());

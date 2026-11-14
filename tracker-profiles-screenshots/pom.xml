@@ -214,6 +214,8 @@
                             <manifestEntries>
                                 <!-- sqlite-jdbc loads a native library, which otherwise logs a restricted method warning on startup -->
                                 <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+                                <!-- Read by ApplicationVersion, used in the names of downloaded screenshot archives -->
+                                <Implementation-Version>${project.version}</Implementation-Version>
                             </manifestEntries>
                         </transformer>
 

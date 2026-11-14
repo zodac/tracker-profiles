@@ -44,8 +44,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 - **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers.
 - **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`), `SettingsApiHandler`
-  (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
-  which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
+  (`/api/settings`), `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`). API handlers
+  extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
+  responses.
 - **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each tracker's
   most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null` password on save keeps the stored one, and an
   empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in `app.js`). Passwords are encrypted by
@@ -73,6 +74,28 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   The UI fetches a tracker's logs only while it is expanded, polling with the ID of the last message it has, and groups them by step (a phase),
   with a divider per attempt once a tracker is retried and a heading per section. `RunStatus` gives each completed step's time for the phase
   durations.
+
+#### Screenshots
+
+`ProfileScreenshotExecutor` reports each saved screenshot to the `ExecutionListener` (`trackerScreenshotSaved`, also for an existing screenshot that
+is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest one per `RedactionType` (a retry replaces it) and the latest failure
+screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
+shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
+execution is kept, in memory.
+
+`ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
+`?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment). `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
+`&preview=true` (used by the gallery) the whole page scaled to 1920 wide (at most 10800 tall), or the PNG itself if it is not wider. Both come
+from `web.screenshot.ScreenshotPreviews`, which never decodes a whole screenshot (an 8K full-page PNG needs over 600MB, more than the default
+512MB heap): it decodes every `n`th pixel (keeping twice the target width, then scaling smoothly) in strips of at most 64MB, one image at a time,
+and caches up to 64MB of images by path, last-modified time and kind. `?tracker=X` downloads all of a
+tracker's screenshots, and no parameters downloads the profile screenshots of every succeeded tracker. A download of one screenshot is the PNG
+itself, and several are a zip (`ScreenshotArchive`, failure screenshots under `errors/`) named `tracker-profiles_v<version>_<yyyy-MM-dd_HH:mm:ss>`
+from the execution start in `TIMEZONE`. The version is the `Implementation-Version` of the JAR manifest (set by the shade plugin), read by
+`ApplicationVersion`, and `unknown` outside the JAR. The UI adds each screenshot's `savedAt` to its image URLs, so images can be cached by the
+browser and a replaced screenshot is fetched again.
+
+In the UI, the screenshots are shown in each expanded tracker above its logs (re-rendered only when they change), and open in a `<dialog>` gallery.
 
 #### Cancelling an Execution
 

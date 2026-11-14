@@ -56,6 +56,7 @@ import org.apache.logging.log4j.Logger;
  * @param redactionTypes             the {@link RedactionType}s to perform redaction of sensitive information on the user profile page, in order
  * @param secretKey                  the secret used to encrypt the passwords stored in the database
  * @param takeScreenshotOnError      whether to take a screenshot of the current page if an error occurs during screenshotting
+ * @param timezone                   the local timezone, used for the name of the output directory and of downloaded screenshot archives
  * @param trackerExecutionOrder      the execution order of the different {@link TrackerType}s
  * @param webUiPort                  the port on which the web UI is served
  */
@@ -75,6 +76,7 @@ public record ApplicationConfiguration(
     Set<RedactionType> redactionTypes,
     String secretKey,
     boolean takeScreenshotOnError,
+    ZoneId timezone,
     Set<TrackerType> trackerExecutionOrder,
     int webUiPort
 ) {
@@ -136,6 +138,7 @@ public record ApplicationConfiguration(
             getRedactionTypes(source),
             source.get(ConfigurationOption.SECRET_KEY),
             getBooleanValue(source, ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
+            getTimezone(source),
             getTrackerExecutionOrder(source),
             getWebUiPort(source)
         );
@@ -186,18 +189,25 @@ public record ApplicationConfiguration(
     }
 
     private static Path getOutputDirectory(final Source source) {
-        final String timeZone = source.get(ConfigurationOption.TIMEZONE);
+        final ZoneId timezone = getTimezone(source);
         final String outputDirectoryNameFormat = source.get(ConfigurationOption.OUTPUT_DIRECTORY_NAME_FORMAT);
         final String outputDirectoryParentPath = source.get(ConfigurationOption.OUTPUT_DIRECTORY_PARENT_PATH);
 
         try {
-            final LocalDate currentDate = LocalDate.now(ZoneId.of(timeZone));
+            final LocalDate currentDate = LocalDate.now(timezone);
             final String outputDirectoryName = currentDate.format(DateTimeFormatter.ofPattern(outputDirectoryNameFormat, Locale.getDefault()));
             return Paths.get(outputDirectoryParentPath, outputDirectoryName);
         } catch (final IllegalArgumentException e) {
             throw new IllegalArgumentException("[OUTPUT_DIRECTORY_NAME_FORMAT] Invalid time format: '%s'".formatted(outputDirectoryNameFormat), e);
+        }
+    }
+
+    private static ZoneId getTimezone(final Source source) {
+        final String timezone = source.get(ConfigurationOption.TIMEZONE);
+        try {
+            return ZoneId.of(timezone);
         } catch (final DateTimeException e) {
-            throw new IllegalArgumentException("[TIMEZONE] Invalid timezone: '%s'".formatted(timeZone), e);
+            throw new IllegalArgumentException("[TIMEZONE] Invalid timezone: '%s'".formatted(timezone), e);
         }
     }
 
@@ -281,6 +291,7 @@ public record ApplicationConfiguration(
         LOGGER.debug("redactionTypes={}", redactionTypes);
         LOGGER.debug("secretKey={}", secretKey.isEmpty() ? "" : "****");
         LOGGER.debug("takeScreenshotOnError={}", takeScreenshotOnError);
+        LOGGER.debug("timezone={}", timezone);
         LOGGER.debug("trackerExecutionOrder={}", trackerExecutionOrder);
         LOGGER.debug("webUiPort={}", webUiPort);
     }
@@ -290,10 +301,10 @@ public record ApplicationConfiguration(
         return ("ApplicationConfiguration[browserDataStoragePath=%s, browserDimensions=%s, databasePath=%s, enableAdultContent=%s, "
             + "enableTranslationToEnglish=%s, existingScreenshotAction=%s, forceUiBrowser=%s, inputTimeoutDuration=%s, logLevel=%s, "
             + "numberOfParallelThreads=%s, numberOfScreenshotAttempts=%s, outputDirectory=%s, redactionTypes=%s, secretKey=****, "
-            + "takeScreenshotOnError=%s, trackerExecutionOrder=%s, webUiPort=%s]").formatted(browserDataStoragePath, browserDimensions, databasePath,
-            enableAdultContent, enableTranslationToEnglish, existingScreenshotAction, forceUiBrowser, inputTimeoutDuration, logLevel,
-            numberOfParallelThreads, numberOfScreenshotAttempts, outputDirectory, redactionTypes, takeScreenshotOnError, trackerExecutionOrder,
-            webUiPort);
+            + "takeScreenshotOnError=%s, timezone=%s, trackerExecutionOrder=%s, webUiPort=%s]").formatted(browserDataStoragePath, browserDimensions,
+            databasePath, enableAdultContent, enableTranslationToEnglish, existingScreenshotAction, forceUiBrowser, inputTimeoutDuration, logLevel,
+            numberOfParallelThreads, numberOfScreenshotAttempts, outputDirectory, redactionTypes, takeScreenshotOnError, timezone,
+            trackerExecutionOrder, webUiPort);
     }
 
     // Resolves a value from the overrides, then the environment, then the default value

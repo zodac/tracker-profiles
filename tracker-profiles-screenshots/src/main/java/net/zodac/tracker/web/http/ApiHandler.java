@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -196,6 +197,32 @@ public abstract class ApiHandler implements HttpHandler {
      */
     protected static String toJson(final Object body) {
         return GSON.toJson(body);
+    }
+
+    /**
+     * Reads the (decoded) query parameters of the request. If a parameter is repeated, the last value is used.
+     *
+     * @param exchange the {@link HttpExchange}
+     * @return the query parameters, keyed by name
+     */
+    protected static Map<String, String> queryParameters(final HttpExchange exchange) {
+        return parseQuery(exchange.getRequestURI().getRawQuery());
+    }
+
+    private static Map<String, String> parseQuery(final @Nullable String rawQuery) {
+        final Map<String, String> query = new HashMap<>();
+        if (rawQuery == null || rawQuery.isEmpty()) {
+            return query;
+        }
+
+        for (final String parameter : rawQuery.split("&", -1)) {
+            final int separator = parameter.indexOf('=');
+            if (separator > 0) {
+                query.put(URLDecoder.decode(parameter.substring(0, separator), StandardCharsets.UTF_8),
+                    URLDecoder.decode(parameter.substring(separator + 1), StandardCharsets.UTF_8));
+            }
+        }
+        return query;
     }
 
     private static void sendError(final HttpExchange exchange, final HttpStatus httpStatus, final @Nullable String message) {

@@ -55,6 +55,7 @@ public record RunStatus(
      * @param completedSteps  the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far, in execution order
      * @param stepCompletedAt when each of the {@code completedSteps} completed, as epoch milliseconds, keyed by step name
      * @param latestMessage   the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
+     * @param screenshots     the screenshots of the tracker: its profile screenshots, or its failure screenshot if it failed (while running, both)
      */
     public record TrackerProgress(
         String name,
@@ -65,7 +66,27 @@ public record RunStatus(
         int attempt,
         List<String> completedSteps,
         Map<String, Long> stepCompletedAt,
-        String latestMessage
+        String latestMessage,
+        List<Screenshot> screenshots
+    ) {
+
+    }
+
+    /**
+     * A screenshot of a tracker, retrieved with {@code /api/screenshots?tracker={trackerName}&id={id}}.
+     *
+     * @param id       the ID of the screenshot within its tracker
+     * @param label    the label shown for the screenshot
+     * @param fileName the name of the screenshot file
+     * @param failure  whether this is a failure screenshot, rather than a profile screenshot
+     * @param savedAt  when the screenshot was saved, as epoch milliseconds (changed when a retry replaces the screenshot)
+     */
+    public record Screenshot(
+        String id,
+        String label,
+        String fileName,
+        boolean failure,
+        long savedAt
     ) {
 
     }

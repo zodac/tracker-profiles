@@ -18,8 +18,11 @@
 package net.zodac.tracker.web;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -45,7 +48,9 @@ import net.zodac.tracker.framework.gui.DisplayValidator;
 import net.zodac.tracker.framework.input.UserInputRequests;
 import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.framework.progress.TrackerStep;
+import net.zodac.tracker.framework.redactor.RedactionType;
 import net.zodac.tracker.web.log.WebLogAppender;
+import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
@@ -355,6 +360,56 @@ public final class RunManager implements ExecutionListener {
         return shown;
     }
 
+    /**
+     * The start time of the current (or most recent) execution.
+     *
+     * @return the start time as epoch milliseconds, or {@code null} if no execution has been started
+     */
+    public @Nullable Long executionStartedAt() {
+        lock.lock();
+        try {
+            return nullIfUnset(startedAt);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Retrieves the screenshots of a tracker in the current (or most recent) execution, as listed in its {@link RunStatus.TrackerProgress}.
+     *
+     * @param trackerName the name of the tracker
+     * @return the {@link ScreenshotFile}s of the tracker, or an empty {@link List} if the tracker is not in the execution
+     */
+    public List<ScreenshotFile> trackerScreenshots(final String trackerName) {
+        lock.lock();
+        try {
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            return tracker == null ? List.of() : tracker.shownScreenshots();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Retrieves the profile screenshots of every tracker that succeeded in the current (or most recent) execution, ordered by tracker name.
+     *
+     * @return the {@link ScreenshotFile}s of the successful trackers
+     */
+    public List<ScreenshotFile> successfulScreenshots() {
+        lock.lock();
+        try {
+            final List<ScreenshotFile> screenshots = new ArrayList<>();
+            trackers.values()
+                .stream()
+                .filter(tracker -> tracker.state == RunStatus.TrackerState.SUCCEEDED)
+                .sorted(Comparator.comparing(tracker -> tracker.name))
+                .forEach(tracker -> screenshots.addAll(tracker.shownScreenshots()));
+            return screenshots;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private static @Nullable Long nullIfUnset(final long epochMillis) {
         return epochMillis == 0L ? null : epochMillis;
     }
@@ -426,6 +481,34 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
+    public void trackerScreenshotSaved(final String trackerName, final RedactionType redactionType, final Path screenshot) {
+        lock.lock();
+        try {
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker != null) {
+                // Replacing the value keeps its position, so the screenshots stay in the order they were first taken
+                tracker.screenshots.put(redactionType, ScreenshotFile.ofProfile(redactionType, screenshot, System.currentTimeMillis()));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void trackerFailureScreenshotSaved(final String trackerName, final Path screenshot) {
+        lock.lock();
+        try {
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker != null) {
+                tracker.failureScreenshot.clear();
+                tracker.failureScreenshot.add(ScreenshotFile.ofFailure(screenshot, System.currentTimeMillis()));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
         final long completedAt = System.currentTimeMillis();
         lock.lock();
@@ -433,6 +516,10 @@ public final class RunManager implements ExecutionListener {
             final TrackerProgressState tracker = trackers.computeIfAbsent(trackerName, _ -> new TrackerProgressState(trackerName, trackerType));
             tracker.state = wasSuccessful ? RunStatus.TrackerState.SUCCEEDED : RunStatus.TrackerState.FAILED;
             tracker.finishedAt = completedAt;
+            if (wasSuccessful) {
+                // Deleted once the tracker succeeds
+                tracker.failureScreenshot.clear();
+            }
         } finally {
             lock.unlock();
         }
@@ -451,6 +538,9 @@ public final class RunManager implements ExecutionListener {
         private final String name;
         private final TrackerType trackerType;
         private final Map<TrackerStep, Long> stepCompletedAt = new EnumMap<>(TrackerStep.class);
+        private final Map<RedactionType, ScreenshotFile> screenshots = new LinkedHashMap<>();
+        // Only the latest failure screenshot is kept (an empty list when there is none, since PMD flags assigning null to a field)
+        private final List<ScreenshotFile> failureScreenshot = new ArrayList<>(1);
         private RunStatus.TrackerState state = RunStatus.TrackerState.WAITING;
         // 0 when not set, since PMD flags assigning null to a field
         private long startedAt;
@@ -464,7 +554,21 @@ public final class RunManager implements ExecutionListener {
 
         private RunStatus.TrackerProgress toView(final String latestMessage) {
             return new RunStatus.TrackerProgress(name, trackerType.name(), state, nullIfUnset(startedAt), nullIfUnset(finishedAt), attempt,
-                stepCompletedAt.keySet().stream().map(Enum::name).toList(), stepCompletedAtByName(), latestMessage);
+                stepCompletedAt.keySet().stream().map(Enum::name).toList(), stepCompletedAtByName(), latestMessage,
+                shownScreenshots().stream().map(screenshot -> new RunStatus.Screenshot(screenshot.id(), screenshot.label(), screenshot.fileName(),
+                    screenshot.failure(), screenshot.savedAt())).toList());
+        }
+
+        // A failed (or cancelled) tracker only shows its failure screenshot, since any profile screenshots are from an incomplete attempt
+        private List<ScreenshotFile> shownScreenshots() {
+            final List<ScreenshotFile> shown = new ArrayList<>();
+            if (state != RunStatus.TrackerState.FAILED && state != RunStatus.TrackerState.CANCELLED) {
+                shown.addAll(screenshots.values());
+            }
+            if (state != RunStatus.TrackerState.SUCCEEDED) {
+                shown.addAll(failureScreenshot);
+            }
+            return shown;
         }
 
         private Map<String, Long> stepCompletedAtByName() {

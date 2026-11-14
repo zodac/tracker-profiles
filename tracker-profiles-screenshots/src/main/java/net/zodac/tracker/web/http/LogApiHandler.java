@@ -19,9 +19,6 @@ package net.zodac.tracker.web.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import net.zodac.tracker.web.log.WebLogAppender;
 import org.jspecify.annotations.Nullable;
@@ -57,7 +54,7 @@ public final class LogApiHandler extends ApiHandler {
 
     @Override
     protected void handleGet(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException {
-        final Map<String, String> query = parseQuery(exchange.getRequestURI().getRawQuery());
+        final Map<String, String> query = queryParameters(exchange);
         sendJson(exchange, HttpStatus.OK, webLogAppender.entries(query.get("tracker"), parseAfter(query.get("after"))));
     }
 
@@ -71,21 +68,5 @@ public final class LogApiHandler extends ApiHandler {
         } catch (final NumberFormatException e) {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Invalid 'after' value: '%s'".formatted(after), e);
         }
-    }
-
-    private static Map<String, String> parseQuery(final @Nullable String rawQuery) {
-        final Map<String, String> query = new HashMap<>();
-        if (rawQuery == null || rawQuery.isEmpty()) {
-            return query;
-        }
-
-        for (final String parameter : rawQuery.split("&", -1)) {
-            final int separator = parameter.indexOf('=');
-            if (separator > 0) {
-                query.put(URLDecoder.decode(parameter.substring(0, separator), StandardCharsets.UTF_8),
-                    URLDecoder.decode(parameter.substring(separator + 1), StandardCharsets.UTF_8));
-            }
-        }
-        return query;
     }
 }

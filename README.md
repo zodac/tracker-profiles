@@ -364,6 +364,13 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
       warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
       attempt are separated within each step, and the screenshot messages are separated by redaction type
+    - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed
+      (with `TAKE_SCREENSHOT_ON_ERROR` enabled). Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
+      and move between the redaction types with the arrows (or the arrow keys)
+    - Each screenshot can be downloaded on its own, as can every screenshot of a tracker, or of every successful tracker in the execution. Several
+      screenshots are downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the execution started
+      (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). Screenshots are kept for the current (or most recent) execution only, and are still saved to the
+      output directory as before
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - **Run options** (open until an execution is started) holds the [options](#configuration-options) you are most likely to change for an execution,
       such as the tracker order, the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
@@ -577,7 +584,7 @@ Changes to these options apply from the next execution.
 | *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of the new directory created for the screenshots                                                                                                                                                                            | /app/screenshots |
 | *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX              |
 | *SCREENSHOT_EXISTS_ACTION*      | What to do when a screenshot for the tracker for the given date already exists [CREATE_ANOTHER, OVERWRITE, SKIP](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/config/ExistingScreenshotAction.java)                 | CREATE_ANOTHER   |
-| *TIMEZONE*                      | The local timezone, used to retrieve the current date to name the output directory                                                                                                                                                              | UTC              |
+| *TIMEZONE*                      | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                                                        | UTC              |
 
 #### Startup-Only Options
 

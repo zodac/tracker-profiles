@@ -17,10 +17,12 @@
 
 package net.zodac.tracker.app;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.progress.TrackerStep;
+import net.zodac.tracker.framework.redactor.RedactionType;
 
 /**
  * Receives progress updates from {@link ScreenshotOrchestrator} during an execution. Used by the web UI to display progress. Implementations must
@@ -80,6 +82,29 @@ public interface ExecutionListener {
      * @param trackerStep the completed {@link TrackerStep}
      */
     default void trackerStepCompleted(final String trackerName, final TrackerStep trackerStep) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called each time a profile screenshot of a tracker has been saved, or has been found to already exist (when existing screenshots are
+     * skipped). A later screenshot for the same {@link RedactionType} (on a retry) replaces the earlier one.
+     *
+     * @param trackerName   the name of the tracker
+     * @param redactionType the {@link RedactionType} of the screenshot
+     * @param screenshot    the saved screenshot file
+     */
+    default void trackerScreenshotSaved(final String trackerName, final RedactionType redactionType, final Path screenshot) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called each time a failure screenshot of a tracker has been saved, replacing any earlier one. Failure screenshots are deleted if the tracker
+     * then succeeds.
+     *
+     * @param trackerName the name of the tracker
+     * @param screenshot  the saved failure screenshot file
+     */
+    default void trackerFailureScreenshotSaved(final String trackerName, final Path screenshot) {
         // Do nothing by default
     }
 
