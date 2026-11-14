@@ -17,6 +17,8 @@
 
 package net.zodac.tracker.framework.config;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.RecordComponent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.DateTimeException;
@@ -34,7 +36,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.redactor.RedactionType;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -98,10 +99,8 @@ public record ApplicationConfiguration(
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final String BROWSER_DATA_STORAGE_PATH = "/tmp/chrome-home";
-
-    private static final Set<String> VALID_LOG_LEVELS = Arrays.stream(Level.values())
-        .map(Level::name)
-        .collect(Collectors.toSet());
+    private static final String SECRET_KEY_COMPONENT = "secretKey";
+    private static final String MASKED_VALUE = "****";
 
     /**
      * Loads the {@link ApplicationConfiguration} defined by environment variables.
@@ -116,31 +115,37 @@ public record ApplicationConfiguration(
      * Loads the {@link ApplicationConfiguration}, with each value taken from (in order of precedence): the provided {@code overrides}, the
      * environment variable, then the {@link ConfigurationOption#defaultValue()}.
      *
+     * <p>
+     * Values are validated by their {@link ConfigurationOption#type()}: an {@link ConfigurationOption.OptionType#INTEGER} must be in its
+     * {@link ConfigurationOption#range()}, and a {@link ConfigurationOption.OptionType#SELECT} or
+     * {@link ConfigurationOption.OptionType#MULTI_SELECT} must be one of its {@link ConfigurationOption#allowedValues()}.
+     *
      * @param overrides the values that override environment variables, keyed by {@link ConfigurationOption#name()}
      * @return the {@link ApplicationConfiguration}
      * @throws IllegalArgumentException thrown if any value is invalid
      */
     public static ApplicationConfiguration load(final Map<String, String> overrides) {
         final Source source = new Source(overrides);
+        final ZoneId timezone = getTimezone(source);
         return new ApplicationConfiguration(
             BROWSER_DATA_STORAGE_PATH,
-            getBrowserDimensions(source),
+            source.select(ConfigurationOption.BROWSER_RESOLUTION).replace('x', ','),
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
-            getBooleanValue(source, ConfigurationOption.ENABLE_ADULT_TRACKERS),
-            getBooleanValue(source, ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
-            getScreenshotExistsAction(source),
-            getBooleanValue(source, ConfigurationOption.FORCE_UI_BROWSER),
-            getInputTimeoutDuration(source),
-            getLogLevel(source),
-            getNumberOfParallelThreads(source),
-            getNumberOfScreenshotAttempts(source),
-            getOutputDirectory(source),
-            getRedactionTypes(source),
+            source.bool(ConfigurationOption.ENABLE_ADULT_TRACKERS),
+            source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
+            ExistingScreenshotAction.valueOf(source.select(ConfigurationOption.SCREENSHOT_EXISTS_ACTION)),
+            source.bool(ConfigurationOption.FORCE_UI_BROWSER),
+            Duration.ofSeconds(source.integer(ConfigurationOption.INPUT_TIMEOUT_SECONDS)),
+            source.select(ConfigurationOption.LOG_LEVEL),
+            source.integer(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS),
+            source.integer(ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS),
+            getOutputDirectory(source, timezone),
+            source.multiSelect(ConfigurationOption.REDACTION_TYPE, RedactionType::valueOf),
             source.get(ConfigurationOption.SECRET_KEY),
-            getBooleanValue(source, ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
-            getTimezone(source),
-            getTrackerExecutionOrder(source),
-            getWebUiPort(source)
+            source.bool(ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
+            timezone,
+            source.multiSelect(ConfigurationOption.TRACKER_EXECUTION_ORDER, TrackerType::valueOf),
+            source.integer(ConfigurationOption.WEB_UI_PORT)
         );
     }
 
@@ -153,43 +158,7 @@ public record ApplicationConfiguration(
         return !inputTimeoutDuration.isZero();
     }
 
-    private static String getBrowserDimensions(final Source source) {
-        final String resolution = source.get(ConfigurationOption.BROWSER_RESOLUTION).trim().toLowerCase(Locale.ROOT);
-        if (VALID_RESOLUTIONS.contains(resolution)) {
-            return resolution.replace('x', ',');
-        }
-
-        throw new IllegalArgumentException(
-            "[BROWSER_RESOLUTION] Unsupported browser resolution '%s', must be one of: %s".formatted(resolution, VALID_RESOLUTIONS));
-    }
-
-    private static Duration getInputTimeoutDuration(final Source source) {
-        final String inputTimeoutSeconds = source.get(ConfigurationOption.INPUT_TIMEOUT_SECONDS);
-        final int inputTimeoutSecondsValidated = parseIntegerInRange(inputTimeoutSeconds, "INPUT_TIMEOUT_SECONDS", 0, Integer.MAX_VALUE);
-        return Duration.ofSeconds(inputTimeoutSecondsValidated);
-    }
-
-    private static String getLogLevel(final Source source) {
-        final String logLevelRaw = source.get(ConfigurationOption.LOG_LEVEL).toUpperCase(Locale.ROOT);
-        if (!VALID_LOG_LEVELS.contains(logLevelRaw)) {
-            throw new IllegalArgumentException(
-                "[LOG_LEVEL] Invalid value: '%s', must be one of: %s".formatted(logLevelRaw, VALID_LOG_LEVELS));
-        }
-        return logLevelRaw;
-    }
-
-    private static int getNumberOfParallelThreads(final Source source) {
-        final String raw = source.get(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS);
-        return parseIntegerInRange(raw, "NUMBER_OF_PARALLEL_THREADS", 1, 32);
-    }
-
-    private static int getNumberOfScreenshotAttempts(final Source source) {
-        final String numberOfRetriesRaw = source.get(ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS);
-        return parseIntegerInRange(numberOfRetriesRaw, "NUMBER_OF_SCREENSHOT_ATTEMPTS", 1, 5);
-    }
-
-    private static Path getOutputDirectory(final Source source) {
-        final ZoneId timezone = getTimezone(source);
+    private static Path getOutputDirectory(final Source source, final ZoneId timezone) {
         final String outputDirectoryNameFormat = source.get(ConfigurationOption.OUTPUT_DIRECTORY_NAME_FORMAT);
         final String outputDirectoryParentPath = source.get(ConfigurationOption.OUTPUT_DIRECTORY_PARENT_PATH);
 
@@ -211,103 +180,38 @@ public record ApplicationConfiguration(
         }
     }
 
-    private static Set<RedactionType> getRedactionTypes(final Source source) {
-        return parseCommaSeparatedValue(source, ConfigurationOption.REDACTION_TYPE, RedactionType::find);
-    }
-
-    private static ExistingScreenshotAction getScreenshotExistsAction(final Source source) {
-        final String existingScreenshotActionRaw = source.get(ConfigurationOption.SCREENSHOT_EXISTS_ACTION);
-        final ExistingScreenshotAction existingScreenshotActionInput = ExistingScreenshotAction.get(existingScreenshotActionRaw);
-        if (existingScreenshotActionInput == null) {
-            throw new IllegalArgumentException("[SCREENSHOT_EXISTS_ACTION] Invalid value: '%s'".formatted(existingScreenshotActionRaw));
-        }
-
-        return existingScreenshotActionInput;
-    }
-
-    private static Set<TrackerType> getTrackerExecutionOrder(final Source source) {
-        return parseCommaSeparatedValue(source, ConfigurationOption.TRACKER_EXECUTION_ORDER, TrackerType::find);
-    }
-
-    private static <T> Set<T> parseCommaSeparatedValue(final Source source, final ConfigurationOption option, final Function<String, T> parser) {
-        final String envVarName = option.name();
-        final String rawValue = source.get(option);
-        final Set<T> results = new LinkedHashSet<>();
-
-        for (final String token : rawValue.split(",", -1)) {
-            final String trimmed = token.trim();
-            final T value = parser.apply(trimmed);
-
-            if (value == null) {
-                throw new IllegalArgumentException("[%s] Invalid value: '%s'".formatted(envVarName, trimmed));
-            }
-
-            if (!results.add(value)) {
-                throw new IllegalArgumentException("[%s] Duplicate value found: '%s'".formatted(envVarName, trimmed));
-            }
-        }
-        return results;
-    }
-
-    private static int getWebUiPort(final Source source) {
-        return parseIntegerInRange(source.get(ConfigurationOption.WEB_UI_PORT), ConfigurationOption.WEB_UI_PORT.name(), 1, 65_535);
-    }
-
-    private static boolean getBooleanValue(final Source source, final ConfigurationOption option) {
-        return Boolean.parseBoolean(source.get(option));
-    }
-
-    private static int parseIntegerInRange(final String input, final String environmentVariableName, final int min, final int max) {
-        try {
-            final int integer = Integer.parseInt(input);
-            if (integer < min || integer > max) {
-                throw new IllegalArgumentException(
-                    "[%s] Invalid input '%s', must be between %d and %d".formatted(environmentVariableName, input, min, max));
-            }
-            return integer;
-        } catch (final NumberFormatException e) {
-            throw new IllegalArgumentException("[%s] Invalid input '%s', must be a valid number".formatted(environmentVariableName, input), e);
-        }
-    }
-
     /**
      * Logs every value of the {@link ApplicationConfiguration} at {@code DEBUG} level. Called when the application starts and when an execution
      * starts, rather than on each load, since settings are also loaded to validate each change made in the web UI.
      */
     public void print() {
         LOGGER.debug("Loaded application configuration:");
-        LOGGER.debug("browserDataStoragePath={}", browserDataStoragePath);
-        LOGGER.debug("browserDimensions={}", browserDimensions);
-        LOGGER.debug("databasePath={}", databasePath);
-        LOGGER.debug("enableAdultContent={}", enableAdultContent);
-        LOGGER.debug("enableTranslationToEnglish={}", enableTranslationToEnglish);
-        LOGGER.debug("existingScreenshotAction={}", existingScreenshotAction);
-        LOGGER.debug("forceUiBrowser={}", forceUiBrowser);
-        LOGGER.debug("inputTimeoutDuration={}", inputTimeoutDuration);
-        LOGGER.debug("logLevel={}", logLevel);
-        LOGGER.debug("numberOfParallelThreads={}", numberOfParallelThreads);
-        LOGGER.debug("numberOfScreenshotAttempts={}", numberOfScreenshotAttempts);
-        LOGGER.debug("outputDirectory={}", outputDirectory);
-        LOGGER.debug("redactionTypes={}", redactionTypes);
-        LOGGER.debug("secretKey={}", secretKey.isEmpty() ? "" : "****");
-        LOGGER.debug("takeScreenshotOnError={}", takeScreenshotOnError);
-        LOGGER.debug("timezone={}", timezone);
-        LOGGER.debug("trackerExecutionOrder={}", trackerExecutionOrder);
-        LOGGER.debug("webUiPort={}", webUiPort);
+        for (final RecordComponent component : ApplicationConfiguration.class.getRecordComponents()) {
+            LOGGER.debug("{}={}", component.getName(), printableValue(component));
+        }
     }
 
     @Override
     public String toString() {
-        return ("ApplicationConfiguration[browserDataStoragePath=%s, browserDimensions=%s, databasePath=%s, enableAdultContent=%s, "
-            + "enableTranslationToEnglish=%s, existingScreenshotAction=%s, forceUiBrowser=%s, inputTimeoutDuration=%s, logLevel=%s, "
-            + "numberOfParallelThreads=%s, numberOfScreenshotAttempts=%s, outputDirectory=%s, redactionTypes=%s, secretKey=****, "
-            + "takeScreenshotOnError=%s, timezone=%s, trackerExecutionOrder=%s, webUiPort=%s]").formatted(browserDataStoragePath, browserDimensions,
-            databasePath, enableAdultContent, enableTranslationToEnglish, existingScreenshotAction, forceUiBrowser, inputTimeoutDuration, logLevel,
-            numberOfParallelThreads, numberOfScreenshotAttempts, outputDirectory, redactionTypes, takeScreenshotOnError, timezone,
-            trackerExecutionOrder, webUiPort);
+        return Arrays.stream(ApplicationConfiguration.class.getRecordComponents())
+            .map(component -> "%s=%s".formatted(component.getName(), printableValue(component)))
+            .collect(Collectors.joining(", ", "ApplicationConfiguration[", "]"));
     }
 
-    // Resolves a value from the overrides, then the environment, then the default value
+    // The value of a record component, with the secret key masked
+    private Object printableValue(final RecordComponent component) {
+        if (SECRET_KEY_COMPONENT.equals(component.getName())) {
+            return secretKey.isEmpty() ? "" : MASKED_VALUE;
+        }
+
+        try {
+            return component.getAccessor().invoke(this);
+        } catch (final IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Unable to read configuration value '%s'".formatted(component.getName()), e);
+        }
+    }
+
+    // Resolves a value from the overrides, then the environment, then the default value, and parses it by its type
     private record Source(Map<String, String> overrides) {
 
         String get(final ConfigurationOption option) {
@@ -316,6 +220,30 @@ public record ApplicationConfiguration(
                 return override;
             }
             return option.environmentValue().orElse(option.defaultValue());
+        }
+
+        boolean bool(final ConfigurationOption option) {
+            return Boolean.parseBoolean(get(option).trim());
+        }
+
+        int integer(final ConfigurationOption option) {
+            return option.parseInteger(get(option));
+        }
+
+        // The allowed value matching the input, ignoring case
+        String select(final ConfigurationOption option) {
+            return option.parseAllowedValue(get(option));
+        }
+
+        <T> Set<T> multiSelect(final ConfigurationOption option, final Function<String, T> parser) {
+            final Set<T> results = new LinkedHashSet<>();
+            for (final String token : get(option).split(",", -1)) {
+                final String value = option.parseAllowedValue(token);
+                if (!results.add(parser.apply(value))) {
+                    throw new IllegalArgumentException("[%s] Duplicate value found: '%s'".formatted(option.name(), value));
+                }
+            }
+            return results;
         }
     }
 }

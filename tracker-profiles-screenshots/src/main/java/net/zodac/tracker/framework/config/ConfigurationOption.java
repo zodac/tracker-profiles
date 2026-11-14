@@ -17,6 +17,8 @@
 
 package net.zodac.tracker.framework.config;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +68,7 @@ public enum ConfigurationOption {
     /**
      * The user input timeout in seconds.
      */
-    INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", OptionType.INTEGER, List.of(),
+    INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", Range.of(0, Integer.MAX_VALUE),
         "How long to wait for a user input for a manual tracker, in seconds, before the attempt fails (if disabled, or 0, waits until the user"
             + " responds)",
         Scope.EXECUTION),
@@ -80,14 +82,14 @@ public enum ConfigurationOption {
     /**
      * The number of parallel threads for headless trackers.
      */
-    NUMBER_OF_PARALLEL_THREADS(Tab.MAIN, "Execution", "Parallel browsers", "5", OptionType.INTEGER, List.of(),
-        "The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]", Scope.EXECUTION),
+    NUMBER_OF_PARALLEL_THREADS(Tab.MAIN, "Execution", "Parallel browsers", "5", Range.of(1, 32),
+        "The number of parallel browser threads to use for Headless trackers", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.
      */
-    NUMBER_OF_SCREENSHOT_ATTEMPTS(Tab.MAIN, "Execution", "Attempts per tracker", "1", OptionType.INTEGER, List.of(),
-        "The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]", Scope.EXECUTION),
+    NUMBER_OF_SCREENSHOT_ATTEMPTS(Tab.MAIN, "Execution", "Attempts per tracker", "1", Range.of(1, 5),
+        "The number of times to attempt to screenshot a tracker before marking it as a fail", Scope.EXECUTION),
 
     /**
      * The date format used to name the output directory.
@@ -141,8 +143,8 @@ public enum ConfigurationOption {
     /**
      * The web UI port.
      */
-    WEB_UI_PORT(Tab.SETTINGS, "System", "Port", "8080", OptionType.INTEGER, List.of(),
-        "The port on which the web UI is served [min: 1, max: 65535]", Scope.STARTUP);
+    WEB_UI_PORT(Tab.SETTINGS, "System", "Port", "8080", Range.of(1, 65_535),
+        "The port on which the web UI is served", Scope.STARTUP);
 
     /**
      * All available {@link ConfigurationOption}s.
@@ -157,9 +159,21 @@ public enum ConfigurationOption {
     private final List<String> allowedValues;
     private final String description;
     private final Scope scope;
+    private final @Nullable Range range;
 
     ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final OptionType type,
         final List<String> allowedValues, final String description, final Scope scope) {
+        this(tab, group, label, defaultValue, type, allowedValues, description, scope, null);
+    }
+
+    // An OptionType.INTEGER option, with the range of valid values
+    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final Range range,
+        final String description, final Scope scope) {
+        this(tab, group, label, defaultValue, OptionType.INTEGER, List.of(), description, scope, range);
+    }
+
+    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final OptionType type,
+        final List<String> allowedValues, final String description, final Scope scope, final @Nullable Range range) {
         this.tab = tab;
         this.group = group;
         this.label = label;
@@ -168,6 +182,7 @@ public enum ConfigurationOption {
         this.allowedValues = allowedValues;
         this.description = description;
         this.scope = scope;
+        this.range = range;
     }
 
     /**
@@ -249,12 +264,69 @@ public enum ConfigurationOption {
     }
 
     /**
-     * A user-facing description of the option.
+     * A user-facing description of the option, including the {@link #range()} of an {@link OptionType#INTEGER} option with a maximum.
      *
      * @return the description
      */
     public String description() {
-        return description;
+        if (range == null || range.maximum() == Integer.MAX_VALUE) {
+            return description;
+        }
+        return "%s [min: %d, max: %d]".formatted(description, range.minimum(), range.maximum());
+    }
+
+    /**
+     * The range of valid values of an {@link OptionType#INTEGER} option.
+     *
+     * @return the {@link Range}, or {@link Optional#empty()} if the option is not an {@link OptionType#INTEGER}
+     */
+    public Optional<Range> range() {
+        return Optional.ofNullable(range);
+    }
+
+    /**
+     * Parses the value of an {@link OptionType#INTEGER} option, which must be within its {@link #range()}.
+     *
+     * @param input the value to parse
+     * @return the parsed value
+     * @throws IllegalArgumentException if the value is not a number, or is outside the {@link #range()}
+     * @throws IllegalStateException    if the option is not an {@link OptionType#INTEGER}
+     */
+    public int parseInteger(final String input) {
+        if (range == null) {
+            throw new IllegalStateException("[%s] Is not an integer option".formatted(name()));
+        }
+
+        final String trimmed = input.trim();
+        final int integer;
+        try {
+            integer = Integer.parseInt(trimmed);
+        } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("[%s] Invalid input '%s', must be a valid number".formatted(name(), trimmed), e);
+        }
+
+        if (integer < range.minimum() || integer > range.maximum()) {
+            throw new IllegalArgumentException(
+                "[%s] Invalid input '%s', must be between %d and %d".formatted(name(), trimmed, range.minimum(), range.maximum()));
+        }
+        return integer;
+    }
+
+    /**
+     * Finds the {@link #allowedValues()} entry matching the input, ignoring case.
+     *
+     * @param input the value to find
+     * @return the matching allowed value, in its defined case
+     * @throws IllegalArgumentException if the value is not one of the {@link #allowedValues()}
+     */
+    public String parseAllowedValue(final String input) {
+        final String trimmed = input.trim();
+        return allowedValues
+            .stream()
+            .filter(allowedValue -> allowedValue.equalsIgnoreCase(trimmed))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException(
+                "[%s] Invalid value: '%s', must be one of: %s".formatted(name(), trimmed, allowedValues)));
     }
 
     /**
@@ -287,6 +359,33 @@ public enum ConfigurationOption {
 
     private static List<String> names(final Enum<?>[] values) {
         return Arrays.stream(values).map(Enum::name).toList();
+    }
+
+    /**
+     * The range of valid values of an {@link OptionType#INTEGER} {@link ConfigurationOption}, both inclusive.
+     *
+     * @param minimum the smallest valid value
+     * @param maximum the largest valid value ({@link Integer#MAX_VALUE} if unbounded)
+     */
+    public record Range(int minimum, int maximum) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Creates a {@link Range}.
+         *
+         * @param minimum the smallest valid value
+         * @param maximum the largest valid value ({@link Integer#MAX_VALUE} if unbounded)
+         * @return the {@link Range}
+         * @throws IllegalArgumentException if {@code minimum} is greater than {@code maximum}
+         */
+        public static Range of(final int minimum, final int maximum) {
+            if (minimum > maximum) {
+                throw new IllegalArgumentException("Minimum %d is greater than maximum %d".formatted(minimum, maximum));
+            }
+            return new Range(minimum, maximum);
+        }
     }
 
     /**

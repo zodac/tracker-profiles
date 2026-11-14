@@ -157,6 +157,8 @@ public final class SettingsService {
      * @param type               the {@link ConfigurationOption.OptionType}
      * @param description        the description
      * @param allowedValues      the allowed values, for selection types
+     * @param minimum            the smallest valid value, for an integer type
+     * @param maximum            the largest valid value, for an integer type (or {@code null} if unbounded)
      * @param defaultValue       the default value
      * @param environmentValue   the value set by the environment variable, or {@code null} if not set
      * @param savedValue         the value saved in the web UI, or {@code null} if not set
@@ -174,6 +176,8 @@ public final class SettingsService {
         ConfigurationOption.OptionType type,
         String description,
         List<String> allowedValues,
+        @Nullable Integer minimum,
+        @Nullable Integer maximum,
         String defaultValue,
         @Nullable String environmentValue,
         @Nullable String savedValue,
@@ -218,6 +222,8 @@ public final class SettingsService {
                 option.type(),
                 option.description(),
                 option.allowedValues(),
+                minimum(option),
+                maximum(option),
                 option.defaultValue(),
                 environmentValue,
                 savedValue,
@@ -229,12 +235,23 @@ public final class SettingsService {
             );
         }
 
+        private static @Nullable Integer minimum(final ConfigurationOption option) {
+            return option.range().map(ConfigurationOption.Range::minimum).orElse(null);
+        }
+
+        private static @Nullable Integer maximum(final ConfigurationOption option) {
+            return option.range()
+                .map(ConfigurationOption.Range::maximum)
+                .filter(maximum -> maximum != Integer.MAX_VALUE)
+                .orElse(null);
+        }
+
         // A secret value is never returned, only whether it is set
         private static SettingView sensitive(final ConfigurationOption option) {
             final boolean set = option.environmentValue().filter(value -> !value.isEmpty()).isPresent();
             final String maskedValue = set ? MASKED_VALUE : "";
             return new SettingView(option.name(), option.tab(), option.group(), option.label(), option.type(), option.description(),
-                option.allowedValues(), "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
+                option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
                 option.editableAtRuntime(), option.scope());
         }
     }
