@@ -38,7 +38,6 @@ import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code GazelleGames} tracker.
@@ -61,16 +60,12 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to select correct game title");
-
         final By selectionSelector = XpathBuilder
             .from(div, withId("tdwrap"))
             .child(form, atIndex(1))
             .child(table, atIndex(1))
             .build();
-        final WebElement selectionElement = browserInteractionHelper().waitForElementToBePresent(selectionSelector, pageLoadDuration());
-        browserInteractionHelper().highlightElement(selectionElement);
-        displayUtils().confirm(trackerDefinition().name(), "Select the correct game");
+        awaitUserInput(browserInteractionHelper().waitForElementToBePresent(selectionSelector, pageLoadDuration()), "Select the correct game");
     }
 
     @Override

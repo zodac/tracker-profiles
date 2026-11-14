@@ -57,14 +57,10 @@ public class Lst extends Unit3dHandler {
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("Waiting for user to select correct movie poster");
-
         final By selectionSelector = XpathBuilder
             .from(div, withClass("auth-form__text-input-group"))
             .build();
-        final WebElement selectionElement = driver.findElement(selectionSelector);
-        browserInteractionHelper().highlightElement(selectionElement);
-        displayUtils().confirm(trackerDefinition().name(), "Select the correct movie");
+        awaitUserInput(selectionSelector, "Select the correct movie");
 
         // If the user didn't click 'login', do it for them
         // Special case for PTP since the login button needs to be clicked twice

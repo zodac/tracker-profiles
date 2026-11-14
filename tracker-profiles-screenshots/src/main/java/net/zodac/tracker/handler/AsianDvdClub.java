@@ -83,12 +83,8 @@ public class AsianDvdClub extends AbstractTrackerHandler {
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter their personal information");
-
         final By birthdaySelector = By.id("birthday");
-        final WebElement birthdayElement = driver().findElement(birthdaySelector);
-        browserInteractionHelper().highlightElement(birthdayElement);
-        displayUtils().confirm(trackerDefinition().name(), "Enter the requested information");
+        awaitUserInput(birthdaySelector, "Enter the requested information");
     }
 
     @Override

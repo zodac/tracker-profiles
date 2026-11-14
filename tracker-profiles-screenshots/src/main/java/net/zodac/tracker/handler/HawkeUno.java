@@ -57,15 +57,11 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("Waiting for user to enter 2FA code");
-
         final By twoFactorSelector = XpathBuilder
             .from(div, withClass("ds-auth__card"))
             .child(form, atIndex(1))
             .build();
-        final WebElement twoFactorElement = driver.findElement(twoFactorSelector);
-        browserInteractionHelper().highlightElement(twoFactorElement);
-        displayUtils().confirm(trackerDefinition().name(), "Enter the 2FA code");
+        awaitUserInput(twoFactorSelector, "Enter the 2FA code");
 
         // If the user didn't click 'verify', do it for them
         final String nextUrl = driver.getCurrentUrl();

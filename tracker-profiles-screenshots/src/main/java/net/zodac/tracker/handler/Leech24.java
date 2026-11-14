@@ -37,7 +37,6 @@ import net.zodac.tracker.handler.redaction.RedactsEmail;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import net.zodac.tracker.handler.redaction.RedactsTorrentPasskey;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Leech24} tracker.
@@ -59,15 +58,11 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to solve the captcha");
-
         final By captchaSelector = XpathBuilder
             .from(div, withClass("g-recaptcha"))
             .child(div, atIndex(1))
             .build();
-        final WebElement captchaElement = driver().findElement(captchaSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaSelector, "Solve the captcha");
     }
 
     @Override

@@ -98,14 +98,10 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter captcha");
-
         final By captchaElementSelector = XpathBuilder
             .from(img, withAttribute("alt", "CAPTCHA"))
             .build();
-        final WebElement captchaElement = driver().findElement(captchaElementSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaElementSelector, "Solve the captcha");
     }
 
     @Override

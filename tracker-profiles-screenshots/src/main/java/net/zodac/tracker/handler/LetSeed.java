@@ -92,12 +92,8 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter captcha");
-
         final By captchaSelector = By.id("regimage");
-        final WebElement captchaElement = driver().findElement(captchaSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaSelector, "Solve the captcha");
     }
 
     @Override

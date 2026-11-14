@@ -38,7 +38,6 @@ import net.zodac.tracker.framework.xpath.NamedHtmlElement;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Common implementation of {@link AbstractTrackerHandler} for {@code .click} family of trackers.
@@ -67,14 +66,10 @@ public class TheClickHandler extends AbstractTrackerHandler implements RedactsIp
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to solve the captcha");
-
         final By captchaSelector = XpathBuilder
             .from(div, withClass("h-captcha"))
             .build();
-        final WebElement captchaElement = driver().findElement(captchaSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaSelector, "Solve the captcha");
     }
 
     @Override

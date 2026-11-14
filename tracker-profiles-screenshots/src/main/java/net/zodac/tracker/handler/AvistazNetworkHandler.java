@@ -89,17 +89,13 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter captcha");
-
         final By captchaSelector = XpathBuilder
             .from(input, withName("captcha"))
             .navigateTo(parent(div))
             .child(div, atIndex(1))
             .child(img, atIndex(1))
             .build();
-        final WebElement captchaElement = driver().findElement(captchaSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaSelector, "Solve the captcha");
     }
 
     @Override

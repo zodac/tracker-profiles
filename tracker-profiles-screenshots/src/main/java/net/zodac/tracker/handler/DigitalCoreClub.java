@@ -31,7 +31,6 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code DigitalCore.Club} tracker.
@@ -75,12 +74,8 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter captcha");
-
         final By captchaSelector = By.id("captcha");
-        final WebElement captchaElement = driver().findElement(captchaSelector);
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(captchaSelector, "Solve the captcha");
     }
 
     @Override

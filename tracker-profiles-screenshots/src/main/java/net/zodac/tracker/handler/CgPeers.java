@@ -82,12 +82,8 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("Waiting for user to enter the 2FA code and click the 'Verify Code' button");
-
         final By selectionSelector = By.name("code");
-        final WebElement selectionElement = driver.findElement(selectionSelector);
-        browserInteractionHelper().highlightElement(selectionElement);
-        displayUtils().confirm(trackerDefinition().name(), "Enter the 2FA code");
+        awaitUserInput(selectionSelector, "Enter the 2FA code");
 
         // If the user didn't click 'Verify Code', do it for them (it shares the same HTML ID as the login button from the previous page)
         final String nextUrl = driver.getCurrentUrl();

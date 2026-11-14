@@ -36,7 +36,6 @@ import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.redaction.RedactsIpAddress;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code SocietyGlitch} tracker.
@@ -59,11 +58,7 @@ public class SocietyGlitch extends AbstractTrackerHandler implements RedactsIpAd
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("Waiting for user to enter captcha");
-
-        final WebElement captchaElement = driver().findElement(By.id("captcha"));
-        browserInteractionHelper().highlightElement(captchaElement);
-        displayUtils().confirm(trackerDefinition().name(), "Solve the captcha");
+        awaitUserInput(By.id("captcha"), "Solve the captcha");
     }
 
     @Override

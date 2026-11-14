@@ -68,11 +68,7 @@ public class PassThePopcorn extends AbstractTrackerHandler implements RedactsEma
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("Waiting for user to select correct movie title");
-
-        final WebElement selectionElement = driver.findElement(By.id("captcha_container"));
-        browserInteractionHelper().highlightElement(selectionElement);
-        displayUtils().confirm(trackerDefinition().name(), "Select the correct movie");
+        awaitUserInput(By.id("captcha_container"), "Select the correct movie");
 
         // If the user didn't click 'login', do it for them
         // Special case for PTP since the login button needs to be clicked twice
