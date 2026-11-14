@@ -25,7 +25,8 @@
 #   - For ai-sandbox-configuration/Dockerfile:
 #       - Updates the JDK (`AS jdk`) and Maven (`AS maven`) source stage tags alongside the main Dockerfile
 #       - Updates the pinned versions in its Debian package block IN PLACE (the block's RUN shape is kept), resolved
-#         against the Debian release of the shared ai-sandbox base image, which is what the sandbox actually runs
+#         against the Debian release of the shared ai-sandbox base image, which is what the sandbox actually runs -
+#         by the ai-sandbox submodule's `sandbox.sh update-versions --project-only --packages-only`
 #
 # Exit Codes:
 #   - 0: Success
@@ -36,9 +37,9 @@ set -euo pipefail
 
 DEBIAN_DOCKER_IMAGE_VERSION="13.7"
 
-# The sandbox image's project layer, and the shared ai-sandbox base it builds on (whose Debian release the sandbox runs)
+# The sandbox image's project layer, and the ai-sandbox submodule whose update-versions bumps its Debian packages
 SANDBOX_DOCKERFILE="./ai-sandbox-configuration/Dockerfile"
-AI_SANDBOX_BASE_DOCKERFILE="./ai-sandbox/image/base/Dockerfile"
+AI_SANDBOX_DIR="./ai-sandbox"
 
 update_debian_packages() {
     dockerfile="${1}"
@@ -147,77 +148,25 @@ update_debian_packages() {
     echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
 }
 
-# The ai-sandbox base's Debian image (`debian:X.Y`), or nothing if the submodule isn't checked out
-ai_sandbox_debian_image() {
-    grep -oP '^FROM\s+\Kdebian:[0-9]+\.[0-9]+' "${AI_SANDBOX_BASE_DOCKERFILE}" 2>/dev/null | tail -1 || true
-}
-
-# Unlike update_debian_packages, this rewrites only the version strings inside the marker block, since the sandbox
-# layer's RUN uses BuildKit cache mounts that the generic block template would drop
+# The sandbox layer's Debian packages, moved by the ai-sandbox submodule's own updater
+# (`sandbox.sh update-versions --project-only --packages-only`): it rewrites only the version strings inside the
+# marker block (its RUN keeps the BuildKit cache mounts that update_debian_packages' block template would drop),
+# resolves each package against the shared base's Debian release (the one the sandbox runs), and touches no FROM
+# line - the jdk/maven stage tags stay this script's. All or nothing: a package with no candidate changes no pin.
 update_sandbox_debian_packages() {
-    local dockerfile="${SANDBOX_DOCKERFILE}"
-    local start_marker="# BEGIN DEBIAN PACKAGES"
-    local end_marker="# END DEBIAN PACKAGES"
-
-    if [[ ! -f "${dockerfile}" ]]; then
-        echo "⚠️ ${dockerfile} not found, skipping"
-        return 0
-    fi
-    if ! grep -q "${start_marker}" "${dockerfile}" || ! grep -q "${end_marker}" "${dockerfile}"; then
-        echo "❌ Could not find Debian marker lines in ${dockerfile}"
-        return 1
-    fi
-
-    local base_image
-    base_image=$(ai_sandbox_debian_image)
-    if [[ -z "${base_image}" ]]; then
-        echo "❌ Could not read the Debian release from ${AI_SANDBOX_BASE_DOCKERFILE} (is the ai-sandbox submodule checked out?)"
-        return 1
-    fi
-
     echo
-    echo "🔍 Fetching latest sandbox Debian package versions (against ${base_image})..."
-    docker pull "${base_image}" >/dev/null
+    echo "🔍 Updating the Debian packages in ${SANDBOX_DOCKERFILE} (ai-sandbox update-versions)..."
 
-    local package_block
-    package_block=$(awk -v start="${start_marker}" -v end="${end_marker}" '
-        $0 ~ start { in_block = 1 }
-        in_block
-        $0 ~ end { in_block = 0 }
-    ' "${dockerfile}")
-
-    local package_names
-    mapfile -t package_names < <(echo "${package_block}" | grep -oP '^\s*[a-z0-9.+-]+(?==")' | sed 's/^[[:space:]]*//')
-    if [[ "${#package_names[@]}" -eq 0 ]]; then
-        echo "❌ No package names found in ${dockerfile}"
-        return 1
+    local output status=0
+    output=$("${AI_SANDBOX_DIR}/sandbox.sh" update-versions --project-only --packages-only 2>&1) || status=$?
+    if [[ "${status}" -ne 0 ]]; then
+        echo "${output}"
+        echo "❌ ai-sandbox update-versions failed for ${SANDBOX_DOCKERFILE}"
+        return "${status}"
     fi
+    grep -E '^[[:space:]]+[a-z0-9.+-]+([= ]|$)' <<< "${output}" || true
 
-    local versions_raw
-    versions_raw=$(docker run --rm "${base_image}" sh -c \
-        "apt-get update -qq -o Acquire::Languages=none 2>/dev/null && apt-cache policy ${package_names[*]}")
-
-    local -A sandbox_versions
-    local pkg ver
-    while IFS='=' read -r pkg ver; do
-        [[ -n "${pkg}" && -n "${ver}" && "${ver}" != "(none)" ]] && sandbox_versions["${pkg}"]="${ver}"
-    done < <(echo "${versions_raw}" | awk '
-        /^[a-z0-9]/ { pkg=$1; sub(/:$/, "", pkg) }
-        /Candidate:/  { print pkg "=" $2 }
-    ')
-
-    local package version
-    for package in "${package_names[@]}"; do
-        version="${sandbox_versions["${package}"]:-}"
-        if [[ -z "${version}" ]]; then
-            echo "❌ Failed to get version for: ${package}"
-            return 1
-        fi
-        echo "  ${package}=${version}"
-        sed -i "/${start_marker}/,/${end_marker}/ s|^\([[:space:]]*${package}=\)\"[^\"]*\"|\1\"${version}\"|" "${dockerfile}"
-    done
-
-    echo "✅ ${dockerfile#./} updated successfully with latest Debian packages"
+    echo "✅ ${SANDBOX_DOCKERFILE#./} updated successfully with latest Debian packages"
 }
 
 update_ubuntu_packages() {
