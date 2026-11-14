@@ -18,6 +18,8 @@ import {byId, el, pluralise, request, showToast} from './util.mjs'
 
 export let statusTimer = null
 export let latestStatus = null
+// Whether the last status request failed, so the error is only shown once while the application cannot be reached
+let statusUnreachable = false
 
 export function isActive(status) {
     return Boolean(status) && (status.state === 'RUNNING' || status.state === 'CANCELLING')
@@ -160,10 +162,19 @@ function countTrackers(status, state) {
 
 export function refreshStatus() {
     return request('GET', '/api/run')
-        .then(renderStatus)
+        .then(function (status) {
+            if (statusUnreachable) {
+                statusUnreachable = false
+                showToast('Reconnected to the application')
+            }
+            renderStatus(status)
+        })
         .catch(function (error) {
-            showToast(error.message, 'error')
-            // Keeps checking, so the page recovers once the application is reachable again
+            // Shown once, rather than on every retry, until the application is reachable again
+            if (!statusUnreachable) {
+                statusUnreachable = true
+                showToast(`Unable to reach the application, retrying: ${error.message}`, 'error')
+            }
             scheduleStatusRefresh(IDLE_POLL_INTERVAL_MS)
         })
 }
