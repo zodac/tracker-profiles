@@ -68,6 +68,8 @@ public final class SettingsApiHandler extends ApiHandler {
             sendJson(exchange, HttpStatus.OK, settingsService.updateSettings(settingsUpdate.values()));
         } catch (final IllegalArgumentException e) {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, e);
+        } catch (final IllegalStateException e) {
+            throw new HttpRequestException(HttpStatus.CONFLICT, e);
         }
     }
 
@@ -81,6 +83,8 @@ public final class SettingsApiHandler extends ApiHandler {
             sendJson(exchange, HttpStatus.OK, settingsService.resetSetting(pathParameter));
         } catch (final IllegalArgumentException e) {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, e);
+        } catch (final IllegalStateException e) {
+            throw new HttpRequestException(HttpStatus.CONFLICT, e);
         }
     }
 

@@ -61,12 +61,14 @@ public final class WebServer {
      */
     public static WebServer start(final ApplicationConfiguration applicationConfiguration, final WebLogAppender webLogAppender)
         throws IOException, SQLException {
-        final ApplicationDatabase applicationDatabase = ApplicationDatabase.open(applicationConfiguration.databasePath());
+        final ApplicationDatabase applicationDatabase = ApplicationDatabase.open(applicationConfiguration.databasePath(),
+            applicationConfiguration.secretKey());
         removeObsoleteSettings(applicationDatabase);
         applyStoredSettings(applicationDatabase);
 
         final RunManager runManager = RunManager.create(applicationDatabase, webLogAppender);
-        final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::applySavedSettings);
+        final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::isExecutionInProgress,
+            runManager::applySavedSettings);
 
         final HttpServer httpServer = HttpServer.create(new InetSocketAddress(applicationConfiguration.webUiPort()), 0);
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());

@@ -384,10 +384,15 @@ select:focus-visible,
     outline-offset: 1px;
 }
 
+select {
+    cursor: pointer;
+}
+
 input:disabled,
 select:disabled {
     background: var(--surface-muted);
     color: var(--text-muted);
+    cursor: not-allowed;
 }
 
 .inline-field {
@@ -440,6 +445,14 @@ select:disabled {
     border-radius: 50%;
     background: #ffffff;
     transition: transform 0.15s;
+}
+
+.switch input:disabled {
+    cursor: not-allowed;
+}
+
+.switch input:disabled + .switch-track {
+    opacity: 0.5;
 }
 
 .switch input:checked + .switch-track {
@@ -544,8 +557,9 @@ select:disabled {
     border-color: var(--danger);
 }
 
-.option-row.locked .option-label > span:not(.lock-badge),
-.option-row.locked .option-description {
+.option-row.locked .option-label,
+.option-row.locked .option-description,
+.setting-row.locked .setting-description {
     opacity: 0.6;
 }
 
@@ -585,94 +599,117 @@ select:disabled {
     grid-column: 1 / -1;
 }
 
-.options-legend {
+/* Ordered choices (e.g. tracker order, redaction types), dragged into order */
+
+.sortable {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 360px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sortable-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin: 12px 0 0;
-    font-size: 12px;
-}
-
-.live-dot {
-    display: inline-block;
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--success);
-}
-
-.lock-badge {
-    padding: 0 6px;
+    gap: 10px;
+    padding: 6px 10px 6px 4px;
     border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 500;
-}
-
-/* Ordered choices (e.g. tracker order, redaction types) */
-
-.chips {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-
-.chip-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.chip,
-.chip-move {
-    font: inherit;
-    font-size: 13px;
-    border: 1px solid var(--border);
-    background: var(--surface-muted);
-    color: var(--text-muted);
-    cursor: pointer;
-}
-
-.chip {
-    padding: 4px 10px;
     border-radius: 6px;
+    background: var(--surface);
+}
+
+.sortable-item.excluded .sortable-name,
+.sortable-item.excluded .sortable-position {
+    color: var(--text-muted);
     text-decoration: line-through;
 }
 
-.chip.selected {
+.sortable-item.dragging {
+    position: relative;
+    z-index: 2;
     border-color: var(--accent);
     background: var(--accent-soft);
-    color: var(--accent);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.2);
+}
+
+.sortable-position {
+    min-width: 1ch;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.sortable-name {
+    flex: 1;
     font-weight: 500;
-    text-decoration: none;
 }
 
-.chip.fixed {
-    opacity: 0.7;
-}
-
-.chip-move {
-    padding: 4px 7px;
-    border-radius: 6px;
+.drag-handle {
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 16px;
     line-height: 1;
+    cursor: grab;
+    touch-action: none;
 }
 
-.chip:disabled,
-.chip-move:disabled {
+.drag-handle:hover:not(:disabled) {
+    background: var(--surface-muted);
+    color: var(--text);
+}
+
+.sortable-item.dragging .drag-handle {
+    cursor: grabbing;
+}
+
+.drag-handle:disabled {
     cursor: not-allowed;
+    opacity: 0.5;
 }
 
-.chip-move:disabled {
-    opacity: 0.4;
-}
-
-.chip:focus-visible,
-.chip-move:focus-visible {
+.drag-handle:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: 1px;
+}
+
+.sortable.disabled .sortable-item {
+    background: var(--surface-muted);
+}
+
+/* Timeout (disabled, or a number of seconds) */
+
+.timeout-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.timeout-seconds {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.timeout-seconds input[type="number"] {
+    width: 96px;
+}
+
+.locked-notice {
+    margin: 12px 16px 0;
+    font-size: 13px;
+}
+
+#settings-locked {
+    margin: 0;
 }
 
 /* Requests for a user input */
@@ -1078,10 +1115,6 @@ select:disabled {
     border-top: 1px solid var(--border);
 }
 
-.options-panel .options-legend {
-    padding: 0 16px 14px;
-}
-
 .log-details .log-output {
     height: 40vh;
     min-height: 200px;
@@ -1338,6 +1371,58 @@ select:disabled {
     background: var(--surface);
 }
 
+/* A tracker without credentials cannot be run, enabled or removed, so those columns are hidden (keeping the columns aligned) */
+.tracker-row.unset .tracker-extra {
+    visibility: hidden;
+}
+
+/* The page is kept still with a manual scroll when a tracker moves between groups, so the browser must not also adjust it */
+#tracker-groups,
+#tracker-groups * {
+    overflow-anchor: none;
+}
+
+/* Trackers selected (with Ctrl+click) to change together */
+.tracker-row.selected {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.selection-bar {
+    position: sticky;
+    top: 64px;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.15);
+}
+
+.selection-count {
+    margin-right: auto;
+    font-weight: 600;
+}
+
+kbd {
+    padding: 0 4px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--surface-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+.group-hint {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+}
+
 .tracker-row.editing input[type="text"],
 .tracker-row.editing input[type="password"] {
     border-color: var(--accent);
@@ -1441,8 +1526,11 @@ select:disabled {
     margin-left: 8px;
 }
 
-.legend .badge:first-child {
-    margin-left: 0;
+.legend .changed-bar {
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--changed);
 }
 
 #settings-groups {
@@ -1461,7 +1549,7 @@ select:disabled {
 
 .setting-row {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px) 64px;
+    grid-template-columns: minmax(220px, 1fr) minmax(220px, 360px);
     gap: 6px 20px;
     align-items: start;
     padding: 12px 16px 12px 13px;
@@ -1512,10 +1600,6 @@ select:disabled {
     font-size: 12px;
 }
 
-.setting-meta .default-value {
-    font-family: var(--mono);
-}
-
 .setting-input {
     display: flex;
     flex-direction: column;
@@ -1524,10 +1608,6 @@ select:disabled {
 
 .setting-input .switch {
     margin-top: 6px;
-}
-
-.setting-actions {
-    padding-top: 2px;
 }
 
 /* Toasts */
@@ -1649,6 +1729,10 @@ select:disabled {
     .tracker-row,
     .setting-row {
         grid-template-columns: 1fr;
+    }
+
+    .tracker-row.unset .tracker-extra {
+        display: none;
     }
 
     .toolbar {

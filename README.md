@@ -365,16 +365,19 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
       attempt are separated within each step, and the screenshot messages are separated by redaction type
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
-    - **Run options** (collapsed by default) holds the [options](#configuration-options) you are most likely to change for an execution, such as the
-      tracker order, the number of attempts per tracker or the log level. Options marked with a green dot can be changed while an execution is in
-      progress and apply to it straight away; the others are locked until it finishes
+    - **Run options** (open until an execution is started) holds the [options](#configuration-options) you are most likely to change for an execution,
+      such as the tracker order, the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
+      progress
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
-- **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with fields for
-  the username/email and password of each tracker, and the result of its most recent execution. Trackers can also be
-  [imported from a CSV file](#importing-trackers)
+- **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with trackers
+  that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
+  execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
+  seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
+  Several trackers can be selected with `Ctrl`+click (or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers
+  can also be [imported from a CSV file](#importing-trackers)
 - **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
-  from its default is highlighted, along with whether it was set by an environment variable or saved in the web UI
+  from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
@@ -390,11 +393,16 @@ its own. The examples use a named volume:
 
 If no volume is mounted, Docker creates an anonymous volume, which is not reused when a new container is created (as with `--rm`).
 
-Settings saved in the web UI take precedence over environment variables (including after a restart) until they are reset. See
+Settings saved in the web UI take precedence over environment variables (including after a restart). See
 [Configuration Options](#configuration-options) for when a change to each option takes effect, and which can only be set as environment variables.
 
-> **Note:** The web UI has no authentication, and the database stores passwords in plain text. Do not expose the port outside your local network.
-> Saved passwords are never sent back to the browser.
+Tracker passwords are encrypted in the database (AES-256-GCM), with a key derived from the `SECRET_KEY` environment variable, which must be set to
+at least 16 characters (for example, the output of `openssl rand -base64 32`). Keep the same secret for as long as the database is used: if it
+changes, the stored passwords cannot be decrypted and the application does not start. Passwords saved by an earlier version in plain text are
+encrypted when the application starts.
+
+> **Note:** The web UI has no authentication. Do not expose the port outside your local network. Saved passwords are never sent back to the
+> browser.
 
 When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
 tab (and the tab title changes). Complete the step in the tracker's browser window, then select **Continue**; the execution also continues by itself
@@ -413,7 +421,9 @@ the import, and are not saved.
 
 ### Running In Docker
 
-The application is run using Docker, and below are the commands to run the `latest` docker image.
+The application is run using Docker, and below are the commands to run the `latest` docker image. `SECRET_KEY` is required, so set
+`TRACKER_PROFILES_SECRET_KEY` first (for example, `export TRACKER_PROFILES_SECRET_KEY="$(openssl rand -base64 32)"`), and keep the same value
+each time the same database is used.
 
 <details>
 <summary>Docker Commands</summary>
@@ -442,6 +452,7 @@ docker run \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
     --env REDACTION_TYPE=BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
+    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
     --env TAKE_SCREENSHOT_ON_ERROR=false \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
@@ -478,6 +489,7 @@ MSYS_NO_PATHCONV=1 docker run \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
     --env REDACTION_TYPE=BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
+    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
     --env TAKE_SCREENSHOT_ON_ERROR=false \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
@@ -536,23 +548,22 @@ groups:
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
 
 A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including after the
-container is restarted, until it is reset with the **Reset** button.
+container is restarted. Run options and settings cannot be changed while an execution is in progress.
 
 #### Run Options
 
-Options that apply *Immediately* also change an execution that is in progress. Options that apply at *Execution start* are locked in the web UI while
-an execution is in progress.
+These options apply from the next execution.
 
-| Environment Variable            | Description                                                                                                                                                                 | Applies         | Default Value   |
-|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------|
-| *ENABLE_ADULT_TRACKERS*         | Whether to take screenshots of trackers that primarily host adult content                                                                                                   | Execution start | true            |
-| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                                | Execution start | false           |
-| *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)                       | Immediately     | 0               |
-| *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)               | Immediately     | INFO            |
-| *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                                       | Execution start | 5               |
-| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                         | Immediately     | 1               |
-| *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                          | Immediately     | false           |
-| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed, at least one must be selected (case-insensitive). During an execution, a type can be changed until it starts | Immediately     | HEADLESS,MANUAL |
+| Environment Variable            | Description                                                                                                                                                         | Default Value   |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| *ENABLE_ADULT_TRACKERS*         | Whether to take screenshots of trackers that primarily host adult content                                                                                           | true            |
+| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                        | false           |
+| *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
+| *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                               | 5               |
+| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                 | 1               |
+| *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                  | false           |
+| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed, at least one must be selected (case-insensitive)                                                     | HEADLESS,MANUAL |
 
 #### Settings
 
@@ -570,9 +581,9 @@ Changes to these options apply from the next execution.
 
 #### Startup-Only Options
 
-These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference (marked
-as *Environment only*), but cannot be changed there. `DISPLAY`, `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container itself, so are not
-shown in the web UI.
+These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
+(marked as *Environment only*, with the value of `SECRET_KEY` hidden), but cannot be changed there. `DISPLAY`, `JAVA_OPTS` and
+`JAVA_ADDITIONAL_OPTS` configure the container itself, so are not shown in the web UI.
 
 | Environment Variable   | Description                                                                                                                                                     | Default Value                 |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
@@ -580,6 +591,7 @@ shown in the web UI.
 | *DISPLAY*              | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                              |                               |
 | *JAVA_ADDITIONAL_OPTS* | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                  |                               |
 | *JAVA_OPTS*            | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                  |                               |
+| *SECRET_KEY*           | **Required.** The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown in the web UI)                       |                               |
 | *WEB_UI_PORT*          | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                          | 8080                          |
 
 #### JVM Options
@@ -698,6 +710,7 @@ docker run \
     --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
     --env REDACTION_TYPE=NONE,BLUR,BOX \
     --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
+    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
     --env TAKE_SCREENSHOT_ON_ERROR=true \
     --env TIMEZONE=UTC \
     --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \

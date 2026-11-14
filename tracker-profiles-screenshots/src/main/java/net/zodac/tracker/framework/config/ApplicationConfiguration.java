@@ -54,6 +54,7 @@ import org.apache.logging.log4j.Logger;
  * @param numberOfScreenshotAttempts the number of times to attempt to screenshot a tracker
  * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
  * @param redactionTypes             the {@link RedactionType}s to perform redaction of sensitive information on the user profile page, in order
+ * @param secretKey                  the secret used to encrypt the passwords stored in the database
  * @param takeScreenshotOnError      whether to take a screenshot of the current page if an error occurs during screenshotting
  * @param trackerExecutionOrder      the execution order of the different {@link TrackerType}s
  * @param webUiPort                  the port on which the web UI is served
@@ -72,6 +73,7 @@ public record ApplicationConfiguration(
     int numberOfScreenshotAttempts,
     Path outputDirectory,
     Set<RedactionType> redactionTypes,
+    String secretKey,
     boolean takeScreenshotOnError,
     Set<TrackerType> trackerExecutionOrder,
     int webUiPort
@@ -132,6 +134,7 @@ public record ApplicationConfiguration(
             getNumberOfScreenshotAttempts(source),
             getOutputDirectory(source),
             getRedactionTypes(source),
+            source.get(ConfigurationOption.SECRET_KEY),
             getBooleanValue(source, ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
             getTrackerExecutionOrder(source),
             getWebUiPort(source)
@@ -145,35 +148,6 @@ public record ApplicationConfiguration(
      */
     public boolean inputTimeoutEnabled() {
         return !inputTimeoutDuration.isZero();
-    }
-
-    /**
-     * Creates a copy of this {@link ApplicationConfiguration}, with the value of every {@link ConfigurationOption.Scope#LIVE} option taken from
-     * {@code liveValues}. Used to apply changes made during an execution, without changing the options that are only read when an execution
-     * starts.
-     *
-     * @param liveValues the {@link ApplicationConfiguration} holding the new values of the live options
-     * @return the updated {@link ApplicationConfiguration}
-     */
-    public ApplicationConfiguration withLiveValuesFrom(final ApplicationConfiguration liveValues) {
-        return new ApplicationConfiguration(
-            browserDataStoragePath,
-            browserDimensions,
-            databasePath,
-            enableAdultContent,
-            enableTranslationToEnglish,
-            existingScreenshotAction,
-            forceUiBrowser,
-            liveValues.inputTimeoutDuration(),
-            liveValues.logLevel(),
-            numberOfParallelThreads,
-            liveValues.numberOfScreenshotAttempts(),
-            outputDirectory,
-            redactionTypes,
-            liveValues.takeScreenshotOnError(),
-            liveValues.trackerExecutionOrder(),
-            webUiPort
-        );
     }
 
     private static String getBrowserDimensions(final Source source) {
@@ -305,9 +279,21 @@ public record ApplicationConfiguration(
         LOGGER.debug("numberOfScreenshotAttempts={}", numberOfScreenshotAttempts);
         LOGGER.debug("outputDirectory={}", outputDirectory);
         LOGGER.debug("redactionTypes={}", redactionTypes);
+        LOGGER.debug("secretKey={}", secretKey.isEmpty() ? "" : "****");
         LOGGER.debug("takeScreenshotOnError={}", takeScreenshotOnError);
         LOGGER.debug("trackerExecutionOrder={}", trackerExecutionOrder);
         LOGGER.debug("webUiPort={}", webUiPort);
+    }
+
+    @Override
+    public String toString() {
+        return ("ApplicationConfiguration[browserDataStoragePath=%s, browserDimensions=%s, databasePath=%s, enableAdultContent=%s, "
+            + "enableTranslationToEnglish=%s, existingScreenshotAction=%s, forceUiBrowser=%s, inputTimeoutDuration=%s, logLevel=%s, "
+            + "numberOfParallelThreads=%s, numberOfScreenshotAttempts=%s, outputDirectory=%s, redactionTypes=%s, secretKey=****, "
+            + "takeScreenshotOnError=%s, trackerExecutionOrder=%s, webUiPort=%s]").formatted(browserDataStoragePath, browserDimensions, databasePath,
+            enableAdultContent, enableTranslationToEnglish, existingScreenshotAction, forceUiBrowser, inputTimeoutDuration, logLevel,
+            numberOfParallelThreads, numberOfScreenshotAttempts, outputDirectory, redactionTypes, takeScreenshotOnError, trackerExecutionOrder,
+            webUiPort);
     }
 
     // Resolves a value from the overrides, then the environment, then the default value

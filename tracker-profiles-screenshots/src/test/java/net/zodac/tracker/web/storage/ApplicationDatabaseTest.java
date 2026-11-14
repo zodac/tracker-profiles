@@ -18,10 +18,16 @@
 package net.zodac.tracker.web.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +39,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class ApplicationDatabaseTest {
 
+    private static final String SECRET_KEY = "test-secret-key-value";
+
     @TempDir
     private Path tempDirectory;
 
@@ -40,7 +48,7 @@ class ApplicationDatabaseTest {
 
     @BeforeEach
     void setUp() throws IOException, SQLException {
-        applicationDatabase = ApplicationDatabase.open(tempDirectory.resolve("nested").resolve("test.db"));
+        applicationDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY);
     }
 
     @Test
@@ -60,6 +68,15 @@ class ApplicationDatabaseTest {
 
         assertThat(applicationDatabase.findAllCredentials())
             .containsExactly(new StoredTrackerCredential("Tracker", "newUser", "password", false));
+    }
+
+    @Test
+    void givenSavedCredential_whenSavedWithEmptyPassword_thenPasswordIsRemoved() throws SQLException {
+        applicationDatabase.saveCredential("Tracker", "user", "password", true);
+        applicationDatabase.saveCredential("Tracker", "user", "", false);
+
+        assertThat(applicationDatabase.findAllCredentials())
+            .containsExactly(new StoredTrackerCredential("Tracker", "user", "", false));
     }
 
     @Test
@@ -105,6 +122,36 @@ class ApplicationDatabaseTest {
     }
 
     @Test
+    void givenSavedCredential_whenReadFromDatabaseFile_thenPasswordIsEncrypted() throws SQLException {
+        applicationDatabase.saveCredential("Tracker", "user", "password", true);
+
+        assertThat(readStoredPassword("Tracker"))
+            .startsWith(PasswordCipher.ENCRYPTED_PREFIX)
+            .doesNotContain("password");
+    }
+
+    @Test
+    void givenPlainTextPassword_whenDatabaseIsOpened_thenPasswordIsEncryptedAndReadable() throws IOException, SQLException {
+        executeSql("INSERT INTO tracker_credentials (name, username, password, enabled) VALUES ('Tracker', 'user', 'plainPassword', 1)");
+
+        final ApplicationDatabase reopenedDatabase = ApplicationDatabase.open(databasePath(), SECRET_KEY);
+
+        assertThat(readStoredPassword("Tracker"))
+            .startsWith(PasswordCipher.ENCRYPTED_PREFIX);
+        assertThat(reopenedDatabase.findAllCredentials())
+            .containsExactly(new StoredTrackerCredential("Tracker", "user", "plainPassword", true));
+    }
+
+    @Test
+    void givenPasswordsEncryptedWithAnotherSecret_whenDatabaseIsOpened_thenExceptionIsThrown() throws SQLException {
+        applicationDatabase.saveCredential("Tracker", "user", "password", true);
+
+        assertThatThrownBy(() -> ApplicationDatabase.open(databasePath(), "another-secret-key-value"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("different key");
+    }
+
+    @Test
     void givenStoredCredential_whenToString_thenPasswordIsMasked() {
         assertThat(new StoredTrackerCredential("Tracker", "user", "secret", true))
             .hasToString("StoredTrackerCredential[name=Tracker, username=user, password=****, enabled=true]");
@@ -117,5 +164,26 @@ class ApplicationDatabaseTest {
 
         assertThat(applicationDatabase.findAllResults())
             .containsExactly(new StoredTrackerResult("Tracker", 2_000L, false));
+    }
+
+    private Path databasePath() {
+        return tempDirectory.resolve("nested").resolve("test.db");
+    }
+
+    private String readStoredPassword(final String name) throws SQLException {
+        try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath().toAbsolutePath());
+            final PreparedStatement statement = connection.prepareStatement("SELECT password FROM tracker_credentials WHERE name = ?")) {
+            statement.setString(1, name);
+            try (final ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getString(1) : "";
+            }
+        }
+    }
+
+    private void executeSql(final String sql) throws SQLException {
+        try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath().toAbsolutePath());
+            final Statement statement = connection.createStatement()) {
+            statement.execute(sql);
+        }
     }
 }

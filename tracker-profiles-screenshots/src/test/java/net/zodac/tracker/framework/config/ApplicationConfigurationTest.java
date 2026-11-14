@@ -98,41 +98,6 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void givenLiveValues_whenApplied_thenOnlyLiveOptionsChange() {
-        final ApplicationConfiguration original = ApplicationConfiguration.load(Map.of(
-            "NUMBER_OF_PARALLEL_THREADS", "2",
-            "NUMBER_OF_SCREENSHOT_ATTEMPTS", "1",
-            "OUTPUT_DIRECTORY_PARENT_PATH", "/original"
-        ));
-        final ApplicationConfiguration changed = ApplicationConfiguration.load(Map.of(
-            "NUMBER_OF_PARALLEL_THREADS", "9",
-            "NUMBER_OF_SCREENSHOT_ATTEMPTS", "4",
-            "OUTPUT_DIRECTORY_PARENT_PATH", "/changed",
-            "LOG_LEVEL", "DEBUG",
-            "TAKE_SCREENSHOT_ON_ERROR", "true",
-            "INPUT_TIMEOUT_SECONDS", "60",
-            "TRACKER_EXECUTION_ORDER", "MANUAL,HEADLESS"
-        ));
-
-        final ApplicationConfiguration updated = original.withLiveValuesFrom(changed);
-
-        assertThat(updated.numberOfParallelThreads())
-            .isEqualTo(2);
-        assertThat(updated.outputDirectory())
-            .isEqualTo(original.outputDirectory());
-        assertThat(updated.numberOfScreenshotAttempts())
-            .isEqualTo(4);
-        assertThat(updated.logLevel())
-            .isEqualTo("DEBUG");
-        assertThat(updated.takeScreenshotOnError())
-            .isTrue();
-        assertThat(updated.inputTimeoutDuration())
-            .isEqualTo(Duration.ofSeconds(60L));
-        assertThat(updated.trackerExecutionOrder())
-            .containsExactly(TrackerType.MANUAL, TrackerType.HEADLESS);
-    }
-
-    @Test
     void givenEveryOptionAtItsDefaultValue_whenLoad_thenConfigurationIsValid() {
         final Map<String, String> defaults = new HashMap<>();
         for (final ConfigurationOption option : ConfigurationOption.ALL_VALUES) {

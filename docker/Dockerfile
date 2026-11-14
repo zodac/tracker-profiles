@@ -59,8 +59,9 @@ COPY --from=java_app_builder /app/tracker-profiles-screenshots/target/tracker-pr
 # java.awt.headless=true returns a HeadlessGraphicsEnvironment without connecting to an X11 display
 # tracker-profiles.appcds-training=true starts the web UI (loading every tracker handler via TrackerHandlerFactory's reflection scan), then
 # stops it and exits, rather than running forever
-# DATABASE_PATH points to a throwaway database, so nothing is written to /app/data
-RUN DATABASE_PATH=/tmp/appcds-training.db \
+# DATABASE_PATH points to a throwaway database, so nothing is written to /app/data, and SECRET_KEY is a throwaway secret for it
+RUN SECRET_KEY=appcds-training-secret \
+    DATABASE_PATH=/tmp/appcds-training.db \
     java \
         -Djava.awt.headless=true \
         -Dtracker-profiles.appcds-training=true \
@@ -83,7 +84,8 @@ RUN sed -i '/log4j.*[Aa]sync/d' /app/classes.lst
 # The command exits with code 1 (Xshare:dump exits after creating the archive, before main runs); the fallback touch
 # ensures a file always exists so the COPY in the runtime stage never fails \
 # At runtime, -Xshare:auto silently ignores an empty or incompatible archive
-RUN DATABASE_PATH=/tmp/appcds-training.db \
+RUN SECRET_KEY=appcds-training-secret \
+    DATABASE_PATH=/tmp/appcds-training.db \
     java \
         -Djava.awt.headless=true \
         -Dtracker-profiles.appcds-training=true \

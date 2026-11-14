@@ -46,22 +46,23 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`), `SettingsApiHandler`
   (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
   which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
-- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each
-  tracker's most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null`/empty password on save keeps the
-  stored one.
+- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each tracker's
+  most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null` password on save keeps the stored one, and an
+  empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in `app.js`). Passwords are encrypted by
+  `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the required `SECRET_KEY` env var and a salt stored
+  in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if a stored password cannot be decrypted (the
+  secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in `SettingView`) or logged.
 - **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
   overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
   (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
-  UI along with any pending user inputs. Trackers of a type removed from the execution order before it starts are not returned.
-- **Live settings** — `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`) after every save. While an execution is
-  running, only `Scope.LIVE` options are applied (`Configuration.applyLiveChanges`, which uses `ApplicationConfiguration.withLiveValuesFrom`), so
-  options read at execution start (such as the output directory) never change part-way through. Code reading a `LIVE` option must read it at the
-  point of use (e.g. the attempts limit is read before each attempt, and `ScreenshotOrchestrator` reads `trackerExecutionOrder()` before each tracker
-  type starts). When adding a `LIVE` option, add it to `withLiveValuesFrom`.
+  UI along with any pending user inputs.
+- **No setting changes during an execution** — `SettingsService` rejects every save or reset with `IllegalStateException` (HTTP 409) while
+  `RunManager.isExecutionInProgress()`, and the web UI locks every setting, so an execution always uses the configuration loaded when it started.
+  After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.
 - **`SettingsService`** — resolves each setting as saved value → environment variable → default, and validates all values together by calling
   `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
-  default, until it is reset. `RunManager.reloadConfiguration` only applies saved values for options that are `editableAtRuntime` (not
-  `Scope.STARTUP`).
+  default (the API can reset it, but the web UI has no reset). `RunManager.reloadConfiguration` only applies saved values for options that are
+  `editableAtRuntime` (not `Scope.STARTUP`).
 - **User input** — manual trackers call `displayUtils().confirm(trackerName, message)`, which waits in `framework.input.UserInputRequests` until
   the user responds in the web UI (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS`
   passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
@@ -94,9 +95,16 @@ The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Con
 styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the shared config, like the redaction scripts.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section. While an execution is running, options that
-  are not `Scope.LIVE` are locked, and tracker types that have started cannot be changed in the tracker order. The Settings tab shows the
-  `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last.
+  tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section (open until Start is pressed). The tracker
+  list and execution log are hidden until an execution has started. While an execution is running, every option (on both tabs) is locked. The Settings
+  tab shows the `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last. `MULTI_SELECT` options are a list dragged into order
+  (or moved with the arrow keys on the handle), each with a switch to include it; `INPUT_TIMEOUT_SECONDS` is a switch (off saves `0`) with a seconds
+  field.
+- The Trackers tab groups trackers as enabled (headless/manual), disabled, and unset (no username or password, with the last run, enable and
+  remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
+  rows around it still (the page never follows the moved row). Ctrl/Cmd+click selects trackers (Ctrl/Cmd+Shift+click a range), which the selection
+  bar enables, disables or removes together. A tracker whose credentials change its group while it is being edited is pinned
+  in its group until the user clicks outside its row, or makes no change for 10s.
 - There are no save buttons: every change is saved automatically and confirmed with a toast. Text inputs save after a 1s pause in typing (or
   on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place
   (not re-rendered) so the focused input is never replaced.
@@ -213,15 +221,15 @@ private static final ApplicationConfiguration CONFIG = Configuration.get();
 ```
 
 Every env var is defined once in the `ConfigurationOption` enum (web UI `Tab`, group, label, default value, `OptionType`, allowed values,
-description, and `Scope`: `STARTUP` (environment only), `EXECUTION` (read when an execution starts) or `LIVE` (applies during an execution)). This
+description, and `Scope`: `STARTUP` (environment only) or `EXECUTION` (read when an execution starts)). This
 drives both loading and the web UI. Values are resolved as: override (saved in the web
 UI) → environment variable → `ConfigurationOption.defaultValue()`, via the private `Source` record in `ApplicationConfiguration`.
 
 New env vars must be:
 
-1. Added to `ConfigurationOption` (alphabetical order). Use `Tab.MAIN` for options likely to be changed for (or during) an execution, otherwise
-   `Tab.SETTINGS`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect), `Scope.LIVE` only if every use
-   reads it at the point of use (and add it to `ApplicationConfiguration.withLiveValuesFrom`), otherwise `Scope.EXECUTION`
+1. Added to `ConfigurationOption` (alphabetical order). Use `Tab.MAIN` for options likely to be changed for an execution, otherwise
+   `Tab.SETTINGS`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect), otherwise `Scope.EXECUTION`.
+   A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in `ApplicationConfiguration.print()` and `toString()`
 2. Added as a record component (alphabetical order among components)
 3. Loaded via a `getXxx(source)` private static method using `source.get(ConfigurationOption.XXX)` and, where needed,
    `parseIntegerInRange(input, envVarName, min, max)` (use `Integer.MAX_VALUE` for unbounded positive integers)

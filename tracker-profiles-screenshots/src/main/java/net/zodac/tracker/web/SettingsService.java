@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
@@ -35,11 +36,16 @@ import org.jspecify.annotations.Nullable;
  */
 public final class SettingsService {
 
+    private static final String MASKED_VALUE = "********";
+
     private final ApplicationDatabase applicationDatabase;
+    private final BooleanSupplier executionInProgress;
     private final SavedSettingsListener savedSettingsListener;
 
-    private SettingsService(final ApplicationDatabase applicationDatabase, final SavedSettingsListener savedSettingsListener) {
+    private SettingsService(final ApplicationDatabase applicationDatabase, final BooleanSupplier executionInProgress,
+        final SavedSettingsListener savedSettingsListener) {
         this.applicationDatabase = applicationDatabase;
+        this.executionInProgress = executionInProgress;
         this.savedSettingsListener = savedSettingsListener;
     }
 
@@ -47,11 +53,13 @@ public final class SettingsService {
      * Creates a {@link SettingsService}.
      *
      * @param applicationDatabase   the {@link ApplicationDatabase} storing settings saved in the web UI
+     * @param executionInProgress   whether an execution is in progress, during which settings cannot be changed
      * @param savedSettingsListener the {@link SavedSettingsListener} notified each time settings are saved
      * @return the {@link SettingsService}
      */
-    public static SettingsService create(final ApplicationDatabase applicationDatabase, final SavedSettingsListener savedSettingsListener) {
-        return new SettingsService(applicationDatabase, savedSettingsListener);
+    public static SettingsService create(final ApplicationDatabase applicationDatabase, final BooleanSupplier executionInProgress,
+        final SavedSettingsListener savedSettingsListener) {
+        return new SettingsService(applicationDatabase, executionInProgress, savedSettingsListener);
     }
 
     /**
@@ -76,9 +84,11 @@ public final class SettingsService {
      * @param values the values to save, keyed by {@link ConfigurationOption#name()}
      * @return the updated {@link SettingView}s
      * @throws IllegalArgumentException thrown if a setting does not exist, cannot be changed at runtime, or the resulting configuration is invalid
+     * @throws IllegalStateException    thrown if an execution is in progress
      * @throws SQLException             thrown if the settings cannot be saved
      */
     public List<SettingView> updateSettings(final Map<String, String> values) throws SQLException {
+        checkNoExecutionInProgress();
         final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
 
         // Settings saved for an option that no longer exists are dropped
@@ -98,9 +108,11 @@ public final class SettingsService {
      * @param name the {@link ConfigurationOption#name()} to reset
      * @return the updated {@link SettingView}s
      * @throws IllegalArgumentException thrown if a setting does not exist, cannot be changed at runtime, or the resulting configuration is invalid
+     * @throws IllegalStateException    thrown if an execution is in progress
      * @throws SQLException             thrown if the settings cannot be saved
      */
     public List<SettingView> resetSetting(final String name) throws SQLException {
+        checkNoExecutionInProgress();
         final ConfigurationOption option = findEditableOption(name);
         final Map<String, String> overrides = new LinkedHashMap<>(applicationDatabase.findAllSettings());
         overrides.remove(option.name());
@@ -108,6 +120,12 @@ public final class SettingsService {
 
         validateAndSave(overrides);
         return listSettings();
+    }
+
+    private void checkNoExecutionInProgress() {
+        if (executionInProgress.getAsBoolean()) {
+            throw new IllegalStateException("Settings cannot be changed while an execution is in progress");
+        }
     }
 
     private void validateAndSave(final Map<String, String> overrides) throws SQLException {
@@ -174,6 +192,10 @@ public final class SettingsService {
          * @return the {@link SettingView}
          */
         static SettingView of(final ConfigurationOption option, final @Nullable String savedValue) {
+            if (option.sensitive()) {
+                return sensitive(option);
+            }
+
             final String environmentValue = option.environmentValue().orElse(null);
             final String value;
             final Source source;
@@ -205,6 +227,15 @@ public final class SettingsService {
                 option.editableAtRuntime(),
                 option.scope()
             );
+        }
+
+        // A secret value is never returned, only whether it is set
+        private static SettingView sensitive(final ConfigurationOption option) {
+            final boolean set = option.environmentValue().filter(value -> !value.isEmpty()).isPresent();
+            final String maskedValue = set ? MASKED_VALUE : "";
+            return new SettingView(option.name(), option.tab(), option.group(), option.label(), option.type(), option.description(),
+                option.allowedValues(), "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
+                option.editableAtRuntime(), option.scope());
         }
     }
 

@@ -36,6 +36,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class RunManagerTest {
 
+    private static final String SECRET_KEY = "test-secret-key-value";
+
     @TempDir
     private Path tempDirectory;
 
@@ -46,7 +48,7 @@ class RunManagerTest {
 
     @Test
     void givenNoExecution_whenCancelled_thenNothingIsCancelled() throws IOException, SQLException {
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
 
         assertThat(runManager.cancel())
             .isFalse();
@@ -56,7 +58,7 @@ class RunManagerTest {
 
     @Test
     void givenNoExecution_whenStatusRetrieved_thenNoProgressIsReported() throws IOException, SQLException {
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
 
         assertThat(runManager.status())
             .returns(0, RunStatus::totalTrackers)
@@ -67,7 +69,7 @@ class RunManagerTest {
     @Test
     void givenNoExecution_whenSettingsSaved_thenWholeConfigurationIsReloaded() throws IOException, SQLException {
         Configuration.reload(Map.of());
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
 
         runManager.applySavedSettings(Map.of("NUMBER_OF_SCREENSHOT_ATTEMPTS", "3", "NUMBER_OF_PARALLEL_THREADS", "4"));
 
@@ -75,5 +77,9 @@ class RunManagerTest {
             .isEqualTo(3);
         assertThat(Configuration.get().numberOfParallelThreads())
             .isEqualTo(4);
+    }
+
+    private ApplicationDatabase openDatabase() throws IOException, SQLException {
+        return ApplicationDatabase.open(tempDirectory.resolve("test.db"), SECRET_KEY);
     }
 }

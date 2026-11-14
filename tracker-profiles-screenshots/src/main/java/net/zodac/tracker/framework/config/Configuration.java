@@ -31,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class Configuration {
 
-    // Serialises updates, so a change made during an execution cannot be lost to a concurrent reload
+    // Serialises reloads, so concurrent reloads cannot interleave
     private static final Lock UPDATE_LOCK = new ReentrantLock();
 
     @Nullable
@@ -72,27 +72,6 @@ public final class Configuration {
             final ApplicationConfiguration reloaded = ApplicationConfiguration.load(overrides);
             instance = reloaded;
             return reloaded;
-        } finally {
-            UPDATE_LOCK.unlock();
-        }
-    }
-
-    /**
-     * Applies the provided {@code overrides} to the {@link ConfigurationOption.Scope#LIVE} options only, keeping the current value of every other
-     * option. Used by the web UI when a setting is changed during an execution, so that options read when the execution started (such as the
-     * output directory) do not change part-way through it.
-     *
-     * @param overrides the values that override environment variables, keyed by {@link ConfigurationOption#name()}
-     * @return the updated {@link ApplicationConfiguration}
-     * @throws IllegalArgumentException if any value is invalid (the current configuration is retained)
-     * @throws IllegalStateException    if {@link #init()} has not been called
-     */
-    public static ApplicationConfiguration applyLiveChanges(final Map<String, String> overrides) {
-        UPDATE_LOCK.lock();
-        try {
-            final ApplicationConfiguration updated = get().withLiveValuesFrom(ApplicationConfiguration.load(overrides));
-            instance = updated;
-            return updated;
         } finally {
             UPDATE_LOCK.unlock();
         }

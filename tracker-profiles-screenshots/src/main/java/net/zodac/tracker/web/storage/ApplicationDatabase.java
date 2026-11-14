@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * SQLite-backed storage for the web UI, holding tracker credentials, settings that override environment variables, and the result of the most recent
- * execution of each tracker.
+ * execution of each tracker. Tracker passwords are encrypted with a {@link PasswordCipher}.
  *
  * <p>
  * A new {@link Connection} is opened for each operation, and all operations are serialised by a {@link Lock}, since the expected load is a single
@@ -62,6 +63,15 @@ public final class ApplicationDatabase {
             value TEXT NOT NULL
         )""";
 
+    private static final String CREATE_METADATA_TABLE = """
+        CREATE TABLE IF NOT EXISTS metadata (
+            name  TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )""";
+    private static final String SALT_METADATA = "password_salt";
+    private static final String SELECT_METADATA = "SELECT value FROM metadata WHERE name = ?";
+    private static final String INSERT_METADATA = "INSERT INTO metadata (name, value) VALUES (?, ?)";
+
     private static final String CREATE_RESULTS_TABLE = """
         CREATE TABLE IF NOT EXISTS tracker_results (
             name        TEXT PRIMARY KEY COLLATE NOCASE,
@@ -79,6 +89,7 @@ public final class ApplicationDatabase {
             password = COALESCE(?, tracker_credentials.password),
             enabled  = excluded.enabled""";
     private static final String DELETE_CREDENTIAL = "DELETE FROM tracker_credentials WHERE name = ?";
+    private static final String UPDATE_PASSWORD = "UPDATE tracker_credentials SET password = ? WHERE name = ?";
 
     private static final String SELECT_ALL_SETTINGS = "SELECT name, value FROM settings ORDER BY name";
     private static final String UPSERT_SETTING =
@@ -94,41 +105,105 @@ public final class ApplicationDatabase {
 
     private final Lock lock = new ReentrantLock();
     private final String jdbcUrl;
+    private final PasswordCipher passwordCipher;
 
-    private ApplicationDatabase(final String jdbcUrl) {
+    private ApplicationDatabase(final String jdbcUrl, final PasswordCipher passwordCipher) {
         this.jdbcUrl = jdbcUrl;
+        this.passwordCipher = passwordCipher;
     }
 
     /**
-     * Opens (creating if needed) the SQLite database at the given {@link Path}, and creates any missing tables.
+     * Opens (creating if needed) the SQLite database at the given {@link Path}, and creates any missing tables. Passwords stored in plain text
+     * (by an earlier version) are encrypted, and every stored password is checked to be decryptable with the key.
      *
      * @param databasePath the {@link Path} to the SQLite database file
+     * @param secretKey    the secret used to encrypt the stored passwords (the {@code SECRET_KEY} environment variable)
      * @return the {@link ApplicationDatabase}
-     * @throws IOException  thrown if the parent directory of the database cannot be created
-     * @throws SQLException thrown if the database cannot be opened or initialised
+     * @throws IOException              thrown if the parent directory of the database cannot be created
+     * @throws SQLException             thrown if the database cannot be opened or initialised
+     * @throws IllegalArgumentException thrown if the secret is too short
+     * @throws IllegalStateException    thrown if a stored password cannot be decrypted with the secret
      */
-    public static ApplicationDatabase open(final Path databasePath) throws IOException, SQLException {
+    public static ApplicationDatabase open(final Path databasePath, final String secretKey) throws IOException, SQLException {
         final Path absolutePath = databasePath.toAbsolutePath();
         final Path parent = absolutePath.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
         }
 
-        final ApplicationDatabase applicationDatabase = new ApplicationDatabase("jdbc:sqlite:" + absolutePath);
-        applicationDatabase.createTables();
+        final String jdbcUrl = "jdbc:sqlite:" + absolutePath;
+        final byte[] salt;
+        try (final Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            createTables(connection);
+            salt = findOrCreateSalt(connection);
+        }
+
+        final ApplicationDatabase applicationDatabase = new ApplicationDatabase(jdbcUrl, PasswordCipher.fromSecretKey(secretKey, salt));
+        applicationDatabase.encryptPlainTextPasswords();
+        // Fails at startup (rather than on the next execution) if the secret was changed
+        applicationDatabase.findAllCredentials();
         LOGGER.debug("Opened database at '{}'", absolutePath);
         return applicationDatabase;
     }
 
-    private void createTables() throws SQLException {
+    // The salt used to derive the key from the secret, created with the database
+    private static byte[] findOrCreateSalt(final Connection connection) throws SQLException {
+        try (final PreparedStatement selectStatement = connection.prepareStatement(SELECT_METADATA)) {
+            selectStatement.setString(1, SALT_METADATA);
+            try (final ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Base64.getDecoder().decode(resultSet.getString("value"));
+                }
+            }
+        }
+
+        final byte[] salt = PasswordCipher.newSalt();
+        try (final PreparedStatement insertStatement = connection.prepareStatement(INSERT_METADATA)) {
+            insertStatement.setString(1, SALT_METADATA);
+            insertStatement.setString(2, Base64.getEncoder().encodeToString(salt));
+            insertStatement.executeUpdate();
+        }
+        return salt;
+    }
+
+    private void encryptPlainTextPasswords() throws SQLException {
         lock.lock();
-        try (final Connection connection = connect();
-            final Statement statement = connection.createStatement()) {
+        try (final Connection connection = connect()) {
+            connection.setAutoCommit(false);
+            try (final PreparedStatement selectStatement = connection.prepareStatement(SELECT_ALL_CREDENTIALS);
+                final ResultSet resultSet = selectStatement.executeQuery();
+                final PreparedStatement updateStatement = connection.prepareStatement(UPDATE_PASSWORD)) {
+                int encrypted = 0;
+                while (resultSet.next()) {
+                    final String name = resultSet.getString("name");
+                    final String password = resultSet.getString("password");
+                    if (!password.isEmpty() && !PasswordCipher.isEncrypted(password)) {
+                        updateStatement.setString(1, passwordCipher.encrypt(name, password));
+                        updateStatement.setString(2, name);
+                        updateStatement.addBatch();
+                        encrypted++;
+                    }
+                }
+                updateStatement.executeBatch();
+                connection.commit();
+                if (encrypted > 0) {
+                    LOGGER.info("Encrypted {} stored password{}", encrypted, encrypted == 1 ? "" : "s");
+                }
+            } catch (final SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private static void createTables(final Connection connection) throws SQLException {
+        try (final Statement statement = connection.createStatement()) {
             statement.execute(CREATE_TRACKERS_TABLE);
             statement.execute(CREATE_SETTINGS_TABLE);
             statement.execute(CREATE_RESULTS_TABLE);
-        } finally {
-            lock.unlock();
+            statement.execute(CREATE_METADATA_TABLE);
         }
     }
 
@@ -145,10 +220,11 @@ public final class ApplicationDatabase {
             final ResultSet resultSet = statement.executeQuery()) {
             final List<StoredTrackerCredential> credentials = new ArrayList<>();
             while (resultSet.next()) {
+                final String name = resultSet.getString("name");
                 credentials.add(new StoredTrackerCredential(
-                    resultSet.getString("name"),
+                    name,
                     resultSet.getString("username"),
-                    resultSet.getString("password"),
+                    passwordCipher.decrypt(name, resultSet.getString("password")),
                     resultSet.getInt("enabled") != 0
                 ));
             }
@@ -180,7 +256,7 @@ public final class ApplicationDatabase {
      *
      * @param name     the tracker name
      * @param username the username or email
-     * @param password the password, or {@code null} to keep any existing password
+     * @param password the password, {@code null} to keep any existing password, or empty to remove it
      * @param enabled  whether the tracker should be executed
      * @throws SQLException thrown if the database cannot be updated
      */
@@ -222,13 +298,14 @@ public final class ApplicationDatabase {
         }
     }
 
-    private static void bindCredential(final PreparedStatement statement, final String name, final String username, final @Nullable String password,
+    private void bindCredential(final PreparedStatement statement, final String name, final String username, final @Nullable String password,
         final boolean enabled) throws SQLException {
+        final String storedPassword = password == null ? null : passwordCipher.encrypt(name, password);
         statement.setString(1, name);
         statement.setString(2, username);
-        statement.setString(3, password);
+        statement.setString(3, storedPassword);
         statement.setInt(4, enabled ? 1 : 0);
-        statement.setString(5, password);
+        statement.setString(5, storedPassword);
     }
 
     /**

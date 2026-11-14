@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
  * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render each option on the tab
  * given by its {@link Tab}.
  */
-public enum ConfigurationOption { // NOPMD: DataClass - definitions of each environment variable, with accessors for the web UI
+public enum ConfigurationOption {
 
     /**
      * The resolution of the web browser.
@@ -67,14 +67,15 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
      * The user input timeout in seconds.
      */
     INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", OptionType.INTEGER, List.of(),
-        "How long to wait for a user input for a manual tracker, in seconds, before the attempt fails (0 waits until the user responds)",
-        Scope.LIVE),
+        "How long to wait for a user input for a manual tracker, in seconds, before the attempt fails (if disabled, or 0, waits until the user"
+            + " responds)",
+        Scope.EXECUTION),
 
     /**
      * The application log level.
      */
     LOG_LEVEL(Tab.MAIN, "Logging", "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
-        "The logging level for application output", Scope.LIVE),
+        "The logging level for application output", Scope.EXECUTION),
 
     /**
      * The number of parallel threads for headless trackers.
@@ -86,7 +87,7 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
      * The number of screenshot attempts per tracker.
      */
     NUMBER_OF_SCREENSHOT_ATTEMPTS(Tab.MAIN, "Execution", "Attempts per tracker", "1", OptionType.INTEGER, List.of(),
-        "The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]", Scope.LIVE),
+        "The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]", Scope.EXECUTION),
 
     /**
      * The date format used to name the output directory.
@@ -114,10 +115,16 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
         "What to do when a screenshot for the tracker for the given date already exists", Scope.EXECUTION),
 
     /**
+     * The secret used to encrypt the passwords stored in the database.
+     */
+    SECRET_KEY(Tab.SETTINGS, "System", "Secret key", "", OptionType.STRING, List.of(),
+        "The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown)", Scope.STARTUP),
+
+    /**
      * Whether to take a screenshot on error.
      */
     TAKE_SCREENSHOT_ON_ERROR(Tab.MAIN, "Execution", "Screenshot on error", "false", OptionType.BOOLEAN, List.of(),
-        "Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called 'errors')", Scope.LIVE),
+        "Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called 'errors')", Scope.EXECUTION),
 
     /**
      * The local timezone.
@@ -129,8 +136,7 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
      * The execution order of tracker types.
      */
     TRACKER_EXECUTION_ORDER(Tab.MAIN, "Execution", "Tracker order", "HEADLESS,MANUAL", OptionType.MULTI_SELECT, names(TrackerType.values()),
-        "The order in which different tracker types should be executed, at least one must be selected (a type can be changed during an execution"
-            + " until it starts)", Scope.LIVE),
+        "The order in which different tracker types should be executed, at least one must be selected", Scope.EXECUTION),
 
     /**
      * The web UI port.
@@ -270,6 +276,15 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
         return scope != Scope.STARTUP;
     }
 
+    /**
+     * Whether the value is secret, so is never returned to the web UI or logged.
+     *
+     * @return {@code true} if the value is secret
+     */
+    public boolean sensitive() {
+        return this == SECRET_KEY;
+    }
+
     private static List<String> names(final Enum<?>[] values) {
         return Arrays.stream(values).map(Enum::name).toList();
     }
@@ -285,14 +300,9 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
         STARTUP,
 
         /**
-         * Read when an execution starts, so a change made during an execution applies from the next one.
+         * Read when an execution starts, and cannot be changed while an execution is in progress.
          */
-        EXECUTION,
-
-        /**
-         * Applied immediately, including to an execution that is in progress.
-         */
-        LIVE
+        EXECUTION
     }
 
     /**
@@ -301,7 +311,7 @@ public enum ConfigurationOption { // NOPMD: DataClass - definitions of each envi
     public enum Tab {
 
         /**
-         * The main tab, alongside the controls to start an execution, for options likely to be changed for (or during) an execution.
+         * The main tab, alongside the controls to start an execution, for options likely to be changed for an execution.
          */
         MAIN,
 

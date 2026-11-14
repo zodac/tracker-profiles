@@ -81,13 +81,14 @@ public final class TrackerApiHandler extends ApiHandler {
         final TrackerHandler trackerHandler = findHandler(trackerUpdate.name());
 
         final String username = trackerUpdate.username() == null ? "" : trackerUpdate.username().trim();
-        final String password = trackerUpdate.password() == null || trackerUpdate.password().isEmpty() ? null : trackerUpdate.password();
+        // A null password keeps the stored password, and an empty password removes it
+        final String password = trackerUpdate.password();
 
         if (trackerUpdate.enabled()) {
             if (username.isBlank()) {
                 throw badRequest("A username is required to enable '%s'".formatted(trackerHandler.name()));
             }
-            if (password == null && !hasStoredPassword(trackerHandler.name())) {
+            if (password == null ? !hasStoredPassword(trackerHandler.name()) : password.isEmpty()) {
                 throw badRequest("A password is required to enable '%s'".formatted(trackerHandler.name()));
             }
         }
@@ -192,7 +193,7 @@ public final class TrackerApiHandler extends ApiHandler {
      *
      * @param name     the tracker name
      * @param username the username or email
-     * @param password the new password, or {@code null}/empty to keep any existing password
+     * @param password the new password, {@code null} to keep any existing password, or empty to remove it
      * @param enabled  whether the tracker should be executed
      */
     record TrackerUpdate(@Nullable String name, @Nullable String username, @Nullable String password, boolean enabled) {

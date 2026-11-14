@@ -63,8 +63,8 @@ import org.jspecify.annotations.Nullable;
  * a cancelled one has fully stopped.
  *
  * <p>
- * Settings saved during an execution are applied with {@link #applySavedSettings(Map)}: only {@link ConfigurationOption.Scope#LIVE} options
- * change the running execution, the others apply from the next execution.
+ * Settings cannot be changed while an execution is in progress (see {@link #isExecutionInProgress()}), so an execution always uses the
+ * {@link Configuration} loaded when it started.
  */
 public final class RunManager implements ExecutionListener {
 
@@ -130,24 +130,28 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Applies settings that have just been saved in the web UI. While an execution is in progress, only the {@link ConfigurationOption.Scope#LIVE}
-     * options are applied, so the options read when the execution started do not change part-way through it. Otherwise, the whole
-     * {@link Configuration} is reloaded.
+     * Applies settings that have just been saved in the web UI, by reloading the whole {@link Configuration}. If an execution has started since the
+     * settings were saved, they are not applied, since the {@link Configuration} is reloaded when the next execution starts.
      *
      * @param savedSettings every setting saved in the web UI, keyed by environment variable name
      * @throws IllegalArgumentException thrown if the combination of environment variables and saved settings is invalid
      */
     public void applySavedSettings(final Map<String, String> savedSettings) {
-        final boolean active = isActive();
-        final Map<String, String> overrides = editableOverrides(savedSettings);
-        final ApplicationConfiguration applicationConfiguration = active
-            ? Configuration.applyLiveChanges(overrides)
-            : Configuration.reload(overrides);
-        applyLogLevel(applicationConfiguration);
-        LOGGER.debug("Applied saved settings{}", active ? " to the execution in progress" : "");
+        if (isExecutionInProgress()) {
+            LOGGER.debug("Saved settings not applied, since an execution is in progress");
+            return;
+        }
+
+        applyLogLevel(Configuration.reload(editableOverrides(savedSettings)));
+        LOGGER.debug("Applied saved settings");
     }
 
-    private boolean isActive() {
+    /**
+     * Whether an execution is running or being cancelled, during which settings cannot be changed.
+     *
+     * @return {@code true} if an execution is in progress
+     */
+    public boolean isExecutionInProgress() {
         lock.lock();
         try {
             return state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING;

@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class SettingsServiceTest {
 
+    private static final String SECRET_KEY = "test-secret-key-value";
+
     // Assumes the environment variable is not set when executing tests
     private static final ConfigurationOption OPTION = ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS;
 
@@ -44,13 +47,14 @@ class SettingsServiceTest {
     private Path tempDirectory;
 
     private final List<Map<String, String>> savedSettings = new ArrayList<>();
+    private final AtomicBoolean executionInProgress = new AtomicBoolean();
     private ApplicationDatabase applicationDatabase;
     private SettingsService settingsService;
 
     @BeforeEach
     void setUp() throws IOException, SQLException {
-        applicationDatabase = ApplicationDatabase.open(tempDirectory.resolve("test.db"));
-        settingsService = SettingsService.create(applicationDatabase, savedSettings::add);
+        applicationDatabase = openDatabase();
+        settingsService = SettingsService.create(applicationDatabase, executionInProgress::get, savedSettings::add);
     }
 
     @Test
@@ -96,8 +100,8 @@ class SettingsServiceTest {
         settingsService.updateSettings(Map.of(OPTION.name(), "4", ConfigurationOption.LOG_LEVEL.name(), "DEBUG"));
 
         // Simulates restarting the application, by opening the same database file again
-        final SettingsService restartedService = SettingsService.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")),
-            savedSettings::add);
+        final SettingsService restartedService = SettingsService.create(openDatabase(),
+            executionInProgress::get, savedSettings::add);
         final List<SettingsService.SettingView> settings = restartedService.listSettings();
 
         assertThat(find(settings, OPTION))
@@ -167,6 +171,44 @@ class SettingsServiceTest {
     }
 
     @Test
+    void givenExecutionInProgress_whenUpdated_thenExceptionIsThrownAndNothingIsSaved() throws SQLException {
+        executionInProgress.set(true);
+        final Map<String, String> values = Map.of(OPTION.name(), "4");
+
+        assertThatThrownBy(() -> settingsService.updateSettings(values))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("execution is in progress");
+        assertThat(applicationDatabase.findAllSettings())
+            .isEmpty();
+        assertThat(savedSettings)
+            .isEmpty();
+    }
+
+    @Test
+    void givenExecutionInProgress_whenReset_thenExceptionIsThrown() throws SQLException {
+        settingsService.updateSettings(Map.of(OPTION.name(), "4"));
+        executionInProgress.set(true);
+
+        assertThatThrownBy(() -> settingsService.resetSetting(OPTION.name()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("execution is in progress");
+        assertThat(applicationDatabase.findAllSettings())
+            .containsEntry(OPTION.name(), "4");
+    }
+
+    @Test
+    void givenSecretKeyOption_whenListed_thenValueIsNeverReturnedAndCannotBeChanged() throws SQLException {
+        final SettingsService.SettingView secretKey = find(settingsService.listSettings(), ConfigurationOption.SECRET_KEY);
+
+        assertThat(secretKey)
+            .returns("", SettingsService.SettingView::defaultValue)
+            .returns(null, SettingsService.SettingView::savedValue)
+            .returns(false, SettingsService.SettingView::editable);
+        assertThat(secretKey.value())
+            .isIn("", "********");
+    }
+
+    @Test
     void givenUnknownOption_whenUpdated_thenExceptionIsThrown() {
         final Map<String, String> values = Map.of("UNKNOWN", "value");
 
@@ -180,5 +222,9 @@ class SettingsServiceTest {
             .filter(setting -> setting.name().equals(option.name()))
             .findAny()
             .orElseThrow();
+    }
+
+    private ApplicationDatabase openDatabase() throws IOException, SQLException {
+        return ApplicationDatabase.open(tempDirectory.resolve("test.db"), SECRET_KEY);
     }
 }

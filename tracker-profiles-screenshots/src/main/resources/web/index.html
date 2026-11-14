@@ -59,18 +59,18 @@
             </div>
         </div>
 
-        <details id="run-options-panel" class="card options-panel">
+        <details id="run-options-panel" class="card options-panel" open>
             <summary>
                 <h2>Run options</h2>
                 <span id="run-options-summary" class="options-summary muted"></span>
             </summary>
+            <p id="run-options-locked" class="notice locked-notice" hidden>Run options cannot be changed while an execution is in progress.</p>
             <div id="run-options" class="options-grid"></div>
-            <p class="options-legend muted"><span class="live-dot" aria-hidden="true"></span> Can be changed during an execution</p>
         </details>
 
         <div id="execution-trackers" class="execution-trackers"></div>
 
-        <details id="execution-log" class="card log-details">
+        <details id="execution-log" class="card log-details" hidden>
             <summary>
                 <h2>Execution log</h2>
                 <span class="muted">Messages not logged by a tracker, such as the summary of the execution</span>
@@ -88,10 +88,19 @@
             <input type="file" id="import-file" accept=".csv,text/csv" hidden>
         </div>
         <p class="muted hint">
-            Enabled trackers are executed when <strong>Start</strong> is pressed. Changes are saved automatically. Passwords are never sent back to
-            the browser: leave the password blank to keep the saved one. An imported CSV file needs the header row
-            <code>trackerName,username,password</code>, and rows starting with <code>#</code> are ignored.
+            Enabled trackers are executed when <strong>Start</strong> is pressed. Trackers without a username and password are listed as
+            <strong>Unset</strong> until both are saved. Changes are saved automatically. Passwords are encrypted, and never sent back to the
+            browser: a saved password is shown as dots, and deleting them removes it. An imported CSV file needs the header row
+            <code>trackerName,username,password</code>, and rows starting with <code>#</code> are ignored. Select several trackers with
+            <kbd>Ctrl</kbd>+click (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+click for a range) to enable, disable or remove them together.
         </p>
+        <div id="selection-bar" class="selection-bar" role="toolbar" aria-label="Selected trackers" hidden>
+            <span id="selection-count" class="selection-count"></span>
+            <button id="selection-enable" class="button small" type="button">Enable</button>
+            <button id="selection-disable" class="button small" type="button">Disable</button>
+            <button id="selection-remove" class="button danger small" type="button">Remove</button>
+            <button id="selection-clear" class="button small" type="button" title="Clear the selection (Esc)">Clear</button>
+        </div>
         <div id="import-result" class="notice" hidden></div>
         <div id="adult-warning" class="notice" hidden>
             Adult trackers are excluded by the <strong>Include adult trackers</strong> run option on the Main tab, so enabled adult trackers will be
@@ -106,9 +115,9 @@
             Values are loaded from the environment variables of the application. Changes are saved automatically, take precedence over the
             environment variables, and apply from the next execution. Options you are likely to change for an execution are on the Main tab.
         </p>
+        <p id="settings-locked" class="notice locked-notice" hidden>Settings cannot be changed while an execution is in progress.</p>
         <div class="legend">
-            <span class="badge changed">Changed</span> value differs from the default
-            <span class="badge source-environment">Environment</span> set by an environment variable
+            <span class="changed-bar" aria-hidden="true"></span> value differs from the default
             <span class="badge source-web_ui">Saved</span> changed in this UI
         </div>
         <div id="settings-groups"></div>
