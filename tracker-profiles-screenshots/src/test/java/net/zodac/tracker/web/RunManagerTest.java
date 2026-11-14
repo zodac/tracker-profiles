@@ -20,6 +20,7 @@ package net.zodac.tracker.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
@@ -134,7 +135,7 @@ class RunManagerTest {
         runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Zeta", "Alpha", "Failed")));
         for (final String trackerName : List.of("Zeta", "Alpha", "Failed")) {
             runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
-            runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, tempDirectory.resolve(trackerName + ".png"));
+            runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, createScreenshot(trackerName + ".png"));
             runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, !"Failed".equals(trackerName));
         }
 
@@ -192,10 +193,33 @@ class RunManagerTest {
             .returns(List.of(), RunStatus::failedTrackers);
     }
 
-    private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful) {
+    @Test
+    void givenSuccessfulScreenshotDeleted_whenStatusRetrieved_thenItIsNotDownloadable() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+        completeTracker(runManager, "Alpha", "Alpha.png", true);
+        completeTracker(runManager, "Beta", "Beta.png", true);
+
+        Files.delete(tempDirectory.resolve("Beta.png"));
+
+        assertThat(runManager.latestSuccessfulScreenshots())
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha.png");
+        assertThat(runManager.status())
+            .returns(1, RunStatus::downloadableTrackers)
+            .returns(1, RunStatus::downloadableScreenshots);
+    }
+
+    private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful)
+        throws IOException {
         runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
-        runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, tempDirectory.resolve(fileName));
+        runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, createScreenshot(fileName));
         runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, wasSuccessful);
+    }
+
+    // Only screenshots that exist can be downloaded
+    private Path createScreenshot(final String fileName) throws IOException {
+        return Files.writeString(tempDirectory.resolve(fileName), "");
     }
 
     private static List<String> screenshotIds(final RunManager runManager, final String trackerName) {

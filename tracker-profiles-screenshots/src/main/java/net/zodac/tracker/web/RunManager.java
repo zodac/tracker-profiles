@@ -18,12 +18,12 @@
 package net.zodac.tracker.web;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -385,12 +385,11 @@ public final class RunManager implements ExecutionListener {
      */
     public RunStatus status() {
         final Map<String, String> latestMessages = webLogAppender.latestMessages();
+        final Map<String, List<ScreenshotFile>> downloadableScreenshots = existingLatestSuccessfulScreenshots();
         lock.lock();
         try {
-            final Set<TrackerType> shownTrackerTypes = shownTrackerTypes();
             final List<RunStatus.TrackerProgress> shownTrackers = trackers.values()
                 .stream()
-                .filter(tracker -> shownTrackerTypes.contains(tracker.trackerType))
                 .map(tracker -> tracker.toView(latestMessages.getOrDefault(tracker.name, "")))
                 .toList();
 
@@ -402,23 +401,13 @@ public final class RunManager implements ExecutionListener {
                 startedTrackerTypes.stream().map(Enum::name).toList(),
                 shownTrackers,
                 failedTrackerNames(),
-                latestSuccessfulScreenshots.size(),
-                latestSuccessfulScreenshots.values().stream().mapToInt(List::size).sum(),
+                downloadableScreenshots.size(),
+                downloadableScreenshots.values().stream().mapToInt(List::size).sum(),
                 UserInputRequests.pending()
             );
         } finally {
             lock.unlock();
         }
-    }
-
-    // Types already started are always shown, plus the types still to come in the (current) execution order, which may change during the execution
-    private Set<TrackerType> shownTrackerTypes() {
-        final Set<TrackerType> shown = EnumSet.noneOf(TrackerType.class);
-        shown.addAll(startedTrackerTypes);
-        if (state == RunStatus.State.RUNNING) {
-            shown.addAll(Configuration.get().trackerExecutionOrder());
-        }
-        return shown;
     }
 
     /**
@@ -455,17 +444,36 @@ public final class RunManager implements ExecutionListener {
      * Retrieves the profile screenshots of the latest successful execution of every tracker, across all executions since the application started,
      * ordered by tracker name. A tracker that succeeds again replaces its earlier screenshots, while one that fails keeps those of its last success.
      *
-     * @return the latest {@link ScreenshotFile}s of each successful tracker
+     * @return the latest {@link ScreenshotFile}s of each successful tracker that still exist
      */
     public List<ScreenshotFile> latestSuccessfulScreenshots() {
+        final List<ScreenshotFile> screenshots = new ArrayList<>();
+        existingLatestSuccessfulScreenshots().values().forEach(screenshots::addAll);
+        return screenshots;
+    }
+
+    // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name. The files are checked without
+    // holding the lock
+    private Map<String, List<ScreenshotFile>> existingLatestSuccessfulScreenshots() {
+        final Map<String, List<ScreenshotFile>> latest;
         lock.lock();
         try {
-            final List<ScreenshotFile> screenshots = new ArrayList<>();
-            latestSuccessfulScreenshots.values().forEach(screenshots::addAll);
-            return screenshots;
+            latest = new TreeMap<>(latestSuccessfulScreenshots);
         } finally {
             lock.unlock();
         }
+
+        final Map<String, List<ScreenshotFile>> existing = new TreeMap<>();
+        latest.forEach((trackerName, screenshots) -> {
+            final List<ScreenshotFile> existingScreenshots = screenshots
+                .stream()
+                .filter(screenshot -> Files.isRegularFile(screenshot.path()))
+                .toList();
+            if (!existingScreenshots.isEmpty()) {
+                existing.put(trackerName, existingScreenshots);
+            }
+        });
+        return existing;
     }
 
     private static @Nullable Long nullIfUnset(final long epochMillis) {
