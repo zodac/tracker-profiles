@@ -51,14 +51,24 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
   responses.
 - **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each tracker's
-  most recent execution (shown on the Trackers tab). It keeps a single connection (WAL journal, `synchronous=NORMAL`), used only while holding its
-  lock: SQLite allows one writer, so a connection pool would not help. Lists for the web UI use `findAllCredentialStatuses()`, which never decrypts a
-  password; only an execution decrypts them (`findAllCredentials()`). Passwords are never returned by the API; a `null` password on save keeps the
-  stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in `js/constants.mjs`).
-  Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the required
-  `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if a stored
-  password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in
+  most recent execution (shown on the Trackers tab), through one repository each: `credentials()` (`TrackerCredentialRepository`), `settings()`
+  (`SettingRepository`) and `results()` (`TrackerResultRepository`). The repositories run their SQL through `DatabaseConnection`, the single
+  connection (WAL journal, `synchronous=NORMAL`), which holds a lock for each statement or transaction (`query`, `exists`, `update`, `batch`,
+  `inTransaction`): SQLite allows one writer, so a connection pool would not help. Keep all SQL in the repositories, as constants using numbered
+  parameters (`?1`), and wrap any multi-statement change in `inTransaction`. Lists for the web UI use `credentials().findAllStatuses()`, which never
+  decrypts a password; only an execution decrypts them (`credentials().findAll()`). Passwords are never returned by the API; a `null` password on save
+  keeps the stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in
+  `js/constants.mjs`). Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the
+  required `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if
+  a stored password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in
   `SettingView`) or logged.
+- **Schema migrations** — the schema is versioned by Flyway (`flyway-core`, which includes SQLite support): `ApplicationDatabase.open` applies the
+  migrations in `src/main/resources/db/migration` before opening its connection. To change the schema, add the next `V<n>__<description>.sql` (never
+  edit a released migration, as Flyway validates their checksums), and update `LATEST_SCHEMA_VERSION` in `ApplicationDatabaseTest`. A database created
+  before versioning is baselined at version 0, so `V1` (which uses `IF NOT EXISTS`) and every later migration run on it. Tables are `STRICT, WITHOUT
+  ROWID` with a `TEXT` primary key (`COLLATE NOCASE` for tracker and setting names), so lookups and ordered scans by name need no other index; SQLite
+  cannot alter a table in place, so a change to a column is a copy into a new table (see `V2`). Add an index only for a query that filters or sorts by
+  a column other than the primary key (check it with `EXPLAIN QUERY PLAN`). Flyway's own logging is limited to `WARN` in `log4j2.xml`.
 - **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
   overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
   (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
