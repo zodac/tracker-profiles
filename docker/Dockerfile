@@ -44,6 +44,14 @@ RUN mvn dependency:go-offline
 COPY tracker-profiles-screenshots/src ./tracker-profiles-screenshots/src
 RUN mvn clean install
 
+# Extract the SQLite native library from the JAR, so it is loaded from /app/native at runtime (see start.sh), rather than extracted to /tmp,
+# which is mounted noexec in docs/docker-compose.example.yml
+WORKDIR /app/native
+RUN jar xf /app/tracker-profiles-screenshots/target/tracker-profiles-screenshots-*.jar "org/sqlite/native/Linux/$(uname -m)/libsqlitejdbc.so" && \
+    mv "org/sqlite/native/Linux/$(uname -m)/libsqlitejdbc.so" libsqlitejdbc.so && \
+    rm -rf org
+WORKDIR /app
+
 # Stage 3: Generate static AppCDS archive to reduce startup time and memory footprint
 FROM eclipse-temurin:27_35-jdk AS appcds_builder
 WORKDIR /app
@@ -153,6 +161,9 @@ COPY ./docker/browser_extensions/ublock_origin_lite_ddkjiahejlhfcafbddmgiahcphec
 
 # Copy scripts
 COPY --chmod=755 ./docker/scripts/start.sh /app/start.sh
+
+# Copy the SQLite native library (see start.sh)
+COPY --from=java_app_builder /app/native/libsqlitejdbc.so /app/native/libsqlitejdbc.so
 
 # Configure nonroot user
 ARG PUID=1000

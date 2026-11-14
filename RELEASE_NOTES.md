@@ -19,7 +19,7 @@ Manual trackers now ask for input (continue, skip, or wait 5 more minutes) in th
 still needs `DISPLAY` to be configured.
 
 Tracker credentials, settings and the latest results are stored in a SQLite database in the `/app/data` volume, so mount a volume to keep them
-between containers (e.g. `-v tracker-profiles-data:/app/data`). Passwords are encrypted, and are never sent back to the browser.
+between containers (the [example compose file](docs/docker-compose.example.yml) uses the `tracker-profiles-data` volume). Passwords are encrypted, and are never sent back to the browser.
 
 ## Backwards Incompatible Changes
 
@@ -41,4 +41,11 @@ between containers (e.g. `-v tracker-profiles-data:/app/data`). Passwords are en
     - `TRACKER_INPUT_FILE_PATH`
 - New options: `DATABASE_PATH`, `SECRET_KEY` and `WEB_UI_PORT`
 
-See the [README](README.md#running-in-docker) for the updated Docker commands.
+## Docker Compose
+
+The application is now run with Docker Compose rather than `docker run`. See
+[docker-compose.example.yml](docs/docker-compose.example.yml) for an example, and the [README](README.md#running-with-docker-compose) for how to use
+it. The example runs a hardened container: a non-root user with no capabilities, a read-only root filesystem, memory and process limits, and the web
+UI only reachable from the host (`127.0.0.1`).
+
+The container is now stopped gracefully by `docker stop` (`SIGTERM`), as well as `SIGINT`.

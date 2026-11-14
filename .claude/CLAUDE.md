@@ -22,6 +22,20 @@ To run a single test class:
 mvn test -Dtests -pl tracker-profiles-screenshots -Dtest=TextSearcherTest
 ```
 
+## Running the Application
+
+The application is run with Docker Compose. `docs/docker-compose.example.yml` is the only run example referenced by the README (do not add
+`docker run` or `docker build` commands to the documentation). Its image is pinned to the latest release, rewritten by `publish.yml` on each
+release, and its environment variables are grouped as on the web UI (execution, browser, output, logging, application and container). For local
+testing, `docker-compose.yml` in the repository root (git-ignored) builds `docker/Dockerfile` with the same hardening: `docker compose up --build`
+(requires `TRACKER_PROFILES_SECRET_KEY`).
+
+The compose files harden the container (follow the same standard in any new compose file): UID `1000`, `cap_drop: ALL`,
+`no-new-privileges`, `read_only: true`, `/tmp` as a `noexec` tmpfs, `init: true`, memory and pids limits, log rotation, and the port bound to
+`127.0.0.1`. So the application must never write outside `/tmp` and the volumes, nor load native code from `/tmp`: the SQLite native library is
+extracted to `/app/native` when the image is built and loaded from there by `start.sh` (`org.sqlite.lib.path`). Chrome runs with `--no-sandbox`
+and `--disable-dev-shm-usage`, so it needs no capabilities, and keeps its shared memory in `/tmp`.
+
 ## Architecture Overview
 
 ### Execution Flow
@@ -295,8 +309,8 @@ New env vars must be:
 3. Loaded in the `load()` constructor call with the `Source` parser for its type (`source.bool(...)`, `integer(...)`, `select(...)`,
    `multiSelect(...)`, or `get(...)` for a string), or a private static `getXxx(source)` method for anything else
 4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Tab.MAIN`, the `Settings` table for other editable
-   options, otherwise the `Startup-Only Options` table, and in all Docker run examples (Debian, Windows, development and performance analysis
-   blocks), all in alphabetical order
+   options, otherwise the `Startup-Only Options` table, in the `environment` of `docs/docker-compose.example.yml` (and the local, git-ignored
+   `docker-compose.yml` if it exists), and in the README performance analysis block, all in alphabetical order
 
 ### Redaction
 

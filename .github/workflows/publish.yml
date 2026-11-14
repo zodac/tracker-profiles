@@ -135,6 +135,13 @@ jobs:
           tracker_count=$(grep -R --include='*.java' '^@TrackerHandler(' . | cut -d '"' -f2 | sort -u | wc -l | tr -d '[:space:]')
           sed -i -E "s/(There are currently \*\*)[0-9]+(\*\* supported trackers listed below\.)/\1${tracker_count}\2/" README.md
 
+      # Staged here and committed by bump_version.sh, along with the version bump
+      - name: Pin the example Compose file to the released version
+        run: |
+          sed -i -E "s|^(\s*image: zodac/tracker-profiles:).*|\1${{ steps.version.outputs.version }}|" docs/docker-compose.example.yml
+          git add -- docs/docker-compose.example.yml
+          grep -n 'image: zodac/tracker-profiles:' docs/docker-compose.example.yml
+
       - name: Bump patch version in VERSION file
         run: .github/scripts/bump_version.sh "${{ steps.version.outputs.version }}"
 

@@ -34,3 +34,6 @@ trackers.csv
 # /home/dev/.claude, so it survives a sandbox teardown. Holds OAuth tokens (.credentials.json), so it must never be
 # committed.
 .claude-history/
+
+# Local Docker Compose file (builds the local Dockerfile) - see docs/docker-compose.example.yml
+/docker-compose.yml

@@ -10,7 +10,7 @@
 - [How To Use](#how-to-use)
     - [Web UI](#web-ui)
     - [Importing Trackers](#importing-trackers)
-    - [Running In Docker](#running-in-docker)
+    - [Running With Docker Compose](#running-with-docker-compose)
     - [Browser UI](#browser-ui)
         - [UI In Debian](#ui-in-debian)
         - [UI In Windows](#ui-in-windows)
@@ -70,21 +70,21 @@ Below are examples of the different types of redaction from the [MooKo](https://
 
 #### None
 
-![No Redaction](./doc/images/MooKo.png)
+![No Redaction](./docs/images/MooKo.png)
 
 </td>
 <td valign="top">
 
 #### Blur
 
-![Blur Redaction](./doc/images/MooKo_Blur.png)
+![Blur Redaction](./docs/images/MooKo_Blur.png)
 
 </td>
 <td valign="top">
 
 #### Box
 
-![Box Redaction](./doc/images/MooKo_Box.png)
+![Box Redaction](./docs/images/MooKo_Box.png)
 
 </td>
 </tr>
@@ -95,22 +95,15 @@ Below are examples of the different types of redaction from the [MooKo](https://
 
 This is the fastest way to run the application (no UI configuration required, headless trackers only).
 
-Pull the image:
+Download the [example compose file](./docs/docker-compose.example.yml) into an empty directory, set a new secret to encrypt the stored
+passwords, run only the headless trackers, create the screenshot directory (writable by the container user, UID `1000`), and start the container:
 
 ```bash
-docker pull zodac/tracker-profiles:latest
-```
-
-Run:
-
-```bash
-docker run \
-    --env TRACKER_EXECUTION_ORDER=HEADLESS \
-    -p 8080:8080 \
-    -v /tmp/screenshots:/app/screenshots \
-    -v tracker-profiles-data:/app/data \
-    --name tracker-profiles \
-    --rm zodac/tracker-profiles:latest
+curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/zodac/tracker-profiles/master/docs/docker-compose.example.yml
+sed -i "s|change-me-strong-secret|$(openssl rand -base64 32)|" docker-compose.yml
+sed -i 's/TRACKER_EXECUTION_ORDER: "HEADLESS,MANUAL"/TRACKER_EXECUTION_ORDER: "HEADLESS"/' docker-compose.yml
+mkdir -p /tmp/screenshots
+docker compose up -d
 ```
 
 Then open [http://localhost:8080](http://localhost:8080), enter credentials for one or more [headless trackers](#headless) on the **Trackers** tab,
@@ -396,14 +389,15 @@ light/dark mode, which can be overridden with the button in the header (the choi
 
 Tracker credentials, settings saved in the web UI and the result of each tracker's most recent execution are stored in a SQLite database
 (`DATABASE_PATH`), in the `/app/data` volume of the container. This is separate from the screenshots, so it can be mounted, backed up or cleared on
-its own. The examples use a named volume:
+its own. The [example compose file](./docs/docker-compose.example.yml) uses the named volume `tracker-profiles-data`:
 
-- To keep the data across container restarts, mount the same volume each time: `-v tracker-profiles-data:/app/data`
-- To start again with no trackers or saved settings, stop the container and remove the volume: `docker volume rm tracker-profiles-data`
-- To keep the database on the host instead, bind-mount a directory: `-v /tmp/tracker-profiles-data:/app/data` (it must be writable by the
-  container user, UID `1000` by default)
+- The data is kept when the container is recreated (`docker compose down` and `docker compose up`), as the named volume is reused
+- To start again with no trackers or saved settings, remove the volume as well: `docker compose down --volumes` (or
+  `docker volume rm tracker-profiles-data`)
+- To keep the database on the host instead, bind-mount a directory in place of the named volume: `/tmp/tracker-profiles-data:/app/data` (it must be
+  writable by the container user, UID `1000` by default)
 
-If no volume is mounted, Docker creates an anonymous volume, which is not reused when a new container is created (as with `--rm`).
+If no volume is mounted, Docker creates an anonymous volume, which is not reused when a new container is created.
 
 Settings saved in the web UI take precedence over environment variables (including after a restart). See
 [Configuration Options](#configuration-options) for when a change to each option takes effect, and which can only be set as environment variables.
@@ -431,97 +425,34 @@ or prefixed with `#` so they are ignored. The tracker names are case-insensitive
 Each imported tracker is enabled, and replaces any credentials already saved for it. Trackers in the file that are not supported are listed after
 the import, and are not saved.
 
-### Running In Docker
+### Running With Docker Compose
 
-The application is run using Docker, and below are the commands to run the `latest` docker image. `SECRET_KEY` is required, so set
-`TRACKER_PROFILES_SECRET_KEY` first (for example, `export TRACKER_PROFILES_SECRET_KEY="$(openssl rand -base64 32)"`), and keep the same value
-each time the same database is used.
+The application is run with Docker Compose. Download [docker-compose.example.yml](./docs/docker-compose.example.yml) as `docker-compose.yml` into an
+empty directory, and update it:
 
-<details>
-<summary>Docker Commands</summary>
-<table>
+- Set `SECRET_KEY` (marked with a `TODO`) to a new secret, for example the output of `openssl rand -base64 32`, and keep the same value for as long
+  as the same database is used
+- Update the [configuration options](#configuration-options) as needed, which are grouped by what they configure (most can also be changed later in
+  the [web UI](#web-ui))
+- Create the screenshot directory (`/tmp/screenshots` by default), which must be writable by the container user (UID `1000`)
 
-<tr>
-<td valign="top">
+Then start the application with `docker compose up -d`. The web UI is available at [http://localhost:8080](http://localhost:8080), the
+application logs are shown with `docker compose logs -f`, and the application is stopped with `docker compose down`.
 
-#### Debian
+The example uses a fixed image version (the latest release), so update the `image` tag to upgrade. It also restricts the container:
 
-```bash
-docker run \
-    --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_RESOLUTION=1680x1050 \
-    --env DATABASE_PATH=/app/data/tracker-profiles.db \
-    --env ENABLE_ADULT_TRACKERS=true \
-    --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FORCE_UI_BROWSER=false \
-    --env INPUT_TIMEOUT_SECONDS=0 \
-    --env JAVA_ADDITIONAL_OPTS= \
-    --env JAVA_OPTS= \
-    --env LOG_LEVEL=INFO \
-    --env NUMBER_OF_PARALLEL_THREADS=5 \
-    --env NUMBER_OF_SCREENSHOT_ATTEMPTS=1 \
-    --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
-    --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env REDACTION_TYPE=BOX \
-    --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
-    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
-    --env TAKE_SCREENSHOT_ON_ERROR=false \
-    --env TIMEZONE=UTC \
-    --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env WEB_UI_PORT=8080 \
-    -p 8080:8080 \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/screenshots:/app/screenshots \
-    -v tracker-chrome-cache:/tmp/chrome-home \
-    -v tracker-profiles-data:/app/data \
-    --name tracker-profiles \
-    --rm zodac/tracker-profiles:latest
-```
+- The web UI is only reachable from the host itself (`127.0.0.1:8080:8080`), since it has no authentication. To reach it from other devices on your
+  local network, change it to `8080:8080`
+- The container runs as a non-root user with no Linux capabilities, a read-only root filesystem (with `/tmp` in memory, and the data in volumes),
+  and limits on memory and processes. The limits suit the default of 5 parallel browsers, so raise them if `NUMBER_OF_PARALLEL_THREADS` or
+  `BROWSER_RESOLUTION` is increased
 
-</td>
-<td valign="top">
-
-#### Windows
-
-```bash
-MSYS_NO_PATHCONV=1 docker run \
-    --env DISPLAY=host.docker.internal:0 \
-    --env BROWSER_RESOLUTION=1680x1050 \
-    --env DATABASE_PATH=/app/data/tracker-profiles.db \
-    --env ENABLE_ADULT_TRACKERS=true \
-    --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FORCE_UI_BROWSER=false \
-    --env INPUT_TIMEOUT_SECONDS=0 \
-    --env JAVA_ADDITIONAL_OPTS= \
-    --env JAVA_OPTS= \
-    --env LOG_LEVEL=INFO \
-    --env NUMBER_OF_PARALLEL_THREADS=5 \
-    --env NUMBER_OF_SCREENSHOT_ATTEMPTS=1 \
-    --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
-    --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env REDACTION_TYPE=BOX \
-    --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
-    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
-    --env TAKE_SCREENSHOT_ON_ERROR=false \
-    --env TIMEZONE=UTC \
-    --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env WEB_UI_PORT=8080 \
-    -p 8080:8080 \
-    -v /c/tmp/screenshots:/app/screenshots \
-    -v tracker-chrome-cache:/tmp/chrome-home \
-    -v tracker-profiles-data:/app/data \
-    --name tracker-profiles \
-    --rm zodac/tracker-profiles:latest
-```
-
-</td>
-</tr>
-</table>
-</details>
+The example runs the browser with a UI on a Debian host (see [Browser UI](#browser-ui)). On Windows, set `DISPLAY` to `host.docker.internal:0`,
+remove the `/tmp/.X11-unix` volume, and save the screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
 
 ### Browser UI
 
-There are two ways to execute the application - with a UI browser and without. The default commands will
+There are two ways to execute the application - with a UI browser and without. The [example compose file](./docs/docker-compose.example.yml) will
 execute [trackers that require a UI](#manual-interaction), so the UI will need to be configured to run through Docker. A UI browser is needed for
 trackers that require some user input during login, like a Captcha, 2FA, etc.
 
@@ -548,7 +479,7 @@ the configuration:
 #### Disable UI
 
 To disable the UI and run the browser in headless mode only, ensure `FORCE_UI_BROWSER` and `ENABLE_TRANSLATION_TO_ENGLISH` are set to **false**, and
-exclude **MANUAL** from `TRACKER_EXECUTION_ORDER`.
+exclude **MANUAL** from `TRACKER_EXECUTION_ORDER`. `DISPLAY` and the `/tmp/.X11-unix` volume can then be removed from the compose file.
 
 ### Configuration Options
 
@@ -700,40 +631,21 @@ bash ./ci/hooks/setup-hooks.sh
 
 ### Building And Developing In Docker
 
-Below is the command to build and run the development docker image with everything enabled (requires [the UI to be
-defined](#browser-ui)):
+To build and run the local [Dockerfile](./docker/Dockerfile), copy [docker-compose.example.yml](./docs/docker-compose.example.yml) to
+`docker-compose.yml` in the root of the repository (it is ignored by git), and replace `image: zodac/tracker-profiles:<version>` with:
+
+```yaml
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: tracker-profiles-dev
+```
+
+Then update the [configuration options](#configuration-options) for development (such as `FORCE_UI_BROWSER=true`, `LOG_LEVEL=TRACE`,
+`REDACTION_TYPE=NONE,BLUR,BOX` and `TAKE_SCREENSHOT_ON_ERROR=true`, which requires [the UI to be defined](#browser-ui)), and build and run it:
 
 ```bash
-docker build -f ./docker/Dockerfile -t tracker-profiles-dev . &&
-docker run \
-    --env DISPLAY="${DISPLAY}" \
-    --env BROWSER_RESOLUTION=1680x1050 \
-    --env DATABASE_PATH=/app/data/tracker-profiles.db \
-    --env ENABLE_ADULT_TRACKERS=true \
-    --env ENABLE_TRANSLATION_TO_ENGLISH=true \
-    --env FORCE_UI_BROWSER=true \
-    --env INPUT_TIMEOUT_SECONDS=300 \
-    --env JAVA_ADDITIONAL_OPTS= \
-    --env JAVA_OPTS= \
-    --env LOG_LEVEL=TRACE \
-    --env NUMBER_OF_PARALLEL_THREADS=5 \
-    --env NUMBER_OF_SCREENSHOT_ATTEMPTS=5 \
-    --env OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
-    --env OUTPUT_DIRECTORY_PARENT_PATH=/app/screenshots \
-    --env REDACTION_TYPE=NONE,BLUR,BOX \
-    --env SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
-    --env SECRET_KEY="${TRACKER_PROFILES_SECRET_KEY}" \
-    --env TAKE_SCREENSHOT_ON_ERROR=true \
-    --env TIMEZONE=UTC \
-    --env TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
-    --env WEB_UI_PORT=8080 \
-    -p 8080:8080 \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /tmp/screenshots:/app/screenshots \
-    -v tracker-chrome-cache:/tmp/chrome-home \
-    -v tracker-profiles-data:/app/data \
-    --name tracker-profiles-dev \
-    --rm tracker-profiles-dev
+docker compose up --build
 ```
 
 ### Implementing Support For New Trackers
@@ -764,7 +676,7 @@ launch when taking a screenshot, and can be used for debugging a new implementat
 ### Performance Analysis
 
 To generate a `.jfr` file for profiling with [Java Mission Control (JMC)](https://jdk.java.net/jmc/), build and run the JAR with JFR flags
-(environment variables are prefixed before `java`, equivalent to `--env` in the [Docker commands](#building-and-developing-in-docker)), then start an
+(environment variables are prefixed before `java`, equivalent to `environment` in the [compose file](./docs/docker-compose.example.yml)), then start an
 execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost:8080):
 
 ```bash

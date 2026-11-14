@@ -21,12 +21,12 @@
 # Behavior:
 #   - Starts the web browser
 #   - Executes the Java JAR file
-#   - On SIGINT (Ctrl+C), gracefully terminates the browser and Java PID (if started)
+#   - On SIGINT (Ctrl+C) or SIGTERM (`docker stop`), gracefully terminates the browser and Java PID (if started)
 #
 # Exit Codes:
 #   - 0: Success
 #   - 1: Java application signaled failure (e.g., screenshots not captured)
-#   - 130: Script terminated via SIGINT (manual interruption)
+#   - 130: Script terminated via SIGINT or SIGTERM
 # ------------------------------------------------------------------------------
 
 set -eu
@@ -41,9 +41,12 @@ main() {
       -XX:SharedArchiveFile=/app/app.jsa -Xshare:auto \
       -Djava.util.logging.config.file=/app/logging.properties"
 
+    # The SQLite native library is loaded from /app/native (extracted when the image is built), whichever JVM options are in effect, since
+    # sqlite-jdbc would otherwise extract it to /tmp and load it from there, which fails when /tmp is mounted noexec
     # SC2086: intentional word splitting to pass JVM flags as separate arguments
     # shellcheck disable=SC2086
     java ${JAVA_OPTS:-${DEFAULT_JAVA_OPTS}} ${JAVA_ADDITIONAL_OPTS:-} \
+      -Dorg.sqlite.lib.path=/app/native -Dorg.sqlite.lib.name=libsqlitejdbc.so \
       -jar /app/tracker-profiles.jar &
     JAVA_PID=$!
 
@@ -68,5 +71,5 @@ cleanup() {
     exit 130
 }
 
-trap cleanup INT
+trap cleanup INT TERM
 main
