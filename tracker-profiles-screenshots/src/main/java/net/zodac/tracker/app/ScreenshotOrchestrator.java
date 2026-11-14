@@ -79,7 +79,7 @@ public final class ScreenshotOrchestrator {
         }
 
         ScreenshotDirectories.createAll();
-        executionListener.executionStarted(countByType(trackersByType));
+        executionListener.executionStarted(namesByType(trackersByType));
         final ResultCollector resultCollector = ResultCollector.start();
         final Set<TrackerType> executedTrackerTypes = new LinkedHashSet<>();
         try {
@@ -122,10 +122,11 @@ public final class ScreenshotOrchestrator {
             .sum();
     }
 
-    private static Map<TrackerType, Integer> countByType(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        final Map<TrackerType, Integer> numberOfTrackersByType = new EnumMap<>(TrackerType.class);
-        trackersByType.forEach((trackerType, trackers) -> numberOfTrackersByType.put(trackerType, trackers.size()));
-        return numberOfTrackersByType;
+    private static Map<TrackerType, List<String>> namesByType(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
+        final Map<TrackerType, List<String>> trackerNamesByType = new EnumMap<>(TrackerType.class);
+        trackersByType.forEach((trackerType, trackers) ->
+            trackerNamesByType.put(trackerType, trackers.stream().map(TrackerCredential::name).toList()));
+        return trackerNamesByType;
     }
 
     private static void screenshotTrackerByType(final TrackerType trackerType, final Map<TrackerType, Set<TrackerCredential>> trackersByType,

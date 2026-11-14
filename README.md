@@ -356,13 +356,15 @@ this type of automated access.
 
 The application is used through a web UI on port `8080` (configurable with `WEB_UI_PORT`), which has three tabs:
 
-- **Main**: start an execution, follow its progress, and view the application logs live
-    - The progress bar counts completed trackers, and each tracker in progress shows which step it is on (opening the tracker, logging in, opening the
-      profile page, taking the screenshots, logging out)
-    - **Run options** holds the [options](#configuration-options) you are most likely to change for an execution, such as the tracker order or the
-      number of attempts per tracker. Options marked with a green dot can be changed while an execution is in progress and apply to it straight away;
-      the others are locked until it finishes
-    - The log level is changed in the log toolbar, and applies immediately. The logs can also be filtered to a single tracker
+- **Main**: start an execution and follow its progress
+    - Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. A tracker moves between groups as the execution
+      continues, so once it finishes the trackers are grouped by whether they succeeded or failed
+    - Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its
+      latest message (for a failed tracker, why it failed) and how long it took. Expand a tracker to see its own logs, which update while it runs.
+      Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
+    - **Run options** (collapsed by default) holds the [options](#configuration-options) you are most likely to change for an execution, such as the
+      tracker order, the number of attempts per tracker or the log level. Options marked with a green dot can be changed while an execution is in
+      progress and apply to it straight away; the others are locked until it finishes
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
 - **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with fields for

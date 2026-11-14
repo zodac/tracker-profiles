@@ -503,20 +503,6 @@ select:disabled {
     white-space: nowrap;
 }
 
-.main-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    align-items: start;
-    gap: 16px;
-}
-
-.main-column {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 0;
-}
-
 .card-header {
     display: flex;
     align-items: center;
@@ -529,12 +515,6 @@ select:disabled {
 
 /* Run options */
 
-.options-card {
-    position: sticky;
-    top: 16px;
-    padding: 16px;
-}
-
 .option-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -545,12 +525,9 @@ select:disabled {
     border-left: 3px solid transparent;
 }
 
-#run-options {
-    margin-top: 8px;
-}
-
-#run-options .option-row:first-child {
+#run-options .option-row {
     border-top: none;
+    border-bottom: 1px solid var(--border);
 }
 
 .option-row.changed {
@@ -743,32 +720,194 @@ select:disabled {
     color: var(--warning);
 }
 
-/* Trackers in progress */
+/* Trackers in the execution */
 
-.step-legend {
-    font-size: 12px;
+.execution-trackers {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.active-row {
-    display: grid;
-    grid-template-columns: minmax(120px, 200px) minmax(120px, 1fr) minmax(140px, 200px);
-    align-items: center;
-    gap: 12px;
-    padding: 8px 16px;
+.execution-group .card-header h2 {
+    font-size: 15px;
+}
+
+.group-failed .card-header h2 {
+    color: var(--danger);
+}
+
+.group-succeeded .card-header h2 {
+    color: var(--success);
+}
+
+.group-cancelled .card-header h2 {
+    color: var(--warning);
+}
+
+.execution-tracker {
     border-top: 1px solid var(--border);
 }
 
-.active-row:first-child {
+.execution-tracker:first-child {
     border-top: none;
 }
 
-.active-name {
+.execution-row {
+    display: grid;
+    grid-template-columns: 16px minmax(140px, 220px) minmax(110px, 160px) minmax(0, 1fr) 64px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.execution-row::-webkit-details-marker {
+    display: none;
+}
+
+.execution-row::before {
+    content: "\25B8";
+    color: var(--text-muted);
+    transition: transform 0.15s;
+}
+
+.execution-tracker[open] > .execution-row::before {
+    transform: rotate(90deg);
+}
+
+.execution-row:hover {
+    background: var(--surface-muted);
+}
+
+.execution-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.execution-name {
     display: flex;
     align-items: center;
     gap: 6px;
     min-width: 0;
     font-weight: 500;
     overflow-wrap: anywhere;
+}
+
+.execution-detail {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.execution-time {
+    font-size: 12px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.execution-tracker[data-state="FAILED"] .execution-detail {
+    color: var(--danger);
+}
+
+.tracker-log {
+    height: auto;
+    min-height: 0;
+    max-height: 360px;
+    border-top: 1px solid var(--border);
+}
+
+.waiting-names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 16px;
+}
+
+.waiting-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.badge.needs-input {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.empty-execution {
+    padding: 20px;
+}
+
+.empty-execution p {
+    margin: 4px 0 0;
+}
+
+/* Collapsible sections (run options and the execution log) */
+
+.options-panel > summary,
+.log-details > summary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.options-panel > summary::-webkit-details-marker,
+.log-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.options-panel > summary::before,
+.log-details > summary::before {
+    content: "\25B8";
+    color: var(--text-muted);
+    transition: transform 0.15s;
+}
+
+.options-panel[open] > summary::before,
+.log-details[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.options-panel > summary:focus-visible,
+.log-details > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.options-summary,
+.log-details > summary .muted {
+    font-size: 13px;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0 24px;
+    padding: 0 16px;
+    border-top: 1px solid var(--border);
+}
+
+.options-panel .options-legend {
+    padding: 0 16px 14px;
+}
+
+.log-details .log-output {
+    height: 40vh;
+    min-height: 200px;
+    border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .steps {
@@ -791,10 +930,8 @@ select:disabled {
     background: var(--accent);
 }
 
-.active-step {
-    font-size: 12px;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
+.step.stopped {
+    background: var(--danger);
 }
 
 .run-card {
@@ -857,47 +994,6 @@ select:disabled {
 
 .count.failure {
     color: var(--danger);
-}
-
-.failed-trackers {
-    margin: 8px 0 0;
-    color: var(--danger);
-}
-
-.log-card {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.log-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.log-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
-}
-
-.connection {
-    font-size: 12px;
-    color: var(--danger);
-}
-
-.connection::before {
-    content: "\25CF  ";
-}
-
-.connection[data-connected="true"] {
-    color: var(--success);
 }
 
 .log-output {
@@ -1333,24 +1429,21 @@ select:disabled {
 
 /* Small screens */
 
-@media (max-width: 1000px) {
-    .main-layout {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .options-card {
-        position: static;
-    }
-}
-
 @media (max-width: 760px) {
-    .active-row {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    .execution-row {
+        grid-template-columns: 16px minmax(0, 1fr) minmax(90px, 120px);
     }
 
-    .active-step {
-        grid-column: 1 / -1;
-        text-align: left;
+    .execution-detail {
+        grid-column: 2 / -1;
+    }
+
+    .execution-time {
+        display: none;
+    }
+
+    .options-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .app-header {

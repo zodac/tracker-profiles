@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
-import net.zodac.tracker.web.http.LogStreamHandler;
+import net.zodac.tracker.web.http.LogApiHandler;
 import net.zodac.tracker.web.http.RunApiHandler;
 import net.zodac.tracker.web.http.SettingsApiHandler;
 import net.zodac.tracker.web.http.StaticResourceHandler;
@@ -54,7 +54,7 @@ public final class WebServer {
      * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists), then starts the web UI server.
      *
      * @param applicationConfiguration the {@link ApplicationConfiguration} loaded from environment variables
-     * @param webLogAppender           the {@link WebLogAppender} capturing log messages to stream to the web UI
+     * @param webLogAppender           the {@link WebLogAppender} capturing the log messages shown in the web UI
      * @return the started {@link WebServer}
      * @throws IOException  thrown if the server cannot be started
      * @throws SQLException thrown if the database cannot be opened
@@ -65,13 +65,13 @@ public final class WebServer {
         removeObsoleteSettings(applicationDatabase);
         applyStoredSettings(applicationDatabase);
 
-        final RunManager runManager = RunManager.create(applicationDatabase);
+        final RunManager runManager = RunManager.create(applicationDatabase, webLogAppender);
         final SettingsService settingsService = SettingsService.create(applicationDatabase, runManager::applySavedSettings);
 
         final HttpServer httpServer = HttpServer.create(new InetSocketAddress(applicationConfiguration.webUiPort()), 0);
         httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         httpServer.createContext(RunApiHandler.CONTEXT_PATH, RunApiHandler.create(runManager));
-        httpServer.createContext(LogStreamHandler.CONTEXT_PATH, LogStreamHandler.create(webLogAppender));
+        httpServer.createContext(LogApiHandler.CONTEXT_PATH, LogApiHandler.create(webLogAppender));
         httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase));
         httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
         httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());

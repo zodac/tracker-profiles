@@ -19,9 +19,7 @@ package net.zodac.tracker.web.log;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.Map;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
@@ -41,29 +39,62 @@ class WebLogAppenderTest {
     }
 
     @Test
-    void givenRetainedEntries_whenSubscribed_thenRetainedEntriesAreReturnedAndNewEntriesAreSent() {
+    void givenMessagesFromTrackers_whenRetrieved_thenEachTrackerHasItsOwnMessages() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.append(logEvent(Level.INFO, "\u001B[32mfirst\u001B[0m", "[Tracker] "));
+        webLogAppender.clear();
+        webLogAppender.append(logEvent(Level.INFO, "\u001B[32mStarting execution\u001B[0m", null));
+        webLogAppender.append(logEvent(Level.INFO, "\t- Opening tracker", "First"));
+        webLogAppender.append(logEvent(Level.DEBUG, "Debug detail", "Second"));
+        webLogAppender.append(logEvent(Level.INFO, "\t- Logging in as 'user'", "First"));
 
-        final List<LogEntry> received = new ArrayList<>();
-        final Consumer<LogEntry> subscriber = received::add;
-        final List<LogEntry> retained = webLogAppender.subscribe(subscriber);
-        webLogAppender.append(logEvent(Level.WARN, "second", null));
-        webLogAppender.unsubscribe(subscriber);
-        webLogAppender.append(logEvent(Level.ERROR, "third", null));
-
-        assertThat(retained)
-            .last()
-            .returns("INFO", LogEntry::level)
-            .returns("[Tracker] ", LogEntry::tracker)
-            .returns("first", LogEntry::message);
-        assertThat(received)
+        assertThat(webLogAppender.entries("First", 0L))
+            .extracting(LogEntry::message)
+            .containsExactly("\t- Opening tracker", "\t- Logging in as 'user'");
+        assertThat(webLogAppender.entries("Second", 0L))
             .singleElement()
-            .returns("WARN", LogEntry::level)
+            .returns("DEBUG", LogEntry::level)
+            .returns("Second", LogEntry::tracker);
+        assertThat(webLogAppender.entries(null, 0L))
+            .singleElement()
             .returns("", LogEntry::tracker)
-            .returns("second", LogEntry::message);
-        assertThat(received.getFirst().id())
-            .isGreaterThan(retained.getLast().id());
+            .returns("Starting execution", LogEntry::message);
+    }
+
+    @Test
+    void givenMessages_whenRetrievedAfterAnId_thenOnlyLaterMessagesAreReturned() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear();
+        webLogAppender.append(logEvent(Level.INFO, "first", "Tracker"));
+        final long firstId = webLogAppender.entries("Tracker", 0L).getFirst().id();
+        webLogAppender.append(logEvent(Level.WARN, "second", "Tracker"));
+
+        assertThat(webLogAppender.entries("Tracker", firstId))
+            .extracting(LogEntry::message)
+            .containsExactly("second");
+    }
+
+    @Test
+    void givenMessages_whenLatestMessagesRetrieved_thenLatestInfoMessageOfEachTrackerIsSummarised() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear();
+        webLogAppender.append(logEvent(Level.INFO, "\t\t- Opening user profile page", "Tracker"));
+        webLogAppender.append(logEvent(Level.DEBUG, "Ignored, since below INFO", "Tracker"));
+
+        assertThat(webLogAppender.latestMessages())
+            .containsExactly(Map.entry("Tracker", "Opening user profile page"));
+    }
+
+    @Test
+    void givenMessages_whenCleared_thenNoMessagesAreRetained() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.append(logEvent(Level.INFO, "message", "Tracker"));
+
+        webLogAppender.clear();
+
+        assertThat(webLogAppender.entries("Tracker", 0L))
+            .isEmpty();
+        assertThat(webLogAppender.latestMessages())
+            .isEmpty();
     }
 
     private static Log4jLogEvent logEvent(final Level level, final String message, final @Nullable String tracker) {

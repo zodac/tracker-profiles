@@ -42,7 +42,7 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 `docker/Dockerfile`) with virtual threads, Gson for JSON, and no web framework.
 
 - **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers.
-- **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogStreamHandler` (`/api/logs`, Server-Sent Events),
+- **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`), `SettingsApiHandler`
   (`/api/settings`), `StaticResourceHandler` (`/`). API handlers extend `ApiHandler`,
   which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
@@ -50,8 +50,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   tracker's most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null`/empty password on save keeps the
   stored one.
 - **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
-  overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track progress (tracker types
-  started, trackers in progress and their completed `TrackerStep`s, results), which `RunStatus` returns to the UI along with any pending user inputs.
+  overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
+  (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
+  UI along with any pending user inputs. Trackers of a type removed from the execution order before it starts are not returned.
 - **Live settings** — `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`) after every save. While an execution is
   running, only `Scope.LIVE` options are applied (`Configuration.applyLiveChanges`, which uses `ApplicationConfiguration.withLiveValuesFrom`), so
   options read at execution start (such as the output directory) never change part-way through. Code reading a `LIVE` option must read it at the
@@ -64,7 +65,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 - **User input** — manual trackers call `displayUtils().confirm(trackerName, message)`, which waits in `framework.input.UserInputRequests` until
   the user responds in the web UI (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS`
   passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
-- **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, retaining recent entries for the log stream.
+- **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
+  each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
+  tracker, and each tracker's latest `INFO`+ message for `RunStatus`. It is cleared when an execution starts. The UI fetches a tracker's logs only
+  while it is expanded, polling with the ID of the last message it has.
 
 #### Cancelling an Execution
 
@@ -86,8 +90,9 @@ create a driver without registering it in `DriverPool` (or checking `ExecutionCa
 The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Content-Security-Policy: default-src 'self'`, so no inline scripts or
 styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the shared config, like the redaction scripts.
 
-- The Main tab shows the options with `Tab.MAIN` as "Run options" (`LOG_LEVEL` is shown in the log toolbar instead); while an execution is running,
-  options that are not `Scope.LIVE` are locked, and tracker types that have started cannot be changed in the tracker order. The Settings tab shows the
+- The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
+  tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section. While an execution is running, options that
+  are not `Scope.LIVE` are locked, and tracker types that have started cannot be changed in the tracker order. The Settings tab shows the
   `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last.
 - There are no save buttons: every change is saved automatically and confirmed with a toast. Text inputs save after a 1s pause in typing (or
   on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place

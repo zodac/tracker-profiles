@@ -38,65 +38,45 @@
     <section id="tab-main" class="tab-panel" role="tabpanel">
         <div id="pending-inputs" class="pending-inputs" aria-live="assertive"></div>
 
-        <div class="main-layout">
-            <div class="main-column">
-                <div class="card run-card">
-                    <div class="run-summary">
-                        <div>
-                            <h2>Screenshot trackers</h2>
-                            <p id="run-description" class="muted">Takes a screenshot of the profile page of every enabled tracker.</p>
-                        </div>
-                        <div class="run-actions">
-                            <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
-                            <button id="start-button" class="button primary large" type="button">Start</button>
-                        </div>
-                    </div>
-                    <div id="run-progress" class="run-progress" hidden>
-                        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
-                        <div class="progress-counts">
-                            <span id="progress-text"></span>
-                            <span><span class="count success" id="success-count">0</span> succeeded</span>
-                            <span><span class="count failure" id="failure-count">0</span> failed</span>
-                        </div>
-                        <p id="failed-trackers" class="failed-trackers" hidden></p>
-                    </div>
+        <div class="card run-card">
+            <div class="run-summary">
+                <div>
+                    <h2>Screenshot trackers</h2>
+                    <p id="run-description" class="muted">Takes a screenshot of the profile page of every enabled tracker.</p>
                 </div>
-
-                <div id="active-card" class="card active-card" hidden>
-                    <div class="card-header">
-                        <h2>In progress</h2>
-                        <span class="muted step-legend">Open · Login · Profile · Screenshot · Logout</span>
-                    </div>
-                    <div id="active-trackers"></div>
-                </div>
-
-                <div class="card log-card">
-                    <div class="log-toolbar">
-                        <h2>Logs</h2>
-                        <div class="log-controls">
-                            <label class="inline-field" title="Saved straight away, and applies immediately (including to an execution in progress)">
-                                Level <span id="log-level-control"></span>
-                            </label>
-                            <label class="inline-field">Tracker
-                                <select id="log-tracker-filter">
-                                    <option value="">All</option>
-                                </select>
-                            </label>
-                            <label class="inline-field"><input type="checkbox" id="log-autoscroll" checked> Auto-scroll</label>
-                            <button id="log-clear" class="button" type="button">Clear view</button>
-                            <span id="log-connection" class="connection" data-connected="false">Disconnected</span>
-                        </div>
-                    </div>
-                    <div id="log-output" class="log-output" role="log" aria-live="polite"></div>
+                <div class="run-actions">
+                    <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
+                    <button id="start-button" class="button primary large" type="button">Start</button>
                 </div>
             </div>
-
-            <aside class="card options-card" aria-labelledby="run-options-title">
-                <h2 id="run-options-title">Run options</h2>
-                <div id="run-options"></div>
-                <p class="options-legend muted"><span class="live-dot" aria-hidden="true"></span> Can be changed during an execution</p>
-            </aside>
+            <div id="run-progress" class="run-progress" hidden>
+                <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+                <div class="progress-counts">
+                    <span id="progress-text"></span>
+                    <span><span class="count success" id="success-count">0</span> succeeded</span>
+                    <span><span class="count failure" id="failure-count">0</span> failed</span>
+                </div>
+            </div>
         </div>
+
+        <details id="run-options-panel" class="card options-panel">
+            <summary>
+                <h2>Run options</h2>
+                <span id="run-options-summary" class="options-summary muted"></span>
+            </summary>
+            <div id="run-options" class="options-grid"></div>
+            <p class="options-legend muted"><span class="live-dot" aria-hidden="true"></span> Can be changed during an execution</p>
+        </details>
+
+        <div id="execution-trackers" class="execution-trackers"></div>
+
+        <details id="execution-log" class="card log-details">
+            <summary>
+                <h2>Execution log</h2>
+                <span class="muted">Messages not logged by a tracker, such as the summary of the execution</span>
+            </summary>
+            <div class="log-output" data-tracker="" role="log"></div>
+        </details>
     </section>
 
     <!-- Trackers -->

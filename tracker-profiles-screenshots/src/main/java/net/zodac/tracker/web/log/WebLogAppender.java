@@ -21,33 +21,46 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.Property;
+import org.jspecify.annotations.Nullable;
 
 /**
- * A Log4j2 appender that retains the most recent log messages in memory and forwards new messages to subscribers, so they can be streamed to the
- * web UI.
+ * A Log4j2 appender that keeps the log messages of the current execution in memory, separately for each tracker, so the web UI can show the logs of
+ * a single tracker (trackers are executed in parallel, so their messages are interleaved). Messages logged outside a tracker (such as the start and
+ * summary of an execution) are kept as the execution log.
+ *
+ * <p>
+ * The tracker of a message is read from the {@code tracker} key of the Log4j {@link org.apache.logging.log4j.ThreadContext}, which is set for the
+ * thread executing each tracker. All messages are cleared with {@link #clear()} when a new execution starts.
  */
 public final class WebLogAppender extends AbstractAppender {
 
+    /**
+     * The key in the logging context holding the name of the tracker being screenshot.
+     */
+    public static final String TRACKER_CONTEXT_KEY = "tracker";
+
     private static final String APPENDER_NAME = "WEB_UI";
-    private static final int MAXIMUM_RETAINED_ENTRIES = 5_000;
+    private static final String EXECUTION_LOG = "";
+    private static final int MAXIMUM_ENTRIES_PER_LOG = 2_000;
     private static final Pattern ANSI_ESCAPE_CODE = Pattern.compile("\u001B\\[[0-9;]*[A-Za-z]");
+    private static final Pattern LEADING_LIST_MARKER = Pattern.compile("^[\\s>-]+");
 
     private final Lock lock = new ReentrantLock();
-    private final Deque<LogEntry> retainedEntries = new ArrayDeque<>();
-    private final Set<Consumer<LogEntry>> subscribers = new CopyOnWriteArraySet<>();
+    private final Map<String, Deque<LogEntry>> entriesByTracker = new HashMap<>();
+    private final Map<String, String> latestMessageByTracker = new HashMap<>();
     private long nextId = 1L;
 
     private WebLogAppender() {
@@ -82,60 +95,76 @@ public final class WebLogAppender extends AbstractAppender {
 
     @Override
     public void append(final LogEvent event) {
-        final String tracker = event.getContextData().getValue("tracker");
-        final LogEntry logEntry;
+        final String trackerValue = event.getContextData().getValue(TRACKER_CONTEXT_KEY);
+        final String tracker = trackerValue == null ? EXECUTION_LOG : stripAnsiCodes(trackerValue).trim();
+        final String message = formatMessage(event);
 
         lock.lock();
         try {
             final long id = nextId;
             nextId++;
-            logEntry = new LogEntry(
-                id,
-                event.getTimeMillis(),
-                event.getLevel().name(),
-                tracker == null ? "" : stripAnsiCodes(tracker),
-                formatMessage(event)
-            );
-            retainedEntries.addLast(logEntry);
-            if (retainedEntries.size() > MAXIMUM_RETAINED_ENTRIES) {
-                retainedEntries.removeFirst();
+            final Deque<LogEntry> entries = entriesByTracker.computeIfAbsent(tracker, _ -> new ArrayDeque<>());
+            entries.addLast(new LogEntry(id, event.getTimeMillis(), event.getLevel().name(), tracker, message));
+            if (entries.size() > MAXIMUM_ENTRIES_PER_LOG) {
+                entries.removeFirst();
+            }
+
+            final String summary = summarise(message);
+            if (!tracker.isEmpty() && event.getLevel().isMoreSpecificThan(Level.INFO) && !summary.isEmpty()) {
+                latestMessageByTracker.put(tracker, summary);
             }
         } finally {
             lock.unlock();
         }
-
-        for (final Consumer<LogEntry> subscriber : subscribers) {
-            subscriber.accept(logEntry);
-        }
     }
 
     /**
-     * Registers a subscriber to receive each new {@link LogEntry}, and returns all currently retained entries. Registration and retrieval are
-     * atomic, so no entry is missed or duplicated between the returned entries and those sent to the subscriber.
+     * Retrieves the retained log messages of a tracker, or of the execution itself, written after the given ID.
      *
-     * <p>
-     * The subscriber is called on the logging thread, so it must not block.
-     *
-     * @param subscriber the subscriber to receive new {@link LogEntry}s
-     * @return the currently retained {@link LogEntry}s, oldest first
+     * @param tracker the name of the tracker, or {@code null}/empty for the messages not logged by a tracker
+     * @param afterId only messages with a greater {@link LogEntry#id()} are returned (0 for all messages)
+     * @return the {@link LogEntry}s, oldest first
      */
-    public List<LogEntry> subscribe(final Consumer<LogEntry> subscriber) {
+    public List<LogEntry> entries(final @Nullable String tracker, final long afterId) {
         lock.lock();
         try {
-            subscribers.add(subscriber);
-            return List.copyOf(retainedEntries);
+            final Deque<LogEntry> entries = entriesByTracker.get(tracker == null ? EXECUTION_LOG : tracker);
+            if (entries == null) {
+                return List.of();
+            }
+            return entries.stream()
+                .filter(entry -> entry.id() > afterId)
+                .toList();
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * Removes a subscriber previously registered with {@link #subscribe(Consumer)}.
+     * Retrieves the most recent message of at least {@code INFO} level logged by each tracker, used to summarise what each tracker is doing.
      *
-     * @param subscriber the subscriber to remove
+     * @return the latest message, keyed by tracker name
      */
-    public void unsubscribe(final Consumer<LogEntry> subscriber) {
-        subscribers.remove(subscriber);
+    public Map<String, String> latestMessages() {
+        lock.lock();
+        try {
+            return Map.copyOf(latestMessageByTracker);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Removes every retained log message, when a new execution starts.
+     */
+    public void clear() {
+        lock.lock();
+        try {
+            entriesByTracker.clear();
+            latestMessageByTracker.clear();
+        } finally {
+            lock.unlock();
+        }
     }
 
     private static String formatMessage(final LogEvent event) {
@@ -148,6 +177,12 @@ public final class WebLogAppender extends AbstractAppender {
         final StringWriter stackTrace = new StringWriter();
         thrown.printStackTrace(new PrintWriter(stackTrace));
         return message + System.lineSeparator() + stackTrace;
+    }
+
+    // The first line of the message, without the indentation and list markers used in the console output
+    private static String summarise(final String message) {
+        final String firstLine = message.lines().findFirst().orElse("");
+        return LEADING_LIST_MARKER.matcher(firstLine).replaceFirst("").trim();
     }
 
     /**

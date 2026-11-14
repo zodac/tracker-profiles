@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.config.Configuration;
+import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class RunManagerTest {
 
     @Test
     void givenNoExecution_whenCancelled_thenNothingIsCancelled() throws IOException, SQLException {
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")));
+        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
 
         assertThat(runManager.cancel())
             .isFalse();
@@ -55,18 +56,18 @@ class RunManagerTest {
 
     @Test
     void givenNoExecution_whenStatusRetrieved_thenNoProgressIsReported() throws IOException, SQLException {
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")));
+        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
 
         assertThat(runManager.status())
             .returns(0, RunStatus::totalTrackers)
-            .returns(List.of(), RunStatus::activeTrackers)
+            .returns(List.of(), RunStatus::trackers)
             .returns(List.of(), RunStatus::pendingInputs);
     }
 
     @Test
     void givenNoExecution_whenSettingsSaved_thenWholeConfigurationIsReloaded() throws IOException, SQLException {
         Configuration.reload(Map.of());
-        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")));
+        final RunManager runManager = RunManager.create(ApplicationDatabase.open(tempDirectory.resolve("test.db")), WebLogAppender.install());
 
         runManager.applySavedSettings(Map.of("NUMBER_OF_SCREENSHOT_ATTEMPTS", "3", "NUMBER_OF_PARALLEL_THREADS", "4"));
 

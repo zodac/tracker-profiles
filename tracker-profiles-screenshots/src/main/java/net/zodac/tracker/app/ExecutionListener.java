@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.app;
 
+import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.progress.TrackerStep;
@@ -37,9 +38,9 @@ public interface ExecutionListener {
      * Called once the trackers to be executed are known, before any are executed. Every {@link TrackerType} with an enabled tracker is included,
      * since {@link net.zodac.tracker.framework.config.ApplicationConfiguration#trackerExecutionOrder()} can be changed during the execution.
      *
-     * @param numberOfTrackersByType the number of trackers of each {@link TrackerType}
+     * @param trackerNamesByType the names of the trackers of each {@link TrackerType}, in the order they are executed
      */
-    default void executionStarted(final Map<TrackerType, Integer> numberOfTrackersByType) {
+    default void executionStarted(final Map<TrackerType, List<String>> trackerNamesByType) {
         // Do nothing by default
     }
 
@@ -59,6 +60,16 @@ public interface ExecutionListener {
      * @param trackerName the name of the tracker
      */
     default void trackerStarted(final TrackerType trackerType, final String trackerName) {
+        // Do nothing by default
+    }
+
+    /**
+     * Called at the start of each attempt to screenshot a tracker.
+     *
+     * @param trackerName the name of the tracker
+     * @param attempt     the attempt number, starting at 1
+     */
+    default void trackerAttemptStarted(final String trackerName, final int attempt) {
         // Do nothing by default
     }
 

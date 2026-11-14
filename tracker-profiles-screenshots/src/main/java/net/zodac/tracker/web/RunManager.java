@@ -20,8 +20,6 @@ package net.zodac.tracker.web;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -46,6 +44,7 @@ import net.zodac.tracker.framework.gui.DisplayValidator;
 import net.zodac.tracker.framework.input.UserInputRequests;
 import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.framework.progress.TrackerStep;
+import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
@@ -73,30 +72,30 @@ public final class RunManager implements ExecutionListener {
 
     private final Lock lock = new ReentrantLock();
     private final ApplicationDatabase applicationDatabase;
+    private final WebLogAppender webLogAppender;
 
     private RunStatus.State state = RunStatus.State.IDLE;
     // 0 when not set, since PMD flags assigning null to a field
     private long startedAt;
     private long finishedAt;
-    private final Map<TrackerType, Integer> numberOfTrackersByType = new EnumMap<>(TrackerType.class);
     private final Set<TrackerType> startedTrackerTypes = new LinkedHashSet<>();
-    private final List<String> successfulTrackers = new ArrayList<>();
-    private final List<String> failedTrackers = new ArrayList<>();
-    private final Map<String, ActiveTrackerState> activeTrackers = new LinkedHashMap<>();
+    private final Map<String, TrackerProgressState> trackers = new LinkedHashMap<>();
     private @Nullable Thread executionThread;
 
-    private RunManager(final ApplicationDatabase applicationDatabase) {
+    private RunManager(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) {
         this.applicationDatabase = applicationDatabase;
+        this.webLogAppender = webLogAppender;
     }
 
     /**
      * Creates a {@link RunManager}.
      *
      * @param applicationDatabase the {@link ApplicationDatabase} from which trackers and settings are loaded for each execution
+     * @param webLogAppender      the {@link WebLogAppender} holding the log messages of each execution, cleared when a new execution starts
      * @return the {@link RunManager}
      */
-    public static RunManager create(final ApplicationDatabase applicationDatabase) {
-        return new RunManager(applicationDatabase);
+    public static RunManager create(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) {
+        return new RunManager(applicationDatabase, webLogAppender);
     }
 
     /**
@@ -171,11 +170,9 @@ public final class RunManager implements ExecutionListener {
             state = RunStatus.State.RUNNING;
             startedAt = System.currentTimeMillis();
             finishedAt = 0L;
-            numberOfTrackersByType.clear();
             startedTrackerTypes.clear();
-            successfulTrackers.clear();
-            failedTrackers.clear();
-            activeTrackers.clear();
+            trackers.clear();
+            webLogAppender.clear();
             ExecutionCancellation.reset();
             executionThread = Thread.ofPlatform()
                 .name("web-execution")
@@ -295,7 +292,13 @@ public final class RunManager implements ExecutionListener {
             }
             state = finalState;
             finishedAt = System.currentTimeMillis();
-            activeTrackers.clear();
+            // A tracker still in progress was stopped by the cancellation, or by an error that ended the execution
+            for (final TrackerProgressState tracker : trackers.values()) {
+                if (tracker.state == RunStatus.TrackerState.RUNNING) {
+                    tracker.state = RunStatus.TrackerState.CANCELLED;
+                    tracker.finishedAt = finishedAt;
+                }
+            }
         } finally {
             lock.unlock();
         }
@@ -313,17 +316,23 @@ public final class RunManager implements ExecutionListener {
      * @return the {@link RunStatus}
      */
     public RunStatus status() {
+        final Map<String, String> latestMessages = webLogAppender.latestMessages();
         lock.lock();
         try {
+            final Set<TrackerType> shownTrackerTypes = shownTrackerTypes();
+            final List<RunStatus.TrackerProgress> shownTrackers = trackers.values()
+                .stream()
+                .filter(tracker -> shownTrackerTypes.contains(tracker.trackerType))
+                .map(tracker -> tracker.toView(latestMessages.getOrDefault(tracker.name, "")))
+                .toList();
+
             return new RunStatus(
                 state,
                 nullIfUnset(startedAt),
                 nullIfUnset(finishedAt),
-                totalTrackers(),
-                List.copyOf(successfulTrackers),
-                List.copyOf(failedTrackers),
+                shownTrackers.size(),
                 startedTrackerTypes.stream().map(Enum::name).toList(),
-                activeTrackers.values().stream().map(ActiveTrackerState::toView).toList(),
+                shownTrackers,
                 UserInputRequests.pending()
             );
         } finally {
@@ -331,20 +340,14 @@ public final class RunManager implements ExecutionListener {
         }
     }
 
-    // Types already started always count, plus the types still to come in the (current) execution order, which may change during the execution
-    private int totalTrackers() {
-        if (numberOfTrackersByType.isEmpty()) {
-            return 0;
-        }
-
-        final Set<TrackerType> counted = EnumSet.noneOf(TrackerType.class);
-        counted.addAll(startedTrackerTypes);
+    // Types already started are always shown, plus the types still to come in the (current) execution order, which may change during the execution
+    private Set<TrackerType> shownTrackerTypes() {
+        final Set<TrackerType> shown = EnumSet.noneOf(TrackerType.class);
+        shown.addAll(startedTrackerTypes);
         if (state == RunStatus.State.RUNNING) {
-            counted.addAll(Configuration.get().trackerExecutionOrder());
+            shown.addAll(Configuration.get().trackerExecutionOrder());
         }
-        return counted.stream()
-            .mapToInt(trackerType -> numberOfTrackersByType.getOrDefault(trackerType, 0))
-            .sum();
+        return shown;
     }
 
     private static @Nullable Long nullIfUnset(final long epochMillis) {
@@ -352,10 +355,14 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void executionStarted(final Map<TrackerType, Integer> numberOfTrackersByType) {
+    public void executionStarted(final Map<TrackerType, List<String>> trackerNamesByType) {
         lock.lock();
         try {
-            this.numberOfTrackersByType.putAll(numberOfTrackersByType);
+            trackerNamesByType.forEach((trackerType, trackerNames) -> {
+                for (final String trackerName : trackerNames) {
+                    trackers.put(trackerName, new TrackerProgressState(trackerName, trackerType));
+                }
+            });
         } finally {
             lock.unlock();
         }
@@ -375,7 +382,22 @@ public final class RunManager implements ExecutionListener {
     public void trackerStarted(final TrackerType trackerType, final String trackerName) {
         lock.lock();
         try {
-            activeTrackers.put(trackerName, new ActiveTrackerState(trackerName, trackerType, System.currentTimeMillis()));
+            final TrackerProgressState tracker = trackers.computeIfAbsent(trackerName, _ -> new TrackerProgressState(trackerName, trackerType));
+            tracker.state = RunStatus.TrackerState.RUNNING;
+            tracker.startedAt = System.currentTimeMillis();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void trackerAttemptStarted(final String trackerName, final int attempt) {
+        lock.lock();
+        try {
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker != null) {
+                tracker.attempt = attempt;
+            }
         } finally {
             lock.unlock();
         }
@@ -385,9 +407,9 @@ public final class RunManager implements ExecutionListener {
     public void trackerStepCompleted(final String trackerName, final TrackerStep trackerStep) {
         lock.lock();
         try {
-            final ActiveTrackerState activeTracker = activeTrackers.get(trackerName);
-            if (activeTracker != null) {
-                activeTracker.completedSteps.add(trackerStep);
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker != null) {
+                tracker.completedSteps.add(trackerStep);
             }
         } finally {
             lock.unlock();
@@ -399,12 +421,9 @@ public final class RunManager implements ExecutionListener {
         final long completedAt = System.currentTimeMillis();
         lock.lock();
         try {
-            activeTrackers.remove(trackerName);
-            if (wasSuccessful) {
-                successfulTrackers.add(trackerName);
-            } else {
-                failedTrackers.add(trackerName);
-            }
+            final TrackerProgressState tracker = trackers.computeIfAbsent(trackerName, _ -> new TrackerProgressState(trackerName, trackerType));
+            tracker.state = wasSuccessful ? RunStatus.TrackerState.SUCCEEDED : RunStatus.TrackerState.FAILED;
+            tracker.finishedAt = completedAt;
         } finally {
             lock.unlock();
         }
@@ -417,22 +436,26 @@ public final class RunManager implements ExecutionListener {
         }
     }
 
-    // Mutable progress of a tracker being executed, only accessed while holding the lock
-    private static final class ActiveTrackerState {
+    // Mutable progress of a tracker in the execution, only accessed while holding the lock
+    private static final class TrackerProgressState {
 
         private final String name;
         private final TrackerType trackerType;
-        private final long startedAt;
         private final Set<TrackerStep> completedSteps = EnumSet.noneOf(TrackerStep.class);
+        private RunStatus.TrackerState state = RunStatus.TrackerState.WAITING;
+        // 0 when not set, since PMD flags assigning null to a field
+        private long startedAt;
+        private long finishedAt;
+        private int attempt;
 
-        private ActiveTrackerState(final String name, final TrackerType trackerType, final long startedAt) {
+        private TrackerProgressState(final String name, final TrackerType trackerType) {
             this.name = name;
             this.trackerType = trackerType;
-            this.startedAt = startedAt;
         }
 
-        private RunStatus.ActiveTracker toView() {
-            return new RunStatus.ActiveTracker(name, trackerType.name(), startedAt, completedSteps.stream().map(Enum::name).toList());
+        private RunStatus.TrackerProgress toView(final String latestMessage) {
+            return new RunStatus.TrackerProgress(name, trackerType.name(), state, nullIfUnset(startedAt), nullIfUnset(finishedAt), attempt,
+                completedSteps.stream().map(Enum::name).toList(), latestMessage);
         }
     }
 }

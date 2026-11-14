@@ -109,6 +109,7 @@ final class ProfileScreenshotExecutor {
         // The maximum is read before each attempt, since it can be changed in the web UI during an execution
         for (int attempt = 1; attempt <= Configuration.get().numberOfScreenshotAttempts(); attempt++) {
             ExecutionCancellation.throwIfCancelled();
+            executionListener.trackerAttemptStarted(trackerCredential.name(), attempt);
             if (attempt != FIRST_ATTEMPT) {
                 LOGGER.warn("");
                 LOGGER.info("Attempt {}/{}", attempt, Configuration.get().numberOfScreenshotAttempts());

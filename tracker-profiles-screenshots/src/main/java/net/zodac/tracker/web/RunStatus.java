@@ -27,11 +27,9 @@ import org.jspecify.annotations.Nullable;
  * @param state               the {@link State} of the execution
  * @param startedAt           the start time of the execution as epoch milliseconds, or {@code null} if never started
  * @param finishedAt          the end time of the execution as epoch milliseconds, or {@code null} if not finished
- * @param totalTrackers       the number of trackers to be executed, for the tracker types already started and those still in the execution order
- * @param successfulTrackers  the names of the trackers successfully screenshot
- * @param failedTrackers      the names of the trackers that failed
+ * @param totalTrackers       the number of trackers in {@code trackers}
  * @param startedTrackerTypes the tracker types that have started executing, in order (the last one is in progress while running)
- * @param activeTrackers      the trackers currently being executed
+ * @param trackers            every tracker of the tracker types already started, and (while running) of those still in the execution order
  * @param pendingInputs       the requests waiting for the user to provide an input
  */
 public record RunStatus(
@@ -39,23 +37,65 @@ public record RunStatus(
     @Nullable Long startedAt,
     @Nullable Long finishedAt,
     int totalTrackers,
-    List<String> successfulTrackers,
-    List<String> failedTrackers,
     List<String> startedTrackerTypes,
-    List<ActiveTracker> activeTrackers,
+    List<TrackerProgress> trackers,
     List<PendingUserInput> pendingInputs
 ) {
 
     /**
-     * A tracker currently being executed.
+     * The progress of a single tracker in the execution.
      *
      * @param name           the tracker name
      * @param type           the tracker type
-     * @param startedAt      when the tracker started executing, as epoch milliseconds
+     * @param state          the {@link TrackerState}
+     * @param startedAt      when the tracker started executing, as epoch milliseconds, or {@code null} if it has not started
+     * @param finishedAt     when the tracker finished executing, as epoch milliseconds, or {@code null} if it has not finished
+     * @param attempt        the current (or last) attempt, starting at 1, or 0 if it has not started
      * @param completedSteps the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far
+     * @param latestMessage  the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
      */
-    public record ActiveTracker(String name, String type, long startedAt, List<String> completedSteps) {
+    public record TrackerProgress(
+        String name,
+        String type,
+        TrackerState state,
+        @Nullable Long startedAt,
+        @Nullable Long finishedAt,
+        int attempt,
+        List<String> completedSteps,
+        String latestMessage
+    ) {
 
+    }
+
+    /**
+     * The state of a single tracker in an execution.
+     */
+    public enum TrackerState {
+
+        /**
+         * The tracker has not started yet.
+         */
+        WAITING,
+
+        /**
+         * The tracker is being executed.
+         */
+        RUNNING,
+
+        /**
+         * The tracker was successfully screenshot.
+         */
+        SUCCEEDED,
+
+        /**
+         * Every attempt for the tracker failed.
+         */
+        FAILED,
+
+        /**
+         * The tracker was in progress when the execution was cancelled (or ended abruptly).
+         */
+        CANCELLED
     }
 
     /**

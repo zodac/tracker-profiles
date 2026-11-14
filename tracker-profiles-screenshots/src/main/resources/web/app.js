@@ -4,6 +4,7 @@
     const MAXIMUM_LOG_LINES = 5000
     const MAXIMUM_TOASTS = 4
     const STATUS_POLL_INTERVAL_MS = 2000
+    const IDLE_POLL_INTERVAL_MS = 10000
     const INPUT_POLL_INTERVAL_MS = 1000
     const TYPING_SAVE_DELAY_MS = 1000
     const THEME_STORAGE_KEY = 'tracker-profiles-theme'
@@ -29,7 +30,15 @@
         {name: 'TAKE_SCREENSHOTS', label: 'Taking screenshots'},
         {name: 'LOGOUT', label: 'Logging out'},
     ]
-    // Settings shown in their own place on the Main tab, rather than in the run options
+    // The groups of trackers in an execution, in the order they are shown
+    const TRACKER_GROUPS = [
+        {state: 'RUNNING', title: 'In progress', empty: null},
+        {state: 'WAITING', title: 'Waiting', titleWhenFinished: 'Not run'},
+        {state: 'FAILED', title: 'Failed'},
+        {state: 'CANCELLED', title: 'Cancelled'},
+        {state: 'SUCCEEDED', title: 'Succeeded'},
+    ]
+    const OPTIONS_OPEN_STORAGE_KEY = 'tracker-profiles-run-options-open'
     const LOG_LEVEL_SETTING = 'LOG_LEVEL'
     const EXECUTION_ORDER_SETTING = 'TRACKER_EXECUTION_ORDER'
     const ADULT_TRACKERS_SETTING = 'ENABLE_ADULT_TRACKERS'
@@ -271,7 +280,9 @@
 
         byId('run-description').textContent = runDescription(status)
 
-        const completed = status.successfulTrackers.length + status.failedTrackers.length
+        const succeeded = countTrackers(status, 'SUCCEEDED')
+        const failed = countTrackers(status, 'FAILED')
+        const completed = succeeded + failed
         byId('run-progress').hidden = status.state === 'IDLE'
         byId('progress-fill').style.width = status.totalTrackers > 0 ? `${Math.round((completed / status.totalTrackers) * 100)}%` : '0'
         if (status.state === 'CANCELLED') {
@@ -283,16 +294,13 @@
                 ? `${completed} of ${pluralise(status.totalTrackers, 'tracker')} complete`
                 : (active ? 'Preparing…' : 'No trackers executed')
         }
-        byId('success-count').textContent = String(status.successfulTrackers.length)
-        byId('failure-count').textContent = String(status.failedTrackers.length)
-
-        const failedTrackers = byId('failed-trackers')
-        failedTrackers.hidden = status.failedTrackers.length === 0
-        failedTrackers.textContent = `Failed: ${status.failedTrackers.join(', ')}`
+        byId('success-count').textContent = String(succeeded)
+        byId('failure-count').textContent = String(failed)
 
         renderPendingInputs(running ? status.pendingInputs : [])
-        renderActiveTrackers(active ? status.activeTrackers : [])
+        renderExecutionTrackers(status)
         applyRunStateToOptions(status)
+        refreshOpenLogs(active || wasActive)
 
         // The results of the trackers are shown on the Trackers tab, so are reloaded once an execution ends
         if (wasActive && !active && trackersLoaded) {
@@ -301,12 +309,19 @@
             })
         }
 
+        // While idle, the status is still checked occasionally, in case an execution is started from another browser
         clearTimeout(statusTimer)
         if (active) {
             statusTimer = setTimeout(refreshStatus, cancelling ? 500 : (waiting ? INPUT_POLL_INTERVAL_MS : STATUS_POLL_INTERVAL_MS))
         } else {
-            statusTimer = null
+            statusTimer = setTimeout(refreshStatus, IDLE_POLL_INTERVAL_MS)
         }
+    }
+
+    function countTrackers(status, state) {
+        return status.trackers.filter(function (tracker) {
+            return tracker.state === state
+        }).length
     }
 
     function refreshStatus() {
@@ -435,141 +450,250 @@
     }
 
     // ---------------------------------------------------------------------------------------------------------------
-    // Main: trackers in progress
+    // Main: trackers in the execution, grouped by state, each with its own logs
     // ---------------------------------------------------------------------------------------------------------------
 
-    function renderActiveTrackers(activeTrackers) {
-        byId('active-card').hidden = activeTrackers.length === 0
-        byId('active-trackers').replaceChildren.apply(byId('active-trackers'), activeTrackers.map(function (tracker) {
-            const nextStep = TRACKER_STEPS.find(function (step) {
-                return !tracker.completedSteps.includes(step.name)
-            })
-            const segments = TRACKER_STEPS.map(function (step) {
+    // Rows are kept between renders (and moved between groups), so an expanded tracker stays expanded, keyed by tracker name
+    let executionStartedAt = null
+    const trackerRows = new Map()
+    const groupElements = {}
+
+    function stepBar(tracker) {
+        const nextStep = TRACKER_STEPS.find(function (step) {
+            return !tracker.completedSteps.includes(step.name)
+        })
+        return el('span', {className: 'steps', 'aria-label': `${tracker.completedSteps.length} of ${TRACKER_STEPS.length} steps complete`},
+            TRACKER_STEPS.map(function (step) {
                 let state = ''
                 if (tracker.completedSteps.includes(step.name)) {
                     state = 'done'
                 } else if (step === nextStep) {
-                    state = 'current'
+                    state = tracker.state === 'RUNNING' ? 'current' : 'stopped'
                 }
                 return el('span', {className: `step ${state}`, title: step.label})
-            })
-            return el('div', {className: 'active-row'}, [
-                el('span', {className: 'active-name'}, [
-                    tracker.name,
-                    tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
-                ]),
-                el('span', {className: 'steps', 'aria-label': `${tracker.completedSteps.length} of ${TRACKER_STEPS.length} steps complete`}, segments),
-                el('span', {className: 'active-step muted', text: `${nextStep ? nextStep.label : 'Finishing'} · ${formatDuration(Date.now() - tracker.startedAt)}`}),
-            ])
-        }))
+            }))
     }
 
-    // ---------------------------------------------------------------------------------------------------------------
-    // Main: logs
-    // ---------------------------------------------------------------------------------------------------------------
-
-    const loggedTrackers = new Set()
-
-    function isLogLineVisible(tracker) {
-        const filter = byId('log-tracker-filter').value
-        return !filter || tracker === filter
-    }
-
-    function applyLogFilter() {
-        byId('log-output').querySelectorAll('.log-line').forEach(function (line) {
-            line.hidden = !isLogLineVisible(line.dataset.tracker)
-        })
-        scrollLogsIfNeeded()
-    }
-
-    function scrollLogsIfNeeded() {
-        if (byId('log-autoscroll').checked) {
-            const output = byId('log-output')
-            output.scrollTop = output.scrollHeight
+    function trackerTiming(tracker) {
+        if (tracker.startedAt === null) {
+            return ''
         }
+        const end = tracker.finishedAt === null ? Date.now() : tracker.finishedAt
+        return formatDuration(end - tracker.startedAt)
     }
 
-    // Adds any new tracker to the filter, keeping the options in alphabetical order
-    function addTrackerToFilter(tracker) {
-        if (!tracker || loggedTrackers.has(tracker)) {
+    function trackerDetail(tracker) {
+        const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
+        const attempt = tracker.attempt > 1 ? `Attempt ${tracker.attempt}${attempts ? `/${attempts}` : ''} · ` : ''
+        if (tracker.state === 'RUNNING') {
+            const nextStep = TRACKER_STEPS.find(function (step) {
+                return !tracker.completedSteps.includes(step.name)
+            })
+            return `${attempt}${tracker.latestMessage || (nextStep ? nextStep.label : 'Finishing')}`
+        }
+        return `${attempt}${tracker.latestMessage}`
+    }
+
+    function createTrackerRow(tracker) {
+        const summary = el('summary', {className: 'execution-row'})
+        const logOutput = el('div', {className: 'log-output tracker-log', role: 'log', dataset: {tracker: tracker.name}},
+            [el('div', {className: 'log-empty', text: 'Loading logs…'})])
+        const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, logOutput])
+        row.addEventListener('toggle', function () {
+            if (row.open) {
+                fetchLogs(logOutput)
+            }
+        })
+        return row
+    }
+
+    function updateTrackerRow(row, tracker) {
+        const summary = row.querySelector('summary')
+        const needsInput = latestStatus && latestStatus.pendingInputs.some(function (input) {
+            return input.trackerName === tracker.name
+        })
+        summary.replaceChildren(
+            el('span', {className: 'execution-name'}, [
+                tracker.name,
+                tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
+                needsInput ? el('span', {className: 'badge needs-input', text: 'Needs you'}) : null,
+            ]),
+            stepBar(tracker),
+            el('span', {className: 'execution-detail muted', text: trackerDetail(tracker), title: tracker.latestMessage}),
+            el('span', {className: 'execution-time muted', text: trackerTiming(tracker)})
+        )
+        row.dataset.state = tracker.state
+    }
+
+    function groupFor(state) {
+        if (!groupElements[state]) {
+            const definition = TRACKER_GROUPS.find(function (group) {
+                return group.state === state
+            })
+            const title = el('h2')
+            const list = el('div', {className: 'execution-list'})
+            const card = el('section', {className: `card execution-group group-${state.toLowerCase()}`}, [
+                el('div', {className: 'card-header'}, [title]),
+                list,
+            ])
+            groupElements[state] = {card: card, title: title, list: list, definition: definition}
+        }
+        return groupElements[state]
+    }
+
+    // Waiting trackers have no logs yet, so are shown compactly by name
+    function renderWaitingGroup(group, waiting) {
+        group.list.replaceChildren(el('p', {className: 'waiting-names'}, waiting.map(function (tracker) {
+            return el('span', {className: 'waiting-name'}, [
+                tracker.name,
+                tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
+            ])
+        })))
+    }
+
+    function sortForGroup(state, list) {
+        return list.slice().sort(function (first, second) {
+            if (state === 'RUNNING') {
+                return first.startedAt - second.startedAt
+            }
+            return first.name.localeCompare(second.name)
+        })
+    }
+
+    function renderExecutionTrackers(status) {
+        const container = byId('execution-trackers')
+        if (status.startedAt !== executionStartedAt) {
+            executionStartedAt = status.startedAt
+            trackerRows.clear()
+            Object.keys(groupElements).forEach(function (state) {
+                delete groupElements[state]
+            })
+            container.replaceChildren()
+            byId('execution-log').querySelector('.log-output').replaceChildren()
+            Object.keys(logCursors).forEach(function (tracker) {
+                delete logCursors[tracker]
+            })
+        }
+
+        if (status.state === 'IDLE') {
+            container.replaceChildren(el('div', {className: 'card empty-execution'}, [
+                el('h2', {text: 'No execution yet'}),
+                el('p', {className: 'muted', text: 'Press Start to screenshot every enabled tracker. Each tracker is listed here while it runs, with '
+                    + 'its own logs, then grouped by whether it succeeded or failed.'}),
+            ]))
             return
         }
-        loggedTrackers.add(tracker)
-
-        const filter = byId('log-tracker-filter')
-        const option = el('option', {value: tracker, text: tracker})
-        const next = Array.from(filter.options).find(function (existing) {
-            return existing.value && existing.value.localeCompare(tracker) > 0
-        })
-        filter.insertBefore(option, next || null)
-    }
-
-    function appendLogEntries(entries) {
-        const output = byId('log-output')
-        const placeholder = output.querySelector('.log-empty')
-        if (placeholder) {
-            placeholder.remove()
+        if (status.trackers.length === 0) {
+            container.replaceChildren(el('div', {className: 'card empty-execution'}, [
+                el('p', {className: 'muted', text: isActive(status) ? 'Preparing the trackers…' : 'No trackers were executed.'}),
+            ]))
+            return
         }
 
-        const fragment = document.createDocumentFragment()
-        entries.forEach(function (entry) {
-            addTrackerToFilter(entry.tracker)
-            const line = el('div', {className: 'log-line', dataset: {level: entry.level, tracker: entry.tracker}}, [
-                el('span', {className: 'log-time', text: formatTime(entry.timestamp)}),
-                el('span', {className: 'log-level', text: entry.level}),
-                el('span', {className: 'log-message'}, [
-                    entry.tracker ? el('span', {className: 'log-tracker', text: `[${entry.tracker}]`}) : null,
-                    entry.message,
-                ]),
-            ])
-            line.hidden = !isLogLineVisible(entry.tracker)
-            fragment.append(line)
-        })
-        output.append(fragment)
-
-        while (output.childElementCount > MAXIMUM_LOG_LINES) {
-            output.firstElementChild.remove()
-        }
-        scrollLogsIfNeeded()
-    }
-
-    function connectLogs() {
-        const connection = byId('log-connection')
-        const source = new EventSource('/api/logs')
-        let pending = []
-        let flushScheduled = false
-
-        // Batch rendering, since the retained log history arrives as many events at once
-        function flush() {
-            flushScheduled = false
-            const batch = pending
-            pending = []
-            appendLogEntries(batch)
-        }
-
-        source.onopen = function () {
-            connection.dataset.connected = 'true'
-            connection.textContent = 'Live'
-        }
-        source.onerror = function () {
-            connection.dataset.connected = 'false'
-            connection.textContent = 'Reconnecting'
-        }
-        source.onmessage = function (event) {
-            pending.push(JSON.parse(event.data))
-            if (!flushScheduled) {
-                flushScheduled = true
-                requestAnimationFrame(flush)
+        const active = isActive(status)
+        const groups = []
+        TRACKER_GROUPS.forEach(function (definition) {
+            const inGroup = sortForGroup(definition.state, status.trackers.filter(function (tracker) {
+                return tracker.state === definition.state
+            }))
+            if (inGroup.length === 0) {
+                return
             }
-            // A new log message usually means the status has changed, so refresh it if an execution is not being polled
-            if (statusTimer === null) {
-                statusTimer = setTimeout(refreshStatus, 500)
+
+            const group = groupFor(definition.state)
+            const title = !active && definition.titleWhenFinished ? definition.titleWhenFinished : definition.title
+            group.title.textContent = `${title} (${inGroup.length})`
+            if (definition.state === 'WAITING') {
+                renderWaitingGroup(group, inGroup)
+            } else {
+                inGroup.forEach(function (tracker) {
+                    let row = trackerRows.get(tracker.name)
+                    if (!row) {
+                        row = createTrackerRow(tracker)
+                        trackerRows.set(tracker.name, row)
+                    }
+                    updateTrackerRow(row, tracker)
+                    // Appending moves the row to the end of its (possibly new) group, keeping it expanded
+                    group.list.append(row)
+                })
             }
-        }
+            groups.push(group.card)
+        })
+        container.replaceChildren.apply(container, groups)
     }
 
-    function clearLogs() {
-        byId('log-output').replaceChildren(el('div', {className: 'log-empty', text: 'Waiting for log messages…'}))
+    // ---------------------------------------------------------------------------------------------------------------
+    // Main: logs (fetched only for expanded trackers)
+    // ---------------------------------------------------------------------------------------------------------------
+
+    // The ID of the last log message shown, and whether a request is in progress, per tracker ('' for the execution log)
+    const logCursors = {}
+
+    function logLine(entry) {
+        return el('div', {className: 'log-line', dataset: {level: entry.level}}, [
+            el('span', {className: 'log-time', text: formatTime(entry.timestamp)}),
+            el('span', {className: 'log-level', text: entry.level}),
+            // The console output indents messages with tabs, which are too wide here
+            el('span', {className: 'log-message', text: entry.message.replace(/^\t+/, function (tabs) {
+                return '  '.repeat(tabs.length)
+            })}),
+        ])
+    }
+
+    function fetchLogs(output) {
+        const tracker = output.dataset.tracker
+        const cursor = logCursors[tracker] || {lastId: 0, loading: false}
+        logCursors[tracker] = cursor
+        if (cursor.loading) {
+            return
+        }
+
+        cursor.loading = true
+        const query = tracker ? `tracker=${encodeURIComponent(tracker)}&after=${cursor.lastId}` : `after=${cursor.lastId}`
+        request('GET', `/api/logs?${query}`)
+            .then(function (entries) {
+                const placeholder = output.querySelector('.log-empty')
+                if (entries.length === 0) {
+                    if (placeholder) {
+                        placeholder.textContent = 'No log messages yet'
+                    } else if (output.childElementCount === 0) {
+                        output.append(el('div', {className: 'log-empty', text: 'No log messages yet'}))
+                    }
+                    return
+                }
+                if (placeholder) {
+                    placeholder.remove()
+                }
+
+                // Only follow new messages if already scrolled to the bottom, so reading earlier messages is not interrupted
+                const atBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 24
+                const fragment = document.createDocumentFragment()
+                entries.forEach(function (entry) {
+                    fragment.append(logLine(entry))
+                })
+                output.append(fragment)
+                while (output.childElementCount > MAXIMUM_LOG_LINES) {
+                    output.firstElementChild.remove()
+                }
+                cursor.lastId = entries[entries.length - 1].id
+                if (atBottom) {
+                    output.scrollTop = output.scrollHeight
+                }
+            })
+            .catch(function (error) {
+                showToast(error.message, 'error')
+            })
+            .finally(function () {
+                cursor.loading = false
+            })
+    }
+
+    // Expanded logs are refreshed with each status update during an execution (and once more when it ends)
+    function refreshOpenLogs(executionActive) {
+        if (!executionActive) {
+            return
+        }
+        document.querySelectorAll('details[open] > .log-output').forEach(fetchLogs)
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -914,6 +1038,11 @@
     const settingRows = {}
     let settingsSaveQueue = Promise.resolve()
 
+    function currentSettingValue(name) {
+        const setting = findSetting(name)
+        return setting ? setting.value : null
+    }
+
     function findSetting(name) {
         return settings.find(function (setting) {
             return setting.name === name
@@ -980,14 +1109,30 @@
         const container = byId('run-options')
         container.replaceChildren.apply(container, settings
             .filter(function (setting) {
-                return setting.tab === 'MAIN' && setting.name !== LOG_LEVEL_SETTING
+                return setting.tab === 'MAIN'
             })
             .map(renderOptionRow))
+        renderRunOptionsSummary()
+    }
 
-        const logLevel = findSetting(LOG_LEVEL_SETTING)
-        if (logLevel) {
-            renderLogLevelControl(logLevel)
+    // A one-line summary of the main run options, shown when the run options are collapsed
+    function renderRunOptionsSummary() {
+        const order = currentSettingValue(EXECUTION_ORDER_SETTING)
+        const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
+        const parts = []
+        if (order) {
+            parts.push(order.split(',').map(function (type) {
+                return formatTypeName(type.trim())
+            }).join(' → '))
         }
+        if (attempts) {
+            parts.push(pluralise(Number(attempts), 'attempt'))
+        }
+        const logLevel = currentSettingValue(LOG_LEVEL_SETTING)
+        if (logLevel) {
+            parts.push(`${formatTypeName(logLevel)} logs`)
+        }
+        byId('run-options-summary').textContent = parts.join(' · ')
     }
 
     // Options read when an execution starts cannot change the execution in progress, so are locked until it ends
@@ -1264,21 +1409,6 @@
         return row
     }
 
-    // The log level is a setting, shown in the log toolbar
-    function renderLogLevelControl(setting) {
-        const control = createControl(setting)
-        settingRows[setting.name] = {
-            refresh: function () {
-                // The select already shows the saved value
-            },
-            setValue: control.setValue,
-            showError: function () {
-                // Errors are shown as a toast
-            },
-        }
-        byId('log-level-control').replaceChildren(control.element)
-    }
-
     // A setting on the Settings tab
     function renderSettingRow(setting) {
         const name = setting.name
@@ -1414,6 +1544,7 @@
                 Object.keys(settingRows).forEach(function (rowName) {
                     settingRows[rowName].refresh()
                 })
+                renderRunOptionsSummary()
                 if (savedNames.includes(ADULT_TRACKERS_SETTING) && trackersLoaded) {
                     renderTrackers()
                 }
@@ -1456,9 +1587,25 @@
         byId('theme-toggle').addEventListener('click', toggleTheme)
         byId('start-button').addEventListener('click', startRun)
         byId('cancel-button').addEventListener('click', cancelRun)
-        byId('log-tracker-filter').addEventListener('change', applyLogFilter)
-        byId('log-autoscroll').addEventListener('change', scrollLogsIfNeeded)
-        byId('log-clear').addEventListener('click', clearLogs)
+        const optionsPanel = byId('run-options-panel')
+        try {
+            optionsPanel.open = window.localStorage.getItem(OPTIONS_OPEN_STORAGE_KEY) === 'true'
+        } catch {
+            // Storage is unavailable, so the run options start collapsed
+        }
+        optionsPanel.addEventListener('toggle', function () {
+            try {
+                window.localStorage.setItem(OPTIONS_OPEN_STORAGE_KEY, String(optionsPanel.open))
+            } catch {
+                // Storage is unavailable, so the choice only applies until the page is closed
+            }
+        })
+        const executionLog = byId('execution-log')
+        executionLog.addEventListener('toggle', function () {
+            if (executionLog.open) {
+                fetchLogs(executionLog.querySelector('.log-output'))
+            }
+        })
         byId('tracker-search').addEventListener('input', renderTrackers)
         byId('import-button').addEventListener('click', function () {
             byId('import-file').click()
@@ -1480,13 +1627,19 @@
             updateInputTimers()
             if (isActive(latestStatus)) {
                 byId('run-description').textContent = runDescription(latestStatus)
+                document.querySelectorAll('details.execution-tracker[data-state="RUNNING"] .execution-time').forEach(function (time) {
+                    const tracker = latestStatus.trackers.find(function (candidate) {
+                        return candidate.name === time.closest('details').dataset.name
+                    })
+                    if (tracker) {
+                        time.textContent = trackerTiming(tracker)
+                    }
+                })
             }
         }, 1000)
 
-        clearLogs()
         showTab()
         refreshStatus()
-        connectLogs()
         loadTrackers().catch(function (error) {
             showToast(error.message, 'error')
         })

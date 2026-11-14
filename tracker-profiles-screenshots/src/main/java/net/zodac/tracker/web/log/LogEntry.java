@@ -23,7 +23,7 @@ package net.zodac.tracker.web.log;
  * @param id        a sequential identifier, increasing for each log message
  * @param timestamp the time of the log message, as epoch milliseconds
  * @param level     the log level
- * @param tracker   the tracker prefix (if any) set in the logging context
+ * @param tracker   the name of the tracker that logged the message, or empty if it was not logged by a tracker
  * @param message   the log message, with any ANSI escape codes removed
  */
 public record LogEntry(long id, long timestamp, String level, String tracker, String message) {
