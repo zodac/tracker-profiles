@@ -85,7 +85,7 @@ public class Milkie extends AbstractTrackerHandler implements DoesNotScrollDurin
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make logout button interactable");
         reloadProfilePage();
 
         final By profileLinkSelector = profileLinkSelector();

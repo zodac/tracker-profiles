@@ -63,22 +63,22 @@ public class SceneTime extends AbstractTrackerHandler implements HasDismissibleE
      */
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for promotion pop-up");
+        LOGGER.debug("Checking for promotion pop-up");
         final By promotionCloseSelector = XpathBuilder
             .from(button, withAttribute("aria-label", "Close promotion"))
             .build();
         final Collection<WebElement> announcements = driver().findElements(promotionCloseSelector);
         if (announcements.isEmpty()) {
-            LOGGER.debug("\t\t\t- No promotion pop-up found");
+            LOGGER.debug("No promotion pop-up found");
             return;
         }
 
         // There should only be one of these, and we'll wait for it to scroll down and become interactable
-        LOGGER.debug("\t\t\t- Found promotion pop-up, closing");
+        LOGGER.debug("Found promotion pop-up, closing");
         final WebElement promotionClose = browserInteractionHelper().waitForElementToBeInteractable(promotionCloseSelector, pageLoadDuration());
         clickButton(promotionClose);
 
-        LOGGER.debug("\t\t\t- Cleared pop-up");
+        LOGGER.debug("Cleared pop-up");
     }
 
     @Override

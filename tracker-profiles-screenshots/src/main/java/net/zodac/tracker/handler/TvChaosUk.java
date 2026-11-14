@@ -57,7 +57,7 @@ public class TvChaosUk extends AbstractTrackerHandler implements HasDismissibleE
             .build();
         final Collection<WebElement> cookieButtons = driver().findElements(cookieSelector);
         if (cookieButtons.isEmpty()) {
-            LOGGER.debug("\t- No cookie buttons found");
+            LOGGER.debug("No cookie buttons found");
         }
 
         for (final WebElement cookieButton : cookieButtons) {

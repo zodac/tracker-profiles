@@ -61,7 +61,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
      */
     @Override
     public void postLoginClickAction() {
-        LOGGER.debug("\t\t- Checking for site changes modal");
+        LOGGER.debug("Checking for site changes modal");
 
         final By siteChangesSelector = XpathBuilder
             .from(footer, withClass("__dialog-footer"))
@@ -70,16 +70,16 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
         final Collection<WebElement> siteChangesElements = driver().findElements(siteChangesSelector);
 
         if (siteChangesElements.isEmpty()) {
-            LOGGER.debug("\t\t\t- No site changes found");
+            LOGGER.debug("No site changes found");
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found {} site changes, clearing", siteChangesElements.size());
+        LOGGER.debug("Found {} site changes, clearing", siteChangesElements.size());
         for (final WebElement siteChangesElement : siteChangesElements) {
             clickButton(siteChangesElement);
         }
 
-        LOGGER.debug("\t\t- Cleared site changes");
+        LOGGER.debug("Cleared site changes");
     }
 
     /**
@@ -90,7 +90,7 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
      */
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for Freeleech pop-up");
+        LOGGER.debug("Checking for Freeleech pop-up");
         final RemoteWebDriver driver = driver();
         final By twoFaReminderSelectors = XpathBuilder
             .from(div, withClass("fl-celebration__stage"))
@@ -100,14 +100,14 @@ public class NordicBytes extends AbstractTrackerHandler implements HasDismissibl
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found Freeleech pop-up, closing");
+        LOGGER.debug("Found Freeleech pop-up, closing");
         final By closeButtonSelector = XpathBuilder
             .from(button, withClass("celebration__close"))
             .build();
         final WebElement closeButton = driver.findElement(closeButtonSelector);
         clickButton(closeButton);
 
-        LOGGER.debug("\t\t\t- Closed pop-up");
+        LOGGER.debug("Closed pop-up");
     }
 
     /**

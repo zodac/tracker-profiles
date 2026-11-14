@@ -292,22 +292,22 @@ public record ApplicationConfiguration(
      */
     public void print() {
         LOGGER.debug("Loaded application configuration:");
-        LOGGER.debug("\t- browserDataStoragePath={}", browserDataStoragePath);
-        LOGGER.debug("\t- browserDimensions={}", browserDimensions);
-        LOGGER.debug("\t- databasePath={}", databasePath);
-        LOGGER.debug("\t- enableAdultContent={}", enableAdultContent);
-        LOGGER.debug("\t- enableTranslationToEnglish={}", enableTranslationToEnglish);
-        LOGGER.debug("\t- existingScreenshotAction={}", existingScreenshotAction);
-        LOGGER.debug("\t- forceUiBrowser={}", forceUiBrowser);
-        LOGGER.debug("\t- inputTimeoutDuration={}", inputTimeoutDuration);
-        LOGGER.debug("\t- logLevel={}", logLevel);
-        LOGGER.debug("\t- numberOfParallelThreads={}", numberOfParallelThreads);
-        LOGGER.debug("\t- numberOfScreenshotAttempts={}", numberOfScreenshotAttempts);
-        LOGGER.debug("\t- outputDirectory={}", outputDirectory);
-        LOGGER.debug("\t- redactionTypes={}", redactionTypes);
-        LOGGER.debug("\t- takeScreenshotOnError={}", takeScreenshotOnError);
-        LOGGER.debug("\t- trackerExecutionOrder={}", trackerExecutionOrder);
-        LOGGER.debug("\t- webUiPort={}", webUiPort);
+        LOGGER.debug("browserDataStoragePath={}", browserDataStoragePath);
+        LOGGER.debug("browserDimensions={}", browserDimensions);
+        LOGGER.debug("databasePath={}", databasePath);
+        LOGGER.debug("enableAdultContent={}", enableAdultContent);
+        LOGGER.debug("enableTranslationToEnglish={}", enableTranslationToEnglish);
+        LOGGER.debug("existingScreenshotAction={}", existingScreenshotAction);
+        LOGGER.debug("forceUiBrowser={}", forceUiBrowser);
+        LOGGER.debug("inputTimeoutDuration={}", inputTimeoutDuration);
+        LOGGER.debug("logLevel={}", logLevel);
+        LOGGER.debug("numberOfParallelThreads={}", numberOfParallelThreads);
+        LOGGER.debug("numberOfScreenshotAttempts={}", numberOfScreenshotAttempts);
+        LOGGER.debug("outputDirectory={}", outputDirectory);
+        LOGGER.debug("redactionTypes={}", redactionTypes);
+        LOGGER.debug("takeScreenshotOnError={}", takeScreenshotOnError);
+        LOGGER.debug("trackerExecutionOrder={}", trackerExecutionOrder);
+        LOGGER.debug("webUiPort={}", webUiPort);
     }
 
     // Resolves a value from the overrides, then the environment, then the default value

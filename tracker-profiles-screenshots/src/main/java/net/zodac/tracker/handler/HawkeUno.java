@@ -57,7 +57,7 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("\t\t >>> Waiting for user to enter 2FA code");
+        LOGGER.info("Waiting for user to enter 2FA code");
 
         final By twoFactorSelector = XpathBuilder
             .from(div, withClass("ds-auth__card"))
@@ -104,7 +104,7 @@ public class HawkeUno extends AbstractTrackerHandler implements HasCloudflareChe
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user profile dropdown");
+        LOGGER.debug("Clicking user profile dropdown");
         final By userProfileDropdownSelector = XpathBuilder
             .from(div, withClass("deep-space-userbar"))
             .child(button, atIndex(1))

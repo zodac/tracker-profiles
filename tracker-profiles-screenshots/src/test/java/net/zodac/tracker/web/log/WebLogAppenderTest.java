@@ -18,8 +18,11 @@
 package net.zodac.tracker.web.log;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.Map;
+import net.zodac.tracker.framework.progress.TrackerLogContext;
+import net.zodac.tracker.framework.progress.TrackerStep;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.message.SimpleMessage;
@@ -43,13 +46,13 @@ class WebLogAppenderTest {
         final WebLogAppender webLogAppender = WebLogAppender.install();
         webLogAppender.clear();
         webLogAppender.append(logEvent(Level.INFO, "\u001B[32mStarting execution\u001B[0m", null));
-        webLogAppender.append(logEvent(Level.INFO, "\t- Opening tracker", "First"));
+        webLogAppender.append(logEvent(Level.INFO, "Opening 'https://first.tracker'", "First"));
         webLogAppender.append(logEvent(Level.DEBUG, "Debug detail", "Second"));
-        webLogAppender.append(logEvent(Level.INFO, "\t- Logging in as 'user'", "First"));
+        webLogAppender.append(logEvent(Level.INFO, "Logging in as 'user'", "First"));
 
         assertThat(webLogAppender.entries("First", 0L))
             .extracting(LogEntry::message)
-            .containsExactly("\t- Opening tracker", "\t- Logging in as 'user'");
+            .containsExactly("Opening 'https://first.tracker'", "Logging in as 'user'");
         assertThat(webLogAppender.entries("Second", 0L))
             .singleElement()
             .returns("DEBUG", LogEntry::level)
@@ -58,6 +61,23 @@ class WebLogAppenderTest {
             .singleElement()
             .returns("", LogEntry::tracker)
             .returns("Starting execution", LogEntry::message);
+    }
+
+    @Test
+    void givenMessagesDuringAnAttempt_whenRetrieved_thenAttemptStepAndSectionAreIncluded() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear();
+        final SortedArrayStringMap contextData = new SortedArrayStringMap();
+        contextData.putValue(TrackerLogContext.TRACKER_KEY, "Tracker");
+        contextData.putValue(TrackerLogContext.ATTEMPT_KEY, "2");
+        contextData.putValue(TrackerLogContext.STEP_KEY, TrackerStep.TAKE_SCREENSHOTS.name());
+        contextData.putValue(TrackerLogContext.SECTION_KEY, "Box redaction");
+        webLogAppender.append(logEventWithContext(Level.INFO, "Redacted the text of 2 elements", contextData));
+        webLogAppender.append(logEvent(Level.DEBUG, "Execution time: 21s", "Tracker"));
+
+        assertThat(webLogAppender.entries("Tracker", 0L))
+            .extracting(LogEntry::attempt, LogEntry::step, LogEntry::section)
+            .containsExactly(tuple(2, "TAKE_SCREENSHOTS", "Box redaction"), tuple(0, "", ""));
     }
 
     @Test
@@ -77,11 +97,24 @@ class WebLogAppenderTest {
     void givenMessages_whenLatestMessagesRetrieved_thenLatestInfoMessageOfEachTrackerIsSummarised() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
         webLogAppender.clear();
-        webLogAppender.append(logEvent(Level.INFO, "\t\t- Opening user profile page", "Tracker"));
+        webLogAppender.append(logEvent(Level.INFO, "Logging in as 'user'", "Tracker"));
         webLogAppender.append(logEvent(Level.DEBUG, "Ignored, since below INFO", "Tracker"));
 
         assertThat(webLogAppender.latestMessages())
-            .containsExactly(Map.entry("Tracker", "Opening user profile page"));
+            .containsExactly(Map.entry("Tracker", "Logging in as 'user'"));
+    }
+
+    @Test
+    void givenLatestMessage_whenClearedForTracker_thenOnlyThatTrackerHasNoLatestMessage() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear();
+        webLogAppender.append(logEvent(Level.INFO, "Logged out", "First"));
+        webLogAppender.append(logEvent(Level.INFO, "Logging in as 'user'", "Second"));
+
+        webLogAppender.clearLatestMessage("First");
+
+        assertThat(webLogAppender.latestMessages())
+            .containsExactly(Map.entry("Second", "Logging in as 'user'"));
     }
 
     @Test
@@ -100,9 +133,12 @@ class WebLogAppenderTest {
     private static Log4jLogEvent logEvent(final Level level, final String message, final @Nullable String tracker) {
         final SortedArrayStringMap contextData = new SortedArrayStringMap();
         if (tracker != null) {
-            contextData.putValue("tracker", tracker);
+            contextData.putValue(TrackerLogContext.TRACKER_KEY, tracker);
         }
+        return logEventWithContext(level, message, contextData);
+    }
 
+    private static Log4jLogEvent logEventWithContext(final Level level, final String message, final SortedArrayStringMap contextData) {
         return Log4jLogEvent.newBuilder()
             .setLevel(level)
             .setMessage(new SimpleMessage(message))

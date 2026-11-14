@@ -84,21 +84,21 @@ public class GazelleHandler extends AbstractTrackerHandler implements RedactsEma
      */
     protected By profilePageElementSelectorWithLastFm() {
         try {
-            LOGGER.debug("\t\t- Looking for Last.fm section for user");
+            LOGGER.debug("Looking for Last.fm section for user");
             final By lastFmSectionSelector = XpathBuilder
                 .from(div, withClass("box_lastfm"))
                 .build();
             driver().findElement(lastFmSectionSelector);
 
-            LOGGER.debug("\t\t- Found Last.fm section, waiting for 'last played' entry to load");
+            LOGGER.debug("Found Last.fm section, waiting for 'last played' entry to load");
             final By lastFmLastPlayedSelector = By.id("lastfm_stats");
             browserInteractionHelper().waitForElementToBeVisible(lastFmLastPlayedSelector, pageLoadDuration());
             return lastFmLastPlayedSelector;
         } catch (final NoSuchElementException e) {
-            LOGGER.debug("\t\t- Found no Last.fm section, assuming user has not linked account, will use fallback item to confirm profile page", e);
+            LOGGER.debug("Found no Last.fm section, assuming user has not linked account, will use fallback item to confirm profile page", e);
             return profilePageElementSelector();
         } catch (final TimeoutException e) {
-            LOGGER.warn("\t\t- Unable to find Last.fm 'last played' section");
+            LOGGER.warn("Unable to find Last.fm 'last played' section");
             throw e;
         }
     }

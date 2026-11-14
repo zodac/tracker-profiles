@@ -73,7 +73,7 @@ public class Zappateers extends AbstractTrackerHandler
 
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        LOGGER.debug("Waiting for login/rules pop-up to disappear");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
@@ -145,7 +145,7 @@ public class Zappateers extends AbstractTrackerHandler
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = XpathBuilder
             .from(li, withClass("hoe-header-profile"))
             .child(a, withClass("dropdown-toggle"))

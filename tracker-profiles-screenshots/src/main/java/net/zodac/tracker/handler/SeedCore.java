@@ -60,21 +60,21 @@ public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
     public void dismiss() {
         super.dismiss();
 
-        LOGGER.debug("\t\t- Checking for daily reward");
+        LOGGER.debug("Checking for daily reward");
         final Collection<WebElement> dailyRewardElements = driver().findElements(DAILY_REWARD_SELECTOR);
         if (dailyRewardElements.isEmpty()) {
-            LOGGER.debug("\t\t\t- No daily reward found");
+            LOGGER.debug("No daily reward found");
             return;
         }
 
         // There should only be one of these, so we'll load it and click it
-        LOGGER.debug("\t\t\t- Found daily reward, closing");
+        LOGGER.debug("Found daily reward, closing");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final WebElement dailyRewardElement = browserInteractionHelper.waitForElementToBeInteractable(DAILY_REWARD_SELECTOR, pageLoadDuration());
         clickButton(dailyRewardElement);
         browserInteractionHelper.waitForElementToDisappear(DAILY_REWARD_SELECTOR, pageLoadDuration());
 
-        LOGGER.debug("\t\t\t- Cleared daily reward");
+        LOGGER.debug("Cleared daily reward");
     }
 
     @Override
@@ -94,7 +94,7 @@ public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
      */
     @Override
     protected void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        LOGGER.debug("Waiting for login/rules pop-up to disappear");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
@@ -112,7 +112,7 @@ public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
             .build();
 
         for (int attempt = 1; attempt <= MAXIMUM_DROPDOWN_HOVER_ATTEMPTS; attempt++) {
-            LOGGER.debug("\t\t- Highlighting user dropdown menu to make profile/logout button interactable (attempt {}/{})", attempt,
+            LOGGER.debug("Highlighting user dropdown menu to make profile/logout button interactable (attempt {}/{})", attempt,
                 MAXIMUM_DROPDOWN_HOVER_ATTEMPTS);
             browserInteractionHelper.moveToOrigin(); // Move away first so a repeated hover re-triggers the dropdown
             browserInteractionHelper.moveTo(driver().findElement(logoutParentSelector));
@@ -121,11 +121,11 @@ public class SeedCore extends Unit3dHandler implements HasCloudflareCheck {
                 browserInteractionHelper.waitForElementToBeVisible(dropdownMenuSelector, pageTransitionsDuration());
                 return;
             } catch (final TimeoutException e) {
-                LOGGER.debug("\t\t\t- User dropdown menu not visible after hover");
+                LOGGER.debug("User dropdown menu not visible after hover");
                 LOGGER.trace(e);
             }
         }
 
-        LOGGER.debug("\t\t- User dropdown menu still not visible after {} attempts", MAXIMUM_DROPDOWN_HOVER_ATTEMPTS);
+        LOGGER.debug("User dropdown menu still not visible after {} attempts", MAXIMUM_DROPDOWN_HOVER_ATTEMPTS);
     }
 }

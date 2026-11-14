@@ -61,7 +61,7 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to select correct game title");
+        LOGGER.info("Waiting for user to select correct game title");
 
         final By selectionSelector = XpathBuilder
             .from(div, withId("tdwrap"))
@@ -116,7 +116,7 @@ public class GazelleGames extends AbstractTrackerHandler implements RedactsEmail
      */
     @Override
     protected void additionalActionAfterLogoutClick() {
-        LOGGER.debug("\t\t- Clicking JavaScript alert to confirm logout");
+        LOGGER.debug("Clicking JavaScript alert to confirm logout");
         browserInteractionHelper().acceptAlert();
     }
 

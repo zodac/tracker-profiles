@@ -59,7 +59,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to solve the captcha");
+        LOGGER.info("Waiting for user to solve the captcha");
 
         final By captchaSelector = XpathBuilder
             .from(div, withClass("g-recaptcha"))
@@ -101,7 +101,7 @@ public class Leech24 extends AbstractTrackerHandler implements HasProfilePageAct
      */
     @Override
     public void performActionOnProfilePage() {
-        LOGGER.debug("\t\t- Adding <span id='passkey-value'> around the passkey value on the page");
+        LOGGER.debug("Adding <span id='passkey-value'> around the passkey value on the page");
         final String script = """
             var td = document.querySelector('.myFrame-content table.comment td');
             var bTags = td.querySelectorAll('b');

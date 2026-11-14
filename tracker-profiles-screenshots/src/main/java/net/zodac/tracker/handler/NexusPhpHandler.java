@@ -60,7 +60,7 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
         // Special case where the website provides an option to use English, but only on the login page
         // We use this instead of an explicit translation to let the website handle it
         if (Configuration.get().enableTranslationToEnglish()) {
-            LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
+            LOGGER.debug("Selecting English as tracker language prior to login");
             final WebElement languageDropdown = driver().findElement(languageDropdownSelector());
             new Select(languageDropdown).selectByIndex(0);
             browserInteractionHelper().waitForPageToLoad(pageLoadDuration());
@@ -98,7 +98,7 @@ public class NexusPhpHandler extends AbstractTrackerHandler implements RedactsEm
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final By captchaElementSelector = XpathBuilder
             .from(img, withAttribute("alt", "CAPTCHA"))

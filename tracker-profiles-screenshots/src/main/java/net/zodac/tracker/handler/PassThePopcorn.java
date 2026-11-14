@@ -68,7 +68,7 @@ public class PassThePopcorn extends AbstractTrackerHandler implements RedactsEma
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("\t\t >>> Waiting for user to select correct movie title");
+        LOGGER.info("Waiting for user to select correct movie title");
 
         final WebElement selectionElement = driver.findElement(By.id("captcha_container"));
         browserInteractionHelper().highlightElement(selectionElement);

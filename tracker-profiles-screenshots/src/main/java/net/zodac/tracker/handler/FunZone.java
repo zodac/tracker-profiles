@@ -56,7 +56,7 @@ public class FunZone extends Unit3dHandler {
 
     private void clearThemesPopups() {
         BrowserInteractionHelper.explicitWait(Duration.ofSeconds(2L), "theme pop-ups to load");
-        LOGGER.debug("\t\t- Checking for theme pop-ups");
+        LOGGER.debug("Checking for theme pop-ups");
 
         final RemoteWebDriver driver = driver();
         final By popupsSelector = XpathBuilder
@@ -67,11 +67,11 @@ public class FunZone extends Unit3dHandler {
 
         final Collection<WebElement> popups = driver.findElements(popupsSelector);
         if (popups.isEmpty()) {
-            LOGGER.debug("\t\t\t- No theme pop-ups found");
+            LOGGER.debug("No theme pop-ups found");
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found {} theme pop-up{}, clearing", popups.size(), StringUtils.pluralise(popups));
+        LOGGER.debug("Found {} theme pop-up{}, clearing", popups.size(), StringUtils.pluralise(popups));
         for (final WebElement popup : popups) {
             final By dontShowCheckboxSelector = By.id("popup-dont-show");
             final WebElement dontShowCheckbox = driver.findElement(dontShowCheckboxSelector);
@@ -79,11 +79,11 @@ public class FunZone extends Unit3dHandler {
             clickButton(popup);
         }
 
-        LOGGER.debug("\t\t- Cleared theme pop-ups");
+        LOGGER.debug("Cleared theme pop-ups");
     }
 
     private void clearThemesBanner() {
-        LOGGER.debug("\t\t- Checking for theme banners");
+        LOGGER.debug("Checking for theme banners");
 
         final By bannersSelector = XpathBuilder
             .from(div, withId("themes-banner"))
@@ -93,16 +93,16 @@ public class FunZone extends Unit3dHandler {
 
         final Collection<WebElement> banners = driver().findElements(bannersSelector);
         if (banners.isEmpty()) {
-            LOGGER.debug("\t\t\t- No theme banners found");
+            LOGGER.debug("No theme banners found");
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found {} theme banners{}, clearing", banners.size(), StringUtils.pluralise(banners));
+        LOGGER.debug("Found {} theme banners{}, clearing", banners.size(), StringUtils.pluralise(banners));
         for (final WebElement banner : banners) {
             clickButton(banner);
         }
 
-        LOGGER.debug("\t\t- Cleared theme banner");
+        LOGGER.debug("Cleared theme banner");
     }
 
     @Override

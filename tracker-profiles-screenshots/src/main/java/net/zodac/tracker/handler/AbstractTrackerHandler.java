@@ -163,7 +163,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
             }
 
             try {
-                LOGGER.info("\t\t- '{}'", trackerUrl);
+                LOGGER.info("Opening '{}'", trackerUrl);
                 driver.manage().timeouts().pageLoadTimeout(maximumLinkResolutionDuration());
                 driver.navigate().to(trackerUrl);
 
@@ -174,7 +174,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
                 // If website can't be resolved, assume the site is down and attempt the next URL (if any), else rethrow exception
                 if (e.getMessage() != null && e.getMessage().contains("ERR_NAME_NOT_RESOLVED")) {
                     final String errorMessage = e.getMessage().split("\n", -1)[0];
-                    LOGGER.warn("\t\t- Unable to connect: {}", errorMessage);
+                    LOGGER.warn("Unable to connect: {}", errorMessage);
                 } else {
                     throw e;
                 }
@@ -207,7 +207,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * If the tracker {@link HasCloudflareCheck}, the Cloudflare verification check is performed once the login page has been reached.
      */
     public void navigateToLoginPage() {
-        LOGGER.debug("\t- Navigating to login page");
+        LOGGER.debug("Navigating to login page");
         preLoginNavigationAction();
         final By loginLinkSelector = loginPageSelector();
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
@@ -379,7 +379,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         }
 
         try {
-            LOGGER.debug("\t\t- Waiting to confirm user profile page has loaded successfully");
+            LOGGER.debug("Waiting to confirm user profile page has loaded successfully");
             browserInteractionHelper.waitForPageToLoad(pageLoadDuration());
             browserInteractionHelper.waitForElementToBeVisible(profilePageElementSelector, pageLoadDuration());
             browserInteractionHelper.moveToOrigin();
@@ -503,7 +503,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * load, signifying that we have successfully logged out and been redirected to the login page.
      */
     public final void logout() {
-        LOGGER.debug("\t- Logging out of tracker");
+        LOGGER.debug("Logging out of tracker");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By logoutButtonSelector = logoutButtonSelector();
         final WebElement logoutButton = browserInteractionHelper.waitForElementToBeInteractable(logoutButtonSelector, pageTransitionsDuration());
@@ -558,7 +558,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
             driver.manage().timeouts().pageLoadTimeout(maximumClickResolutionDuration());
             buttonToClick.click();
         } catch (final TimeoutException e) {
-            LOGGER.debug("\t\t- Page still loading after {}, force stopping page load", maximumClickResolutionDuration());
+            LOGGER.debug("Page still loading after {}, force stopping page load", maximumClickResolutionDuration());
             LOGGER.trace(e);
             browserInteractionHelper().stopPageLoad();
         } catch (final Exception e) {

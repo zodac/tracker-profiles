@@ -89,7 +89,7 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final By captchaSelector = XpathBuilder
             .from(input, withName("captcha"))
@@ -177,7 +177,7 @@ public class AvistazNetworkHandler extends AbstractTrackerHandler implements Has
      * Opens the user's dropdown menu to expose links to the logout button.
      */
     protected void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make logout button interactable");
         final By logoutParentSelector = XpathBuilder
             .from(div, withClass("navbar"))
             .child(ul, atIndex(2))

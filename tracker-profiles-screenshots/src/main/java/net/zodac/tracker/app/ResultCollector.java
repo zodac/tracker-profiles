@@ -97,7 +97,6 @@ final class ResultCollector {
             .sum();
 
         if (totalSuccessful == 0 && totalUnsuccessful == 0) {
-            LOGGER.error("");
             LOGGER.error("Unexpectedly had no trackers execute");
             return ExitState.FAILURE;
         }
@@ -120,12 +119,8 @@ final class ResultCollector {
             return null;
         }
 
-        LOGGER.error("");
         LOGGER.error("{} selected tracker{} failed in {}:", totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
-        unsuccessfulTrackers.forEach((type, trackers) -> {
-            LOGGER.error("- {}:", type.formattedName());
-            trackers.forEach(name -> LOGGER.error("\t- {}", name));
-        });
+        unsuccessfulTrackers.forEach((type, trackers) -> LOGGER.error("{}: {}", type.formattedName(), String.join(", ", trackers)));
         return ExitState.FAILURE;
     }
 
@@ -134,15 +129,13 @@ final class ResultCollector {
             return null;
         }
 
-        LOGGER.info("");
         LOGGER.info("{} selected tracker{} successfully screenshot in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful), executionTime());
-        successfulTrackers.forEach((type, trackers) -> LOGGER.debug("- {} ({}): {}", type.formattedName(), trackers.size(), trackers));
+        successfulTrackers.forEach((type, trackers) -> LOGGER.debug("{} ({}): {}", type.formattedName(), trackers.size(), trackers));
         return ExitState.SUCCESS;
     }
 
     private ExitState handlePartialFailure(final Collection<TrackerType> executedTrackerTypes, final int totalSuccessful,
         final int totalUnsuccessful) {
-        LOGGER.warn("");
         LOGGER.warn("{} tracker{} successfully screenshot, {} tracker{} failed in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful),
             totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
 
@@ -151,8 +144,7 @@ final class ResultCollector {
             if (trackers == null || trackers.isEmpty()) {
                 continue;
             }
-            LOGGER.warn("- {}:", trackerType.formattedName());
-            trackers.forEach(name -> LOGGER.warn("\t- {}", name));
+            LOGGER.warn("{}: {}", trackerType.formattedName(), String.join(", ", trackers));
         }
         return ExitState.PARTIAL_FAILURE;
     }

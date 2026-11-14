@@ -82,7 +82,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("\t\t >>> Waiting for user to enter the 2FA code and click the 'Verify Code' button");
+        LOGGER.info("Waiting for user to enter the 2FA code and click the 'Verify Code' button");
 
         final By selectionSelector = By.name("code");
         final WebElement selectionElement = driver.findElement(selectionSelector);
@@ -114,29 +114,29 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
      */
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for 2FA announcements");
+        LOGGER.debug("Checking for 2FA announcements");
         final By announcementSelector = XpathBuilder
             .from(button, withClass("announcement-dismiss"))
             .build();
         final Collection<WebElement> announcements = driver().findElements(announcementSelector);
 
         if (announcements.isEmpty()) {
-            LOGGER.debug("\t\t\t- No announcements found");
+            LOGGER.debug("No announcements found");
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found {} announcement{}, clearing", announcements.size(), StringUtils.pluralise(announcements));
+        LOGGER.debug("Found {} announcement{}, clearing", announcements.size(), StringUtils.pluralise(announcements));
         for (final WebElement announcement : announcements) {
             try {
                 clickButton(announcement);
                 browserInteractionHelper().waitForElementToDisappear(announcementSelector, pageTransitionsDuration());
             } catch (final ElementNotInteractableException e) {
                 LOGGER.trace("Element not interactable", e);
-                LOGGER.debug("\t\t\t- Element not interactable");
+                LOGGER.debug("Element not interactable");
             }
         }
 
-        LOGGER.debug("\t\t- Cleared announcements");
+        LOGGER.debug("Cleared announcements");
     }
 
     @Override
@@ -178,7 +178,7 @@ public class CgPeers extends LuminanceHandler implements HasCloudflareCheck, Has
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = By.id("userDropdownTrigger");
         final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);

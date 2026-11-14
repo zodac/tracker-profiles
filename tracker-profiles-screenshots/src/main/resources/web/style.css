@@ -22,6 +22,7 @@
     --log-muted: #7d8696;
     --radius: 8px;
     --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
@@ -91,7 +92,7 @@ body {
     background: var(--bg);
     color: var(--text);
     transition: background-color 0.2s, color 0.2s;
-    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 14px/1.5 var(--sans);
 }
 
 code {
@@ -816,8 +817,184 @@ select:disabled {
 .log-output.tracker-log {
     height: auto;
     min-height: 0;
-    max-height: 360px;
+    max-height: 480px;
+    padding: 0;
     border-top: 1px solid var(--border);
+}
+
+/* The log of a tracker is split into its steps (phases), always on the dark log background */
+
+.tracker-log > .log-empty {
+    padding: 8px 16px;
+}
+
+.phase {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.phase:first-of-type {
+    border-top: none;
+}
+
+.phase > summary {
+    display: grid;
+    grid-template-columns: 10px 16px minmax(0, 1fr) auto 56px;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    cursor: pointer;
+    list-style: none;
+    font: 500 13px/1.4 var(--sans);
+}
+
+.phase > summary::-webkit-details-marker {
+    display: none;
+}
+
+.phase > summary::before {
+    content: "\25B8";
+    color: var(--log-muted);
+    transition: transform 0.15s;
+}
+
+.phase[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.phase > summary:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.phase > summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.phase.empty > summary {
+    cursor: default;
+}
+
+.phase.empty > summary::before {
+    visibility: hidden;
+}
+
+.phase[data-state="pending"] > summary,
+.phase[data-state="skipped"] > summary {
+    color: var(--log-muted);
+}
+
+.phase-icon {
+    display: grid;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.phase[data-state="done"] .phase-icon {
+    background: #2ea043;
+    color: #ffffff;
+}
+
+.phase[data-state="failed"] .phase-icon {
+    background: #da3633;
+    color: #ffffff;
+}
+
+.phase[data-state="cancelled"] .phase-icon {
+    border: 2px solid #e3b341;
+}
+
+.phase[data-state="running"] .phase-icon {
+    border: 2px solid #79a8ff;
+    border-top-color: transparent;
+    animation: phase-spin 1s linear infinite;
+}
+
+.phase[data-state="pending"] .phase-icon {
+    border: 1.5px dashed var(--log-muted);
+}
+
+.phase[data-state="skipped"] .phase-icon {
+    border: 1.5px solid var(--log-muted);
+    color: var(--log-muted);
+}
+
+@keyframes phase-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .phase[data-state="running"] .phase-icon {
+        animation: none;
+    }
+}
+
+.phase-count,
+.phase-time {
+    color: var(--log-muted);
+    font: 12px var(--mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.phase-time {
+    text-align: right;
+}
+
+.phase-warnings {
+    color: #e3b341;
+}
+
+.phase-body {
+    padding: 2px 0 8px;
+}
+
+.phase-body .log-line {
+    padding-left: 52px;
+}
+
+.attempt-divider,
+.phase-section {
+    padding: 6px 16px 2px 52px;
+    color: var(--log-muted);
+    font: 600 11px/1.4 var(--sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Attempt dividers are only useful once a tracker has been retried */
+.attempt-divider {
+    display: none;
+}
+
+.multi-attempt .attempt-divider {
+    display: block;
+}
+
+.phase-footer:not(:empty) {
+    padding: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 760px) {
+    .phase > summary {
+        grid-template-columns: 10px 16px minmax(0, 1fr) 56px;
+    }
+
+    .phase-count {
+        display: none;
+    }
+
+    .phase-body .log-line,
+    .attempt-divider,
+    .phase-section {
+        padding-left: 28px;
+    }
 }
 
 .waiting-names {

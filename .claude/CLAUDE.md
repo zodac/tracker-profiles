@@ -67,8 +67,11 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
   each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
-  tracker, and each tracker's latest `INFO`+ message for `RunStatus`. It is cleared when an execution starts. The UI fetches a tracker's logs only
-  while it is expanded, polling with the ID of the last message it has.
+  tracker, and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each
+  `LogEntry` also carries the attempt, `TrackerStep` and section it was logged in (see [Logging](#logging)). It is cleared when an execution starts.
+  The UI fetches a tracker's logs only while it is expanded, polling with the ID of the last message it has, and groups them by step (a phase),
+  with a divider per attempt once a tracker is retried and a heading per section. `RunStatus` gives each completed step's time for the phase
+  durations.
 
 #### Cancelling an Execution
 
@@ -270,9 +273,19 @@ Log4j2 is used throughout. Apply levels as follows:
 ### Progress
 
 Progress is reported to the web UI through `ExecutionListener` (implemented by `RunManager`): `executionStarted`, `trackerTypeStarted`,
-`trackerStarted`, `trackerStepCompleted` (once per `TrackerStep`, the first time it succeeds, even across retries) and `trackerCompleted`. The log
-messages of a tracker carry its name in the Log4j `ThreadContext` (key `tracker`), which the console pattern prints as a prefix and the web UI uses to
-filter the logs, so do not add the tracker name to log messages. Never write directly to `System.out` or `System.err`; use the logger.
+`trackerStarted`, `trackerStepCompleted` (once per `TrackerStep`, the first time it succeeds, even across retries) and `trackerCompleted`.
+
+`TrackerLogContext` sets the Log4j `ThreadContext` of a tracker's thread: its name (key `tracker`, which the console pattern prints as a prefix), the
+attempt, the `TrackerStep` in progress, and an optional section of the step (the redaction type while taking screenshots). `ProfileScreenshotExecutor`
+calls `TrackerLogContext.startStep(...)` as each step begins; messages logged before the first step are part of `OPEN_TRACKER`. The web UI uses
+these to filter and group the logs, so log messages must not:
+
+- include the tracker name
+- start with indentation, `-`, `>>>` or other list markers (the UI groups messages instead)
+- only announce the step that is starting (such as "Opening tracker"), since the UI already shows it
+- be blank lines used as separators
+
+Never write directly to `System.out` or `System.err`; use the logger.
 
 ## Coding Standards
 

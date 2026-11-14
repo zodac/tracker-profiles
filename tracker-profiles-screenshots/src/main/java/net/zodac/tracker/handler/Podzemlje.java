@@ -59,12 +59,12 @@ public class Podzemlje extends Unit3dHandler {
      */
     @Override
     protected void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Waiting for login/rules pop-up to disappear");
+        LOGGER.debug("Waiting for login/rules pop-up to disappear");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final By loginPopupSelector = By.id("swal2-title");
         browserInteractionHelper.waitForElementToDisappear(loginPopupSelector, pageLoadDuration());
 
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = XpathBuilder
             .from(div, withClass("top-nav__right"))
             .descendant(li, withClass("top-nav__dropdown"))

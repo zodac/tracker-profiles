@@ -59,7 +59,7 @@ public class BeyondHd extends AbstractTrackerHandler implements HasFixedHeader, 
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final By captchaSelector = XpathBuilder
             .from(input, withId("captcha"))

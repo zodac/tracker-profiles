@@ -67,7 +67,7 @@ public class TheClickHandler extends AbstractTrackerHandler implements RedactsIp
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to solve the captcha");
+        LOGGER.info("Waiting for user to solve the captcha");
 
         final By captchaSelector = XpathBuilder
             .from(div, withClass("h-captcha"))

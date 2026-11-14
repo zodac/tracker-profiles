@@ -361,7 +361,10 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       continues, so once it finishes the trackers are grouped by whether they succeeded or failed
     - Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its
       latest message (for a failed tracker, why it failed) and how long it took. Expand a tracker to see its own logs, which update while it runs.
-      Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
+      The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
+      warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
+      attempt are separated within each step, and the screenshot messages are separated by redaction type
+    - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - **Run options** (collapsed by default) holds the [options](#configuration-options) you are most likely to change for an execution, such as the
       tracker order, the number of attempts per tracker or the log level. Options marked with a green dot can be changed while an execution is in
       progress and apply to it straight away; the others are locked until it finishes

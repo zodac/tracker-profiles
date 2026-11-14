@@ -92,7 +92,7 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final By captchaSelector = By.id("regimage");
         final WebElement captchaElement = driver().findElement(captchaSelector);
@@ -121,7 +121,7 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
         for (final By headerSelector : headerSelectors) {
             final WebElement headerElement = driver.findElement(headerSelector);
 
-            LOGGER.debug("\t\t\t- Updating header with 'fixedMenu' class, to set up static state");
+            LOGGER.debug("Updating header with 'fixedMenu' class, to set up static state");
             browserInteractionHelper.addClass(headerElement, "fixedMenu");
 
             browserInteractionHelper.makeUnfixed(headerElement);
@@ -154,7 +154,7 @@ public class LetSeed extends TsSpecialEditionHandler implements HasFixedHeader, 
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = By.id("quickprofileview");
         final WebElement profileParent = driver().findElement(profileParentSelector);
         clickButton(profileParent);

@@ -20,6 +20,7 @@ package net.zodac.tracker.web;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -401,6 +402,8 @@ public final class RunManager implements ExecutionListener {
         } finally {
             lock.unlock();
         }
+        // The latest message of the previous attempt no longer describes what the tracker is doing
+        webLogAppender.clearLatestMessage(trackerName);
     }
 
     @Override
@@ -409,11 +412,13 @@ public final class RunManager implements ExecutionListener {
         try {
             final TrackerProgressState tracker = trackers.get(trackerName);
             if (tracker != null) {
-                tracker.completedSteps.add(trackerStep);
+                tracker.stepCompletedAt.put(trackerStep, System.currentTimeMillis());
             }
         } finally {
             lock.unlock();
         }
+        // The latest message of the completed step no longer describes what the tracker is doing
+        webLogAppender.clearLatestMessage(trackerName);
     }
 
     @Override
@@ -441,7 +446,7 @@ public final class RunManager implements ExecutionListener {
 
         private final String name;
         private final TrackerType trackerType;
-        private final Set<TrackerStep> completedSteps = EnumSet.noneOf(TrackerStep.class);
+        private final Map<TrackerStep, Long> stepCompletedAt = new EnumMap<>(TrackerStep.class);
         private RunStatus.TrackerState state = RunStatus.TrackerState.WAITING;
         // 0 when not set, since PMD flags assigning null to a field
         private long startedAt;
@@ -455,7 +460,13 @@ public final class RunManager implements ExecutionListener {
 
         private RunStatus.TrackerProgress toView(final String latestMessage) {
             return new RunStatus.TrackerProgress(name, trackerType.name(), state, nullIfUnset(startedAt), nullIfUnset(finishedAt), attempt,
-                completedSteps.stream().map(Enum::name).toList(), latestMessage);
+                stepCompletedAt.keySet().stream().map(Enum::name).toList(), stepCompletedAtByName(), latestMessage);
+        }
+
+        private Map<String, Long> stepCompletedAtByName() {
+            final Map<String, Long> byName = new LinkedHashMap<>();
+            stepCompletedAt.forEach((trackerStep, completedAt) -> byName.put(trackerStep.name(), completedAt));
+            return byName;
         }
     }
 }

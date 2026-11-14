@@ -47,14 +47,14 @@ public class Xspeeds extends TsSpecialEditionHandler {
     @Override
     public void postLoginClickAction() {
         final String currentPage = driver().getCurrentUrl();
-        LOGGER.debug("\t\t- Checking current page: {}", currentPage);
+        LOGGER.debug("Checking current page: {}", currentPage);
 
         if (!currentPage.endsWith("messages.php")) {
-            LOGGER.debug("\t\t- Not on messages page, proceeding as normal");
+            LOGGER.debug("Not on messages page, proceeding as normal");
             return;
         }
 
-        LOGGER.debug("\t\t- On messages page, redirecting to home page");
+        LOGGER.debug("On messages page, redirecting to home page");
         final By homeLinkSelector = XpathBuilder
             .from(div, withId("menu"))
             .child(ul, withClass("TSSEMenu"))
@@ -64,7 +64,7 @@ public class Xspeeds extends TsSpecialEditionHandler {
         final WebElement homeLink = driver().findElement(homeLinkSelector);
         clickButton(homeLink);
 
-        LOGGER.debug("\t\t- Redirected to {}", driver().getCurrentUrl());
+        LOGGER.debug("Redirected to {}", driver().getCurrentUrl());
     }
 
     @Override

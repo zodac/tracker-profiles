@@ -71,7 +71,7 @@ public class LatTeam extends Unit3dHandler {
      */
     @Override
     protected void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By logoutParentSelector = XpathBuilder
             .from(span, withClass("user-sidebar__toggle-label"))
             .build();

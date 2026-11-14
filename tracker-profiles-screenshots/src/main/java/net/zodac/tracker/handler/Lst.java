@@ -57,7 +57,7 @@ public class Lst extends Unit3dHandler {
     protected void postLoginClickAction() {
         final RemoteWebDriver driver = driver();
         final String initialUrl = driver.getCurrentUrl();
-        LOGGER.info("\t\t >>> Waiting for user to select correct movie poster");
+        LOGGER.info("Waiting for user to select correct movie poster");
 
         final By selectionSelector = XpathBuilder
             .from(div, withClass("auth-form__text-input-group"))

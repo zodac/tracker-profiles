@@ -131,7 +131,7 @@ public class TsSpecialEditionHandler extends AbstractTrackerHandler implements R
      */
     @Override
     protected void additionalActionAfterLogoutClick() {
-        LOGGER.debug("\t\t- Clicking JavaScript alert to confirm logout");
+        LOGGER.debug("Clicking JavaScript alert to confirm logout");
         browserInteractionHelper().acceptAlert();
     }
 

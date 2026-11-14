@@ -71,7 +71,7 @@ public final class UserInputRequests {
      */
     public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
         final long id = register(trackerName, message);
-        LOGGER.info("\t\t >>> Waiting for user input in the web UI: {}", message);
+        LOGGER.info("Waiting for user input in the web UI: {}", message);
 
         try {
             waitForResponse(id, pageChanged);

@@ -62,16 +62,16 @@ public class TeamOs extends XenForoHandler implements UsesExtensions {
         final List<WebElement> adminThreadButtons = driver().findElements(adminThreadButtonsSelector).stream().toList();
 
         if (adminThreadButtons.size() != EXPECTED_NUMBER_OF_THREAD_LINKS) {
-            LOGGER.debug("\t\t- Found {} thread links, not clicking anything", adminThreadButtons.size());
+            LOGGER.debug("Found {} thread links, not clicking anything", adminThreadButtons.size());
             return;
         }
 
-        LOGGER.debug("\t\t- Found single thread link to updated rules, admin requires thread to be viewed, clicking...");
+        LOGGER.debug("Found single thread link to updated rules, admin requires thread to be viewed, clicking...");
         final WebElement adminThreadButton = adminThreadButtons.getFirst();
         browserInteractionHelper.removeAttribute(adminThreadButton, "target");  // Stop forcing the link to open in a new tab
         clickButton(adminThreadButton);
         browserInteractionHelper.stopPageLoad();
-        LOGGER.debug("\t\t- Updated rules thread viewed, continuing tracker execution");
+        LOGGER.debug("Updated rules thread viewed, continuing tracker execution");
     }
 
     @Override

@@ -80,10 +80,8 @@ public enum TrackerType {
         }
 
         if (!trackers.isEmpty()) {
-            LOGGER.info("- %-12s: %d".formatted(formattedName(), trackers.size()));
-            for (final TrackerCredential trackerCredential : trackers) {
-                LOGGER.debug("\t- %-16s".formatted(trackerCredential.name()));
-            }
+            LOGGER.info("{}: {}", formattedName(), trackers.size());
+            LOGGER.debug("{} trackers: {}", formattedName(), trackers.stream().map(TrackerCredential::name).sorted().toList());
         }
     }
 

@@ -142,7 +142,7 @@ public class SpeedApp extends AbstractTrackerHandler implements HasFixedHeader, 
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Highlighting user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Highlighting user dropdown menu to make profile/logout button interactable");
         final WebElement toggle = driver().findElement(By.id("kt_header_user_menu_toggle"));
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         browserInteractionHelper.moveTo(toggle);

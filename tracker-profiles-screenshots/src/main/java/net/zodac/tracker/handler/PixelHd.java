@@ -98,7 +98,7 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
      */
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for announcement");
+        LOGGER.debug("Checking for announcement");
         final RemoteWebDriver driver = driver();
         final By announcementSelector = XpathBuilder
             .from(div, withId("newAnnouncementSlideDown"))
@@ -110,13 +110,13 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
         }
 
         // There should only be one of these, and we'll wait for it to scroll down and become interactable
-        LOGGER.debug("\t\t\t- Found announcement, opening link");
+        LOGGER.debug("Found announcement, opening link");
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
         final WebElement announcementLink = browserInteractionHelper.waitForElementToBeInteractable(announcementSelector, pageLoadDuration());
         clickButton(announcementLink);
 
         // This scrolls us down to the announcement, which we need to click and mark as read
-        LOGGER.debug("\t\t\t- Marking announcement as read");
+        LOGGER.debug("Marking announcement as read");
         final By markAsReadSelector = XpathBuilder
             .from(a, withId("newsDivSectionAnchor"))
             .navigateTo(followingSibling(a))
@@ -127,7 +127,7 @@ public class PixelHd extends AbstractTrackerHandler implements HasDismissibleEle
         // The announcement is at the bottom of the page, so we need to scroll back up to continue execution
         browserInteractionHelper.scrollToTheTop();
 
-        LOGGER.debug("\t\t\t- Cleared announcement");
+        LOGGER.debug("Cleared announcement");
     }
 
     @Override

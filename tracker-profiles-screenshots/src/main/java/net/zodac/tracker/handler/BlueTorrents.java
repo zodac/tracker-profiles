@@ -100,7 +100,7 @@ public class BlueTorrents extends AbstractTrackerHandler implements HasFixedHead
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By dropdownToggleSelector = XpathBuilder
             .from(ul, withClass("dropdown-menu-end"))
             .navigateTo(precedingSibling(a))

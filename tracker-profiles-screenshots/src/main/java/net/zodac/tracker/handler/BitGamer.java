@@ -97,7 +97,7 @@ public class BitGamer extends AbstractTrackerHandler implements RedactsIpAddress
     }
 
     private void openControlPanel() {
-        LOGGER.debug("\t\t- Navigating to control panel to access logout links");
+        LOGGER.debug("Navigating to control panel to access logout links");
         final By controlPanelSelector = XpathBuilder
             .from(a, containsHref("/my.php"))
             .build();

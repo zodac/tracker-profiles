@@ -77,7 +77,7 @@ public class TorrentPier extends AbstractTrackerHandler implements HasDismissibl
 
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for donation notice");
+        LOGGER.debug("Checking for donation notice");
 
         final RemoteWebDriver driver = driver();
         final BrowserInteractionHelper browserInteractionHelper = browserInteractionHelper();
@@ -90,7 +90,7 @@ public class TorrentPier extends AbstractTrackerHandler implements HasDismissibl
         final Collection<WebElement> bottomBanners = driver.findElements(bottomBannerSelector);
         if (!bottomBanners.isEmpty()) {
             // There should only be one of these
-            LOGGER.debug("\t\t\t- Found bottom donation banner, clearing");
+            LOGGER.debug("Found bottom donation banner, clearing");
             final WebElement banner = browserInteractionHelper.waitForElementToBeInteractable(bottomBannerSelector, pageLoadDuration());
             clickButton(banner);
         }
@@ -103,12 +103,12 @@ public class TorrentPier extends AbstractTrackerHandler implements HasDismissibl
         final Collection<WebElement> mainBanners = driver.findElements(mainBannerSelector);
         if (!mainBanners.isEmpty()) {
             // There should only be one of these
-            LOGGER.debug("\t\t\t- Found main donation banner, clearing");
+            LOGGER.debug("Found main donation banner, clearing");
             final WebElement banner = browserInteractionHelper.waitForElementToBeInteractable(mainBannerSelector, pageLoadDuration());
             clickButton(banner);
         }
 
-        LOGGER.debug("\t\t- Cleared donation banner");
+        LOGGER.debug("Cleared donation banner");
     }
 
     @Override

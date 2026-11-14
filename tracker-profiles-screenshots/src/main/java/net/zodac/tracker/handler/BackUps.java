@@ -89,7 +89,7 @@ public class BackUps extends TsSpecialEditionHandler implements HasFixedHeader {
             return;
         }
 
-        LOGGER.debug("\t\t- Tracker redirected to inbox due to unread private messages, manually navigating back to the home page");
+        LOGGER.debug("Tracker redirected to inbox due to unread private messages, manually navigating back to the home page");
         final By homePageSelector = XpathBuilder
             .from(div, withId("menu"))
             .descendant(a, atIndex(1))

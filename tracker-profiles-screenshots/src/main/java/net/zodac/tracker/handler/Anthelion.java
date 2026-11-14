@@ -55,7 +55,7 @@ public class Anthelion extends GazelleHandler {
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter their 2FA code");
+        LOGGER.info("Waiting for user to enter their 2FA code");
 
         final By twoFaSelector = By.id("twofa");
         final WebElement twoFaElement = driver().findElement(twoFaSelector);

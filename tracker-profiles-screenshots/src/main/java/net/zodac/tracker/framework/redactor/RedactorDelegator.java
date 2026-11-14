@@ -59,41 +59,31 @@ public final class RedactorDelegator implements Redactor {
     @Override
     public int redact(final WebElement element, final String description, final RedactionBuffer buffer) {
         logElementToBeRedacted(element, description);
-        final int numberOfRedactedElements = redactor.redact(element, description, buffer);
-        LOGGER.trace("");
-        return numberOfRedactedElements;
+        return redactor.redact(element, description, buffer);
     }
 
     @Override
     public int redactEmail(final WebElement element, final RedactionBuffer buffer) {
         logElementToBeRedacted(element, "email");
-        final int numberOfRedactedElements = redactor.redactEmail(element, buffer);
-        LOGGER.trace("");
-        return numberOfRedactedElements;
+        return redactor.redactEmail(element, buffer);
     }
 
     @Override
     public int redactIpAddress(final WebElement element, final RedactionBuffer buffer) {
         logElementToBeRedacted(element, "IP Address");
-        final int numberOfRedactedElements = redactor.redactIpAddress(element, buffer);
-        LOGGER.trace("");
-        return numberOfRedactedElements;
+        return redactor.redactIpAddress(element, buffer);
     }
 
     @Override
     public int redactIrcPasskey(final WebElement element, final RedactionBuffer buffer) {
         logElementToBeRedacted(element, "IRC passkey");
-        final int numberOfRedactedElements = redactor.redactIrcPasskey(element, buffer);
-        LOGGER.trace("");
-        return numberOfRedactedElements;
+        return redactor.redactIrcPasskey(element, buffer);
     }
 
     @Override
     public int redactTorrentPasskey(final WebElement element, final RedactionBuffer buffer) {
         logElementToBeRedacted(element, "torrent passkey");
-        final int numberOfRedactedElements = redactor.redactTorrentPasskey(element, buffer);
-        LOGGER.trace("");
-        return numberOfRedactedElements;
+        return redactor.redactTorrentPasskey(element, buffer);
     }
 
     @Override
@@ -106,17 +96,17 @@ public final class RedactorDelegator implements Redactor {
         final String type = elementType.isBlank() ? "" : (" " + elementType);  // Add leading space for the log output only if there is a type
 
         if (!elementText.isBlank()) {
-            LOGGER.info("\t\t\t- Found{}: '{}' in <{}>", type, NEWLINE_PATTERN.matcher(elementText).replaceAll(""), element.getTagName());
+            LOGGER.info("Found{}: '{}' in <{}>", type, NEWLINE_PATTERN.matcher(elementText).replaceAll(""), element.getTagName());
             return;
         }
 
         // Possibly an image
         final String elementSrc = element.getAttribute("src");
         if (elementSrc != null && !elementSrc.isBlank()) {
-            LOGGER.info("\t\t\t- Found: <{}>: {}", element.getTagName(), element);
+            LOGGER.info("Found: <{}>: {}", element.getTagName(), element);
             return;
         }
 
-        LOGGER.warn("\t\t\t- Found invalid text in <{}> {}, unable to check text or value", element.getTagName(), element);
+        LOGGER.warn("Found invalid text in <{}> {}, unable to check text or value", element.getTagName(), element);
     }
 }

@@ -89,7 +89,7 @@ public class HdBits extends AbstractTrackerHandler implements HasCloudflareCheck
             .build();
         final WebElement captchaTextElement = browserInteractionHelper.waitForElementToHaveText(captchaSelector, pageLoadDuration());
         final String captchaText = browserInteractionHelper.getTextContent(captchaTextElement);
-        LOGGER.info("\t\t >>> Waiting for user to select the '{}' image", captchaText);
+        LOGGER.info("Waiting for user to select the '{}' image", captchaText);
 
         final WebElement captchaElement = driver.findElement(By.id("captcha"));
         browserInteractionHelper.highlightElement(captchaElement);

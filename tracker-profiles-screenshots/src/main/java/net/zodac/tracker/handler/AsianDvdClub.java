@@ -55,7 +55,7 @@ public class AsianDvdClub extends AbstractTrackerHandler {
             return;
         }
 
-        LOGGER.info("\t\t- Progress bar found, assuming we need to wait for 2 minutes");
+        LOGGER.info("Progress bar found, assuming we need to wait for 2 minutes");
 
         final By skipToLoginSelector = XpathBuilder
             .from(a, withText("Skip to Login"))
@@ -83,7 +83,7 @@ public class AsianDvdClub extends AbstractTrackerHandler {
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter their personal information");
+        LOGGER.info("Waiting for user to enter their personal information");
 
         final By birthdaySelector = By.id("birthday");
         final WebElement birthdayElement = driver().findElement(birthdaySelector);

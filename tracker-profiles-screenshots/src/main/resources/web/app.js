@@ -24,7 +24,7 @@
     }
     // The steps of each tracker, in order (see TrackerStep)
     const TRACKER_STEPS = [
-        {name: 'OPEN_TRACKER', label: 'Opening'},
+        {name: 'OPEN_TRACKER', label: 'Opening tracker'},
         {name: 'LOGIN', label: 'Logging in'},
         {name: 'OPEN_PROFILE_PAGE', label: 'Opening profile'},
         {name: 'TAKE_SCREENSHOTS', label: 'Taking screenshots'},
@@ -483,6 +483,9 @@
     }
 
     function trackerDetail(tracker) {
+        if (tracker.state === 'SUCCEEDED') {
+            return ''
+        }
         const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
         // The total is left out if the number of attempts has been lowered below the current attempt during the execution
         const total = attempts && Number(attempts) >= tracker.attempt ? `/${attempts}` : ''
@@ -498,8 +501,7 @@
 
     function createTrackerRow(tracker) {
         const summary = el('summary', {className: 'execution-row'})
-        const logOutput = el('div', {className: 'log-output tracker-log', role: 'log', dataset: {tracker: tracker.name}},
-            [el('div', {className: 'log-empty', text: 'Loading logs…'})])
+        const logOutput = createPhaseLog(tracker)
         const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, logOutput])
         row.addEventListener('toggle', function () {
             if (row.open) {
@@ -525,6 +527,127 @@
             el('span', {className: 'execution-time muted', text: trackerTiming(tracker)})
         )
         row.dataset.state = tracker.state
+        updatePhases(row.querySelector('.tracker-log'), tracker)
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Main: tracker logs, grouped by step (phase)
+    // ---------------------------------------------------------------------------------------------------------------
+
+    function createPhaseLog(tracker) {
+        const phases = TRACKER_STEPS.map(function (step) {
+            const summary = el('summary', {}, [
+                el('span', {className: 'phase-icon', 'aria-hidden': 'true'}),
+                el('span', {className: 'phase-name', text: step.label}),
+                el('span', {className: 'phase-count'}),
+                el('span', {className: 'phase-time'}),
+            ])
+            const phase = el('details', {className: 'phase', dataset: {step: step.name, count: '0', warnings: '0'}},
+                [summary, el('div', {className: 'phase-body'})])
+            // A phase with no messages has nothing to show
+            summary.addEventListener('click', function (event) {
+                if (phase.dataset.count === '0') {
+                    event.preventDefault()
+                }
+            })
+            return phase
+        })
+        return el('div', {className: 'log-output tracker-log', role: 'log', dataset: {tracker: tracker.name}},
+            [el('div', {className: 'log-empty', text: 'Loading logs…'})].concat(phases, [el('div', {className: 'phase-footer'})]))
+    }
+
+    function phaseState(tracker, step, nextStep) {
+        if (tracker.completedSteps.includes(step.name)) {
+            return 'done'
+        }
+        if (step === nextStep) {
+            return {RUNNING: 'running', FAILED: 'failed', CANCELLED: 'cancelled'}[tracker.state] || 'pending'
+        }
+        return tracker.state === 'RUNNING' || tracker.state === 'WAITING' ? 'pending' : 'skipped'
+    }
+
+    // The time from the end of the previous step (or the start of the tracker) to the end of this step (or now, if in progress)
+    function phaseDuration(tracker, index, state) {
+        if (state === 'pending' || state === 'skipped' || tracker.startedAt === null) {
+            return ''
+        }
+        const previous = index === 0 ? null : tracker.stepCompletedAt[TRACKER_STEPS[index - 1].name]
+        const start = previous || tracker.startedAt
+        let end = tracker.stepCompletedAt[TRACKER_STEPS[index].name]
+        if (!end) {
+            end = tracker.finishedAt === null ? Date.now() : tracker.finishedAt
+        }
+        return formatDuration(end - start)
+    }
+
+    function updatePhases(output, tracker) {
+        const nextStep = TRACKER_STEPS.find(function (step) {
+            return !tracker.completedSteps.includes(step.name)
+        })
+        if (tracker.attempt > 1) {
+            output.classList.add('multi-attempt')
+        }
+        TRACKER_STEPS.forEach(function (step, index) {
+            const phase = output.querySelector(`.phase[data-step="${step.name}"]`)
+            const state = phaseState(tracker, step, nextStep)
+            // Opened when it starts running or fails, and closed when done, so a phase opened or closed by the user stays that way until it changes
+            if (phase.dataset.state !== state) {
+                phase.dataset.state = state
+                phase.open = phase.dataset.count !== '0' && (state === 'running' || state === 'failed' || state === 'cancelled')
+            }
+            phase.querySelector('.phase-icon').textContent = {done: '✓', failed: '✕', skipped: '–'}[state] || ''
+            phase.querySelector('.phase-time').textContent = phaseDuration(tracker, index, state)
+            updatePhaseCount(phase)
+        })
+    }
+
+    function updatePhaseCount(phase) {
+        const count = Number(phase.dataset.count)
+        const warnings = Number(phase.dataset.warnings)
+        let text = count === 0 ? '' : `${count} message${count === 1 ? '' : 's'}`
+        if (count === 0 && phase.dataset.state === 'skipped') {
+            text = 'Not run'
+        }
+        phase.querySelector('.phase-count').replaceChildren(text, warnings === 0 ? '' : el('span', {
+            className: 'phase-warnings', text: ` · ${warnings} warning${warnings === 1 ? '' : 's'}`,
+        }))
+        phase.classList.toggle('empty', count === 0)
+    }
+
+    function appendPhaseEntries(output, entries) {
+        entries.forEach(function (entry) {
+            const phase = entry.step ? output.querySelector(`.phase[data-step="${entry.step}"]`) : null
+            if (!phase) {
+                output.querySelector('.phase-footer').append(logLine(entry))
+                return
+            }
+
+            const body = phase.querySelector('.phase-body')
+            // Dividers between attempts are only shown once the tracker has been retried
+            if (body.dataset.attempt !== String(entry.attempt)) {
+                body.dataset.attempt = String(entry.attempt)
+                body.dataset.section = ''
+                body.append(el('div', {className: 'attempt-divider', text: `Attempt ${entry.attempt}`}))
+                if (entry.attempt > 1) {
+                    output.classList.add('multi-attempt')
+                }
+            }
+            if (entry.section && body.dataset.section !== entry.section) {
+                body.dataset.section = entry.section
+                body.append(el('div', {className: 'phase-section', text: entry.section}))
+            }
+            body.append(logLine(entry))
+
+            const wasEmpty = phase.dataset.count === '0'
+            phase.dataset.count = String(Number(phase.dataset.count) + 1)
+            if (entry.level === 'WARN' || entry.level === 'ERROR' || entry.level === 'FATAL') {
+                phase.dataset.warnings = String(Number(phase.dataset.warnings) + 1)
+            }
+            if (wasEmpty && (phase.dataset.state === 'running' || phase.dataset.state === 'failed' || phase.dataset.state === 'cancelled')) {
+                phase.open = true
+            }
+            updatePhaseCount(phase)
+        })
     }
 
     function groupFor(state) {
@@ -635,10 +758,7 @@
         return el('div', {className: 'log-line', dataset: {level: entry.level}}, [
             el('span', {className: 'log-time', text: formatTime(entry.timestamp)}),
             el('span', {className: 'log-level', text: entry.level}),
-            // The console output indents messages with tabs, which are too wide here
-            el('span', {className: 'log-message', text: entry.message.replace(/^\t+/, function (tabs) {
-                return '  '.repeat(tabs.length)
-            })}),
+            el('span', {className: 'log-message', text: entry.message}),
         ])
     }
 
@@ -658,7 +778,7 @@
                 if (entries.length === 0) {
                     if (placeholder) {
                         placeholder.textContent = 'No log messages yet'
-                    } else if (output.childElementCount === 0) {
+                    } else if (!output.dataset.tracker && output.childElementCount === 0) {
                         output.append(el('div', {className: 'log-empty', text: 'No log messages yet'}))
                     }
                     return
@@ -669,13 +789,17 @@
 
                 // Only follow new messages if already scrolled to the bottom, so reading earlier messages is not interrupted
                 const atBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 24
-                const fragment = document.createDocumentFragment()
-                entries.forEach(function (entry) {
-                    fragment.append(logLine(entry))
-                })
-                output.append(fragment)
-                while (output.childElementCount > MAXIMUM_LOG_LINES) {
-                    output.firstElementChild.remove()
+                if (output.dataset.tracker) {
+                    appendPhaseEntries(output, entries)
+                } else {
+                    const fragment = document.createDocumentFragment()
+                    entries.forEach(function (entry) {
+                        fragment.append(logLine(entry))
+                    })
+                    output.append(fragment)
+                    while (output.childElementCount > MAXIMUM_LOG_LINES) {
+                        output.firstElementChild.remove()
+                    }
                 }
                 cursor.lastId = entries[entries.length - 1].id
                 if (atBottom) {

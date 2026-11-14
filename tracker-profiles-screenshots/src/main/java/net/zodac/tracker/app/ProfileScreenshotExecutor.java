@@ -38,6 +38,7 @@ import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.framework.exception.ScreenshotWriteError;
 import net.zodac.tracker.framework.exception.TrackerUnavailableException;
 import net.zodac.tracker.framework.exception.TranslationException;
+import net.zodac.tracker.framework.progress.TrackerLogContext;
 import net.zodac.tracker.framework.progress.TrackerStep;
 import net.zodac.tracker.framework.redaction.RedactionRegistry;
 import net.zodac.tracker.framework.redactor.RedactionType;
@@ -55,7 +56,6 @@ import net.zodac.tracker.util.StringUtils;
 import net.zodac.tracker.util.TimingUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.NoSuchWindowException;
@@ -68,11 +68,6 @@ import org.openqa.selenium.remote.UnreachableBrowserException;
  */
 final class ProfileScreenshotExecutor {
 
-    /**
-     * The key in the logging context holding the name of the tracker being screenshot.
-     */
-    static final String TRACKER_CONTEXT_KEY = "tracker";
-
     private static final int FIRST_ATTEMPT = 1;
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -81,23 +76,23 @@ final class ProfileScreenshotExecutor {
     }
 
     /**
-     * Attempts to take a screenshot for the given {@link TrackerCredential}. The tracker name is set in the logging context (as {@code tracker}),
-     * so that each log message can be attributed to the tracker in the web UI.
+     * Attempts to take a screenshot for the given {@link TrackerCredential}. The tracker name, attempt and {@link TrackerStep} are set in the logging
+     * context (see {@link TrackerLogContext}), so that each log message can be attributed to them in the web UI.
      *
      * @param trackerCredential details of the tracker to screenshot
      * @param executionListener the {@link ExecutionListener} to notify as each {@link TrackerStep} completes
      * @return {@code true} if screenshot was successful
      */
     static boolean takeScreenshot(final TrackerCredential trackerCredential, final ExecutionListener executionListener) {
-        ThreadContext.put(TRACKER_CONTEXT_KEY, trackerCredential.name());
+        TrackerLogContext.startTracker(trackerCredential.name());
 
         try {
             final long startNanos = System.nanoTime();
             final boolean result = takeScreenshotWithAttempts(trackerCredential, executionListener);
-            printTrackerExecutionTime(trackerCredential.name(), startNanos);
+            printTrackerExecutionTime(startNanos);
             return result;
         } finally {
-            ThreadContext.clearAll();
+            TrackerLogContext.clear();
         }
     }
 
@@ -107,15 +102,13 @@ final class ProfileScreenshotExecutor {
         final Set<TrackerStep> successfulSteps = EnumSet.noneOf(TrackerStep.class);
 
         // The maximum is read before each attempt, since it can be changed in the web UI during an execution
-        for (int attempt = 1; attempt <= Configuration.get().numberOfScreenshotAttempts(); attempt++) {
+        for (int attempt = FIRST_ATTEMPT; attempt <= Configuration.get().numberOfScreenshotAttempts(); attempt++) {
             ExecutionCancellation.throwIfCancelled();
             executionListener.trackerAttemptStarted(trackerCredential.name(), attempt);
-            if (attempt != FIRST_ATTEMPT) {
-                LOGGER.warn("");
-                LOGGER.info("Attempt {}/{}", attempt, Configuration.get().numberOfScreenshotAttempts());
-            }
-
+            TrackerLogContext.startAttempt(attempt);
             final Set<TrackerStep> screenshotResult = screenshotTracker(trackerCredential, executionListener, successfulSteps);
+            TrackerLogContext.endAttempt();
+
             // A failure caused by cancelling (such as the browser being quit) must not be retried
             ExecutionCancellation.throwIfCancelled();
             if (screenshotResult.size() == TrackerStep.NUMBER_OF_STEPS) { // All steps were successful
@@ -125,7 +118,7 @@ final class ProfileScreenshotExecutor {
             }
         }
 
-        LOGGER.debug("\t- All {} attempts exhausted for tracker '{}'", Configuration.get().numberOfScreenshotAttempts(), trackerCredential.name());
+        LOGGER.debug("All {} attempts exhausted", Configuration.get().numberOfScreenshotAttempts());
         return false;
     }
 
@@ -137,36 +130,36 @@ final class ProfileScreenshotExecutor {
             screenshotProfile(trackerHandler, trackerCredential, executionListener, successfulSteps);
             return successfulSteps;
         } catch (final CancelledInputException e) {
-            LOGGER.debug("\t- User skipped the manual input for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- User skipped the manual input for tracker '{}'", trackerCredential.name());
+            LOGGER.debug("User skipped the manual input", e);
+            LOGGER.warn("User skipped the manual input");
         } catch (final CloudflareVerificationException e) {
             screenshotOnError(trackerHandler, trackerCredential.name());
-            LOGGER.debug("\t- Unable to pass Cloudflare verification for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- {}", e.getMessage());
+            LOGGER.debug("Unable to pass Cloudflare verification", e);
+            LOGGER.warn("{}", e.getMessage());
         } catch (final NoSuchElementException e) {
-            LOGGER.debug("\t- No implementation for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- No implementation for tracker '{}'", trackerCredential.name());
+            LOGGER.debug("No tracker handler implementation found", e);
+            LOGGER.warn("No tracker handler implementation found");
         } catch (final NoUserInputException e) {
             final String errorMessage = e.getCause() == null ? e.getMessage() : e.getCause().getMessage();
-            LOGGER.debug("\t- User provided no manual input for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- User provided no manual input for tracker '{}': {}", trackerCredential.name(), errorMessage);
+            LOGGER.debug("User provided no manual input", e);
+            LOGGER.warn("User provided no manual input: {}", errorMessage);
         } catch (final ScreenshotWriteError e) {
-            LOGGER.debug("\t- Error writing screenshot for tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- Error writing screenshot for tracker '{}'", trackerCredential.name());
+            LOGGER.debug("Error writing screenshot", e);
+            LOGGER.warn("Error writing screenshot");
         } catch (final TimeoutException e) {
             screenshotOnError(trackerHandler, trackerCredential.name());
-            logTimeoutException(trackerCredential.name(), e);
+            logTimeoutException(e);
         } catch (final TrackerUnavailableException e) {
-            LOGGER.debug("\t- Unable to connect to tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- Unable to connect to tracker '{}'", trackerCredential.name());
+            LOGGER.debug("Unable to connect to the tracker", e);
+            LOGGER.warn("Unable to connect to the tracker");
         } catch (final TranslationException e) {
-            LOGGER.debug("\t- Unable to translate tracker '{}' to English", trackerCredential.name(), e);
-            LOGGER.warn("\t- Unable to translate tracker '{}' to English: {}", trackerCredential.name(), e.getMessage());
+            LOGGER.debug("Unable to translate the page to English", e);
+            LOGGER.warn("Unable to translate the page to English: {}", e.getMessage());
         } catch (final StaleElementReferenceException e) {
-            LOGGER.debug("\t- Page element became stale during interaction with tracker '{}'", trackerCredential.name(), e);
-            LOGGER.warn("\t- Page element became stale during interaction with tracker '{}'", trackerCredential.name());
+            LOGGER.debug("Page element became stale during interaction", e);
+            LOGGER.warn("Page element became stale during interaction");
         } catch (final NoSuchSessionException | NoSuchWindowException | UnreachableBrowserException e) {
-            logBrowserUnavailable(trackerCredential.name(), e);
+            logBrowserUnavailable(e);
         } catch (final Exception e) {
             handleUnexpectedError(trackerHandler, trackerCredential.name(), e);
         } finally {
@@ -178,14 +171,14 @@ final class ProfileScreenshotExecutor {
         return successfulSteps;
     }
 
-    private static void logTimeoutException(final String trackerName, final TimeoutException e) {
-        LOGGER.debug("\t- Timed out waiting to find required element for tracker '{}'", trackerName, e);
+    private static void logTimeoutException(final TimeoutException e) {
+        LOGGER.debug("Timed out waiting to find required element", e);
 
         final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
         if (cleanedErrorMessage.isEmpty()) {
-            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}'", trackerName);
+            LOGGER.warn("Timed out waiting to find required element");
         } else {
-            LOGGER.warn("\t- Timed out waiting to find required element for tracker '{}': {}", trackerName, cleanedErrorMessage);
+            LOGGER.warn("Timed out waiting to find required element: {}", cleanedErrorMessage);
         }
     }
 
@@ -200,35 +193,35 @@ final class ProfileScreenshotExecutor {
         for (final File errorScreenshot : errorScreenshots) {
             try {
                 Files.delete(errorScreenshot.toPath());
-                LOGGER.debug("\t- Deleted error screenshot after successful retry: [{}]", errorScreenshot.getAbsolutePath());
+                LOGGER.debug("Deleted error screenshot after successful retry: [{}]", errorScreenshot.getAbsolutePath());
             } catch (final IOException e) {
-                LOGGER.warn("\t- Failed to delete error screenshot: [{}]", errorScreenshot.getAbsolutePath(), e);
+                LOGGER.warn("Failed to delete error screenshot: [{}]", errorScreenshot.getAbsolutePath(), e);
             }
         }
     }
 
-    private static void logBrowserUnavailable(final String trackerName, final Exception e) {
-        LOGGER.debug("\t- Browser became unavailable for tracker '{}' (cancelled by user, or browser crash)", trackerName, e);
+    private static void logBrowserUnavailable(final Exception e) {
+        LOGGER.debug("Browser became unavailable (cancelled by user, or browser crash)", e);
         if (!ExecutionCancellation.isCancelled()) {
-            LOGGER.warn("\t- Browser became unavailable for tracker '{}' (cancelled by user, or browser crash)", trackerName);
+            LOGGER.warn("Browser became unavailable (cancelled by user, or browser crash)");
         }
     }
 
     private static void handleUnexpectedError(final @Nullable AbstractTrackerHandler trackerHandler, final String trackerName, final Exception e) {
         if (ExecutionCancellation.isCancelled()) {
             // Expected while cancelling (the browser is quit, or no new browser is available), so not reported as an error
-            LOGGER.debug("\t- Execution cancelled while taking screenshot of '{}'", trackerName, e);
+            LOGGER.debug("Execution cancelled while taking screenshot", e);
             return;
         }
 
         screenshotOnError(trackerHandler, trackerName);
-        LOGGER.debug("\t- Unexpected error taking screenshot of '{}'", trackerName, e);
+        LOGGER.debug("Unexpected error taking screenshot", e);
 
         final String cleanedErrorMessage = StringUtils.firstLine(e.getMessage());
         if (cleanedErrorMessage.isEmpty()) {
-            LOGGER.warn("\t- Unexpected {} taking screenshot of '{}'", e.getClass().getSimpleName(), trackerName);
+            LOGGER.warn("Unexpected {} taking screenshot", e.getClass().getSimpleName());
         } else {
-            LOGGER.warn("\t- Unexpected {} taking screenshot of '{}': {}", e.getClass().getSimpleName(), trackerName, cleanedErrorMessage);
+            LOGGER.warn("Unexpected {} taking screenshot: {}", e.getClass().getSimpleName(), cleanedErrorMessage);
         }
     }
 
@@ -239,32 +232,32 @@ final class ProfileScreenshotExecutor {
         }
 
         if (trackerHandler == null) {
-            LOGGER.warn("\t\t- Unable to take failure screenshot, trackerHandler is unexpectedly null");
+            LOGGER.warn("Unable to take failure screenshot, trackerHandler is unexpectedly null");
             return;
         }
 
         try {
             ScreenshotDirectories.createErrorsDirectory();
-            LOGGER.trace("Taking failure screenshot for '{}'", trackerName);
+            LOGGER.trace("Taking failure screenshot");
             final File screenshot =
                 ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.errors(), trackerName, false, 0).get();
-            LOGGER.warn("\t\t- Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
+            LOGGER.warn("Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
         } catch (final ExecutionException | IOException e) {
-            LOGGER.debug("\t\t- Unable to take failure screenshot of '{}'", trackerName, e);
-            LOGGER.warn("\t\t- Unable to take failure screenshot of '{}': {}", trackerName, e.getMessage());
+            LOGGER.debug("Unable to take failure screenshot", e);
+            LOGGER.warn("Unable to take failure screenshot: {}", e.getMessage());
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.debug("\t\t- Interrupted while taking failure screenshot of '{}'", trackerName, e);
-            LOGGER.warn("\t\t- Interrupted while taking failure screenshot of '{}': {}", trackerName, e.getMessage());
+            LOGGER.debug("Interrupted while taking failure screenshot", e);
+            LOGGER.warn("Interrupted while taking failure screenshot: {}", e.getMessage());
         }
     }
 
     private static void screenshotProfile(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
         final ExecutionListener executionListener, final Set<TrackerStep> successfulSteps) {
-        LOGGER.trace("\t- Starting to take screenshot of profile");
+        LOGGER.trace("Starting to take screenshot of profile");
         final List<RedactionType> redactionsToExecute = redactionTypesToExecute(trackerCredential.name(), Configuration.get().redactionTypes());
         if (redactionsToExecute.isEmpty()) {
-            LOGGER.warn("\t- Screenshots already exist for all redaction types for tracker '{}', skipping", trackerCredential.name());
+            LOGGER.warn("Screenshots already exist for all redaction types, skipping");
             for (final TrackerStep trackerStep : TrackerStep.values()) {
                 completeStep(trackerCredential.name(), trackerStep, executionListener, successfulSteps);
             }
@@ -272,27 +265,29 @@ final class ProfileScreenshotExecutor {
         }
 
         if (redactionsToExecute.size() != Configuration.get().redactionTypes().size()) {
-            LOGGER.warn("\t- Some screenshots already exist for tracker '{}', only executing: {}", trackerCredential.name(), redactionsToExecute);
+            LOGGER.warn("Some screenshots already exist, only executing: {}", redactionsToExecute);
         }
 
-        LOGGER.info("\t- Opening tracker");
+        TrackerLogContext.startStep(TrackerStep.OPEN_TRACKER);
         trackerHandler.openTracker();
         trackerHandler.navigateToLoginPage();
         completeStep(trackerCredential.name(), TrackerStep.OPEN_TRACKER, executionListener, successfulSteps);
 
-        LOGGER.info("\t- Logging in as '{}'", trackerCredential.username());
+        TrackerLogContext.startStep(TrackerStep.LOGIN);
+        LOGGER.info("Logging in as '{}'", trackerCredential.username());
         trackerHandler.login(trackerCredential.username(), trackerCredential.password(), trackerCredential.name());
 
         if (trackerHandler instanceof final HasDismissibleElement trackerWithBanner) {
             trackerWithBanner.dismiss();
-            LOGGER.info("\t- Banner has been cleared");
+            LOGGER.info("Banner has been cleared");
         }
         completeStep(trackerCredential.name(), TrackerStep.LOGIN, executionListener, successfulSteps);
 
-        LOGGER.info("\t- Opening user profile page");
+        TrackerLogContext.startStep(TrackerStep.OPEN_PROFILE_PAGE);
         trackerHandler.openProfilePage();
         completeStep(trackerCredential.name(), TrackerStep.OPEN_PROFILE_PAGE, executionListener, successfulSteps);
 
+        TrackerLogContext.startStep(TrackerStep.TAKE_SCREENSHOTS);
         final boolean scrollDuringScreenshot = !(trackerHandler instanceof DoesNotScrollDuringScreenshot);
 
         // If the tracker has no sensitive information, all redaction types produce identical screenshots, so we take a single one
@@ -300,10 +295,10 @@ final class ProfileScreenshotExecutor {
         if (RedactionRegistry.hasAnyRedaction(trackerHandler)) {
             effectiveRedactions = redactionsToExecute;
         } else {
-            LOGGER.debug("\t- No sensitive information to redact, taking a single screenshot");
+            LOGGER.debug("No sensitive information to redact, taking a single screenshot");
             effectiveRedactions = redactionTypesToExecute(trackerCredential.name(), Set.of(RedactionType.NONE));
             if (effectiveRedactions.isEmpty()) {
-                LOGGER.warn("\t- Screenshot already exists for tracker '{}' with no sensitive information, skipping", trackerCredential.name());
+                LOGGER.warn("Screenshot already exists with no sensitive information, skipping");
             }
         }
 
@@ -313,12 +308,13 @@ final class ProfileScreenshotExecutor {
         }
         completeStep(trackerCredential.name(), TrackerStep.TAKE_SCREENSHOTS, executionListener, successfulSteps);
 
+        TrackerLogContext.startStep(TrackerStep.LOGOUT);
         if (numberOfUpdates > 0) {
-            LOGGER.debug("\t- {} updates made to profile page, reloading before logout", numberOfUpdates);
+            LOGGER.debug("{} updates made to profile page, reloading before logout", numberOfUpdates);
         }
 
         trackerHandler.logout();
-        LOGGER.info("\t- Logged out");
+        LOGGER.info("Logged out");
         completeStep(trackerCredential.name(), TrackerStep.LOGOUT, executionListener, successfulSteps);
     }
 
@@ -332,7 +328,19 @@ final class ProfileScreenshotExecutor {
 
     private static void takeScreenshotForRedactionType(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
         final RedactionType redactionType, final boolean scrollDuringScreenshot) {
-        LOGGER.info("\t- Redaction: {}", redactionType.formattedName());
+        if (redactionType != RedactionType.NONE) {
+            TrackerLogContext.startSection("%s redaction".formatted(redactionType.formattedName()));
+        }
+
+        try {
+            takeScreenshotWithRedaction(trackerHandler, trackerCredential, redactionType, scrollDuringScreenshot);
+        } finally {
+            TrackerLogContext.endSection();
+        }
+    }
+
+    private static void takeScreenshotWithRedaction(final AbstractTrackerHandler trackerHandler, final TrackerCredential trackerCredential,
+        final RedactionType redactionType, final boolean scrollDuringScreenshot) {
         final String baseName = screenshotBaseName(trackerCredential.name(), redactionType);
 
         final Redactor redactor = performRedaction(trackerHandler, redactionType);
@@ -346,7 +354,7 @@ final class ProfileScreenshotExecutor {
         trackerHandler.actionAfterScreenshot();
 
         try {
-            LOGGER.info("\t\t- Screenshot saved at: [{}]", pendingWrite.get().getAbsolutePath());
+            LOGGER.info("Screenshot saved at: [{}]", pendingWrite.get().getAbsolutePath());
         } catch (final ExecutionException e) {
             throw new ScreenshotWriteError(baseName, e);
         } catch (final InterruptedException e) {
@@ -355,40 +363,40 @@ final class ProfileScreenshotExecutor {
         }
 
         if (redactor != null) {
-            LOGGER.debug("\t\t- Undoing redaction");
+            LOGGER.debug("Undoing redaction");
             redactor.undoRedaction();
         }
     }
 
     // Perform modifications to the user profile page before redaction so redaction positions are computed against the settled layout
     private static int updateProfilePage(final AbstractTrackerHandler trackerHandler) {
-        LOGGER.info("\t\t- Performing updates to profile page, if needed");
+        LOGGER.info("Performing updates to profile page, if needed");
         int counter = 0;
 
         if (Configuration.get().enableTranslationToEnglish() && trackerHandler instanceof final NeedsExplicitTranslation trackerNeedsTranslation) {
-            LOGGER.info("\t\t\t- Translating profile page to English");
+            LOGGER.info("Translating profile page to English");
             trackerNeedsTranslation.translatePageToEnglish();
             counter++;
         }
 
         if (trackerHandler instanceof final HasFixedHeader trackerWithFixedHeader) {
-            LOGGER.debug("\t\t\t- Unfixing header");
+            LOGGER.debug("Unfixing header");
             trackerWithFixedHeader.unfixHeaders(trackerHandler.driver(), trackerWithFixedHeader.headerSelectors());
-            LOGGER.info("\t\t\t- Header has been updated to not be fixed");
+            LOGGER.info("Header has been updated to not be fixed");
             counter++;
         }
 
         if (trackerHandler instanceof final HasFixedSidebar trackerWithFixedSidebar) {
-            LOGGER.debug("\t\t\t- Unfixing sidebar");
+            LOGGER.debug("Unfixing sidebar");
             trackerWithFixedSidebar.unfixSidebar(trackerHandler.driver());
-            LOGGER.info("\t\t\t- Sidebar has been updated to not be fixed");
+            LOGGER.info("Sidebar has been updated to not be fixed");
             counter++;
         }
 
         if (trackerHandler instanceof final HasJumpButtons trackerWithJumpButtons) {
-            LOGGER.debug("\t\t\t- Hiding jump to top/bottom buttons");
+            LOGGER.debug("Hiding jump to top/bottom buttons");
             trackerWithJumpButtons.hideJumpButtons(trackerHandler.driver(), trackerWithJumpButtons.jumpButtonSelectors());
-            LOGGER.info("\t\t\t- Top/bottom jump buttons have been hidden");
+            LOGGER.info("Top/bottom jump buttons have been hidden");
             counter++;
         }
 
@@ -398,23 +406,23 @@ final class ProfileScreenshotExecutor {
     @Nullable
     private static Redactor performRedaction(final AbstractTrackerHandler trackerHandler, final RedactionType redactionType) {
         if (redactionType == RedactionType.NONE) {
-            LOGGER.debug("\t\t- Not redacting content");
+            LOGGER.debug("Not redacting content");
             return null;
         }
 
         if (!RedactionRegistry.hasAnyRedaction(trackerHandler)) {
-            LOGGER.debug("\t\t- Nothing to redact");
+            LOGGER.debug("Nothing to redact");
             return null;
         }
 
         final Redactor redactor = RedactorDelegator.create(trackerHandler.driver(), redactionType);
-        LOGGER.info("\t\t- Redacting elements with sensitive information");
+        LOGGER.info("Redacting elements with sensitive information");
 
         final int numberOfRedactedElements = trackerHandler.redactElements(redactor);
         if (numberOfRedactedElements == 0) {
-            LOGGER.warn("\t\t- Unexpectedly found nothing to redact");
+            LOGGER.warn("Unexpectedly found nothing to redact");
         } else {
-            LOGGER.info("\t\t- Redacted the text of {} element{}", numberOfRedactedElements, StringUtils.pluralise(numberOfRedactedElements));
+            LOGGER.info("Redacted the text of {} element{}", numberOfRedactedElements, StringUtils.pluralise(numberOfRedactedElements));
         }
         return redactor;
     }
@@ -431,7 +439,7 @@ final class ProfileScreenshotExecutor {
             if (ScreenshotTaker.howManyScreenshotsAlreadyExist(baseName, Configuration.get().outputDirectory()) == 0) {
                 typesToProcess.add(type);
             } else {
-                LOGGER.debug("\t- Screenshot already exists for '{}', skipping", baseName);
+                LOGGER.debug("Screenshot already exists for '{}', skipping", baseName);
             }
         }
         return typesToProcess;
@@ -447,8 +455,8 @@ final class ProfileScreenshotExecutor {
         return redactionType == RedactionType.NONE ? trackerName : (trackerName + "_" + redactionType.formattedName());
     }
 
-    private static void printTrackerExecutionTime(final String trackerName, final long startNanos) {
+    private static void printTrackerExecutionTime(final long startNanos) {
         final long elapsedNanos = System.nanoTime() - startNanos;
-        LOGGER.debug("\t- Execution time for {}: {}", trackerName, TimingUtils.toNaturalTime(elapsedNanos));
+        LOGGER.debug("Execution time: {}", TimingUtils.toNaturalTime(elapsedNanos));
     }
 }

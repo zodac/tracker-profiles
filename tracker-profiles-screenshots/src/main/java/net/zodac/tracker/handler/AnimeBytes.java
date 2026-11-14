@@ -58,7 +58,7 @@ public class AnimeBytes extends AbstractTrackerHandler {
      */
     @Override
     protected void additionalActionAfterLogoutClick() {
-        LOGGER.debug("\t\t- Logout button clicked, clicking confirmation button");
+        LOGGER.debug("Logout button clicked, clicking confirmation button");
         final By logoutConfirmSelector = By.name("yes");
         final WebElement logoutConfirm = browserInteractionHelper().waitForElementToBePresent(logoutConfirmSelector, pageTransitionsDuration());
         clickButton(logoutConfirm);

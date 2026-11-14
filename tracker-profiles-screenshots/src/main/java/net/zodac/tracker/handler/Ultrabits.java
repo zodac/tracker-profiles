@@ -56,7 +56,7 @@ public class Ultrabits extends AbstractTrackerHandler implements HasCloudflareCh
         // Special case where the website provides an option to use English, but only on the login page
         // We use this instead of an explicit translation to let the website handle it
         if (Configuration.get().enableTranslationToEnglish()) {
-            LOGGER.debug("\t\t- Selecting English as tracker language prior to login");
+            LOGGER.debug("Selecting English as tracker language prior to login");
             final RemoteWebDriver driver = driver();
             final By languageDropdownSelector = XpathBuilder
                 .from(body, atIndex(1))

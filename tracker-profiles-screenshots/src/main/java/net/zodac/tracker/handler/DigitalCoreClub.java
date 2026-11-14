@@ -75,7 +75,7 @@ public class DigitalCoreClub extends AbstractTrackerHandler {
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final By captchaSelector = By.id("captcha");
         final WebElement captchaElement = driver().findElement(captchaSelector);

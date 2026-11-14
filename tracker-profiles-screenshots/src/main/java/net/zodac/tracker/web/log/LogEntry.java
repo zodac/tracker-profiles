@@ -24,8 +24,11 @@ package net.zodac.tracker.web.log;
  * @param timestamp the time of the log message, as epoch milliseconds
  * @param level     the log level
  * @param tracker   the name of the tracker that logged the message, or empty if it was not logged by a tracker
+ * @param attempt   the attempt of the tracker the message was logged during, starting at 1, or 0 if it was not logged during an attempt
+ * @param step      the name of the {@link net.zodac.tracker.framework.progress.TrackerStep} the message was logged during, or empty if none
+ * @param section   the section of the step the message was logged during (such as the redaction type of a screenshot), or empty if none
  * @param message   the log message, with any ANSI escape codes removed
  */
-public record LogEntry(long id, long timestamp, String level, String tracker, String message) {
+public record LogEntry(long id, long timestamp, String level, String tracker, int attempt, String step, String section, String message) {
 
 }

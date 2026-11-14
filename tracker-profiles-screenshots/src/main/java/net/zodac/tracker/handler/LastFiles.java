@@ -141,7 +141,7 @@ public class LastFiles extends AbstractTrackerHandler
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = XpathBuilder
             .from(li, withClass("user-menu"))
             .child(a, withClass("nav-link"))

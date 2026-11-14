@@ -85,30 +85,30 @@ public class UblockOriginLiteExtension implements Extension {
     public void configure(final RemoteWebDriver driver) {
         try {
             final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
-            LOGGER.info("\t- Configuring {}", getClass().getSimpleName());
-            LOGGER.debug("\t\t- Configuring with settings {}", settings);
+            LOGGER.info("Configuring {}", getClass().getSimpleName());
+            LOGGER.debug("Configuring with settings {}", settings);
             openExtensionConfigurationPage(driver, id());
 
             if (isSettingEnabled(UblockOriginSetting.SET_FILTERING_MODE)) {
-                LOGGER.debug("\t\t- Setting filtering mode");
+                LOGGER.debug("Setting filtering mode");
                 settingFilteringMode(driver);
             }
 
             if (isSettingEnabled(UblockOriginSetting.ENABLE_MISCELLANEOUS_FILTERS)
                 || isSettingEnabled(UblockOriginSetting.ENABLE_REGION_FILTERS)) {
-                LOGGER.debug("\t\t- Opening filter lists page");
+                LOGGER.debug("Opening filter lists page");
                 openFilterListsPage(driver, browserInteractionHelper);
 
                 if (isSettingEnabled(UblockOriginSetting.ENABLE_MISCELLANEOUS_FILTERS)) {
-                    LOGGER.debug("\t\t- Enabling all miscellaneous filters");
+                    LOGGER.debug("Enabling all miscellaneous filters");
                     enableAllMiscellaneousFilters(driver, browserInteractionHelper);
                 }
 
                 if (isSettingEnabled(UblockOriginSetting.ENABLE_REGION_FILTERS)) {
-                    LOGGER.debug("\t\t- Expanding region filter lists");
+                    LOGGER.debug("Expanding region filter lists");
                     expandRegionFiltersList(driver, browserInteractionHelper);
 
-                    LOGGER.debug("\t\t- Enabling all region filters");
+                    LOGGER.debug("Enabling all region filters");
                     enableAllRegionFilters(driver, browserInteractionHelper);
                 }
             }
@@ -199,7 +199,7 @@ public class UblockOriginLiteExtension implements Extension {
         final BrowserInteractionHelper browserInteractionHelper, final By checkboxesSelector) {
         final List<WebElement> checkboxes = driver.findElements(checkboxesSelector).stream().toList();
         final int numberOfCheckboxes = checkboxes.size();
-        LOGGER.debug("\t\t\t- Found {} checkboxes", numberOfCheckboxes);
+        LOGGER.debug("Found {} checkboxes", numberOfCheckboxes);
 
         for (int i = 0; i < numberOfCheckboxes; i++) {
             final WebElement checkbox = checkboxes.get(i);

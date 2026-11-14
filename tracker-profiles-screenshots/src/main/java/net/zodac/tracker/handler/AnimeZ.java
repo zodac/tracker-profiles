@@ -121,7 +121,7 @@ public class AnimeZ extends AbstractTrackerHandler implements HasCloudflareCheck
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By logoutParentSelector = XpathBuilder
             .from(span, withClass("avatar"))
             .navigateTo(parent(a))

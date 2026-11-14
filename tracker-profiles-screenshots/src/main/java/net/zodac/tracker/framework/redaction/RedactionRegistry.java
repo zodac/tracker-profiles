@@ -113,7 +113,7 @@ public final class RedactionRegistry {
         int total = 0;
         for (final RedactionEntry<?> entry : ENTRIES) {
             if (entry.applies(handler)) {
-                LOGGER.debug("\t\t- Redacting {} elements", entry.description());
+                LOGGER.debug("Redacting {} elements", entry.description());
                 total += entry.invoke(handler, driver, redactor);
             }
         }

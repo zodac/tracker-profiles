@@ -158,7 +158,7 @@ public final class CloudflareSolver {
      */
     public CloudflareResult solve() {
         if (!(driver instanceof final HasCdp cdp)) {
-            LOGGER.debug("\t\t- Browser does not support the Chrome DevTools Protocol, unable to automatically pass Cloudflare verification");
+            LOGGER.debug("Browser does not support the Chrome DevTools Protocol, unable to automatically pass Cloudflare verification");
             return CloudflareResult.ofNotPassed();
         }
 
@@ -187,7 +187,7 @@ public final class CloudflareSolver {
 
         final PageState pageState = snapshot.pageState();
         if (pageState.errorCode() != null) {
-            LOGGER.debug("\t\t- Cloudflare rejected the verification with error code {}", pageState.errorCode());
+            LOGGER.debug("Cloudflare rejected the verification with error code {}", pageState.errorCode());
             return CloudflareResult.ofRejected(pageState.errorCode());
         }
 
@@ -274,7 +274,7 @@ public final class CloudflareSolver {
     }
 
     private static void click(final HasCdp cdp, final Point point) {
-        LOGGER.debug("\t\t- Clicking Cloudflare verification checkbox");
+        LOGGER.debug("Clicking Cloudflare verification checkbox");
         LOGGER.trace("Clicking at ({}, {})", point.x(), point.y());
         cdp.executeCdpCommand("Input.dispatchMouseEvent", Map.of(
             "type", "mousePressed",
@@ -485,7 +485,7 @@ public final class CloudflareSolver {
             }
 
             if (elapsedSince(start).compareTo(CHALLENGE_APPEARANCE_TIMEOUT) >= 0) {
-                LOGGER.debug("\t\t- No Cloudflare verification check was presented");
+                LOGGER.debug("No Cloudflare verification check was presented");
                 return CloudflareResult.ofPassed();
             }
             return null;

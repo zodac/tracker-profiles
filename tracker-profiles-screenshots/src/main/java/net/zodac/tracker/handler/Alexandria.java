@@ -90,7 +90,7 @@ public class Alexandria extends AbstractTrackerHandler implements RedactsIpAddre
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Hovering over user icon to make logout button interactable");
+        LOGGER.debug("Hovering over user icon to make logout button interactable");
         final By userLinkIcon = XpathBuilder
             .from(div, withId("desktopNavMenu"))
             .descendant(a, containsHref("/user/"))

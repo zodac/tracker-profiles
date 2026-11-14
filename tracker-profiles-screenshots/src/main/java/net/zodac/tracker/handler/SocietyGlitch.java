@@ -59,7 +59,7 @@ public class SocietyGlitch extends AbstractTrackerHandler implements RedactsIpAd
      */
     @Override
     protected void preLoginClickAction() {
-        LOGGER.info("\t\t >>> Waiting for user to enter captcha");
+        LOGGER.info("Waiting for user to enter captcha");
 
         final WebElement captchaElement = driver().findElement(By.id("captcha"));
         browserInteractionHelper().highlightElement(captchaElement);

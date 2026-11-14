@@ -129,7 +129,7 @@ public class C411 extends AbstractTrackerHandler implements HasCloudflareCheck, 
     }
 
     private void openUserDropdownMenu() {
-        LOGGER.debug("\t\t- Clicking user dropdown menu to make profile/logout button interactable");
+        LOGGER.debug("Clicking user dropdown menu to make profile/logout button interactable");
         final By profileParentSelector = XpathBuilder
             .from(header, atIndex(1))
             .descendant(button, withAttribute("aria-haspopup", "menu"))

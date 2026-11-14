@@ -24,9 +24,11 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
+import net.zodac.tracker.framework.progress.TrackerLogContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
@@ -34,6 +36,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.util.ReadOnlyStringMap;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -42,21 +45,16 @@ import org.jspecify.annotations.Nullable;
  * summary of an execution) are kept as the execution log.
  *
  * <p>
- * The tracker of a message is read from the {@code tracker} key of the Log4j {@link org.apache.logging.log4j.ThreadContext}, which is set for the
- * thread executing each tracker. All messages are cleared with {@link #clear()} when a new execution starts.
+ * The tracker of a message (and its attempt, {@link net.zodac.tracker.framework.progress.TrackerStep} and section) is read from the Log4j
+ * {@link org.apache.logging.log4j.ThreadContext}, which is set by {@link TrackerLogContext} for the thread executing each tracker. All messages are
+ * cleared with {@link #clear()} when a new execution starts.
  */
 public final class WebLogAppender extends AbstractAppender {
-
-    /**
-     * The key in the logging context holding the name of the tracker being screenshot.
-     */
-    public static final String TRACKER_CONTEXT_KEY = "tracker";
 
     private static final String APPENDER_NAME = "WEB_UI";
     private static final String EXECUTION_LOG = "";
     private static final int MAXIMUM_ENTRIES_PER_LOG = 2_000;
     private static final Pattern ANSI_ESCAPE_CODE = Pattern.compile("\u001B\\[[0-9;]*[A-Za-z]");
-    private static final Pattern LEADING_LIST_MARKER = Pattern.compile("^[\\s>-]+");
 
     private final Lock lock = new ReentrantLock();
     private final Map<String, Deque<LogEntry>> entriesByTracker = new HashMap<>();
@@ -95,8 +93,12 @@ public final class WebLogAppender extends AbstractAppender {
 
     @Override
     public void append(final LogEvent event) {
-        final String trackerValue = event.getContextData().getValue(TRACKER_CONTEXT_KEY);
+        final ReadOnlyStringMap contextData = event.getContextData();
+        final String trackerValue = contextData.getValue(TrackerLogContext.TRACKER_KEY);
         final String tracker = trackerValue == null ? EXECUTION_LOG : stripAnsiCodes(trackerValue).trim();
+        final int attempt = parseAttempt(contextData.getValue(TrackerLogContext.ATTEMPT_KEY));
+        final String step = Objects.requireNonNullElse(contextData.getValue(TrackerLogContext.STEP_KEY), "");
+        final String section = Objects.requireNonNullElse(contextData.getValue(TrackerLogContext.SECTION_KEY), "");
         final String message = formatMessage(event);
 
         lock.lock();
@@ -104,7 +106,7 @@ public final class WebLogAppender extends AbstractAppender {
             final long id = nextId;
             nextId++;
             final Deque<LogEntry> entries = entriesByTracker.computeIfAbsent(tracker, _ -> new ArrayDeque<>());
-            entries.addLast(new LogEntry(id, event.getTimeMillis(), event.getLevel().name(), tracker, message));
+            entries.addLast(new LogEntry(id, event.getTimeMillis(), event.getLevel().name(), tracker, attempt, step, section, message));
             if (entries.size() > MAXIMUM_ENTRIES_PER_LOG) {
                 entries.removeFirst();
             }
@@ -155,6 +157,21 @@ public final class WebLogAppender extends AbstractAppender {
     }
 
     /**
+     * Removes the latest message of a tracker (see {@link #latestMessages()}), when it is no longer relevant to what the tracker is doing, such as
+     * when a {@link net.zodac.tracker.framework.progress.TrackerStep} completes.
+     *
+     * @param tracker the name of the tracker
+     */
+    public void clearLatestMessage(final String tracker) {
+        lock.lock();
+        try {
+            latestMessageByTracker.remove(tracker);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Removes every retained log message, when a new execution starts.
      */
     public void clear() {
@@ -179,10 +196,22 @@ public final class WebLogAppender extends AbstractAppender {
         return message + System.lineSeparator() + stackTrace;
     }
 
-    // The first line of the message, without the indentation and list markers used in the console output
+    // The first line of the message
     private static String summarise(final String message) {
-        final String firstLine = message.lines().findFirst().orElse("");
-        return LEADING_LIST_MARKER.matcher(firstLine).replaceFirst("").trim();
+        return message.lines().findFirst().orElse("").trim();
+    }
+
+    // 0 if the message was not logged during an attempt
+    private static int parseAttempt(final @Nullable String attempt) {
+        if (attempt == null) {
+            return 0;
+        }
+
+        try {
+            return Integer.parseInt(attempt);
+        } catch (final NumberFormatException _) {
+            return 0;
+        }
     }
 
     /**

@@ -18,6 +18,7 @@
 package net.zodac.tracker.web;
 
 import java.util.List;
+import java.util.Map;
 import net.zodac.tracker.framework.input.UserInputRequests.PendingUserInput;
 import org.jspecify.annotations.Nullable;
 
@@ -45,14 +46,15 @@ public record RunStatus(
     /**
      * The progress of a single tracker in the execution.
      *
-     * @param name           the tracker name
-     * @param type           the tracker type
-     * @param state          the {@link TrackerState}
-     * @param startedAt      when the tracker started executing, as epoch milliseconds, or {@code null} if it has not started
-     * @param finishedAt     when the tracker finished executing, as epoch milliseconds, or {@code null} if it has not finished
-     * @param attempt        the current (or last) attempt, starting at 1, or 0 if it has not started
-     * @param completedSteps the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far
-     * @param latestMessage  the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
+     * @param name            the tracker name
+     * @param type            the tracker type
+     * @param state           the {@link TrackerState}
+     * @param startedAt       when the tracker started executing, as epoch milliseconds, or {@code null} if it has not started
+     * @param finishedAt      when the tracker finished executing, as epoch milliseconds, or {@code null} if it has not finished
+     * @param attempt         the current (or last) attempt, starting at 1, or 0 if it has not started
+     * @param completedSteps  the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far, in execution order
+     * @param stepCompletedAt when each of the {@code completedSteps} completed, as epoch milliseconds, keyed by step name
+     * @param latestMessage   the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
      */
     public record TrackerProgress(
         String name,
@@ -62,6 +64,7 @@ public record RunStatus(
         @Nullable Long finishedAt,
         int attempt,
         List<String> completedSteps,
+        Map<String, Long> stepCompletedAt,
         String latestMessage
     ) {
 

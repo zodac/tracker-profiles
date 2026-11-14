@@ -64,12 +64,12 @@ public interface HasCloudflareCheck {
     default void cloudflareCheck(final RemoteWebDriver driver, final Duration pageLoadDuration, final TrackerDefinition trackerDefinition) {
         final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
         final var logger = LogManager.getLogger(HasCloudflareCheck.class);
-        logger.debug("\t- Performing Cloudflare verification check");
+        logger.debug("Performing Cloudflare verification check");
 
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration);
         final CloudflareResult result = CloudflareSolver.forDriver(driver).solve();
         if (result.passed()) {
-            logger.debug("\t\t- Cloudflare verification passed");
+            logger.debug("Cloudflare verification passed");
             return;
         }
 
@@ -79,9 +79,9 @@ public interface HasCloudflareCheck {
         }
 
         if (result.wasRejected()) {
-            logger.warn("\t\t- Cloudflare rejected the automatic verification (error code {}), the page may need to be reloaded", result.errorCode());
+            logger.warn("Cloudflare rejected the automatic verification (error code {}), the page may need to be reloaded", result.errorCode());
         }
-        logger.info("\t\t >>> Waiting for user to pass the Cloudflare verification");
+        logger.info("Waiting for user to pass the Cloudflare verification");
         final By cloudflareSelector = cloudflareSelector();
         final WebElement cloudflareElement = browserInteractionHelper.waitForElementToBePresent(cloudflareSelector, pageLoadDuration);
         browserInteractionHelper.highlightElement(cloudflareElement);

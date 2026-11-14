@@ -82,7 +82,7 @@ public class Empornium extends LuminanceHandler implements HasProfilePageActions
             final Collection<WebElement> sectionDivs = driver.findElements(By.id(entry.getValue()));
             for (final WebElement sectionDiv : sectionDivs) {
                 if (sectionDiv.isDisplayed()) {
-                    LOGGER.debug("\t\t- Closing section #{}", entry.getValue());
+                    LOGGER.debug("Closing section #{}", entry.getValue());
                     clickButton(driver.findElement(By.id(entry.getKey())));
                     BrowserInteractionHelper.explicitWait(pageTransitionsDuration(), "section to close");
                 }

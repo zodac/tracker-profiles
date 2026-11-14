@@ -140,10 +140,8 @@ public final class ScreenshotOrchestrator {
         final int effectiveThreadCount = getEffectiveThreadCount(trackerType, numberOfTrackers);
         DriverPool.initialise(trackerType, effectiveThreadCount);
 
-        LOGGER.info("");
-        LOGGER.info(">>> Executing {} trackers {}<<<", trackerType.formattedName(),
-            effectiveThreadCount == 1 ? "" : "(with %d threads) ".formatted(effectiveThreadCount));
-        LOGGER.info("");
+        LOGGER.info("Executing {} trackers{}", trackerType.formattedName(),
+            effectiveThreadCount == 1 ? "" : " (with %d threads)".formatted(effectiveThreadCount));
 
         final List<Callable<Void>> trackerScreenshotTasks = new ArrayList<>();
         for (final TrackerCredential tracker : trackersByType.get(trackerType)) {

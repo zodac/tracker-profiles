@@ -51,7 +51,7 @@ public class CapybaraBr extends Unit3dHandler {
      */
     @Override
     public void dismiss() {
-        LOGGER.debug("\t\t- Checking for 2FA warning");
+        LOGGER.debug("Checking for 2FA warning");
         final RemoteWebDriver driver = driver();
         final By twoFaReminderSelectors = XpathBuilder
             .from(div, withClass("two-factor-reminder__body"))
@@ -61,7 +61,7 @@ public class CapybaraBr extends Unit3dHandler {
             return;
         }
 
-        LOGGER.debug("\t\t\t- Found 2FA reminder, closing");
+        LOGGER.debug("Found 2FA reminder, closing");
         final By closeButtonSelector = XpathBuilder
             .from(div, withClass("two-factor-reminder__body"))
             .child(div, withClass("two-factor-reminder__actions"))
@@ -70,6 +70,6 @@ public class CapybaraBr extends Unit3dHandler {
         final WebElement closeButton = driver.findElement(closeButtonSelector);
         clickButton(closeButton);
 
-        LOGGER.debug("\t\t\t- Closed reminder");
+        LOGGER.debug("Closed reminder");
     }
 }
