@@ -6,7 +6,7 @@
     <parent>
         <groupId>net.zodac</groupId>
         <artifactId>parent-pom</artifactId>
-        <version>1.2.3</version>
+        <version>1.2.4</version>
     </parent>
 
     <artifactId>tracker-profiles</artifactId>
@@ -27,16 +27,6 @@
         <java-release>27</java-release>
         <maven-release>3.10.0</maven-release>
 
-        <!-- Version overrides: tracker-profiles is ahead of parent-pom 1.2.3 -->
-        <jspecify.version>1.0.1</jspecify.version>
-        <mockito.version>5.24.0</mockito.version>
-
-        <!-- tracker-profiles-specific versions not in parent-pom -->
-        <flyway.version>13.12.0</flyway.version>
-        <log4j-transform-maven-shade-plugin-extensions.version>0.2.0</log4j-transform-maven-shade-plugin-extensions.version>
-        <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
-        <sqlite-jdbc.version>3.54.1.0</sqlite-jdbc.version>
-
         <!-- Linter path overrides. parent-pom builds these from ${project.basedir}, which is correct for this root POM
              but resolves to the module's own directory when inherited - so tracker-profiles-screenshots/pom.xml
              redefines all four against ${project.parent.basedir}. Keep the two blocks in sync. -->
@@ -45,27 +35,6 @@
         <ci-config-directory>${project.basedir}/code-quality-config/java</ci-config-directory>
         <license-file>${project.basedir}/code-quality-config/licenses/bsd0.txt</license-file>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <!-- tracker-profiles-specific: not in parent-pom -->
-            <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-core</artifactId>
-                <version>${flyway.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-transform-maven-shade-plugin-extensions</artifactId>
-                <version>${log4j-transform-maven-shade-plugin-extensions.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.xerial</groupId>
-                <artifactId>sqlite-jdbc</artifactId>
-                <version>${sqlite-jdbc.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <pluginManagement>
@@ -110,7 +79,6 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>${maven-shade-plugin.version}</version>
                     <configuration>
                         <createDependencyReducedPom>false</createDependencyReducedPom>
                         <skip>${skip-artifact-build}</skip>
