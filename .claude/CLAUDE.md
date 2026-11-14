@@ -41,18 +41,24 @@ With the system property `tracker-profiles.appcds-training=true`, `ApplicationLa
 Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServer` (module `jdk.httpserver`, included in the `jlink` list in
 `docker/Dockerfile`) with virtual threads, Gson for JSON, and no web framework.
 
-- **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers.
+- **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers. `stop()` (also run by
+  a shutdown hook) closes the database.
 - **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
-  `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`), `SettingsApiHandler`
-  (`/api/settings`), `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`). API handlers
+  `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`, and
+  `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one transaction), `SettingsApiHandler` (`/api/settings`),
+  `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`, keeping each file in memory with an
+  `ETag`). API handlers
   extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
   responses.
 - **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each tracker's
-  most recent execution (shown on the Trackers tab). Passwords are never returned by the API; a `null` password on save keeps the stored one, and an
-  empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in `app.js`). Passwords are encrypted by
-  `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the required `SECRET_KEY` env var and a salt stored
-  in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if a stored password cannot be decrypted (the
-  secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in `SettingView`) or logged.
+  most recent execution (shown on the Trackers tab). It keeps a single connection (WAL journal, `synchronous=NORMAL`), used only while holding its
+  lock: SQLite allows one writer, so a connection pool would not help. Lists for the web UI use `findAllCredentialStatuses()`, which never decrypts a
+  password; only an execution decrypts them (`findAllCredentials()`). Passwords are never returned by the API; a `null` password on save keeps the
+  stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in `js/constants.mjs`).
+  Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the required
+  `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if a stored
+  password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in
+  `SettingView`) or logged.
 - **`RunManager`** — runs one execution at a time on a background thread. Before each run it calls `Configuration.reload(...)` with the
   overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
   (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
@@ -67,7 +73,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
   default (the API can reset it, but the web UI has no reset). `RunManager.reloadConfiguration` only applies saved values for options that are
   `editableAtRuntime` (not `Scope.STARTUP`).
-- **User input** — manual trackers call `displayUtils().confirm(trackerName, message)`, which waits in `framework.input.UserInputRequests` until
+- **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the
+  element and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until
   the user responds in the web UI (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS`
   passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
@@ -85,7 +92,8 @@ is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest 
 screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
 execution is kept, in memory, except that `RunManager.latestSuccessfulScreenshots()` keeps the profile screenshots of each tracker's latest success
-across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button.
+across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button. Only screenshots whose files still
+exist are listed (and counted in `RunStatus`), so the button is hidden when there is nothing to send.
 
 `ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
 `?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment). `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
@@ -119,7 +127,15 @@ The state is `CANCELLING` until the execution thread ends, then `CANCELLED`; a n
 create a driver without registering it in `DriverPool` (or checking `ExecutionCancellation` after creating it).
 
 The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Content-Security-Policy: default-src 'self'`, so no inline scripts or
-styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the shared config, like the redaction scripts.
+styles and no CDNs). `app.mjs` is the entry ES module (`<script type="module">`), wiring the event listeners at start up, and imports the modules
+in `web/js/`: `constants`, `util` (DOM helpers, `request`, toasts), `run` (execution status and user inputs), `execution-trackers` (the trackers of
+an execution and their logs), `screenshots`, `trackers` (Trackers tab and selection), `settings`, `tabs` and `theme-toggle`. Modules only assign
+their own variables (imports are read-only), and import each other freely, since nothing runs before `DOMContentLoaded`. ES modules must use the
+`.mjs` extension: the shared ESLint config (`code-quality-config/javascript/eslint.config.cjs`, which lints all JavaScript) parses `.mjs` files as
+modules and `.js` files as classic scripts (`theme.js` and the redaction scripts).
+
+The status is polled every 2s during an execution (1s while an input is pending) and every 10s while idle. While the page is hidden nothing is
+polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
   tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section (open until Start is pressed). The tracker
@@ -136,24 +152,29 @@ styles and no CDNs). `app.js` and `theme.js` are linted by ESLint with the share
   on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place
   (not re-rendered) so the focused input is never replaced.
 - The theme is light/dark, following the OS until the user picks one with the header toggle. The choice is stored in `localStorage`, and
-  `theme.js` (a blocking script in `<head>`) applies it before the first paint. Dark colours are defined twice in `style.css`, once for
-  `[data-theme="dark"]` and once for the OS preference when the user has not chosen light; keep the two blocks in sync.
+  `theme.js` (a blocking script in `<head>`) applies it before the first paint. `theme.js` always sets `data-theme` (the saved choice, otherwise
+  the OS preference, following OS changes), so `style.css` defines the dark colours once, for `[data-theme="dark"]`, with no media query.
 
 ### Retry and Screenshot Execution
 
 `ProfileScreenshotExecutor` has three layers:
 
-- **`takeScreenshot`** (package-private) — the entry point called by `ScreenshotOrchestrator`. Sets up per-tracker logging context
-  and delegates to the retry loop.
+- **`takeScreenshot`** (package-private) — the entry point called by `ScreenshotOrchestrator`. Starts a `TrackerRun` (which sets the
+  per-tracker logging context) and delegates to the retry loop.
 - **`takeScreenshotWithAttempts`** (private) — the retry loop. Calls `screenshotTracker` up to `numberOfScreenshotAttempts` times
   and returns success only when every `TrackerStep` has been recorded.
 - **`screenshotTracker`** (private) — a single attempt. Resolves the handler via `TrackerHandlerFactory`, delegates to
   `screenshotProfile`, and contains the full per-exception catch chain with tailored log messages. Caught failures fall through
   to a fresh retry; uncaught throws propagate out.
 
-Failure-screenshot writes go to `ScreenshotDirectories.errors()`. That directory is created up-front by `ScreenshotDirectories.createAll()` when
-`TAKE_SCREENSHOT_ON_ERROR=true`, and otherwise by `ScreenshotDirectories.createErrorsDirectory()` (under a lock, since trackers run in parallel) before
-a failure screenshot, as the option can be enabled during an execution.
+`TrackerRun` holds a tracker's progress across its attempts: `trackerRun.step(TrackerStep, action)` starts the step in the logging context, runs it,
+and reports it to the `ExecutionListener` the first time it succeeds, and it reports saved screenshots. Pass the `TrackerRun` rather than the
+tracker name, listener and completed steps separately.
+
+Failure-screenshot writes go to `ScreenshotDirectories.errors()`, created by `ScreenshotDirectories.createAll()` when `TAKE_SCREENSHOT_ON_ERROR=true`.
+
+The configuration cannot change during an execution (settings are locked), so code reads each value when it needs it and never re-reads it to pick
+up a change mid-execution.
 
 ### Tracker Handler Pattern
 
@@ -190,12 +211,12 @@ implementation class, after all other `@Override` methods and private helpers.
 Two types control how the browser is created and whether user interaction is needed:
 
 - **`HEADLESS`** — Runs Chrome without a UI. Default for most trackers.
-- **`MANUAL`** — Runs Chrome with a UI; pauses execution via `displayUtils().confirm(...)` for captcha or 2FA entry, which the user answers in the
-  web UI.
+- **`MANUAL`** — Runs Chrome with a UI; pauses execution via `awaitUserInput(selector, instruction)` for captcha or 2FA entry, which highlights
+  the element and is answered by the user in the web UI (it logs the instruction, so the handler needs no log message of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
-Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`, including during an execution for types not yet started
-(so `TrackerRetriever.groupByType` keeps every type, and `ScreenshotOrchestrator` only executes those in the order).
+Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`; `TrackerRetriever.groupByType` leaves out the trackers
+of any type not in the order.
 
 ### Cloudflare Verification
 
@@ -256,12 +277,14 @@ New env vars must be:
 
 1. Added to `ConfigurationOption` (alphabetical order). Use `Tab.MAIN` for options likely to be changed for an execution, otherwise
    `Tab.SETTINGS`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect), otherwise `Scope.EXECUTION`.
-   A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in `ApplicationConfiguration.print()` and `toString()`
-2. Added as a record component (alphabetical order among components)
-3. Loaded via a `getXxx(source)` private static method using `source.get(ConfigurationOption.XXX)` and, where needed,
-   `parseIntegerInRange(input, envVarName, min, max)` (use `Integer.MAX_VALUE` for unbounded positive integers)
-4. Added to the `load()` constructor call and `print()` debug log
-5. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Tab.MAIN`, the `Settings` table for other editable
+   An `OptionType.INTEGER` option is declared with its `Range.of(min, max)` (use `Integer.MAX_VALUE` for unbounded), which validates it
+   (`parseInteger`), is appended to its description when bounded, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
+   against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
+   `ApplicationConfiguration.printableValue()`
+2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically
+3. Loaded in the `load()` constructor call with the `Source` parser for its type (`source.bool(...)`, `integer(...)`, `select(...)`,
+   `multiSelect(...)`, or `get(...)` for a string), or a private static `getXxx(source)` method for anything else
+4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Tab.MAIN`, the `Settings` table for other editable
    options, otherwise the `Startup-Only Options` table, and in all Docker run examples (Debian, Windows, development and performance analysis
    blocks), all in alphabetical order
 

@@ -371,7 +371,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       and move between the redaction types with the arrows (or the arrow keys)
     - Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the latest screenshots of
       every tracker that has succeeded in any execution since the application started: a tracker executed again only has the screenshots of its
-      latest success, so after **Failures only** the trackers that succeeded in either execution are downloaded together. Several screenshots are
+      latest success, so after **Failures only** the trackers that succeeded in either execution are downloaded together. Screenshots deleted or
+      moved since are left out, and the button is hidden when none are left. Several screenshots are
       downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the latest execution started
       (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails and gallery only show the current (or most recent) execution, and the screenshots are
       kept in memory until the application restarts (they are still saved to the output directory as before)
