@@ -68,7 +68,6 @@ public final class ApplicationLauncher {
     /**
      * Main method for the application. Loads the configuration, then starts the web UI, from which screenshots are executed on request.
      */
-    // TODO: Investigate whether it's worth not logging out
     static void main() {
         final ApplicationConfiguration applicationConfiguration = initApplicationConfiguration();
         warnOfRemovedEnvironmentVariables();
@@ -89,7 +88,7 @@ public final class ApplicationLauncher {
             LOGGER.debug("Invalid environment variable", e);
             LOGGER.error("Invalid environment variable: {}", e.getMessage());
             exit(ExitState.FAILURE);
-            throw e; // Unreachable, since exit() terminates the JVM
+            throw e;
         }
     }
 

@@ -104,6 +104,7 @@ public final class WebServer {
             return;
         }
 
+        LOGGER.debug("Stopping web server in {} seconds", STOP_DELAY_SECONDS);
         httpServer.stop(STOP_DELAY_SECONDS);
         try {
             applicationDatabase.close();
@@ -118,13 +119,15 @@ public final class WebServer {
         final Map<String, String> currentSettings = new LinkedHashMap<>(savedSettings);
         currentSettings.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
 
-        if (currentSettings.size() != savedSettings.size()) {
-            LOGGER.debug("Removing saved settings for options that no longer exist: {}", savedSettings.keySet()
-                .stream()
-                .filter(name -> !currentSettings.containsKey(name))
-                .toList());
-            applicationDatabase.settings().replaceAll(currentSettings);
+        if (currentSettings.size() == savedSettings.size()) {
+            return;
         }
+
+        LOGGER.debug("Removing saved settings for options that no longer exist: {}", savedSettings.keySet()
+            .stream()
+            .filter(name -> !currentSettings.containsKey(name))
+            .toList());
+        applicationDatabase.settings().replaceAll(currentSettings);
     }
 
     private static void applyStoredSettings(final ApplicationDatabase applicationDatabase) throws SQLException {

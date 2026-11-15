@@ -626,7 +626,7 @@ handlers when updates are made, to cover as many cases as possible.
 Run the following command to run git hooks for the project:
 
 ```bash
-bash ./ci/hooks/setup-hooks.sh
+bash ./.hooks/setup-hooks.sh
 ```
 
 ### Building And Developing In Docker

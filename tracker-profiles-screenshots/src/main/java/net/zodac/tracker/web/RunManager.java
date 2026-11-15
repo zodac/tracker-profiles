@@ -84,16 +84,16 @@ public final class RunManager implements ExecutionListener {
     private final Lock lock = new ReentrantLock();
     private final ApplicationDatabase applicationDatabase;
     private final WebLogAppender webLogAppender;
-
-    private RunStatus.State state = RunStatus.State.IDLE;
-    // 0 when not set, since PMD flags assigning null to a field
-    private long startedAt;
-    private long finishedAt;
     private final Set<TrackerType> startedTrackerTypes = new LinkedHashSet<>();
     private final Map<String, TrackerProgressState> trackers = new LinkedHashMap<>();
     // Kept across executions, replaced each time a tracker succeeds, ordered by tracker name
     private final Map<String, List<ScreenshotFile>> latestSuccessfulScreenshots = new TreeMap<>();
-    private @Nullable Thread executionThread;
+
+    @Nullable
+    private Thread executionThread;
+    private RunStatus.State state = RunStatus.State.IDLE;
+    private long startedAt;
+    private long finishedAt;
 
     private RunManager(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) {
         this.applicationDatabase = applicationDatabase;
