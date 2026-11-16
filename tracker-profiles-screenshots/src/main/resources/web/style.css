@@ -1736,14 +1736,14 @@ kbd {
     color: var(--accent);
 }
 
-/* An expanded row ends with rounded corners and a gap before the next row. It is inset by its margin and border, which its padding takes back so
-   its columns stay aligned with the other rows */
+/* An expanded row has rounded corners, with a gap before and after it. It is inset by its margin and border, which its padding takes back so its
+   columns stay aligned with the other rows */
 .tracker-row.expanded {
-    margin: 0 6px 8px;
+    margin: 8px 6px;
     padding-right: 9px;
     padding-left: 9px;
     border: 1px solid var(--border);
-    border-radius: 0 0 var(--radius) var(--radius);
+    border-radius: var(--radius);
 }
 
 .tracker-row.expanded + .tracker-row:not(.expanded) {
