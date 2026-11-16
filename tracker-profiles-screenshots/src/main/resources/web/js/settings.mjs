@@ -444,8 +444,7 @@ function renderOptionRow(setting) {
     const control = createControl(setting)
 
     function refresh() {
-        const current = findSetting(name)
-        row.classList.toggle('changed', current.changedFromDefault)
+        // Run options are expected to change between executions, so they are not marked when they differ from the default
         row.classList.toggle('editing', hasKey(unsavedSettings, name))
     }
 

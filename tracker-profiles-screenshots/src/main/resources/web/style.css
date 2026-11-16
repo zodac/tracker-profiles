@@ -495,18 +495,13 @@ select:disabled {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 4px 12px;
-    padding: 12px 0 12px 10px;
+    padding: 12px 0 12px 13px;
     border-top: 1px solid var(--border);
-    border-left: 3px solid transparent;
 }
 
 #run-options .option-row {
     border-top: none;
     border-bottom: 1px solid var(--border);
-}
-
-.option-row.changed {
-    border-left-color: var(--changed);
 }
 
 .option-row.editing input {
