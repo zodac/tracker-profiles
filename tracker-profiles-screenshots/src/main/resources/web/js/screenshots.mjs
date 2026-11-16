@@ -1,8 +1,8 @@
 import {byId, el, pluralise} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
-// Screenshots of each tracker (thumbnails on the Main tab, and the latest successful screenshots on the Trackers tab, opened in a gallery), and
-// downloads
+// Screenshots of each tracker (thumbnails of the current execution on the Main tab, and of the latest successful execution on the Trackers tab,
+// opened in a gallery), and downloads
 // ---------------------------------------------------------------------------------------------------------------
 
 // The screenshots shown in the gallery, the index of the one being viewed, and whether they are the latest successful screenshots of the
@@ -21,8 +21,12 @@ function screenshotUrl(trackerName, screenshot, option, latest) {
     return `/api/screenshots?${parameters}`
 }
 
-function trackerDownloadUrl(tracker) {
-    return `/api/screenshots?${new URLSearchParams({tracker: tracker.name})}`
+function trackerDownloadUrl(tracker, latest) {
+    const parameters = new URLSearchParams({tracker: tracker.name})
+    if (latest) {
+        parameters.set('latest', 'true')
+    }
+    return `/api/screenshots?${parameters}`
 }
 
 function downloadLink(href, text, title, small) {
@@ -32,8 +36,9 @@ function downloadLink(href, text, title, small) {
     ])
 }
 
-// Only re-rendered when the screenshots change, so a thumbnail is not fetched again with each status update
-export function updateTrackerScreenshots(container, tracker) {
+// Only re-rendered when the screenshots change, so a thumbnail is not fetched again with each status update. With 'latest', the screenshots are
+// those of the tracker's latest successful execution (Trackers tab), rather than the current execution
+export function updateTrackerScreenshots(container, tracker, latest) {
     const signature = tracker.screenshots.map(function (screenshot) {
         return `${screenshot.id}:${screenshot.savedAt}`
     }).join(',')
@@ -51,7 +56,7 @@ export function updateTrackerScreenshots(container, tracker) {
     container.replaceChildren(
         el('div', {className: 'screenshots-header'}, [
             el('h3', {text: multiple ? `Screenshots (${tracker.screenshots.length})` : 'Screenshot'}),
-            downloadLink(trackerDownloadUrl(tracker), multiple ? 'Download all' : 'Download',
+            downloadLink(trackerDownloadUrl(tracker, latest), multiple ? 'Download all' : 'Download',
                 multiple ? `Download the screenshots of ${tracker.name} as a .zip file` : `Download the screenshot of ${tracker.name}`, true),
         ]),
         el('div', {className: 'screenshot-list'}, tracker.screenshots.map(function (screenshot, index) {
@@ -62,16 +67,16 @@ export function updateTrackerScreenshots(container, tracker) {
                     type: 'button',
                     title: `View ${label.toLowerCase()}`,
                     onclick: function () {
-                        openGallery(tracker.name, tracker.screenshots, index)
+                        openGallery(tracker.name, tracker.screenshots, index, latest)
                     },
                 }, [
-                    el('img', {src: screenshotUrl(tracker.name, screenshot, 'thumbnail'), alt: `${tracker.name}: ${label}`, loading: 'lazy'}),
+                    el('img', {src: screenshotUrl(tracker.name, screenshot, 'thumbnail', latest), alt: `${tracker.name}: ${label}`, loading: 'lazy'}),
                 ]),
                 el('figcaption', {}, [
                     el('span', {className: 'screenshot-label', text: label}),
                     el('a', {
                         className: 'icon-button small download-link',
-                        href: screenshotUrl(tracker.name, screenshot, 'download'),
+                        href: screenshotUrl(tracker.name, screenshot, 'download', latest),
                         download: screenshot.fileName,
                         title: `Download ${screenshot.fileName}`,
                         'aria-label': `Download ${screenshot.fileName}`,
@@ -94,7 +99,7 @@ export function updateExecutionDownload(status) {
         : 'Download the latest screenshot of the successful tracker'
 }
 
-export function openGallery(trackerName, screenshots, index, latest) {
+function openGallery(trackerName, screenshots, index, latest) {
     gallery.trackerName = trackerName
     gallery.screenshots = screenshots
     gallery.latest = Boolean(latest)

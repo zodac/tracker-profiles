@@ -1725,6 +1725,18 @@ kbd {
     font-variant-numeric: tabular-nums;
 }
 
+.icon-button.latest-screenshots[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* Spans the whole row below its columns, out to the edges of the row */
+.tracker-row > .tracker-screenshots {
+    grid-column: 1 / -1;
+    margin: 0 -16px -10px;
+}
+
 .latest-screenshots svg {
     width: 16px;
     height: 16px;

@@ -1,6 +1,6 @@
 import {ADULT_TRACKERS_SETTING, REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
 import {latestStatus, runDescription} from './run.mjs'
-import {openGallery} from './screenshots.mjs'
+import {updateTrackerScreenshots} from './screenshots.mjs'
 import {findSetting} from './settings.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
@@ -233,8 +233,8 @@ function lastRunContent(tracker) {
     }
 }
 
-// Opens the profile screenshots of the tracker's latest successful execution (from any execution, kept across restarts) in the gallery
-function updateLatestScreenshots(button, tracker) {
+// Expands the row to show the profile screenshots of the tracker's latest successful execution (from any execution, kept across restarts)
+function updateLatestScreenshotsButton(button, tracker, expanded) {
     const count = tracker.screenshots.length
     button.hidden = count === 0
     button.querySelector('.latest-screenshots-count').textContent = count > 1 ? String(count) : ''
@@ -242,8 +242,10 @@ function updateLatestScreenshots(button, tracker) {
         return screenshot.savedAt
     }).concat([0]))
     const description = count > 1 ? `the ${count} screenshots` : 'the screenshot'
-    button.title = count === 0 ? '' : `View ${description} of the latest successful run (${new Date(newest).toLocaleString()})`
-    button.setAttribute('aria-label', `View ${description} of the latest successful run of ${tracker.name}`)
+    const action = expanded ? 'Hide' : 'Show'
+    button.title = count === 0 ? '' : `${action} ${description} of the latest successful run (${new Date(newest).toLocaleString()})`
+    button.setAttribute('aria-label', `${action} ${description} of the latest successful run of ${tracker.name}`)
+    button.setAttribute('aria-expanded', String(expanded))
 }
 
 function imageIcon() {
@@ -377,9 +379,9 @@ function renderTrackersWithMove(moved) {
 export const selectedTrackers = new Set()
 let selectionAnchor = null
 
-// Clicks on the inputs, switch and buttons of a row keep their usual behaviour
+// Clicks on the inputs, switch, buttons, links and screenshots of a row keep their usual behaviour
 function isRowControl(target) {
-    return Boolean(target.closest('input, button, label.switch'))
+    return Boolean(target.closest('input, button, a, label.switch, .tracker-screenshots'))
 }
 
 function onTrackerRowClick(event, name) {
@@ -517,13 +519,32 @@ function createTrackerRow(tracker) {
     const enabledInput = el('input', {type: 'checkbox', role: 'switch', 'aria-label': `Enable ${tracker.name}`})
     const removeButton = el('button', {className: 'button danger small', type: 'button', text: 'Remove', title: 'Remove the saved credentials'})
     const lastRun = el('span')
+    // The screenshots of the latest successful execution, shown below the row when expanded
+    const screenshotsPanel = el('div', {className: 'tracker-screenshots', hidden: true})
+    let screenshotsExpanded = false
     const screenshotsButton = el('button', {
         className: 'icon-button small latest-screenshots',
         type: 'button',
+        'aria-controls': `latest-screenshots-${tracker.name}`,
         onclick: function () {
-            openGallery(current.name, current.screenshots, 0, true)
+            setScreenshotsExpanded(!screenshotsExpanded)
         },
     }, [imageIcon(), el('span', {className: 'latest-screenshots-count'})])
+    screenshotsPanel.id = `latest-screenshots-${tracker.name}`
+
+    // Collapsing removes the thumbnails, so they are only fetched while the row is expanded
+    function setScreenshotsExpanded(expanded) {
+        screenshotsExpanded = expanded && current.screenshots.length > 0
+        row.classList.toggle('expanded', screenshotsExpanded)
+        if (screenshotsExpanded) {
+            updateTrackerScreenshots(screenshotsPanel, current, true)
+        } else {
+            screenshotsPanel.hidden = true
+            delete screenshotsPanel.dataset.signature
+            screenshotsPanel.replaceChildren()
+        }
+        updateLatestScreenshotsButton(screenshotsButton, current, screenshotsExpanded)
+    }
 
     function hasUnsavedInput() {
         return usernameInput.value !== saved.username || passwordInput.value !== saved.password
@@ -556,7 +577,7 @@ function createTrackerRow(tracker) {
         lastRun.className = content.className
         lastRun.title = content.title
         lastRun.replaceChildren.apply(lastRun, content.children)
-        updateLatestScreenshots(screenshotsButton, updated)
+        setScreenshotsExpanded(screenshotsExpanded && hasCredentials(updated))
         refreshRow()
     }
 
@@ -711,7 +732,7 @@ function createTrackerRow(tracker) {
 
     const screenshotsCell = el('div', {className: 'tracker-screenshots-cell tracker-extra'}, [screenshotsButton])
     row.append(nameCell, usernameInput, passwordInput, lastRun, screenshotsCell, enabledCell, el('div', {className: 'tracker-actions tracker-extra'}, [removeButton]),
-        errorMessage)
+        errorMessage, screenshotsPanel)
     update(tracker)
     return {
         element: row,

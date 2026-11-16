@@ -10,7 +10,7 @@ exiting. The container keeps running, and each execution is started from the bro
   screenshots of every tracker that has succeeded in any execution (as a `.zip` file, while they are still on disk). After an execution in which some
   trackers failed, **Failures only** executes just those trackers again
 - **Trackers**: the credentials of every supported tracker, grouped as enabled, disabled or unset, with the result of its most recent execution and
-  the screenshots of its latest successful execution (kept across restarts, opened in the gallery). Credentials can be imported from a CSV file,
+  the screenshots of its latest successful execution (kept across restarts, shown by expanding its row). Credentials can be imported from a CSV file,
   and several trackers can be selected (`Ctrl`+click, or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together
 - **Settings**: every other option, preloaded from the environment variables. A value saved in the web UI overrides the environment variable,
   including after a restart

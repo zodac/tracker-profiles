@@ -118,9 +118,9 @@ screenshot (dropped when the tracker succeeds, as the file is deleted), and list
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
 execution is kept, in memory, except that `RunManager.latestSuccessfulScreenshots()` keeps the profile screenshots of each tracker's latest success
 across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button and the screenshots button of each
-row on the Trackers tab (`TrackerView.screenshots`). They are saved in the database (`tracker_screenshots`, in the order taken) when a tracker
-succeeds and loaded by `RunManager.create`, so they are kept across restarts. Only screenshots whose files still
-exist are listed (and counted in `RunStatus`), so the button is hidden when there is nothing to send.
+row on the Trackers tab (`TrackerView.screenshots`), which expands the row with their thumbnails. They are saved in the database
+(`tracker_screenshots`, in the order taken) when a tracker succeeds and loaded by `RunManager.create`, so they are kept across restarts. Only
+screenshots whose files still exist are listed (and counted in `RunStatus`), so the button is hidden when there is nothing to send.
 
 `ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
 `?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment), and `&latest=true` (Trackers tab) reads the tracker's latest successful
