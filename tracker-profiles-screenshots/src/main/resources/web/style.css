@@ -442,11 +442,6 @@ select:disabled {
     white-space: nowrap;
 }
 
-.badge.adult {
-    background: var(--danger-soft);
-    color: var(--danger);
-}
-
 .badge.manual {
     background: var(--warning-soft);
     color: var(--warning);

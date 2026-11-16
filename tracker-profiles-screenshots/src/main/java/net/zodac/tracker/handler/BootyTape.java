@@ -40,7 +40,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code BootyTape} tracker.
  */
-@TrackerHandler(name = "BootyTape", adult = true, url = "https://ssl.bootytape.com/")
+@TrackerHandler(name = "BootyTape", url = "https://ssl.bootytape.com/")
 public class BootyTape extends AbstractTrackerHandler implements RedactsIpAddress {
 
     @Override

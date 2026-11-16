@@ -42,13 +42,6 @@ public @interface TrackerHandler {
     String name();
 
     /**
-     * Whether the tracker primarily focuses on adult content.
-     *
-     * @return whether the tracker is an adult tracker or not
-     */
-    boolean adult() default false;
-
-    /**
      * Defines the type of the tracker, to allow for certain types not to be run.
      *
      * @return the {@link TrackerType}

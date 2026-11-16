@@ -44,9 +44,8 @@ public final class TrackerRetriever {
     }
 
     /**
-     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, is an
-     * adult tracker when {@link ApplicationConfiguration#enableAdultContent()} is {@code false}, or whose {@link TrackerType} is not in
-     * {@link ApplicationConfiguration#trackerExecutionOrder()}.
+     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, or whose
+     * {@link TrackerType} is not in {@link ApplicationConfiguration#trackerExecutionOrder()}.
      *
      * @param trackerCredentials the {@link TrackerCredential}s to organise
      * @return {@link Map} of {@link TrackerType} to their credentials
@@ -68,12 +67,6 @@ public final class TrackerRetriever {
         final Optional<TrackerHandler> trackerHandlerOptional = TrackerHandlerFactory.findMatchingHandler(trackerCredential.name());
         if (trackerHandlerOptional.isEmpty()) {
             LOGGER.warn("No implementation found for tracker '{}'", trackerCredential.name());
-            return Optional.empty();
-        }
-
-        final TrackerHandler trackerHandler = trackerHandlerOptional.get();
-        if (!Configuration.get().enableAdultContent() && trackerHandler.adult()) {
-            LOGGER.debug("Skipping adult tracker {}", trackerHandler.name());
             return Optional.empty();
         }
 

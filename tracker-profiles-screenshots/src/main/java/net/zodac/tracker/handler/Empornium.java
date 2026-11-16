@@ -38,7 +38,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 /**
  * Extension of the {@link LuminanceHandler} for the {@code Empornium} tracker.
  */
-@TrackerHandler(name = "Empornium", adult = true, url = {
+@TrackerHandler(name = "Empornium", url = {
     "https://emparadise.rs/",
     "https://www.empornium.sx/"
 })

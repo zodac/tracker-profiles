@@ -33,7 +33,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link Kufirc} for the {@code Empornium} tracker.
  */
-@TrackerHandler(name = "Kufirc", adult = true, url = "https://kufirc.com/")
+@TrackerHandler(name = "Kufirc", url = "https://kufirc.com/")
 public class Kufirc extends LuminanceHandler {
 
     @Override

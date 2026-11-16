@@ -41,7 +41,7 @@ import org.openqa.selenium.WebElement;
 /**
  * Extension of the {@link TorrentPier} for the {@code PornoLab} tracker.
  */
-@TrackerHandler(name = "PornoLab", adult = true, type = TrackerType.MANUAL, url = "https://pornolab.net/forum/tracker.php")
+@TrackerHandler(name = "PornoLab", type = TrackerType.MANUAL, url = "https://pornolab.net/forum/tracker.php")
 public class PornoLab extends TorrentPier implements HasProfilePageActions, NeedsExplicitTranslation {
 
     @Override

@@ -1,5 +1,4 @@
 import {
-    ADULT_TRACKERS_SETTING,
     DEFAULT_INPUT_TIMEOUT_SECONDS,
     EXECUTION_ORDER_SETTING,
     INPUT_TIMEOUT_SETTING,
@@ -593,9 +592,6 @@ function saveSetting(name) {
                 settingRows[rowName].refresh()
             })
             renderRunOptionsSummary()
-            if (savedNames.includes(ADULT_TRACKERS_SETTING) && trackersLoaded) {
-                renderTrackers()
-            }
             showToast(settingsSavedMessage(savedNames))
         })
         .catch(function (error) {

@@ -502,7 +502,6 @@ These options apply from the next execution.
 
 | Environment Variable            | Description                                                                                                                                                         | Default Value   |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| *ENABLE_ADULT_TRACKERS*         | Whether to take screenshots of trackers that primarily host adult content                                                                                           | true            |
 | *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                        | false           |
 | *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
@@ -685,7 +684,6 @@ execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost
 ```bash
 mvn clean install && \
     BROWSER_RESOLUTION=1680x1050 \
-    ENABLE_ADULT_TRACKERS=true \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
     FORCE_UI_BROWSER=true \
     INPUT_TIMEOUT_SECONDS=300 \

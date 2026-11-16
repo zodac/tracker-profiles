@@ -308,7 +308,6 @@ public final class TrackerApiHandler extends ApiHandler {
      *
      * @param name        the tracker name
      * @param type        the tracker type
-     * @param adult       whether the tracker primarily hosts adult content
      * @param urls        the tracker URLs
      * @param username    the stored username or email (empty if not set)
      * @param hasPassword whether a password has been stored
@@ -319,7 +318,7 @@ public final class TrackerApiHandler extends ApiHandler {
      *                    failed) that still exist, retrieved with
      *                    {@code /api/screenshots?tracker={name}&id={id}&latest=true}
      */
-    record TrackerView(String name, String type, boolean adult, List<String> urls, String username, boolean hasPassword, boolean enabled,
+    record TrackerView(String name, String type, List<String> urls, String username, boolean hasPassword, boolean enabled,
         @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, List<RunStatus.Screenshot> screenshots) {
 
         /**
@@ -336,7 +335,6 @@ public final class TrackerApiHandler extends ApiHandler {
             return new TrackerView(
                 trackerHandler.name(),
                 trackerHandler.type().name(),
-                trackerHandler.adult(),
                 List.of(trackerHandler.url()),
                 credential == null ? "" : credential.username(),
                 credential != null && credential.hasPassword(),

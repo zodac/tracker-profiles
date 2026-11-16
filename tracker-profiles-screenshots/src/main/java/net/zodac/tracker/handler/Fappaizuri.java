@@ -34,7 +34,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code Fappaizuri} tracker.
  */
-@TrackerHandler(name = "Fappaizuri", adult = true, url = "https://fappaizuri.me/")
+@TrackerHandler(name = "Fappaizuri", url = "https://fappaizuri.me/")
 public class Fappaizuri extends AbstractTrackerHandler implements RedactsIrcPasskey {
 
     @Override

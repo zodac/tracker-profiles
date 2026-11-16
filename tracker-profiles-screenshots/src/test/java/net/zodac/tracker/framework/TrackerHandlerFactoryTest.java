@@ -41,7 +41,6 @@ class TrackerHandlerFactoryTest {
         assertThat(result).isPresent();
         assertThat(result.get().name()).isEqualTo("ABTorrents");
         assertThat(result.get().type()).isEqualTo(TrackerType.HEADLESS);
-        assertThat(result.get().adult()).isFalse();
     }
 
     @Test

@@ -48,12 +48,6 @@ public enum ConfigurationOption {
         Scope.STARTUP),
 
     /**
-     * Whether to screenshot adult trackers.
-     */
-    ENABLE_ADULT_TRACKERS(Tab.MAIN, "Execution", "Include adult trackers", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to take screenshots of trackers that primarily host adult content", Scope.EXECUTION),
-
-    /**
      * Whether to translate non-English trackers.
      */
     ENABLE_TRANSLATION_TO_ENGLISH(Tab.SETTINGS, "Browser", "Translate to English", "true", OptionType.BOOLEAN, List.of(),

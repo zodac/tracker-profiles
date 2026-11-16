@@ -45,7 +45,6 @@ import org.apache.logging.log4j.Logger;
  * @param browserDataStoragePath     the file path in which to store browser data (profiles, caches, etc.)
  * @param browserDimensions          the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param databasePath               the {@link Path} to the SQLite database used by the web UI
- * @param enableAdultContent         whether to enable screenshots for trackers primarily hosting adult content
  * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
  * @param existingScreenshotAction   the {@link ExistingScreenshotAction} to perform when a screenshot exists for a tracker
  * @param forceUiBrowser             whether to use a UI-based browser or not
@@ -65,7 +64,6 @@ public record ApplicationConfiguration(
     String browserDataStoragePath,
     String browserDimensions,
     Path databasePath,
-    boolean enableAdultContent,
     boolean enableTranslationToEnglish,
     ExistingScreenshotAction existingScreenshotAction,
     boolean forceUiBrowser,
@@ -131,7 +129,6 @@ public record ApplicationConfiguration(
             BROWSER_DATA_STORAGE_PATH,
             source.select(ConfigurationOption.BROWSER_RESOLUTION).replace('x', ','),
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
-            source.bool(ConfigurationOption.ENABLE_ADULT_TRACKERS),
             source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
             ExistingScreenshotAction.valueOf(source.select(ConfigurationOption.SCREENSHOT_EXISTS_ACTION)),
             source.bool(ConfigurationOption.FORCE_UI_BROWSER),

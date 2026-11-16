@@ -29,7 +29,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link Unit3dHandler} for the {@code BitPorn} tracker.
  */
-@TrackerHandler(name = "BitPorn", adult = true, url = "https://bitporn.eu/")
+@TrackerHandler(name = "BitPorn", url = "https://bitporn.eu/")
 public class BitPorn extends Unit3dHandler {
 
     @Override

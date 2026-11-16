@@ -33,7 +33,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link LuminanceHandler} for the {@code HappyFappy} tracker.
  */
-@TrackerHandler(name = "HappyFappy", adult = true, url = "https://www.happyfappy.net/")
+@TrackerHandler(name = "HappyFappy", url = "https://www.happyfappy.net/")
 public class HappyFappy extends LuminanceHandler {
 
     @Override

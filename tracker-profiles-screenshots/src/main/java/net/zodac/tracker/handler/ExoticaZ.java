@@ -46,7 +46,7 @@ import org.openqa.selenium.By;
 /**
  * Extension of the {@link AvistazNetworkHandler} for the {@code ExoticaZ} tracker.
  */
-@TrackerHandler(name = "ExoticaZ", adult = true, type = TrackerType.MANUAL, url = "https://exoticaz.to/")
+@TrackerHandler(name = "ExoticaZ", type = TrackerType.MANUAL, url = "https://exoticaz.to/")
 public class ExoticaZ extends AvistazNetworkHandler {
 
     @Override

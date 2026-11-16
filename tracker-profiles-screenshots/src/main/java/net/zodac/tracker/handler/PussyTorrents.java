@@ -47,7 +47,7 @@ import org.openqa.selenium.By;
 /**
  * Implementation of {@link AbstractTrackerHandler} for the {@code PussyTorrents} tracker.
  */
-@TrackerHandler(name = "PussyTorrents", adult = true, url = "https://pussytorrents.org/")
+@TrackerHandler(name = "PussyTorrents", url = "https://pussytorrents.org/")
 public class PussyTorrents extends AbstractTrackerHandler implements RedactsEmail, UsesExtensions {
 
     @Override

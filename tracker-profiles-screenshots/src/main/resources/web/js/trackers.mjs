@@ -1,7 +1,6 @@
-import {ADULT_TRACKERS_SETTING, REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
+import {REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
 import {latestStatus, runDescription} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
-import {findSetting} from './settings.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -17,11 +16,6 @@ const trackerRowsByName = new Map()
 // Trackers kept in the group they were shown in after their credentials changed, until the user clicks elsewhere or stops changing them
 const pinnedTrackers = new Map()
 let trackerGroups = null
-
-function adultTrackersEnabled() {
-    const setting = findSetting(ADULT_TRACKERS_SETTING)
-    return !setting || setting.value.toLowerCase() === 'true'
-}
 
 export function loadTrackers() {
     return request('GET', '/api/trackers').then(function (loaded) {
@@ -201,9 +195,6 @@ export function renderTrackers() {
         return tracker.enabled
     }).length
     byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(trackers.length, 'supported tracker')} enabled`
-    byId('adult-warning').hidden = adultTrackersEnabled() || !trackers.some(function (tracker) {
-        return tracker.enabled && tracker.adult
-    })
     renderSelection()
 }
 
@@ -731,7 +722,6 @@ function createTrackerRow(tracker) {
             el('span', {className: 'external-icon', 'aria-hidden': 'true', text: '↗'}),
         ]),
         tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual', title: 'Requires user input (e.g. captcha)'}) : null,
-        tracker.adult ? el('span', {className: 'badge adult', text: 'Adult'}) : null,
     ])
     const enabledCell = el('label', {className: 'switch tracker-extra', title: 'Enabled'}, [enabledInput, el('span', {className: 'switch-track'})])
 
