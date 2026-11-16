@@ -261,7 +261,7 @@ class RunManagerTest {
     }
 
     @Test
-    void givenTrackerFailsAfterSucceeding_whenRunManagerCreated_thenLatestScreenshotsIncludeFailureUntilItSucceedsAgain()
+    void givenTrackerFailsAfterSucceeding_whenRunManagerCreated_thenOnlyScreenshotsOfLatestExecutionAreShown()
         throws IOException, SQLException {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
@@ -278,9 +278,9 @@ class RunManagerTest {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
 
             assertThat(runManager.latestScreenshots("Alpha"))
-                .extracting(ScreenshotFile::id, ScreenshotFile::fileName, ScreenshotFile::failure)
-                .containsExactly(tuple("none", "Alpha.png", false), tuple("failure", "Alpha_failure.png", true));
-            // Only profile screenshots are downloaded together
+                .extracting(ScreenshotFile::id, ScreenshotFile::fileName)
+                .containsExactly(tuple("failure", "Alpha_failure.png"));
+            // The profile screenshots of the latest success are still downloaded together
             assertThat(runManager.latestSuccessfulScreenshots())
                 .extracting(ScreenshotFile::fileName)
                 .containsExactly("Alpha.png");
@@ -293,6 +293,29 @@ class RunManagerTest {
             assertThat(RunManager.create(applicationDatabase, WebLogAppender.install()).latestScreenshots("Alpha"))
                 .extracting(ScreenshotFile::fileName)
                 .containsExactly("Alpha_2.png");
+        }
+    }
+
+    @Test
+    void givenTrackerFailsWithoutFailureScreenshot_whenLatestScreenshotsRetrieved_thenNoScreenshotsAreShown() throws IOException, SQLException {
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
+            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            completeTracker(runManager, "Alpha", "Alpha.png", true);
+            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", false);
+
+            assertThat(runManager.latestScreenshots("Alpha"))
+                .isEmpty();
+        }
+
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
+            assertThat(runManager.latestScreenshots("Alpha"))
+                .isEmpty();
+            assertThat(runManager.latestSuccessfulScreenshots())
+                .extracting(ScreenshotFile::fileName)
+                .containsExactly("Alpha.png");
         }
     }
 

@@ -45,9 +45,9 @@ import org.jspecify.annotations.Nullable;
  *     <li>{@code /api/screenshots?tracker={name}&id={id}}: a single screenshot, shown in the browser, or downloaded with {@code &download=true}.
  *     Its thumbnail is retrieved with {@code &thumbnail=true}, and its preview (scaled to 1080p, or the screenshot itself if it is not wider)
  *     with {@code &preview=true}</li>
- *     <li>{@code &latest=true} can be added to either of the requests for a tracker, to use the latest screenshots of the tracker (the profile
- *     screenshots of its latest successful execution and the failure screenshot of its latest execution if it failed, in any execution including
- *     before a restart, as shown on the Trackers tab) instead of the current execution</li>
+ *     <li>{@code &latest=true} can be added to either of the requests for a tracker, to use the screenshots of the tracker's latest execution (its
+ *     profile screenshots if it succeeded, or its failure screenshot if it failed, in any execution including before a restart, as shown on the
+ *     Trackers tab) instead of the current execution</li>
  * </ul>
  *
  * <p>

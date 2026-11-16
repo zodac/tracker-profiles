@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -75,10 +76,10 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>
  * An execution either includes every enabled tracker ({@link #start()}), or only the trackers that failed in the previous execution
- * ({@link #startFailedTrackers()}). The latest screenshots of each tracker (the profile screenshots of its latest successful execution, and the
- * failure screenshot of its latest execution if it failed) are kept across executions, and saved in the {@link ApplicationDatabase} so they are
- * kept across restarts, to be shown on the Trackers tab (see {@link #latestScreenshots(String)}). The profile screenshots of every tracker can
- * be downloaded together (see {@link #latestSuccessfulScreenshots()}).
+ * ({@link #startFailedTrackers()}). The profile screenshots of each tracker's latest successful execution, and the failure screenshot of its latest
+ * execution if it failed, are kept across executions, and saved in the {@link ApplicationDatabase} so they are kept across restarts. The Trackers
+ * tab only shows the screenshots of each tracker's latest execution (see {@link #latestScreenshots(String)}), while the profile screenshots of the
+ * latest success of every tracker can be downloaded together (see {@link #latestSuccessfulScreenshots()}).
  */
 public final class RunManager implements ExecutionListener {
 
@@ -93,6 +94,9 @@ public final class RunManager implements ExecutionListener {
     // Kept across executions (and saved in the database), ordered by tracker name: the profile screenshots of the latest success (replaced when
     // the tracker succeeds again), followed by the failure screenshot of the latest execution if it failed (replaced when it fails again)
     private final Map<String, List<ScreenshotFile>> latestScreenshots;
+    // The trackers whose latest execution failed (kept across executions, and loaded from the saved results), whose profile screenshots are not
+    // from their latest execution
+    private final Set<String> latestExecutionFailed;
 
     @Nullable
     private Thread executionThread;
@@ -101,10 +105,11 @@ public final class RunManager implements ExecutionListener {
     private long finishedAt;
 
     private RunManager(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender,
-        final Map<String, List<ScreenshotFile>> latestScreenshots) {
+        final Map<String, List<ScreenshotFile>> latestScreenshots, final Set<String> latestExecutionFailed) {
         this.applicationDatabase = applicationDatabase;
         this.webLogAppender = webLogAppender;
         this.latestScreenshots = latestScreenshots;
+        this.latestExecutionFailed = latestExecutionFailed;
     }
 
     /**
@@ -113,7 +118,7 @@ public final class RunManager implements ExecutionListener {
      * @param applicationDatabase the {@link ApplicationDatabase} from which trackers and settings are loaded for each execution
      * @param webLogAppender      the {@link WebLogAppender} holding the log messages of each execution, cleared when a new execution starts
      * @return the {@link RunManager}
-     * @throws SQLException thrown if the saved screenshots cannot be read from the database
+     * @throws SQLException thrown if the saved screenshots or results cannot be read from the database
      */
     public static RunManager create(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) throws SQLException {
         final Map<String, List<ScreenshotFile>> screenshotsByTracker = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -124,7 +129,13 @@ public final class RunManager implements ExecutionListener {
             }
         }
         screenshotsByTracker.replaceAll((_, screenshots) -> List.copyOf(screenshots));
-        return new RunManager(applicationDatabase, webLogAppender, screenshotsByTracker);
+
+        final Set<String> latestExecutionFailed = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        applicationDatabase.results().findAll()
+            .stream()
+            .filter(result -> !result.successful())
+            .forEach(result -> latestExecutionFailed.add(result.name()));
+        return new RunManager(applicationDatabase, webLogAppender, screenshotsByTracker, latestExecutionFailed);
     }
 
     // A screenshot saved with a redaction type that no longer exists is ignored
@@ -484,32 +495,35 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Retrieves the latest screenshots of a tracker, in any execution (including before a restart): the profile screenshots of its latest successful
-     * execution, followed by the failure screenshot of its latest execution if it failed.
+     * Retrieves the screenshots of the latest execution of a tracker, in any execution (including before a restart): its profile screenshots if it
+     * succeeded, or its failure screenshot if it failed (never both, as on the Main tab).
      *
      * @param trackerName the name of the tracker
-     * @return the latest {@link ScreenshotFile}s of the tracker that still exist, or an empty {@link List} if there are none
+     * @return the {@link ScreenshotFile}s of the tracker's latest execution that still exist, or an empty {@link List} if there are none
      */
     public List<ScreenshotFile> latestScreenshots(final String trackerName) {
         return existingLatestScreenshots(true).getOrDefault(trackerName, List.of());
     }
 
     /**
-     * Retrieves the latest screenshots of every tracker (see {@link #latestScreenshots(String)}).
+     * Retrieves the screenshots of the latest execution of every tracker (see {@link #latestScreenshots(String)}).
      *
-     * @return the latest {@link ScreenshotFile}s of each tracker that still exist, keyed by tracker name (case-insensitive)
+     * @return the {@link ScreenshotFile}s of each tracker's latest execution that still exist, keyed by tracker name (case-insensitive)
      */
     public Map<String, List<ScreenshotFile>> latestScreenshotsByTracker() {
         return existingLatestScreenshots(true);
     }
 
-    // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name (case-insensitive), optionally
-    // including failure screenshots. The files are checked without holding the lock
-    private Map<String, List<ScreenshotFile>> existingLatestScreenshots(final boolean includeFailures) {
+    // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name (case-insensitive): those of each
+    // tracker's latest execution, or otherwise the profile screenshots of its latest success. The files are checked without holding the lock
+    private Map<String, List<ScreenshotFile>> existingLatestScreenshots(final boolean latestExecutionOnly) {
         final Map<String, List<ScreenshotFile>> latest;
+        final Set<String> failed;
         lock.lock();
         try {
             latest = new TreeMap<>(latestScreenshots);
+            failed = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            failed.addAll(latestExecutionFailed);
         } finally {
             lock.unlock();
         }
@@ -518,7 +532,7 @@ public final class RunManager implements ExecutionListener {
         latest.forEach((trackerName, screenshots) -> {
             final List<ScreenshotFile> existingScreenshots = screenshots
                 .stream()
-                .filter(screenshot -> includeFailures || !screenshot.failure())
+                .filter(screenshot -> latestExecutionOnly ? screenshot.failure() == failed.contains(trackerName) : !screenshot.failure())
                 .filter(screenshot -> Files.isRegularFile(screenshot.path()))
                 .toList();
             if (!existingScreenshots.isEmpty()) {
@@ -649,6 +663,11 @@ public final class RunManager implements ExecutionListener {
                 trackerLatestScreenshots = List.copyOf(screenshots);
             }
             latestScreenshots.put(trackerName, trackerLatestScreenshots);
+            if (wasSuccessful) {
+                latestExecutionFailed.remove(trackerName);
+            } else {
+                latestExecutionFailed.add(trackerName);
+            }
         } finally {
             lock.unlock();
         }

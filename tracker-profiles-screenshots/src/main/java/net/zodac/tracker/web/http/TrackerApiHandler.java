@@ -315,8 +315,8 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param enabled     whether the tracker is enabled for execution
      * @param lastRunAt   when the tracker last finished executing, as epoch milliseconds, or {@code null} if it has never been executed
      * @param lastRunOk   whether the most recent execution was successful, or {@code null} if it has never been executed
-     * @param screenshots the profile screenshots of the latest successful execution, and the failure screenshot of the latest execution if it
-     *                    failed (that still exist), retrieved with
+     * @param screenshots the screenshots of the latest execution (the profile screenshots if it succeeded, or the failure screenshot if it
+     *                    failed) that still exist, retrieved with
      *                    {@code /api/screenshots?tracker={name}&id={id}&latest=true}
      */
     record TrackerView(String name, String type, boolean adult, List<String> urls, String username, boolean hasPassword, boolean enabled,
