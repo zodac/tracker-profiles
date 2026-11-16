@@ -385,7 +385,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers can also be [imported from a CSV file](#importing-trackers).
   A tracker that is no longer supported (removed from the application) is listed as legacy, and never executed. It is never removed
   automatically, so the screenshots of its most recent execution can still be retrieved; removing it clears its credentials, result and
-  screenshots from the database (the screenshot files are kept on disk)
+  screenshots from the database (the screenshot files are kept on disk). Trackers are identified only by name (ignoring case), so a tracker that
+  is renamed in the application is treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and
+  the new name as a separate tracker without credentials, which must be entered again (or imported) before it is executed
 - **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
   from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*
 

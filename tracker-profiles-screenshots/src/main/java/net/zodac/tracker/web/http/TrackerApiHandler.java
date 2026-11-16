@@ -55,7 +55,8 @@ import org.jspecify.annotations.Nullable;
  * A legacy tracker (one with anything stored, but whose handler has since been removed) is listed after the supported trackers, so the screenshots
  * of its latest execution can still be retrieved. It is never removed automatically: removing it ({@code DELETE}, or the {@code remove} bulk
  * action) clears everything stored for it (its credentials, result and screenshots, though the screenshot files are kept), and it cannot be changed
- * otherwise.
+ * otherwise. Trackers are identified only by name (ignoring case), so a renamed tracker is the same as a removed one: its old name is a legacy
+ * tracker, and nothing stored for it is carried over to its new name.
  *
  * <p>
  * Passwords are never returned to the client; only whether a password has been saved.
