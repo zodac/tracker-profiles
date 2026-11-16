@@ -1736,10 +1736,12 @@ kbd {
     color: var(--accent);
 }
 
-/* Spans the whole row below its columns, out to the edges of the row */
+/* Part of the row (the row grows to fit the screenshots), spanning all of its columns below them */
 .tracker-row > .tracker-screenshots {
     grid-column: 1 / -1;
-    margin: 0 -16px -10px;
+    padding: 2px 0 6px;
+    border-top: none;
+    background: transparent;
 }
 
 .latest-screenshots svg {
