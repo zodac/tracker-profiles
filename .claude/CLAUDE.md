@@ -36,6 +36,12 @@ The compose files harden the container (follow the same standard in any new comp
 extracted to `/app/native` when the image is built and loaded from there by `start.sh` (`org.sqlite.lib.path`). Chrome runs with `--no-sandbox`
 and `--disable-dev-shm-usage`, so it needs no capabilities, and keeps its shared memory in `/tmp`.
 
+### Reviewing Web UI Changes
+
+After any change to the web UI (anything in `src/main/resources/web/`, or a change to an API response it renders), run the `run-app` skill
+before committing: it builds and starts the application and screenshots the affected tabs. Look at the screenshots, and send them to the user
+with `SendUserFile` for review, with any option set to a non-default value through environment variables if the change depends on it.
+
 ## Architecture Overview
 
 ### Execution Flow
