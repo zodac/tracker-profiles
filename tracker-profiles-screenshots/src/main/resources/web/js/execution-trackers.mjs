@@ -22,7 +22,7 @@ function stepBar(tracker) {
             let state = ''
             if (tracker.completedSteps.includes(step.name)) {
                 state = 'done'
-            } else if (step === nextStep) {
+            } else if (step === nextStep && tracker.state !== 'WAITING') {
                 state = tracker.state === 'RUNNING' ? 'current' : 'stopped'
             }
             return el('span', {className: `step ${state}`, title: step.label})
@@ -38,6 +38,9 @@ export function trackerTiming(tracker) {
 }
 
 function trackerDetail(tracker) {
+    if (tracker.state === 'WAITING') {
+        return latestStatus && isActive(latestStatus) ? 'Waiting' : 'Not run'
+    }
     if (tracker.state === 'SUCCEEDED') {
         return tracker.screenshots.length === 0 ? '' : pluralise(tracker.screenshots.length, 'screenshot')
     }
@@ -58,6 +61,12 @@ function createExecutionRow(tracker) {
     const screenshots = el('div', {className: 'tracker-screenshots', hidden: true})
     const logOutput = createPhaseLog(tracker)
     const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, screenshots, logOutput])
+    // A waiting tracker has no logs yet, so cannot be expanded
+    summary.addEventListener('click', function (event) {
+        if (row.dataset.state === 'WAITING') {
+            event.preventDefault()
+        }
+    })
     row.addEventListener('toggle', function () {
         if (row.open) {
             fetchLogs(logOutput)
@@ -222,16 +231,6 @@ function groupFor(state) {
     return groupElements[state]
 }
 
-// Waiting trackers have no logs yet, so are shown compactly by name
-function renderWaitingGroup(group, waiting) {
-    group.list.replaceChildren(el('p', {className: 'waiting-names'}, waiting.map(function (tracker) {
-        return el('span', {className: 'waiting-name'}, [
-            tracker.name,
-            tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
-        ])
-    })))
-}
-
 function sortForGroup(state, list) {
     return list.slice().sort(function (first, second) {
         if (state === 'RUNNING') {
@@ -281,20 +280,16 @@ export function renderExecutionTrackers(status) {
         const group = groupFor(definition.state)
         const title = !active && definition.titleWhenFinished ? definition.titleWhenFinished : definition.title
         group.title.textContent = `${title} (${inGroup.length})`
-        if (definition.state === 'WAITING') {
-            renderWaitingGroup(group, inGroup)
-        } else {
-            inGroup.forEach(function (tracker) {
-                let row = trackerRows.get(tracker.name)
-                if (!row) {
-                    row = createExecutionRow(tracker)
-                    trackerRows.set(tracker.name, row)
-                }
-                updateExecutionRow(row, tracker)
-                // Appending moves the row to the end of its (possibly new) group, keeping it expanded
-                group.list.append(row)
-            })
-        }
+        inGroup.forEach(function (tracker) {
+            let row = trackerRows.get(tracker.name)
+            if (!row) {
+                row = createExecutionRow(tracker)
+                trackerRows.set(tracker.name, row)
+            }
+            updateExecutionRow(row, tracker)
+            // Appending moves the row to the end of its (possibly new) group, keeping it expanded
+            group.list.append(row)
+        })
         groups.push(group.card)
     })
     container.replaceChildren.apply(container, groups)

@@ -807,6 +807,18 @@ select:disabled {
     font-variant-numeric: tabular-nums;
 }
 
+.execution-tracker[data-state="WAITING"] > .execution-row {
+    cursor: default;
+}
+
+.execution-tracker[data-state="WAITING"] > .execution-row::before {
+    visibility: hidden;
+}
+
+.execution-tracker[data-state="WAITING"] > .execution-row:hover {
+    background: none;
+}
+
 .execution-tracker[data-state="FAILED"] .execution-detail {
     color: var(--danger);
 }
@@ -1243,25 +1255,6 @@ a.icon-button {
     .gallery-nav {
         width: 28px;
     }
-}
-
-.waiting-names {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0;
-    padding: 12px 16px;
-}
-
-.waiting-name {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--text-muted);
-    font-size: 13px;
 }
 
 .badge.needs-input {
