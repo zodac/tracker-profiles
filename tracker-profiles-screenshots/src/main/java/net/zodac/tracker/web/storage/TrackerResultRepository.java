@@ -31,6 +31,7 @@ public final class TrackerResultRepository {
         ON CONFLICT (name) DO UPDATE SET
             finished_at = excluded.finished_at,
             successful  = excluded.successful""";
+    private static final String DELETE = "DELETE FROM tracker_results WHERE name = ?1";
 
     private final DatabaseConnection connection;
 
@@ -74,5 +75,16 @@ public final class TrackerResultRepository {
             statement.setLong(2, trackerResult.finishedAt());
             statement.setInt(3, trackerResult.successful() ? 1 : 0);
         });
+    }
+
+    /**
+     * Deletes the result of a tracker.
+     *
+     * @param name the tracker name
+     * @return {@code true} if a result was deleted
+     * @throws SQLException thrown if the database cannot be updated
+     */
+    boolean delete(final String name) throws SQLException {
+        return connection.update(DELETE, statement -> statement.setString(1, name)) > 0;
     }
 }

@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -41,6 +42,7 @@ import net.zodac.tracker.app.TrackerRetriever;
 import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCredential;
+import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
@@ -368,6 +370,7 @@ public final class RunManager implements ExecutionListener {
             .stream()
             .filter(StoredTrackerCredential::enabled)
             .filter(credential -> !failedTrackersOnly || failedTrackerNames.contains(credential.name()))
+            .filter(RunManager::isSupported)
             .map(StoredTrackerCredential::toTrackerCredential)
             .toList();
 
@@ -381,6 +384,16 @@ public final class RunManager implements ExecutionListener {
         }
 
         return ScreenshotOrchestrator.start(trackersByType, this);
+    }
+
+    // A legacy tracker (whose handler has since been removed) keeps its saved credentials, so is still enabled, but can no longer be executed
+    private static boolean isSupported(final StoredTrackerCredential credential) {
+        if (TrackerHandlerFactory.findMatchingHandler(credential.name()).isPresent()) {
+            return true;
+        }
+
+        LOGGER.debug("Not executing legacy tracker '{}', which is no longer supported", credential.name());
+        return false;
     }
 
     private void finish(final ExitState exitState) {
@@ -512,6 +525,24 @@ public final class RunManager implements ExecutionListener {
      */
     public Map<String, List<ScreenshotFile>> latestScreenshotsByTracker() {
         return existingLatestScreenshots(true);
+    }
+
+    /**
+     * Forgets the latest screenshots and result of trackers that have been removed (see {@link ApplicationDatabase#removeTrackers(Collection)}), so
+     * they are no longer listed or downloaded. The screenshot files themselves are kept.
+     *
+     * @param trackerNames the names of the removed trackers
+     */
+    public void forgetTrackers(final Collection<String> trackerNames) {
+        lock.lock();
+        try {
+            trackerNames.forEach(trackerName -> {
+                latestScreenshots.remove(trackerName);
+                latestExecutionFailed.remove(trackerName);
+            });
+        } finally {
+            lock.unlock();
+        }
     }
 
     // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name (case-insensitive): those of each

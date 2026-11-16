@@ -267,6 +267,33 @@ class ApplicationDatabaseTest {
             );
     }
 
+    @Test
+    void givenStoredTrackers_whenRemoved_thenEverythingStoredForThemIsRemovedAndOnlyStoredTrackersAreReported() throws SQLException {
+        applicationDatabase.credentials().save("Alpha", "user", "password", true);
+        applicationDatabase.results().save(new StoredTrackerResult("Alpha", 1_000L, true));
+        applicationDatabase.screenshots().replace("Alpha", List.of(
+            new StoredTrackerScreenshot("Alpha", "none", 0, "/screenshots/Alpha.png", 1_000L)
+        ));
+        // Only a result and screenshots remain once a tracker's credentials have been removed
+        applicationDatabase.results().save(new StoredTrackerResult("Beta", 1_000L, false));
+        applicationDatabase.screenshots().replace("Beta", List.of(
+            new StoredTrackerScreenshot("Beta", "failure", 0, "/screenshots/Beta.png", 1_000L)
+        ));
+        applicationDatabase.credentials().save("Gamma", "user", "password", true);
+        applicationDatabase.results().save(new StoredTrackerResult("Gamma", 1_000L, true));
+
+        assertThat(applicationDatabase.removeTrackers(List.of("alpha", "Beta", "Unknown")))
+            .containsExactly("alpha", "Beta");
+        assertThat(applicationDatabase.credentials().findAllStatuses())
+            .extracting(TrackerCredentialStatus::name)
+            .containsExactly("Gamma");
+        assertThat(applicationDatabase.results().findAll())
+            .extracting(StoredTrackerResult::name)
+            .containsExactly("Gamma");
+        assertThat(applicationDatabase.screenshots().findAll())
+            .isEmpty();
+    }
+
     private Path databasePath() {
         return tempDirectory.resolve("nested").resolve("test.db");
     }

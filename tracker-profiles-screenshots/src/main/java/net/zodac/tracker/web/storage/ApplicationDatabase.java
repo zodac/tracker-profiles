@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -171,6 +173,30 @@ public final class ApplicationDatabase implements AutoCloseable {
      */
     public TrackerScreenshotRepository screenshots() {
         return screenshots;
+    }
+
+    /**
+     * Removes everything stored for several trackers (their credentials, the result of their most recent execution and their latest screenshots)
+     * in a single transaction. The screenshot files themselves are kept.
+     *
+     * @param names the tracker names
+     * @return the names of the trackers for which anything was stored (and removed), in the order provided
+     * @throws SQLException thrown if the database cannot be updated, in which case nothing is removed
+     */
+    public List<String> removeTrackers(final Collection<String> names) throws SQLException {
+        return connection.inTransaction(() -> {
+            final List<String> removed = new ArrayList<>();
+            for (final String name : names) {
+                // Each is deleted, even once one has been found
+                final boolean hadCredentials = credentials.deleteIfStored(name);
+                final boolean hadResult = results.delete(name);
+                final boolean hadScreenshots = screenshots.delete(name);
+                if (hadCredentials || hadResult || hadScreenshots) {
+                    removed.add(name);
+                }
+            }
+            return removed;
+        });
     }
 
     /**

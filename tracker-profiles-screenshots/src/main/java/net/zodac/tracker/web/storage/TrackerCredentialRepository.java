@@ -170,7 +170,18 @@ public final class TrackerCredentialRepository {
      * @throws SQLException thrown if the database cannot be updated
      */
     public void delete(final String name) throws SQLException {
-        connection.update(DELETE, statement -> statement.setString(1, name));
+        deleteIfStored(name);
+    }
+
+    /**
+     * Deletes the stored credentials of a tracker, if any.
+     *
+     * @param name the tracker name
+     * @return {@code true} if credentials were stored (and deleted)
+     * @throws SQLException thrown if the database cannot be updated
+     */
+    boolean deleteIfStored(final String name) throws SQLException {
+        return connection.update(DELETE, statement -> statement.setString(1, name)) > 0;
     }
 
     /**

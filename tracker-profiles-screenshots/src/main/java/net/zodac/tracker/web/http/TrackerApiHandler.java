@@ -21,11 +21,14 @@ import com.google.gson.annotations.SerializedName;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.zodac.tracker.framework.TrackerCredential;
@@ -43,10 +46,16 @@ import net.zodac.tracker.web.storage.TrackerCredentialStatus;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Handles requests to list every supported tracker with its stored credentials, most recent result and its latest screenshots
+ * Handles requests to list every tracker with its stored credentials, most recent result and its latest screenshots
  * ({@code GET}), save the credentials for a
  * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), and remove the stored credentials for a tracker
  * ({@code DELETE /api/trackers/{name}}).
+ *
+ * <p>
+ * A legacy tracker (one with anything stored, but whose handler has since been removed) is listed after the supported trackers, so the screenshots
+ * of its latest execution can still be retrieved. It is never removed automatically: removing it ({@code DELETE}, or the {@code remove} bulk
+ * action) clears everything stored for it (its credentials, result and screenshots, though the screenshot files are kept), and it cannot be changed
+ * otherwise.
  *
  * <p>
  * Passwords are never returned to the client; only whether a password has been saved.
@@ -157,8 +166,9 @@ public final class TrackerApiHandler extends ApiHandler {
             throw badRequest("An action is required (one of: enable, disable, remove)");
         }
 
+        final List<String> requestedNames = bulkChange.names() == null ? List.of() : bulkChange.names();
         // Unsupported trackers are skipped, using the name defined by the handler of the others
-        final List<String> names = bulkChange.names() == null ? List.of() : bulkChange.names()
+        final List<String> names = requestedNames
             .stream()
             .map(TrackerHandlerFactory::findMatchingHandler)
             .flatMap(Optional::stream)
@@ -169,7 +179,11 @@ public final class TrackerApiHandler extends ApiHandler {
         final List<String> changed = switch (bulkChange.action()) {
             case ENABLE -> applicationDatabase.credentials().changeEnabled(names, true);
             case DISABLE -> applicationDatabase.credentials().changeEnabled(names, false);
-            case REMOVE -> applicationDatabase.credentials().deleteAll(names);
+            case REMOVE -> {
+                final List<String> removed = new ArrayList<>(applicationDatabase.credentials().deleteAll(names));
+                removed.addAll(removeLegacyTrackers(requestedNames));
+                yield removed;
+            }
         };
         sendJson(exchange, HttpStatus.OK, new BulkResult(changed, listTrackers()));
     }
@@ -186,31 +200,89 @@ public final class TrackerApiHandler extends ApiHandler {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Tracker name must be provided");
         }
 
-        final TrackerHandler trackerHandler = findHandler(pathParameter);
-        applicationDatabase.credentials().delete(trackerHandler.name());
+        final Optional<TrackerHandler> trackerHandler = TrackerHandlerFactory.findMatchingHandler(pathParameter);
+        if (trackerHandler.isPresent()) {
+            applicationDatabase.credentials().delete(trackerHandler.get().name());
+        } else if (removeLegacyTrackers(List.of(pathParameter)).isEmpty()) {
+            throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unsupported tracker: '%s'".formatted(pathParameter));
+        }
         sendJson(exchange, HttpStatus.OK, listTrackers());
     }
 
+    // Clears everything stored for the requested trackers that are legacy trackers (never a supported tracker), returning their names
+    private List<String> removeLegacyTrackers(final List<String> requestedNames) throws SQLException {
+        final Set<String> legacyNames = legacyTrackerNames();
+        final List<String> names = requestedNames
+            .stream()
+            .filter(legacyNames::contains)
+            .distinct()
+            .toList();
+        if (names.isEmpty()) {
+            return List.of();
+        }
+
+        final List<String> removed = applicationDatabase.removeTrackers(names);
+        runManager.forgetTrackers(removed);
+        return removed;
+    }
+
+    private Set<String> legacyTrackerNames() throws SQLException {
+        return legacyTrackerNames(
+            applicationDatabase.credentials().findAllStatuses().stream().map(TrackerCredentialStatus::name).toList(),
+            applicationDatabase.results().findAll().stream().map(StoredTrackerResult::name).toList(),
+            runManager.latestScreenshotsByTracker().keySet()
+        );
+    }
+
+    // The names of the trackers with anything stored but no handler, ordered by name (case-insensitive)
+    private static Set<String> legacyTrackerNames(final Collection<String> credentialNames, final Collection<String> resultNames,
+        final Collection<String> screenshotNames) {
+        final Set<String> names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        names.addAll(credentialNames);
+        names.addAll(resultNames);
+        names.addAll(screenshotNames);
+        names.removeIf(name -> TrackerHandlerFactory.findMatchingHandler(name).isPresent());
+        return names;
+    }
+
     private List<TrackerView> listTrackers() throws SQLException {
-        final Map<String, TrackerCredentialStatus> credentialsByName = applicationDatabase.credentials().findAllStatuses()
+        final List<TrackerCredentialStatus> credentials = applicationDatabase.credentials().findAllStatuses();
+        final Map<String, TrackerCredentialStatus> credentialsByName = credentials
             .stream()
             .collect(Collectors.toMap(credential -> credential.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
-        final Map<String, StoredTrackerResult> resultsByName = applicationDatabase.results().findAll()
+        final List<StoredTrackerResult> results = applicationDatabase.results().findAll();
+        final Map<String, StoredTrackerResult> resultsByName = results
             .stream()
             .collect(Collectors.toMap(result -> result.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
         // Keyed by tracker name, ignoring case
         final Map<String, List<ScreenshotFile>> screenshotsByName = runManager.latestScreenshotsByTracker();
 
-        return TrackerHandlerFactory.allHandlers()
-            .stream()
-            .map(trackerHandler -> {
-                final String key = trackerHandler.name().toLowerCase(Locale.ROOT);
-                return TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key),
-                    screenshotsByName.getOrDefault(trackerHandler.name(), List.of()));
-            })
-            .toList();
+        final List<TrackerView> trackerViews = new ArrayList<>();
+        for (final TrackerHandler trackerHandler : TrackerHandlerFactory.allHandlers()) {
+            final String key = trackerHandler.name().toLowerCase(Locale.ROOT);
+            trackerViews.add(TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key),
+                screenshotsByName.getOrDefault(trackerHandler.name(), List.of())));
+        }
+
+        // Listed by the name they were stored with, after the supported trackers
+        final Set<String> legacyNames = legacyTrackerNames(credentials.stream().map(TrackerCredentialStatus::name).toList(),
+            results.stream().map(StoredTrackerResult::name).toList(), screenshotsByName.keySet());
+        for (final String legacyName : legacyNames) {
+            final String key = legacyName.toLowerCase(Locale.ROOT);
+            trackerViews.add(TrackerView.ofLegacy(storedName(legacyName, credentialsByName.get(key), resultsByName.get(key)),
+                credentialsByName.get(key), resultsByName.get(key), screenshotsByName.getOrDefault(legacyName, List.of())));
+        }
+        return trackerViews;
+    }
+
+    private static String storedName(final String name, final @Nullable TrackerCredentialStatus credential,
+        final @Nullable StoredTrackerResult result) {
+        if (credential != null) {
+            return credential.name();
+        }
+        return result == null ? name : result.name();
     }
 
     private static HttpRequestException badRequest(final String message) {
@@ -285,7 +357,7 @@ public final class TrackerApiHandler extends ApiHandler {
      * The result of changing several trackers at once.
      *
      * @param changed  the names of the trackers that were changed (the others were skipped)
-     * @param trackers every supported tracker, after the change
+     * @param trackers every tracker, after the change
      */
     record BulkResult(List<String> changed, List<TrackerView> trackers) {
 
@@ -297,18 +369,18 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param added       the number of trackers added
      * @param updated     the number of trackers whose existing credentials were replaced
      * @param unsupported the names of the trackers in the CSV file that are not supported, and were not imported
-     * @param trackers    every supported tracker, after the import
+     * @param trackers    every tracker, after the import
      */
     record ImportResult(int added, int updated, List<String> unsupported, List<TrackerView> trackers) {
 
     }
 
     /**
-     * A supported tracker and its stored credentials, as returned to the web UI.
+     * A tracker and its stored credentials, as returned to the web UI.
      *
      * @param name        the tracker name
-     * @param type        the tracker type
-     * @param urls        the tracker URLs
+     * @param type        the tracker type, or {@code null} for a legacy tracker
+     * @param urls        the tracker URLs (empty for a legacy tracker)
      * @param username    the stored username or email (empty if not set)
      * @param hasPassword whether a password has been stored
      * @param enabled     whether the tracker is enabled for execution
@@ -317,9 +389,10 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param screenshots the screenshots of the latest execution (the profile screenshots if it succeeded, or the failure screenshot if it
      *                    failed) that still exist, retrieved with
      *                    {@code /api/screenshots?tracker={name}&id={id}&latest=true}
+     * @param legacy      whether the tracker is no longer supported (its handler has been removed), so it is only kept until removed by the user
      */
-    record TrackerView(String name, String type, List<String> urls, String username, boolean hasPassword, boolean enabled,
-        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, List<RunStatus.Screenshot> screenshots) {
+    record TrackerView(String name, @Nullable String type, List<String> urls, String username, boolean hasPassword, boolean enabled,
+        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, List<RunStatus.Screenshot> screenshots, boolean legacy) {
 
         /**
          * Creates a {@link TrackerView} from a {@link TrackerHandler} and its stored credentials.
@@ -341,7 +414,33 @@ public final class TrackerApiHandler extends ApiHandler {
                 credential != null && credential.enabled(),
                 result == null ? null : result.finishedAt(),
                 result == null ? null : result.successful(),
-                screenshots.stream().map(RunStatus.Screenshot::of).toList()
+                screenshots.stream().map(RunStatus.Screenshot::of).toList(),
+                false
+            );
+        }
+
+        /**
+         * Creates a {@link TrackerView} for a legacy tracker, whose handler has been removed, from what is still stored for it.
+         *
+         * @param name        the tracker name
+         * @param credential  the {@link TrackerCredentialStatus}, or {@code null} if none are stored
+         * @param result      the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
+         * @param screenshots the latest {@link ScreenshotFile}s of the tracker
+         * @return the {@link TrackerView}
+         */
+        static TrackerView ofLegacy(final String name, final @Nullable TrackerCredentialStatus credential, final @Nullable StoredTrackerResult result,
+            final List<ScreenshotFile> screenshots) {
+            return new TrackerView(
+                name,
+                null,
+                List.of(),
+                credential == null ? "" : credential.username(),
+                credential != null && credential.hasPassword(),
+                credential != null && credential.enabled(),
+                result == null ? null : result.finishedAt(),
+                result == null ? null : result.successful(),
+                screenshots.stream().map(RunStatus.Screenshot::of).toList(),
+                true
             );
         }
     }

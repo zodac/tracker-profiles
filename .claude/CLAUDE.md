@@ -185,6 +185,10 @@ polled, except the status every 10s during an execution (no logs), so the page t
   rows around it still (the page never follows the moved row). Ctrl/Cmd+click selects trackers (Ctrl/Cmd+Shift+click a range), which the selection
   bar enables, disables or removes together. A tracker whose credentials change its group while it is being edited is pinned
   in its group until the user clicks outside its row, or makes no change for 10s.
+- A legacy tracker (anything stored in the database for a name with no handler, such as a removed tracker) is listed by `TrackerApiHandler`
+  (`TrackerView.legacy`) in a Legacy group on the Trackers tab, with its last run and screenshots, so they can still be retrieved if the tracker
+  goes down. It is never executed (`RunManager` skips it) and **never removed automatically**: only the user's remove (`DELETE`, or the bulk
+  `remove`) clears its credentials, result and screenshots (`ApplicationDatabase.removeTrackers`, `RunManager.forgetTrackers`), keeping the files.
 - There are no save buttons: every change is saved automatically and confirmed with a toast. Text inputs save after a 1s pause in typing (or
   on blur/Enter), switches and selects save immediately. Saves are queued so they reach the server in order, and rows are updated in place
   (not re-rendered) so the focused input is never replaced.

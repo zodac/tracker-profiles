@@ -382,7 +382,10 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   The image button next to a tracker's last result expands its row to show the screenshots of its most recent execution, as on the **Main** tab:
   its profile screenshots if it succeeded, or its failure screenshot if it failed (from any execution, also before a restart, as long as they are
   still on disk). Several trackers can be selected with `Ctrl`+click (or
-  `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers can also be [imported from a CSV file](#importing-trackers)
+  `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers can also be [imported from a CSV file](#importing-trackers).
+  A tracker that is no longer supported (removed from the application) is listed as legacy, and never executed. It is never removed
+  automatically, so the screenshots of its most recent execution can still be retrieved; removing it clears its credentials, result and
+  screenshots from the database (the screenshot files are kept on disk)
 - **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
   from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*
 

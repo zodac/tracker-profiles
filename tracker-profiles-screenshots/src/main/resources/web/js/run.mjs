@@ -42,8 +42,9 @@ function enabledTrackersDescription() {
         return 'Takes a screenshot of the profile page of every enabled tracker.'
     }
 
+    // Legacy trackers are never executed, even if they were enabled before they stopped being supported
     const enabled = trackers.filter(function (tracker) {
-        return tracker.enabled
+        return tracker.enabled && !tracker.legacy
     })
     if (enabled.length === 0) {
         return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab.'

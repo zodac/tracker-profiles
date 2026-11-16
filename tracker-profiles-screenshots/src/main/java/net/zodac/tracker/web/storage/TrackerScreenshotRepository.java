@@ -82,4 +82,15 @@ public final class TrackerScreenshotRepository {
             });
         });
     }
+
+    /**
+     * Deletes every stored screenshot of a tracker (the screenshot files are kept).
+     *
+     * @param trackerName the tracker name
+     * @return {@code true} if any screenshot was deleted
+     * @throws SQLException thrown if the database cannot be updated
+     */
+    boolean delete(final String trackerName) throws SQLException {
+        return connection.update(DELETE_FOR_TRACKER, statement -> statement.setString(1, trackerName)) > 0;
+    }
 }

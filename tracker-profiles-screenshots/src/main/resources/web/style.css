@@ -1572,6 +1572,15 @@ a.icon-button {
     visibility: hidden;
 }
 
+/* A legacy tracker is no longer supported, so cannot be enabled (keeping the columns aligned) */
+.tracker-row.legacy .switch {
+    visibility: hidden;
+}
+
+.tracker-label {
+    font-weight: 500;
+}
+
 /* The page is kept still with a manual scroll when a tracker moves between groups, so the browser must not also adjust it */
 #tracker-groups,
 #tracker-groups * {
@@ -1985,6 +1994,10 @@ kbd {
     }
 
     .tracker-row.unset .tracker-extra {
+        display: none;
+    }
+
+    .tracker-row.legacy .switch {
         display: none;
     }
 

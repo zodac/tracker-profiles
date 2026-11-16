@@ -38,8 +38,17 @@ function hasCredentials(tracker) {
     return Boolean(tracker.username) && tracker.hasPassword
 }
 
-// The group a tracker belongs in: 'headless' or 'manual' (enabled), 'disabled', or 'unset' (no username or password)
+// Whether anything is saved for a tracker that can be removed: its credentials, or anything at all for a legacy tracker
+function isRemovable(tracker) {
+    return tracker.legacy || Boolean(tracker.username) || tracker.hasPassword
+}
+
+// The group a tracker belongs in: 'headless' or 'manual' (enabled), 'disabled', 'unset' (no username or password), or 'legacy' (no longer
+// supported, but kept until the user removes it)
 function trackerGroupOf(tracker) {
+    if (tracker.legacy) {
+        return 'legacy'
+    }
     if (!hasCredentials(tracker)) {
         return 'unset'
     }
@@ -114,6 +123,7 @@ function buildTrackerGroups() {
         manual: createTrackerGroup('manual', 'No enabled manual trackers'),
         disabled: createTrackerGroup('disabled', ''),
         unset: createTrackerGroup('unset', ''),
+        legacy: createTrackerGroup('legacy', ''),
     }
     groups.headless.title = el('div', {className: 'subgroup-title'})
     groups.manual.title = el('div', {className: 'subgroup-title'})
@@ -121,6 +131,7 @@ function buildTrackerGroups() {
         enabled: el('span', {className: 'group-count'}),
         disabled: el('span', {className: 'group-count'}),
         unset: el('span', {className: 'group-count'}),
+        legacy: el('span', {className: 'group-count'}),
     }
 
     const enabledCard = el('details', {className: 'card group', open: true}, [
@@ -140,8 +151,17 @@ function buildTrackerGroups() {
         ]),
         groups.unset.list, groups.unset.empty,
     ])
-    byId('tracker-groups').replaceChildren(enabledCard, disabledCard, unsetCard)
-    return {groups: groups, counts: counts}
+    // Only shown while there are legacy trackers
+    const legacyCard = el('details', {className: 'card group', open: true, hidden: true}, [
+        el('summary', {}, [
+            el('h2', {text: 'Legacy'}),
+            counts.legacy,
+            el('span', {className: 'group-hint muted', text: 'No longer supported, so never executed. Kept until removed, to keep their screenshots'}),
+        ]),
+        groups.legacy.list,
+    ])
+    byId('tracker-groups').replaceChildren(enabledCard, disabledCard, legacyCard, unsetCard)
+    return {groups: groups, counts: counts, legacyCard: legacyCard}
 }
 
 // Puts the rows in the list in order, only moving those not already in place, so a focused input keeps its focus
@@ -163,7 +183,14 @@ export function renderTrackers() {
     }
 
     const search = byId('tracker-search').value.trim().toLowerCase()
-    const rowsByGroup = {headless: [], manual: [], disabled: [], unset: []}
+    const rowsByGroup = {headless: [], manual: [], disabled: [], unset: [], legacy: []}
+    // A removed legacy tracker is no longer listed, so its row is dropped
+    trackerRowsByName.forEach(function (row, name) {
+        if (!findTracker(name)) {
+            trackerRowsByName.delete(name)
+            selectedTrackers.delete(name)
+        }
+    })
     trackers.forEach(function (tracker) {
         let row = trackerRowsByName.get(tracker.name)
         if (!row) {
@@ -190,11 +217,16 @@ export function renderTrackers() {
     trackerGroups.counts.enabled.textContent = `(${rowsByGroup.headless.length + rowsByGroup.manual.length})`
     trackerGroups.counts.disabled.textContent = `(${rowsByGroup.disabled.length})`
     trackerGroups.counts.unset.textContent = `(${rowsByGroup.unset.length})`
+    trackerGroups.counts.legacy.textContent = `(${rowsByGroup.legacy.length})`
+    trackerGroups.legacyCard.hidden = rowsByGroup.legacy.length === 0
 
-    const totalEnabled = trackers.filter(function (tracker) {
+    const supported = trackers.filter(function (tracker) {
+        return !tracker.legacy
+    })
+    const totalEnabled = supported.filter(function (tracker) {
         return tracker.enabled
     }).length
-    byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(trackers.length, 'supported tracker')} enabled`
+    byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(supported.length, 'supported tracker')} enabled`
     renderSelection()
 }
 
@@ -262,6 +294,18 @@ function imageIcon() {
         svg.append(child)
     })
     return svg
+}
+
+// A link to the tracker, or only its name for a legacy tracker, which has no known URL
+function trackerNameContent(tracker) {
+    const url = tracker.urls[0]
+    if (!url) {
+        return el('span', {className: 'tracker-label', text: tracker.name})
+    }
+    return el('a', {className: 'tracker-link', href: url, target: '_blank', rel: 'noopener noreferrer', title: `Open ${tracker.name} (${url})`}, [
+        tracker.name,
+        el('span', {className: 'external-icon', 'aria-hidden': 'true', text: '↗'}),
+    ])
 }
 
 export function importTrackers(file) {
@@ -429,18 +473,20 @@ function renderSelection() {
     })
 
     const selected = selectedTrackerList()
-    const withCredentials = selected.filter(hasCredentials)
     byId('selection-bar').hidden = selected.length === 0
     byId('selection-count').textContent = `${pluralise(selected.length, 'tracker')} selected`
-    byId('selection-enable').disabled = !withCredentials.some(function (tracker) {
-        return !tracker.enabled
+    byId('selection-enable').disabled = !selected.some(function (tracker) {
+        return canChangeEnabled(tracker, true)
     })
     byId('selection-disable').disabled = !selected.some(function (tracker) {
-        return tracker.enabled
+        return canChangeEnabled(tracker, false)
     })
-    byId('selection-remove').disabled = !selected.some(function (tracker) {
-        return tracker.username || tracker.hasPassword
-    })
+    byId('selection-remove').disabled = !selected.some(isRemovable)
+}
+
+// A legacy tracker cannot be enabled or disabled, only removed
+function canChangeEnabled(tracker, enable) {
+    return !tracker.legacy && tracker.enabled !== enable && (!enable || hasCredentials(tracker))
 }
 
 // Applies a change to every selected tracker in a single request, then moves them all together
@@ -449,17 +495,23 @@ export function changeSelectedTrackers(action) {
     let targets
     let describe
     if (action === 'remove') {
-        targets = selected.filter(function (tracker) {
-            return tracker.username || tracker.hasPassword
-        })
-        if (!window.confirm(`Remove the saved credentials for ${pluralise(targets.length, 'tracker')}?`)) {
+        targets = selected.filter(isRemovable)
+        const legacyCount = targets.filter(function (tracker) {
+            return tracker.legacy
+        }).length
+        let question = `Remove the saved credentials for ${pluralise(targets.length, 'tracker')}?`
+        if (legacyCount > 0) {
+            question += ` ${pluralise(legacyCount, 'legacy tracker')} will be removed from the list with ${legacyCount === 1 ? 'its' : 'their'} last`
+                + ' run and screenshots (the screenshot files are kept).'
+        }
+        if (!window.confirm(question)) {
             return
         }
         describe = 'Removed the credentials for'
     } else {
         const enable = action === 'enable'
         targets = selected.filter(function (tracker) {
-            return tracker.enabled !== enable && (!enable || hasCredentials(tracker))
+            return canChangeEnabled(tracker, enable)
         })
         describe = enable ? 'Enabled' : 'Disabled'
     }
@@ -487,7 +539,9 @@ export function changeSelectedTrackers(action) {
         .finally(function () {
             changed.forEach(function (name) {
                 unpinTracker(name)
-                trackerRowsByName.get(name).resetInput()
+                if (findTracker(name)) {
+                    trackerRowsByName.get(name).resetInput()
+                }
             })
             clearSelection()
             renderTrackersWithMove(changed)
@@ -513,7 +567,15 @@ function createTrackerRow(tracker) {
     })
     passwordInput.value = saved.password
     const enabledInput = el('input', {type: 'checkbox', role: 'switch', 'aria-label': `Enable ${tracker.name}`})
-    const removeButton = el('button', {className: 'button danger small', type: 'button', text: 'Remove', title: 'Remove the saved credentials'})
+    const removeButton = el('button', {
+        className: 'button danger small',
+        type: 'button',
+        text: 'Remove',
+        title: tracker.legacy ? 'Remove the tracker, with its saved credentials, last run and screenshots' : 'Remove the saved credentials',
+    })
+    // A legacy tracker cannot be changed, only removed
+    usernameInput.disabled = tracker.legacy
+    passwordInput.disabled = tracker.legacy
     const lastRun = el('span')
     // The screenshots of the latest run, shown below the row when expanded
     const screenshotsPanel = el('div', {className: 'tracker-screenshots', hidden: true})
@@ -548,9 +610,10 @@ function createTrackerRow(tracker) {
 
     function refreshRow() {
         const credentialsSet = hasCredentials(current)
-        row.classList.toggle('unset', !credentialsSet)
-        enabledInput.disabled = !credentialsSet
-        removeButton.disabled = !credentialsSet
+        row.classList.toggle('unset', !credentialsSet && !current.legacy)
+        row.classList.toggle('legacy', current.legacy)
+        enabledInput.disabled = !credentialsSet || current.legacy
+        removeButton.disabled = !credentialsSet && !current.legacy
         row.classList.toggle('editing', hasUnsavedInput())
         if (hasUnsavedInput()) {
             trackerDrafts[current.name] = true
@@ -573,7 +636,7 @@ function createTrackerRow(tracker) {
         lastRun.className = content.className
         lastRun.title = content.title
         lastRun.replaceChildren.apply(lastRun, content.children)
-        setScreenshotsExpanded(screenshotsExpanded && hasCredentials(updated))
+        setScreenshotsExpanded(screenshotsExpanded && (hasCredentials(updated) || updated.legacy))
         refreshRow()
     }
 
@@ -680,17 +743,28 @@ function createTrackerRow(tracker) {
         queueSave(enabledInput.checked)
     })
     removeButton.addEventListener('click', function () {
-        if (!window.confirm(`Remove the saved credentials for ${current.name}?`)) {
+        const question = current.legacy
+            ? `Remove ${current.name}, with its saved credentials, last run and screenshots? It is no longer supported, so cannot be added again`
+                + ' (the screenshot files are kept).'
+            : `Remove the saved credentials for ${current.name}?`
+        if (!window.confirm(question)) {
             return
         }
-        request('DELETE', `/api/trackers/${encodeURIComponent(current.name)}`)
+        const name = current.name
+        const legacy = current.legacy
+        request('DELETE', `/api/trackers/${encodeURIComponent(name)}`)
             .then(function (updated) {
                 trackers = updated
-                current = findTracker(current.name)
+                unpinTracker(name)
+                if (legacy) {
+                    showToast(`Removed ${name}`)
+                    renderTrackers()
+                    return
+                }
+                current = findTracker(name)
                 resetInput()
-                unpinTracker(current.name)
-                showToast(`Removed the credentials for ${current.name}`)
-                renderTrackersWithMove(current.name)
+                showToast(`Removed the credentials for ${name}`)
+                renderTrackersWithMove(name)
             })
             .catch(function (error) {
                 showToast(error.message, 'error')
@@ -715,12 +789,8 @@ function createTrackerRow(tracker) {
         saved.password = ''
     }
 
-    const url = tracker.urls[0]
     const nameCell = el('div', {className: 'tracker-name'}, [
-        el('a', {className: 'tracker-link', href: url, target: '_blank', rel: 'noopener noreferrer', title: `Open ${tracker.name} (${url})`}, [
-            tracker.name,
-            el('span', {className: 'external-icon', 'aria-hidden': 'true', text: '↗'}),
-        ]),
+        trackerNameContent(tracker),
         tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual', title: 'Requires user input (e.g. captcha)'}) : null,
     ])
     const enabledCell = el('label', {className: 'switch tracker-extra', title: 'Enabled'}, [enabledInput, el('span', {className: 'switch-track'})])

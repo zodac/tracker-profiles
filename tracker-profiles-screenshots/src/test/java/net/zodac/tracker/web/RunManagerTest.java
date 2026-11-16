@@ -170,6 +170,22 @@ class RunManagerTest {
     }
 
     @Test
+    void givenTrackersForgotten_whenLatestScreenshotsRetrieved_thenOnlyOtherTrackersAreIncluded() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+        completeTracker(runManager, "Alpha", "Alpha.png", true);
+        completeTracker(runManager, "Beta", "Beta.png", true);
+
+        runManager.forgetTrackers(List.of("alpha"));
+
+        assertThat(runManager.latestSuccessfulScreenshots())
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Beta.png");
+        assertThat(runManager.latestScreenshots("Alpha"))
+            .isEmpty();
+    }
+
+    @Test
     void givenTrackersFailed_whenStatusRetrieved_thenFailedTrackersAreListed() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
         runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta", "Gamma")));
