@@ -41,7 +41,7 @@ import org.junit.jupiter.api.io.TempDir;
 class ApplicationDatabaseTest {
 
     private static final String SECRET_KEY = "test-secret-key-value";
-    private static final String LATEST_SCHEMA_VERSION = "2";
+    private static final String LATEST_SCHEMA_VERSION = "3";
 
     @TempDir
     private Path tempDirectory;
@@ -63,7 +63,7 @@ class ApplicationDatabaseTest {
         assertThat(querySingleValue("SELECT MAX(CAST(version AS INTEGER)) FROM flyway_schema_history WHERE success = 1"))
             .isEqualTo(LATEST_SCHEMA_VERSION);
         assertThat(querySingleValue("SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND sql LIKE '%STRICT, WITHOUT ROWID'"))
-            .isEqualTo("4");
+            .isEqualTo("5");
     }
 
     @Test
@@ -245,6 +245,26 @@ class ApplicationDatabaseTest {
 
         assertThat(applicationDatabase.results().findAll())
             .containsExactly(new StoredTrackerResult("Tracker", 2_000L, false));
+    }
+
+    @Test
+    void givenSavedScreenshots_whenReplaced_thenOnlyNewScreenshotsOfThatTrackerAreKeptInOrder() throws SQLException {
+        applicationDatabase.screenshots().replace("Alpha", List.of(
+            new StoredTrackerScreenshot("Alpha", "BOX", 0, "/screenshots/Alpha_box.png", 1_000L),
+            new StoredTrackerScreenshot("Alpha", "BLUR", 1, "/screenshots/Alpha_blur.png", 1_000L)
+        ));
+        applicationDatabase.screenshots().replace("Beta", List.of(new StoredTrackerScreenshot("Beta", "NONE", 0, "/screenshots/Beta.png", 1_000L)));
+        applicationDatabase.screenshots().replace("alpha", List.of(
+            new StoredTrackerScreenshot("alpha", "BLUR", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
+            new StoredTrackerScreenshot("alpha", "BOX", 1, "/screenshots/Alpha_box_2.png", 2_000L)
+        ));
+
+        assertThat(applicationDatabase.screenshots().findAll())
+            .containsExactly(
+                new StoredTrackerScreenshot("alpha", "BLUR", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
+                new StoredTrackerScreenshot("alpha", "BOX", 1, "/screenshots/Alpha_box_2.png", 2_000L),
+                new StoredTrackerScreenshot("Beta", "NONE", 0, "/screenshots/Beta.png", 1_000L)
+            );
     }
 
     private Path databasePath() {

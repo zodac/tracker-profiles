@@ -363,12 +363,12 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       (with `TAKE_SCREENSHOT_ON_ERROR` enabled). Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
       and move between the redaction types with the arrows (or the arrow keys)
     - Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the latest screenshots of
-      every tracker that has succeeded in any execution since the application started: a tracker executed again only has the screenshots of its
+      every tracker that has succeeded in any execution (also before a restart): a tracker executed again only has the screenshots of its
       latest success, so after **Failures only** the trackers that succeeded in either execution are downloaded together. Screenshots deleted or
       moved since are left out, and the button is hidden when none are left. Several screenshots are
       downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the latest execution started
-      (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails and gallery only show the current (or most recent) execution, and the screenshots are
-      kept in memory until the application restarts (they are still saved to the output directory as before)
+      (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
+      application restarts (the screenshots are still saved to the output directory as before)
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - **Run options** (open until an execution is started) holds the [options](#configuration-options) you are most likely to change for an execution,
       such as the tracker order, the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
@@ -379,15 +379,17 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
-  Several trackers can be selected with `Ctrl`+click (or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers
-  can also be [imported from a CSV file](#importing-trackers)
+  The screenshots of a tracker's latest successful execution (from any execution, also before a restart) open in the gallery with the image
+  button next to its last result, as long as they are still on disk. Several trackers can be selected with `Ctrl`+click (or `Ctrl`+`Shift`+click
+  for a range) to enable, disable or remove them together. Trackers can also be [imported from a CSV file](#importing-trackers)
 - **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
   from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
 
-Tracker credentials, settings saved in the web UI and the result of each tracker's most recent execution are stored in a SQLite database
+Tracker credentials, settings saved in the web UI, the result of each tracker's most recent execution and the location of the screenshots of its
+latest successful execution are stored in a SQLite database
 (`DATABASE_PATH`), in the `/app/data` volume of the container. This is separate from the screenshots, so it can be mounted, backed up or cleared on
 its own. The [example compose file](./docs/docker-compose.example.yml) uses the named volume `tracker-profiles-data`:
 

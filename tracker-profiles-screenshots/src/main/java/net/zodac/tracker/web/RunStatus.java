@@ -20,6 +20,7 @@ package net.zodac.tracker.web;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.input.UserInputRequests.PendingUserInput;
+import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -98,6 +99,16 @@ public record RunStatus(
         long savedAt
     ) {
 
+        /**
+         * Creates a {@link Screenshot} for a {@link ScreenshotFile}.
+         *
+         * @param screenshotFile the {@link ScreenshotFile}
+         * @return the {@link Screenshot}
+         */
+        public static Screenshot of(final ScreenshotFile screenshotFile) {
+            return new Screenshot(screenshotFile.id(), screenshotFile.label(), screenshotFile.fileName(), screenshotFile.failure(),
+                screenshotFile.savedAt());
+        }
     }
 
     /**

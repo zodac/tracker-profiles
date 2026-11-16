@@ -1,17 +1,22 @@
 import {byId, el, pluralise} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
-// Main: screenshots of each tracker (thumbnails, opened in a gallery), and downloads
+// Screenshots of each tracker (thumbnails on the Main tab, and the latest successful screenshots on the Trackers tab, opened in a gallery), and
+// downloads
 // ---------------------------------------------------------------------------------------------------------------
 
-// The screenshots shown in the gallery, and the index of the one being viewed
-const gallery = {trackerName: null, screenshots: [], index: 0}
+// The screenshots shown in the gallery, the index of the one being viewed, and whether they are the latest successful screenshots of the
+// tracker (from any execution) rather than those of the current execution
+const gallery = {trackerName: null, screenshots: [], index: 0, latest: false}
 
 // 'savedAt' is included so a screenshot replaced on a retry is fetched again (otherwise the image is cached by the browser)
-function screenshotUrl(trackerName, screenshot, option) {
+function screenshotUrl(trackerName, screenshot, option, latest) {
     const parameters = new URLSearchParams({tracker: trackerName, id: screenshot.id, v: String(screenshot.savedAt)})
     if (option) {
         parameters.set(option, 'true')
+    }
+    if (latest) {
+        parameters.set('latest', 'true')
     }
     return `/api/screenshots?${parameters}`
 }
@@ -89,9 +94,10 @@ export function updateExecutionDownload(status) {
         : 'Download the latest screenshot of the successful tracker'
 }
 
-function openGallery(trackerName, screenshots, index) {
+export function openGallery(trackerName, screenshots, index, latest) {
     gallery.trackerName = trackerName
     gallery.screenshots = screenshots
+    gallery.latest = Boolean(latest)
     const dialog = byId('screenshot-gallery')
     byId('gallery-title').textContent = trackerName
     const multiple = screenshots.length > 1
@@ -125,10 +131,10 @@ function showGalleryScreenshot(index) {
         tab.setAttribute('aria-selected', String(tabIndex === gallery.index))
     })
     const fullSize = byId('gallery-full-size')
-    fullSize.href = screenshotUrl(gallery.trackerName, screenshot)
+    fullSize.href = screenshotUrl(gallery.trackerName, screenshot, null, gallery.latest)
     fullSize.title = `Open ${screenshot.fileName} at full size in a new tab`
     const download = byId('gallery-download')
-    download.href = screenshotUrl(gallery.trackerName, screenshot, 'download')
+    download.href = screenshotUrl(gallery.trackerName, screenshot, 'download', gallery.latest)
     download.download = screenshot.fileName
     download.title = `Download ${screenshot.fileName}`
 
@@ -144,7 +150,7 @@ function showGalleryScreenshot(index) {
         viewport.replaceChildren(el('p', {className: 'gallery-error', text: 'The screenshot could not be loaded.'}))
     })
     // Scaled down to 1080p, since a full-size screenshot at a high resolution can be too large for the browser to show
-    image.src = screenshotUrl(gallery.trackerName, screenshot, 'preview')
+    image.src = screenshotUrl(gallery.trackerName, screenshot, 'preview', gallery.latest)
     viewport.replaceChildren(image)
 }
 

@@ -33,6 +33,9 @@ import net.zodac.tracker.framework.TrackerCsvReader;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.exception.InvalidCsvInputException;
+import net.zodac.tracker.web.RunManager;
+import net.zodac.tracker.web.RunStatus;
+import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
@@ -40,7 +43,8 @@ import net.zodac.tracker.web.storage.TrackerCredentialStatus;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Handles requests to list every supported tracker with its stored credentials and most recent result ({@code GET}), save the credentials for a
+ * Handles requests to list every supported tracker with its stored credentials, most recent result and the screenshots of its latest successful
+ * execution ({@code GET}), save the credentials for a
  * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), and remove the stored credentials for a tracker
  * ({@code DELETE /api/trackers/{name}}).
  *
@@ -58,20 +62,23 @@ public final class TrackerApiHandler extends ApiHandler {
     private static final String BULK_PATH = "bulk";
 
     private final ApplicationDatabase applicationDatabase;
+    private final RunManager runManager;
 
-    private TrackerApiHandler(final ApplicationDatabase applicationDatabase) {
+    private TrackerApiHandler(final ApplicationDatabase applicationDatabase, final RunManager runManager) {
         super(CONTEXT_PATH);
         this.applicationDatabase = applicationDatabase;
+        this.runManager = runManager;
     }
 
     /**
      * Creates a {@link TrackerApiHandler}.
      *
      * @param applicationDatabase the {@link ApplicationDatabase} storing tracker credentials
+     * @param runManager          the {@link RunManager} holding the screenshots of each tracker's latest successful execution
      * @return the {@link TrackerApiHandler}
      */
-    public static TrackerApiHandler create(final ApplicationDatabase applicationDatabase) {
-        return new TrackerApiHandler(applicationDatabase);
+    public static TrackerApiHandler create(final ApplicationDatabase applicationDatabase, final RunManager runManager) {
+        return new TrackerApiHandler(applicationDatabase, runManager);
     }
 
     @Override
@@ -193,11 +200,15 @@ public final class TrackerApiHandler extends ApiHandler {
             .stream()
             .collect(Collectors.toMap(result -> result.name().toLowerCase(Locale.ROOT), Function.identity(), (first, _) -> first));
 
+        // Keyed by tracker name, ignoring case
+        final Map<String, List<ScreenshotFile>> screenshotsByName = runManager.latestSuccessfulScreenshotsByTracker();
+
         return TrackerHandlerFactory.allHandlers()
             .stream()
             .map(trackerHandler -> {
                 final String key = trackerHandler.name().toLowerCase(Locale.ROOT);
-                return TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key));
+                return TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key),
+                    screenshotsByName.getOrDefault(trackerHandler.name(), List.of()));
             })
             .toList();
     }
@@ -304,9 +315,11 @@ public final class TrackerApiHandler extends ApiHandler {
      * @param enabled     whether the tracker is enabled for execution
      * @param lastRunAt   when the tracker last finished executing, as epoch milliseconds, or {@code null} if it has never been executed
      * @param lastRunOk   whether the most recent execution was successful, or {@code null} if it has never been executed
+     * @param screenshots the profile screenshots of the latest successful execution (that still exist), retrieved with
+     *                    {@code /api/screenshots?tracker={name}&id={id}&latest=true}
      */
     record TrackerView(String name, String type, boolean adult, List<String> urls, String username, boolean hasPassword, boolean enabled,
-        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk) {
+        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, List<RunStatus.Screenshot> screenshots) {
 
         /**
          * Creates a {@link TrackerView} from a {@link TrackerHandler} and its stored credentials.
@@ -314,10 +327,11 @@ public final class TrackerApiHandler extends ApiHandler {
          * @param trackerHandler the {@link TrackerHandler}
          * @param credential     the {@link StoredTrackerCredential}, or {@code null} if none are stored
          * @param result         the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
+         * @param screenshots    the {@link ScreenshotFile}s of the latest successful execution
          * @return the {@link TrackerView}
          */
         static TrackerView of(final TrackerHandler trackerHandler, final @Nullable TrackerCredentialStatus credential,
-            final @Nullable StoredTrackerResult result) {
+            final @Nullable StoredTrackerResult result, final List<ScreenshotFile> screenshots) {
             return new TrackerView(
                 trackerHandler.name(),
                 trackerHandler.type().name(),
@@ -327,7 +341,8 @@ public final class TrackerApiHandler extends ApiHandler {
                 credential != null && credential.hasPassword(),
                 credential != null && credential.enabled(),
                 result == null ? null : result.finishedAt(),
-                result == null ? null : result.successful()
+                result == null ? null : result.successful(),
+                screenshots.stream().map(RunStatus.Screenshot::of).toList()
             );
         }
     }

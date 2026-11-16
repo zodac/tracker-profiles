@@ -82,7 +82,7 @@ public final class WebServer {
             httpServer.createContext(RunApiHandler.CONTEXT_PATH, RunApiHandler.create(runManager));
             httpServer.createContext(LogApiHandler.CONTEXT_PATH, LogApiHandler.create(webLogAppender));
             httpServer.createContext(ScreenshotApiHandler.CONTEXT_PATH, ScreenshotApiHandler.create(runManager));
-            httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase));
+            httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase, runManager));
             httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
             httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());
             httpServer.start();

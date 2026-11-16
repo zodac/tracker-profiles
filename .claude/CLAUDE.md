@@ -64,9 +64,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `ETag`). API handlers
   extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
   responses.
-- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, and the result of each tracker's
-  most recent execution (shown on the Trackers tab), through one repository each: `credentials()` (`TrackerCredentialRepository`), `settings()`
-  (`SettingRepository`) and `results()` (`TrackerResultRepository`). The repositories run their SQL through `DatabaseConnection`, the single
+- **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, the result of each tracker's
+  most recent execution and the profile screenshots of its latest success (both shown on the Trackers tab), through one repository each:
+  `credentials()` (`TrackerCredentialRepository`), `settings()` (`SettingRepository`), `results()` (`TrackerResultRepository`) and `screenshots()`
+  (`TrackerScreenshotRepository`, file paths only). The repositories run their SQL through `DatabaseConnection`, the single
   connection (WAL journal, `synchronous=NORMAL`), which holds a lock for each statement or transaction (`query`, `exists`, `update`, `batch`,
   `inTransaction`): SQLite allows one writer, so a connection pool would not help. Keep all SQL in the repositories, as constants using numbered
   parameters (`?1`), and wrap any multi-statement change in `inTransaction`. Lists for the web UI use `credentials().findAllStatuses()`, which never
@@ -116,11 +117,14 @@ is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest 
 screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
 execution is kept, in memory, except that `RunManager.latestSuccessfulScreenshots()` keeps the profile screenshots of each tracker's latest success
-across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button. Only screenshots whose files still
+across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button and the screenshots button of each
+row on the Trackers tab (`TrackerView.screenshots`). They are saved in the database (`tracker_screenshots`, in the order taken) when a tracker
+succeeds and loaded by `RunManager.create`, so they are kept across restarts. Only screenshots whose files still
 exist are listed (and counted in `RunStatus`), so the button is hidden when there is nothing to send.
 
 `ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
-`?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment). `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
+`?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment), and `&latest=true` (Trackers tab) reads the tracker's latest successful
+screenshots instead of the current execution. `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
 `&preview=true` (used by the gallery) the whole page scaled to 1920 wide (at most 10800 tall), or the PNG itself if it is not wider. Both come
 from `web.screenshot.ScreenshotPreviews`, which never decodes a whole screenshot (an 8K full-page PNG needs over 600MB, more than the default
 512MB heap): it decodes every `n`th pixel (keeping twice the target width, then scaling smoothly) in strips of at most 64MB, one image at a time,

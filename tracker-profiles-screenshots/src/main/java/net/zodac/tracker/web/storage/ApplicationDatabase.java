@@ -31,7 +31,8 @@ import org.flywaydb.core.api.output.MigrateResult;
 
 /**
  * The SQLite database used by the web UI, holding the tracker credentials ({@link #credentials()}), the settings overridden in the web UI
- * ({@link #settings()}) and the result of each tracker's most recent execution ({@link #results()}).
+ * ({@link #settings()}), the result of each tracker's most recent execution ({@link #results()}) and the screenshots of each tracker's latest
+ * successful execution ({@link #screenshots()}).
  *
  * <p>
  * The schema is versioned by Flyway: each change is a new migration in {@code src/main/resources/db/migration}
@@ -53,13 +54,15 @@ public final class ApplicationDatabase implements AutoCloseable {
     private final TrackerCredentialRepository credentials;
     private final SettingRepository settings;
     private final TrackerResultRepository results;
+    private final TrackerScreenshotRepository screenshots;
 
     private ApplicationDatabase(final DatabaseConnection connection, final TrackerCredentialRepository credentials, final SettingRepository settings,
-        final TrackerResultRepository results) {
+        final TrackerResultRepository results, final TrackerScreenshotRepository screenshots) {
         this.connection = connection;
         this.credentials = credentials;
         this.settings = settings;
         this.results = results;
+        this.screenshots = screenshots;
     }
 
     /**
@@ -93,7 +96,8 @@ public final class ApplicationDatabase implements AutoCloseable {
             credentials.findAll();
 
             LOGGER.debug("Opened database at '{}'", absolutePath);
-            return new ApplicationDatabase(connection, credentials, SettingRepository.create(connection), TrackerResultRepository.create(connection));
+            return new ApplicationDatabase(connection, credentials, SettingRepository.create(connection), TrackerResultRepository.create(connection),
+                TrackerScreenshotRepository.create(connection));
         } catch (final SQLException | RuntimeException e) {
             connection.close();
             throw e;
@@ -158,6 +162,15 @@ public final class ApplicationDatabase implements AutoCloseable {
      */
     public TrackerResultRepository results() {
         return results;
+    }
+
+    /**
+     * The profile screenshots of each tracker's latest successful execution.
+     *
+     * @return the {@link TrackerScreenshotRepository}
+     */
+    public TrackerScreenshotRepository screenshots() {
+        return screenshots;
     }
 
     /**

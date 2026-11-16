@@ -18,6 +18,7 @@
 package net.zodac.tracker.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -208,6 +209,55 @@ class RunManagerTest {
         assertThat(runManager.status())
             .returns(1, RunStatus::downloadableTrackers)
             .returns(1, RunStatus::downloadableScreenshots);
+    }
+
+    @Test
+    void givenTrackersSucceededBeforeRestart_whenRunManagerCreated_thenLatestScreenshotsAreKeptInTheirOrder() throws IOException, SQLException {
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
+            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
+            runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
+            // A retry replaces the first screenshot, which keeps its position
+            runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box_retry.png"));
+            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", true);
+            completeTracker(runManager, "Beta", "Beta.png", false);
+        }
+
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
+
+            assertThat(runManager.latestSuccessfulScreenshots("alpha"))
+                .extracting(ScreenshotFile::id, ScreenshotFile::fileName)
+                .containsExactly(tuple("box", "Alpha_box_retry.png"), tuple("blur", "Alpha_blur.png"));
+            assertThat(runManager.latestSuccessfulScreenshots("Beta"))
+                .isEmpty();
+            assertThat(runManager.status())
+                .returns(1, RunStatus::downloadableTrackers)
+                .returns(2, RunStatus::downloadableScreenshots);
+        }
+    }
+
+    @Test
+    void givenTrackerSucceedsAgain_whenRunManagerCreated_thenOnlyItsLatestScreenshotsAreKept() throws IOException, SQLException {
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
+            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
+            runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
+            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", true);
+
+            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            completeTracker(runManager, "Alpha", "Alpha_2.png", true);
+        }
+
+        try (final ApplicationDatabase applicationDatabase = openDatabase()) {
+            assertThat(RunManager.create(applicationDatabase, WebLogAppender.install()).latestSuccessfulScreenshots("Alpha"))
+                .extracting(ScreenshotFile::fileName)
+                .containsExactly("Alpha_2.png");
+        }
     }
 
     private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful)

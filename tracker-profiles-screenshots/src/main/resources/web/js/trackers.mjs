@@ -1,5 +1,6 @@
 import {ADULT_TRACKERS_SETTING, REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
 import {latestStatus, runDescription} from './run.mjs'
+import {openGallery} from './screenshots.mjs'
 import {findSetting} from './settings.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
@@ -230,6 +231,39 @@ function lastRunContent(tracker) {
             formatLastRun(tracker.lastRunAt),
         ],
     }
+}
+
+// Opens the profile screenshots of the tracker's latest successful execution (from any execution, kept across restarts) in the gallery
+function updateLatestScreenshots(button, tracker) {
+    const count = tracker.screenshots.length
+    button.hidden = count === 0
+    button.querySelector('.latest-screenshots-count').textContent = count > 1 ? String(count) : ''
+    const newest = Math.max.apply(null, tracker.screenshots.map(function (screenshot) {
+        return screenshot.savedAt
+    }).concat([0]))
+    const description = count > 1 ? `the ${count} screenshots` : 'the screenshot'
+    button.title = count === 0 ? '' : `View ${description} of the latest successful run (${new Date(newest).toLocaleString()})`
+    button.setAttribute('aria-label', `View ${description} of the latest successful run of ${tracker.name}`)
+}
+
+function imageIcon() {
+    const namespace = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(namespace, 'svg')
+    svg.setAttribute('viewBox', '0 0 24 24')
+    svg.setAttribute('aria-hidden', 'true')
+    const shapes = [
+        ['rect', {x: '3', y: '4', width: '18', height: '16', rx: '2'}],
+        ['circle', {cx: '9', cy: '10', r: '2'}],
+        ['path', {d: 'M21 16l-5-5-9 9'}],
+    ]
+    shapes.forEach(function (shape) {
+        const child = document.createElementNS(namespace, shape[0])
+        Object.keys(shape[1]).forEach(function (attribute) {
+            child.setAttribute(attribute, shape[1][attribute])
+        })
+        svg.append(child)
+    })
+    return svg
 }
 
 export function importTrackers(file) {
@@ -483,6 +517,13 @@ function createTrackerRow(tracker) {
     const enabledInput = el('input', {type: 'checkbox', role: 'switch', 'aria-label': `Enable ${tracker.name}`})
     const removeButton = el('button', {className: 'button danger small', type: 'button', text: 'Remove', title: 'Remove the saved credentials'})
     const lastRun = el('span')
+    const screenshotsButton = el('button', {
+        className: 'icon-button small latest-screenshots',
+        type: 'button',
+        onclick: function () {
+            openGallery(current.name, current.screenshots, 0, true)
+        },
+    }, [imageIcon(), el('span', {className: 'latest-screenshots-count'})])
 
     function hasUnsavedInput() {
         return usernameInput.value !== saved.username || passwordInput.value !== saved.password
@@ -515,6 +556,7 @@ function createTrackerRow(tracker) {
         lastRun.className = content.className
         lastRun.title = content.title
         lastRun.replaceChildren.apply(lastRun, content.children)
+        updateLatestScreenshots(screenshotsButton, updated)
         refreshRow()
     }
 
@@ -667,7 +709,8 @@ function createTrackerRow(tracker) {
     ])
     const enabledCell = el('label', {className: 'switch tracker-extra', title: 'Enabled'}, [enabledInput, el('span', {className: 'switch-track'})])
 
-    row.append(nameCell, usernameInput, passwordInput, lastRun, enabledCell, el('div', {className: 'tracker-actions tracker-extra'}, [removeButton]),
+    const screenshotsCell = el('div', {className: 'tracker-screenshots-cell tracker-extra'}, [screenshotsButton])
+    row.append(nameCell, usernameInput, passwordInput, lastRun, screenshotsCell, enabledCell, el('div', {className: 'tracker-actions tracker-extra'}, [removeButton]),
         errorMessage)
     update(tracker)
     return {
