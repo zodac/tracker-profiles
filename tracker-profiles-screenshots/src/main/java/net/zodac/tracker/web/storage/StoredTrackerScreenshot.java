@@ -18,14 +18,15 @@
 package net.zodac.tracker.web.storage;
 
 /**
- * A profile screenshot of the latest successful execution of a tracker, as stored in the {@link ApplicationDatabase}.
+ * One of the latest screenshots of a tracker (a profile screenshot of its latest successful execution, or the failure screenshot of its latest
+ * execution), as stored in the {@link ApplicationDatabase}.
  *
- * @param name          the tracker name
- * @param redactionType the name of the {@link net.zodac.tracker.framework.redactor.RedactionType} of the screenshot
- * @param position      the position of the screenshot among those of the tracker, in the order they were first taken
- * @param path          the absolute path of the screenshot file
- * @param savedAt       when the screenshot was saved, as epoch milliseconds
+ * @param name     the tracker name
+ * @param id       the ID of the screenshot within its tracker (see {@link net.zodac.tracker.web.screenshot.ScreenshotFile#id()})
+ * @param position the position of the screenshot among those of the tracker, in the order they are shown
+ * @param path     the absolute path of the screenshot file
+ * @param savedAt  when the screenshot was saved, as epoch milliseconds
  */
-public record StoredTrackerScreenshot(String name, String redactionType, int position, String path, long savedAt) {
+public record StoredTrackerScreenshot(String name, String id, int position, String path, long savedAt) {
 
 }

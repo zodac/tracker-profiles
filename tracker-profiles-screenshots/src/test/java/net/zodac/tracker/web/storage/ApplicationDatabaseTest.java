@@ -250,20 +250,20 @@ class ApplicationDatabaseTest {
     @Test
     void givenSavedScreenshots_whenReplaced_thenOnlyNewScreenshotsOfThatTrackerAreKeptInOrder() throws SQLException {
         applicationDatabase.screenshots().replace("Alpha", List.of(
-            new StoredTrackerScreenshot("Alpha", "BOX", 0, "/screenshots/Alpha_box.png", 1_000L),
-            new StoredTrackerScreenshot("Alpha", "BLUR", 1, "/screenshots/Alpha_blur.png", 1_000L)
+            new StoredTrackerScreenshot("Alpha", "box", 0, "/screenshots/Alpha_box.png", 1_000L),
+            new StoredTrackerScreenshot("Alpha", "blur", 1, "/screenshots/Alpha_blur.png", 1_000L)
         ));
-        applicationDatabase.screenshots().replace("Beta", List.of(new StoredTrackerScreenshot("Beta", "NONE", 0, "/screenshots/Beta.png", 1_000L)));
+        applicationDatabase.screenshots().replace("Beta", List.of(new StoredTrackerScreenshot("Beta", "none", 0, "/screenshots/Beta.png", 1_000L)));
         applicationDatabase.screenshots().replace("alpha", List.of(
-            new StoredTrackerScreenshot("alpha", "BLUR", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
-            new StoredTrackerScreenshot("alpha", "BOX", 1, "/screenshots/Alpha_box_2.png", 2_000L)
+            new StoredTrackerScreenshot("alpha", "blur", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
+            new StoredTrackerScreenshot("alpha", "box", 1, "/screenshots/Alpha_box_2.png", 2_000L)
         ));
 
         assertThat(applicationDatabase.screenshots().findAll())
             .containsExactly(
-                new StoredTrackerScreenshot("alpha", "BLUR", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
-                new StoredTrackerScreenshot("alpha", "BOX", 1, "/screenshots/Alpha_box_2.png", 2_000L),
-                new StoredTrackerScreenshot("Beta", "NONE", 0, "/screenshots/Beta.png", 1_000L)
+                new StoredTrackerScreenshot("alpha", "blur", 0, "/screenshots/Alpha_blur_2.png", 3_000L),
+                new StoredTrackerScreenshot("alpha", "box", 1, "/screenshots/Alpha_box_2.png", 2_000L),
+                new StoredTrackerScreenshot("Beta", "none", 0, "/screenshots/Beta.png", 1_000L)
             );
     }
 

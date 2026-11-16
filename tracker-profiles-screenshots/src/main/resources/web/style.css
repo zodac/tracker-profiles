@@ -1725,6 +1725,11 @@ kbd {
     font-variant-numeric: tabular-nums;
 }
 
+.icon-button.latest-screenshots.failure {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
 .icon-button.latest-screenshots[aria-expanded="true"] {
     border-color: var(--accent);
     background: var(--accent-soft);

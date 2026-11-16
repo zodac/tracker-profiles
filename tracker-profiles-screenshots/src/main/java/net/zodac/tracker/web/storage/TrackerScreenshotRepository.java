@@ -21,13 +21,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * The profile screenshots of the latest successful execution of each tracker, in the {@code tracker_screenshots} table.
+ * The latest screenshots of each tracker (the profile screenshots of its latest successful execution, and the failure screenshot of its latest
+ * execution if it failed), in the {@code tracker_screenshots} table.
  */
 public final class TrackerScreenshotRepository {
 
-    private static final String SELECT_ALL = "SELECT name, redaction_type, position, path, saved_at FROM tracker_screenshots ORDER BY name, position";
+    private static final String SELECT_ALL = "SELECT name, id, position, path, saved_at FROM tracker_screenshots ORDER BY name, position";
     private static final String DELETE_FOR_TRACKER = "DELETE FROM tracker_screenshots WHERE name = ?1";
-    private static final String INSERT = "INSERT INTO tracker_screenshots (name, redaction_type, position, path, saved_at) "
+    private static final String INSERT = "INSERT INTO tracker_screenshots (name, id, position, path, saved_at) "
         + "VALUES (?1, ?2, ?3, ?4, ?5)";
 
     private final DatabaseConnection connection;
@@ -47,7 +48,7 @@ public final class TrackerScreenshotRepository {
     }
 
     /**
-     * Retrieves the screenshots of the latest successful execution of every tracker, by tracker name, then in the order they were first taken.
+     * Retrieves the latest screenshots of every tracker, by tracker name, then in the order they are shown.
      *
      * @return the {@link StoredTrackerScreenshot}s
      * @throws SQLException thrown if the database cannot be queried
@@ -55,7 +56,7 @@ public final class TrackerScreenshotRepository {
     public List<StoredTrackerScreenshot> findAll() throws SQLException {
         return connection.query(SELECT_ALL, resultSet -> new StoredTrackerScreenshot(
             resultSet.getString("name"),
-            resultSet.getString("redaction_type"),
+            resultSet.getString("id"),
             resultSet.getInt("position"),
             resultSet.getString("path"),
             resultSet.getLong("saved_at")
@@ -66,7 +67,7 @@ public final class TrackerScreenshotRepository {
      * Replaces every stored screenshot of a tracker, in a single transaction.
      *
      * @param trackerName the tracker name
-     * @param screenshots the {@link StoredTrackerScreenshot}s of the tracker's latest successful execution
+     * @param screenshots the latest {@link StoredTrackerScreenshot}s of the tracker
      * @throws SQLException thrown if the database cannot be updated, in which case the previous screenshots are kept
      */
     public void replace(final String trackerName, final List<StoredTrackerScreenshot> screenshots) throws SQLException {
@@ -74,7 +75,7 @@ public final class TrackerScreenshotRepository {
             connection.update(DELETE_FOR_TRACKER, statement -> statement.setString(1, trackerName));
             return connection.batch(INSERT, screenshots, (statement, screenshot) -> {
                 statement.setString(1, screenshot.name());
-                statement.setString(2, screenshot.redactionType());
+                statement.setString(2, screenshot.id());
                 statement.setInt(3, screenshot.position());
                 statement.setString(4, screenshot.path());
                 statement.setLong(5, screenshot.savedAt());

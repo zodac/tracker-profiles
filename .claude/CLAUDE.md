@@ -116,15 +116,17 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest one per `RedactionType` (a retry replaces it) and the latest failure
 screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
-execution is kept, in memory, except that `RunManager.latestSuccessfulScreenshots()` keeps the profile screenshots of each tracker's latest success
-across all executions (replaced when it succeeds again, kept when it fails), used for the "Download all" button and the screenshots button of each
-row on the Trackers tab (`TrackerView.screenshots`), which expands the row with their thumbnails. They are saved in the database
-(`tracker_screenshots`, in the order taken) when a tracker succeeds and loaded by `RunManager.create`, so they are kept across restarts. Only
+execution is kept, in memory, except that `RunManager` keeps each tracker's latest screenshots across all executions: the profile screenshots of
+its latest success (replaced when it succeeds again, kept when it fails) and the failure screenshot of its latest execution if it failed (replaced
+when it fails again, dropped when it succeeds). `latestSuccessfulScreenshots()` (profile screenshots only) is used for the "Download all" button,
+and `latestScreenshots(tracker)` (both) for the screenshots button of each row on the Trackers tab (`TrackerView.screenshots`), which expands the
+row with the same thumbnails as the Main tab (`updateTrackerScreenshots`). They are saved in the database (`tracker_screenshots`, by
+`ScreenshotFile.id`, in the order shown) when a tracker completes and loaded by `RunManager.create`, so they are kept across restarts. Only
 screenshots whose files still exist are listed (and counted in `RunStatus`), so the button is hidden when there is nothing to send.
 
 `ScreenshotApiHandler` only serves files listed by `RunManager` (by tracker name and screenshot ID, never a path from the request):
-`?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment), and `&latest=true` (Trackers tab) reads the tracker's latest successful
-screenshots instead of the current execution. `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
+`?tracker=X&id=Y` is a single PNG (`&download=true` as an attachment), and `&latest=true` (Trackers tab) reads the tracker's latest screenshots
+instead of the current execution. `&thumbnail=true` is a JPEG thumbnail of the top of the page, and
 `&preview=true` (used by the gallery) the whole page scaled to 1920 wide (at most 10800 tall), or the PNG itself if it is not wider. Both come
 from `web.screenshot.ScreenshotPreviews`, which never decodes a whole screenshot (an 8K full-page PNG needs over 600MB, more than the default
 512MB heap): it decodes every `n`th pixel (keeping twice the target width, then scaling smoothly) in strips of at most 64MB, one image at a time,

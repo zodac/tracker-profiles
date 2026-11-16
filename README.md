@@ -379,8 +379,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
-  The image button next to a tracker's last result expands its row to show thumbnails of the screenshots of its latest successful execution
-  (from any execution, also before a restart), as long as they are still on disk. Several trackers can be selected with `Ctrl`+click (or
+  The image button next to a tracker's last result expands its row to show its latest screenshots, as on the **Main** tab: the profile
+  screenshots of its latest successful execution, and the failure screenshot of its latest execution if it failed (from any execution, also before
+  a restart, as long as they are still on disk). Several trackers can be selected with `Ctrl`+click (or
   `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. Trackers can also be [imported from a CSV file](#importing-trackers)
 - **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
   from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*

@@ -233,18 +233,21 @@ function lastRunContent(tracker) {
     }
 }
 
-// Expands the row to show the profile screenshots of the tracker's latest successful execution (from any execution, kept across restarts)
+// Expands the row to show the latest screenshots of the tracker (from any execution, kept across restarts), as on the Main tab: the profile
+// screenshots of its latest successful run, and the failure screenshot of its latest run if it failed
 function updateLatestScreenshotsButton(button, tracker, expanded) {
     const count = tracker.screenshots.length
+    const failure = tracker.screenshots.some(function (screenshot) {
+        return screenshot.failure
+    })
     button.hidden = count === 0
+    button.classList.toggle('failure', failure)
     button.querySelector('.latest-screenshots-count').textContent = count > 1 ? String(count) : ''
-    const newest = Math.max.apply(null, tracker.screenshots.map(function (screenshot) {
-        return screenshot.savedAt
-    }).concat([0]))
-    const description = count > 1 ? `the ${count} screenshots` : 'the screenshot'
+    const description = count > 1 ? `the ${count} latest screenshots` : 'the latest screenshot'
     const action = expanded ? 'Hide' : 'Show'
-    button.title = count === 0 ? '' : `${action} ${description} of the latest successful run (${new Date(newest).toLocaleString()})`
-    button.setAttribute('aria-label', `${action} ${description} of the latest successful run of ${tracker.name}`)
+    const failureNote = failure ? ', including the failure screenshot of the latest run' : ''
+    button.title = count === 0 ? '' : `${action} ${description}${failureNote}`
+    button.setAttribute('aria-label', `${action} ${description} of ${tracker.name}${failureNote}`)
     button.setAttribute('aria-expanded', String(expanded))
 }
 
@@ -519,7 +522,7 @@ function createTrackerRow(tracker) {
     const enabledInput = el('input', {type: 'checkbox', role: 'switch', 'aria-label': `Enable ${tracker.name}`})
     const removeButton = el('button', {className: 'button danger small', type: 'button', text: 'Remove', title: 'Remove the saved credentials'})
     const lastRun = el('span')
-    // The screenshots of the latest successful execution, shown below the row when expanded
+    // The latest screenshots, shown below the row when expanded
     const screenshotsPanel = el('div', {className: 'tracker-screenshots', hidden: true})
     let screenshotsExpanded = false
     const screenshotsButton = el('button', {
