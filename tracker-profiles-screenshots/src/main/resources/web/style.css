@@ -1572,7 +1572,7 @@ a.icon-button {
 
 .tracker-row {
     display: grid;
-    grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(140px, 1fr) 76px 36px 72px;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(140px, 1fr) 96px 36px 72px;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;

@@ -208,10 +208,11 @@ export function renderTrackers() {
 
 function formatLastRun(epochMillis) {
     const date = new Date(epochMillis)
-    if (date.toDateString() === new Date().toDateString()) {
-        return date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+    const options = {day: 'numeric', month: 'short'}
+    if (date.getFullYear() !== new Date().getFullYear()) {
+        options.year = 'numeric'
     }
-    return date.toLocaleDateString([], {day: 'numeric', month: 'short'})
+    return date.toLocaleDateString([], options)
 }
 
 function lastRunContent(tracker) {
