@@ -104,7 +104,7 @@ RUN SECRET_KEY=appcds-training-secret \
         -jar /app/tracker-profiles.jar 2>/dev/null; \
     [ -f /app/app.jsa ] || touch /app/app.jsa
 
-# Python virtual environment with zendriver, for the zendriver Cloudflare solver (see python/cloudflare_check.py)
+# Python virtual environment with zendriver, for the Cloudflare solver (see python/cloudflare_check.py)
 # Built on the same base image as the runtime, so the virtual environment's interpreter link matches the runtime's python3
 FROM debian:13.7-slim AS python_builder
 # Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
@@ -157,7 +157,7 @@ ENV NO_AT_BRIDGE=1
 # - chromium-driver (chromedriver matching the web browser version)
 # - fonts-arphic-ukai (Chinese fonts)
 # - fonts-ipafont (Japanese fonts)
-# - python3 (zendriver Cloudflare solver)
+# - python3 (Cloudflare solver, using zendriver)
 # - wmctrl (force browser to be active window)
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
@@ -188,7 +188,7 @@ COPY ./docker/browser_extensions/ublock_origin_lite_ddkjiahejlhfcafbddmgiahcphec
 # Copy scripts
 COPY --chmod=755 ./docker/scripts/start.sh /app/start.sh
 
-# Copy the zendriver Cloudflare solver (see ZendriverCloudflareSolver), never writing bytecode since the root file system is read-only
+# Copy the Cloudflare solver (see CloudflareSolver), never writing bytecode since the root file system is read-only
 COPY --from=python_builder /app/python /app/python
 ENV PYTHONDONTWRITEBYTECODE=1
 

@@ -720,19 +720,16 @@ memory allocation, GC activity, and thread behaviour.
 Some trackers have a Cloudflare verification check that must be passed before logging in, either as a full-page challenge or as a box in the login
 form. This check is passed automatically without any user input, including when the browser is running in headless mode.
 
-No additional library is used for this. The approach is based on the one used by [zendriver](https://github.com/cdpdriver/zendriver), implemented
-directly on top of the existing Selenium browser:
+This is done with the [zendriver](https://github.com/cdpdriver/zendriver) Python library, which is included in the Docker image. zendriver
+attaches to the tracker's existing browser through the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) only for the
+check (without any JavaScript running in the web page, which Cloudflare can detect), clicks the checkbox if the check asks for it, then detaches.
+The browser is also prepared so that it is not detected as automated:
 
 - The headless browser does not identify itself as headless in its user agent
-- The check is found using the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) instead of JavaScript running in
-  the web page, as Cloudflare can detect the latter
-- The checkbox is clicked with a browser-level mouse event through the Chrome DevTools Protocol, which works without a visible browser window
-- The checkbox is only clicked if the check asks for it, as some websites pass the check without any interaction
 - The variables that `chromedriver` adds to every web page (which websites use to detect an automated browser) are removed from the
   `chromedriver` binary when the Docker image is built
 
-If Cloudflare rejects the attempt, no further clicks are made and the error code reported by Cloudflare is logged. If the check cannot be passed
-automatically:
+If the check cannot be passed automatically:
 
 - For a tracker running in a headless browser, the attempt fails (and is retried if `NUMBER_OF_SCREENSHOT_ATTEMPTS` allows)
 - For a tracker running in a UI browser (a `Manual` tracker, or when `FORCE_UI_BROWSER` is **true**), the user is asked to pass the check instead

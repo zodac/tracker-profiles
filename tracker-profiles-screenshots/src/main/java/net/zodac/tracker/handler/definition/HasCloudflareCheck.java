@@ -23,10 +23,7 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClas
 
 import java.time.Duration;
 import net.zodac.tracker.framework.TrackerDefinition;
-import net.zodac.tracker.framework.cloudflare.CloudflareResult;
 import net.zodac.tracker.framework.cloudflare.CloudflareSolver;
-import net.zodac.tracker.framework.cloudflare.ZendriverCloudflareSolver;
-import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.JavaWebDriverFactory;
 import net.zodac.tracker.framework.exception.CloudflareVerificationException;
 import net.zodac.tracker.framework.gui.DisplayUtils;
@@ -48,8 +45,8 @@ public interface HasCloudflareCheck {
      * Performs the Cloudflare verification check on the login page.
      *
      * <p>
-     * The check is passed automatically by the {@link CloudflareSolver}, without any user input, in both a headless and a UI browser. If the check
-     * cannot be passed automatically and the tracker is using a UI browser, the user is asked to pass it instead.
+     * The check is passed automatically by the {@link CloudflareSolver} (using {@code zendriver}), without any user input, in both a headless and
+     * a UI browser. If the check cannot be passed automatically and the tracker is using a UI browser, the user is asked to pass it instead.
      *
      * <p>
      * Manual user interactions (only if the check cannot be passed automatically in a UI browser):
@@ -60,8 +57,7 @@ public interface HasCloudflareCheck {
      * @param driver            the {@link RemoteWebDriver} for the current session
      * @param pageLoadDuration  the duration to wait for page elements to load
      * @param trackerDefinition the {@link TrackerDefinition} of the tracker
-     * @throws CloudflareVerificationException thrown if the check cannot be passed automatically (including when Cloudflare explicitly rejects
-     *                                         the attempt) and the tracker is using a headless browser
+     * @throws CloudflareVerificationException thrown if the check cannot be passed automatically and the tracker is using a headless browser
      */
     default void cloudflareCheck(final RemoteWebDriver driver, final Duration pageLoadDuration, final TrackerDefinition trackerDefinition) {
         final BrowserInteractionHelper browserInteractionHelper = BrowserInteractionHelper.of(driver);
@@ -69,23 +65,16 @@ public interface HasCloudflareCheck {
         logger.debug("Performing Cloudflare verification check");
 
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration);
-        final CloudflareResult result = switch (Configuration.get().cloudflareSolver()) {
-            case BUILTIN -> CloudflareSolver.forDriver(driver).solve();
-            case ZENDRIVER -> ZendriverCloudflareSolver.forDriver(driver).solve();
-        };
-        if (result.passed()) {
+        if (CloudflareSolver.forDriver(driver).solve()) {
             logger.debug("Cloudflare verification passed");
             return;
         }
 
         final String trackerName = trackerDefinition.name();
         if (JavaWebDriverFactory.usesHeadlessBrowser(trackerDefinition.type())) {
-            throw new CloudflareVerificationException(trackerName, result);
+            throw new CloudflareVerificationException(trackerName);
         }
 
-        if (result.wasRejected()) {
-            logger.warn("Cloudflare rejected the automatic verification (error code {}), the page may need to be reloaded", result.errorCode());
-        }
         logger.info("Waiting for user to pass the Cloudflare verification");
         final By cloudflareSelector = cloudflareSelector();
         final WebElement cloudflareElement = browserInteractionHelper.waitForElementToBePresent(cloudflareSelector, pageLoadDuration);

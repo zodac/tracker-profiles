@@ -274,18 +274,25 @@ A handler whose login page has a Cloudflare verification check (a full-page chal
 `HasCloudflareCheck`. The check is passed automatically by `CloudflareSolver` (`net.zodac.tracker.framework.cloudflare`) in both headless and UI
 browsers, so a Cloudflare check alone is **not** a reason to make a tracker `MANUAL`.
 
-`CloudflareSolver` must never inspect the challenge with JavaScript executed in the page (`driver.executeScript`, or `findElement` on the
-challenge elements) — Cloudflare detects this and fails the check. It locates the challenge through the CDP `DOM` domain, reads the result from
-an isolated world, and clicks with CDP `Input.dispatchMouseEvent`. Headless browsers also need the `HeadlessChrome` marker removed from the user
-agent (done in `JavaWebDriverFactory`), otherwise the check always fails.
+`CloudflareSolver` does not implement the technique itself: it delegates to the [zendriver](https://github.com/cdpdriver/zendriver) Python library,
+so changes to Cloudflare are handled by updating zendriver (`python/requirements.txt`, bumped by `update_dependency_versions.sh`), not by changing
+this code. For each check it runs `python/cloudflare_check.py` (in the virtual environment `/app/python/venv`, built by the `python_builder` stage
+of `docker/Dockerfile`) with the browser's DevTools address (`goog:chromeOptions.debuggerAddress`) and the tab's target ID (the window handle).
+The script attaches zendriver to the existing browser, detects the challenge (`cf_is_interactive_challenge_present`), passes it (`verify_cf`), and
+detaches **without** closing the browser (zendriver's own `stop()` and its exit hook send `Browser.close`, so the script unregisters the hook and
+only closes its connections). It prints one JSON line (`NOT_PRESENT`, `PASSED`, `FAILED` or `ERROR`), and its stderr is logged at `DEBUG` in the
+tracker's logging context. The script is a child process of the JVM, so `DriverPool.terminateAll()` kills it when an execution is cancelled.
 
-Stricter websites also reject the click unless the `cdc_` variables that `chromedriver` injects into every page are removed. This is done by the
-`perl` step in `docker/Dockerfile`, which blanks that code in the `chromedriver` binary (and fails the build if it cannot find it). Public
-Cloudflare demo pages pass without it, so always verify changes against real tracker login pages.
+The challenge must never be inspected with JavaScript executed in the page (`driver.executeScript`, or `findElement` on the challenge elements)
+— Cloudflare detects this and fails the check. Headless browsers also need the `HeadlessChrome` marker removed from the user agent (done in
+`JavaWebDriverFactory`), otherwise the check always fails. Stricter websites also reject the click unless the `cdc_` variables that
+`chromedriver` injects into every page are removed. This is done by the `perl` step in `docker/Dockerfile`, which blanks that code in the
+`chromedriver` binary (and fails the build if it cannot find it). Public Cloudflare demo pages pass without it, so always verify changes against
+real tracker login pages.
 
-The challenge announces its progress with `postMessage` events (`interactiveBegin`, `interactiveEnd`, `complete`, `fail`), which the solver records
-from the isolated world. A challenge may pass with no click at all; it must never be clicked after `fail`, as the checkbox is then replaced by a
-"Troubleshoot" link.
+`python/` is linted with ruff (`code-quality-config/python/ruff.toml`), by the `python` step of `lint_and_tests.sh` and the `python-lint` job of
+`publish.yml`, which must pass before the Docker image is published. The root filesystem of the container is read-only, so the image precompiles
+the bytecode and sets `PYTHONDONTWRITEBYTECODE=1`.
 
 If the check cannot be passed automatically, a headless tracker throws `CloudflareVerificationException` (the attempt fails and may be retried),
 while a UI browser falls back to asking the user (in the web UI and the input dialog), highlighting `cloudflareSelector()`.

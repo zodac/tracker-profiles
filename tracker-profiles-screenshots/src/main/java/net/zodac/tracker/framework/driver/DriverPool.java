@@ -499,7 +499,7 @@ public final class DriverPool {
 
     private static boolean isBrowserProcess(final ProcessHandle processHandle) {
         final String command = processHandle.info().command().orElse("").toLowerCase(Locale.ROOT);
-        // Python runs the zendriver Cloudflare check (see ZendriverCloudflareSolver), attached to a browser
+        // Python runs the zendriver Cloudflare check (see CloudflareSolver), attached to a browser
         return command.contains("chrom") || command.contains("selenium-manager") || command.contains("python");
     }
 

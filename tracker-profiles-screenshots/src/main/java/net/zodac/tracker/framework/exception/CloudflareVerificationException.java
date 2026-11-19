@@ -18,7 +18,6 @@
 package net.zodac.tracker.framework.exception;
 
 import java.io.Serial;
-import net.zodac.tracker.framework.cloudflare.CloudflareResult;
 
 /**
  * Exception used to indicate that a Cloudflare verification check could not be passed automatically.
@@ -32,11 +31,8 @@ public class CloudflareVerificationException extends RuntimeException {
      * Constructs an error message for the {@link CloudflareVerificationException}.
      *
      * @param trackerName the name of the tracker
-     * @param result      the {@link CloudflareResult} of the failed attempt to pass the check
      */
-    public CloudflareVerificationException(final String trackerName, final CloudflareResult result) {
-        super(result.wasRejected()
-            ? "Cloudflare rejected the automatic verification check for '%s' (error code %s)".formatted(trackerName, result.errorCode())
-            : "Unable to automatically pass the Cloudflare verification check for '%s'".formatted(trackerName));
+    public CloudflareVerificationException(final String trackerName) {
+        super("Unable to automatically pass the Cloudflare verification check for '%s'".formatted(trackerName));
     }
 }

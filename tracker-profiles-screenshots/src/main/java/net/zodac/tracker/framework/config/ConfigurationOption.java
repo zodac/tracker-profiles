@@ -41,14 +41,6 @@ public enum ConfigurationOption {
         "The resolution (width x height, in pixels) of the web browser used to take screenshots", Scope.EXECUTION),
 
     /**
-     * The implementation that passes the Cloudflare verification check of a tracker.
-     */
-    CLOUDFLARE_SOLVER(Tab.SETTINGS, "Browser", "Cloudflare solver", CloudflareSolverType.BUILTIN.name(), OptionType.SELECT,
-        names(CloudflareSolverType.values()),
-        "Which implementation passes the Cloudflare verification check of a tracker: the built-in solver, or the zendriver Python library",
-        Scope.EXECUTION),
-
-    /**
      * The path to the SQLite database used by the web UI.
      */
     DATABASE_PATH(Tab.SETTINGS, "System", "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
