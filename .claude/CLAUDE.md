@@ -97,6 +97,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 - **Failures only** — `POST /api/run/failed` calls `RunManager.startFailedTrackers()`, which executes only the trackers that are `FAILED` in the
   current (or most recent) execution (`RunStatus.failedTrackers`, empty while one is in progress) and are still enabled. The UI shows the button
   next to Start only when that list is not empty.
+- **Nothing to execute** — `renderRunReadiness()` (`js/run.mjs`) warns on the Main and Trackers tabs when enabled trackers are of a type left out
+  of `TRACKER_EXECUTION_ORDER` (the saved value), and disables Start when no enabled tracker would be executed. It is called whenever the
+  trackers, the settings or the status change, so the Trackers tab also loads the settings.
 - **No setting changes during an execution** — `SettingsService` rejects every save or reset with `IllegalStateException` (HTTP 409) while
   `RunManager.isExecutionInProgress()`, and the web UI locks every setting, so an execution always uses the configuration loaded when it started.
   After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.

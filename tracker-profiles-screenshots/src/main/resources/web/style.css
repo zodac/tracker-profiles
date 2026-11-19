@@ -1362,6 +1362,16 @@ a.icon-button {
     gap: 8px;
 }
 
+.run-warning {
+    margin: 16px 0 0;
+    font-size: 13px;
+}
+
+.trackers-warning {
+    margin: 0 0 16px;
+    font-size: 13px;
+}
+
 .run-progress {
     margin-top: 16px;
 }

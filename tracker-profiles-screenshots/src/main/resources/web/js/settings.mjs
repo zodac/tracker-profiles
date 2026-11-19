@@ -5,7 +5,7 @@ import {
     LOG_LEVEL_SETTING,
     TYPING_SAVE_DELAY_MS,
 } from './constants.mjs'
-import {formatTypeName, isActive, latestStatus} from './run.mjs'
+import {formatTypeName, isActive, latestStatus, renderRunReadiness} from './run.mjs'
 import {renderTrackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, hasKey, pluralise, request, showToast} from './util.mjs'
 
@@ -49,6 +49,7 @@ export function loadSettings() {
         if (trackersLoaded) {
             renderTrackers()
         }
+        renderRunReadiness()
     })
 }
 
@@ -592,6 +593,7 @@ function saveSetting(name) {
                 settingRows[rowName].refresh()
             })
             renderRunOptionsSummary()
+            renderRunReadiness()
             showToast(settingsSavedMessage(savedNames))
         })
         .catch(function (error) {
