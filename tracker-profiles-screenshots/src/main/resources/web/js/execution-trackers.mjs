@@ -1,3 +1,4 @@
+import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
 import {MAXIMUM_LOG_LINES, TRACKER_GROUPS, TRACKER_STEPS} from './constants.mjs'
 import {formatDuration, isActive, latestStatus} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
@@ -56,11 +57,41 @@ function trackerDetail(tracker) {
     return `${attempt}${tracker.latestMessage}`
 }
 
+// The live view of a running tracker's browser, only streamed while it is open (it is closed by default, as it is large)
+function createBrowserPanel(tracker) {
+    const panel = el('details', {className: 'tracker-browser', hidden: true}, [
+        el('summary', {}, [
+            el('span', {className: 'tracker-browser-title', text: 'Live browser'}),
+            el('span', {className: 'muted', text: 'View only: the browser can be used when the tracker needs you'}),
+        ]),
+    ])
+    panel.addEventListener('toggle', function () {
+        updateBrowserPanel(panel, tracker.name)
+    })
+    return panel
+}
+
+function updateBrowserPanel(panel, trackerName) {
+    // Not streamed while the tracker's row is collapsed either, as it is then not visible
+    const row = panel.closest('.execution-tracker')
+    const shown = !panel.hidden && panel.open && Boolean(row) && row.open
+    if (shown && !panel.browserView) {
+        panel.browserView = createBrowserView(trackerName, false)
+        panel.append(panel.browserView)
+        startBrowserView(panel.browserView)
+    } else if (!shown && panel.browserView) {
+        stopBrowserView(panel.browserView)
+        panel.browserView.remove()
+        panel.browserView = null
+    }
+}
+
 function createExecutionRow(tracker) {
     const summary = el('summary', {className: 'execution-row'})
+    const browser = createBrowserPanel(tracker)
     const screenshots = el('div', {className: 'tracker-screenshots', hidden: true})
     const logOutput = createPhaseLog(tracker)
-    const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, screenshots, logOutput])
+    const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, browser, screenshots, logOutput])
     // A waiting tracker has no logs yet, so cannot be expanded
     summary.addEventListener('click', function (event) {
         if (row.dataset.state === 'WAITING') {
@@ -71,6 +102,7 @@ function createExecutionRow(tracker) {
         if (row.open) {
             fetchLogs(logOutput)
         }
+        updateBrowserPanel(browser, tracker.name)
     })
     return row
 }
@@ -91,6 +123,12 @@ function updateExecutionRow(row, tracker) {
         el('span', {className: 'execution-time muted', text: trackerTiming(tracker)})
     )
     row.dataset.state = tracker.state
+    const browser = row.querySelector('.tracker-browser')
+    browser.hidden = tracker.state !== 'RUNNING'
+    if (browser.hidden) {
+        browser.open = false
+    }
+    updateBrowserPanel(browser, tracker.name)
     updateTrackerScreenshots(row.querySelector('.tracker-screenshots'), tracker)
     updatePhases(row.querySelector('.tracker-log'), tracker)
 }

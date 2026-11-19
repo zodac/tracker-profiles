@@ -24,7 +24,7 @@ services:
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"
       TAKE_SCREENSHOT_ON_ERROR: "false"
-      TRACKER_EXECUTION_ORDER: "HEADLESS,MANUAL"  # Set to "HEADLESS" to only run trackers that need no browser UI (see DISPLAY below)
+      TRACKER_EXECUTION_ORDER: "HEADLESS,MANUAL"  # Set to "HEADLESS" to only run trackers that need no user input
       # Browser configuration (can also be changed on the 'Settings' tab of the web UI)
       BROWSER_RESOLUTION: "1680x1050"
       ENABLE_TRANSLATION_TO_ENGLISH: "true"
@@ -41,7 +41,6 @@ services:
       SECRET_KEY: "change-me-strong-secret"  # <--- TODO: Change this, generate using `openssl rand -base64 32`, and keep it for as long as the database is used
       WEB_UI_PORT: "8080"
       # Container configuration (only read on startup)
-      DISPLAY: ":0"                # X11 display for the browser UI (Windows with VcXsrv: "host.docker.internal:0"), needed for MANUAL trackers
       JAVA_ADDITIONAL_OPTS: ""     # Extra JVM options, appended to the defaults
       JAVA_OPTS: ""                # Replaces the default JVM options entirely
     init: true  # Reaps the browser processes, and forwards the stop signal to the application
@@ -63,7 +62,6 @@ services:
       - /tmp:size=256m,noexec,nosuid,nodev  # Browser shared memory (~35m with 5 parallel browsers)
     user: "1000:1000"  # nonroot user
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix  # Host X11 socket for the browser UI (remove on Windows, or if only HEADLESS trackers are run)
       - /tmp/screenshots:/app/screenshots  # Must be writable by UID 1000 (Windows: "C:/tmp/screenshots:/app/screenshots")
       - tracker-chrome-cache:/tmp/chrome-home
       - tracker-profiles-data:/app/data

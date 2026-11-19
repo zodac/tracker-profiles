@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import net.zodac.tracker.framework.ExecutionCancellation;
+import net.zodac.tracker.framework.driver.BrowserDevTools;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.jspecify.annotations.Nullable;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -57,8 +57,6 @@ public final class CloudflareSolver {
     // The Python interpreter (of the virtual environment with zendriver installed) and the script, overridable for local runs outside Docker
     private static final String PYTHON_EXECUTABLE = System.getProperty("tracker-profiles.zendriver.python", "/app/python/venv/bin/python");
     private static final String SCRIPT_PATH = System.getProperty("tracker-profiles.zendriver.script", "/app/python/cloudflare_check.py");
-    private static final String CHROME_OPTIONS_CAPABILITY = "goog:chromeOptions";
-    private static final String DEBUGGER_ADDRESS_KEY = "debuggerAddress";
 
     // How long the script tries to pass the challenge
     private static final Duration CHALLENGE_SOLVE_TIMEOUT = Duration.ofSeconds(45L);
@@ -87,7 +85,7 @@ public final class CloudflareSolver {
      * @return {@code true} if the check was passed, or no challenge appeared
      */
     public boolean solve() {
-        final String debuggerAddress = debuggerAddress();
+        final String debuggerAddress = BrowserDevTools.debuggerAddress(driver);
         if (debuggerAddress == null) {
             LOGGER.warn("Browser did not report its DevTools address, unable to automatically pass Cloudflare verification with zendriver");
             return false;
@@ -134,15 +132,6 @@ public final class CloudflareSolver {
             LOGGER.debug("Unable to close the zendriver Cloudflare check", e);
             return false;
         }
-    }
-
-    // The address of the browser's DevTools endpoint (such as 'localhost:41233'), which chromedriver reports in the session capabilities
-    private @Nullable String debuggerAddress() {
-        final Object chromeOptions = driver.getCapabilities().getCapability(CHROME_OPTIONS_CAPABILITY);
-        if (chromeOptions instanceof final Map<?, ?> options && options.get(DEBUGGER_ADDRESS_KEY) instanceof final String address) {
-            return address;
-        }
-        return null;
     }
 
     // Logs each line of the script's stderr in the background, in the logging context of the tracker

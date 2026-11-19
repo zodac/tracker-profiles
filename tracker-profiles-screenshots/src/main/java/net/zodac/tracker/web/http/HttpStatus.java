@@ -33,6 +33,11 @@ public enum HttpStatus {
     ACCEPTED(202),
 
     /**
+     * The request was successful, and there is nothing to return.
+     */
+    NO_CONTENT(204),
+
+    /**
      * The request was invalid.
      */
     BAD_REQUEST(400),
@@ -60,7 +65,12 @@ public enum HttpStatus {
     /**
      * An unexpected error occurred.
      */
-    INTERNAL_SERVER_ERROR(500);
+    INTERNAL_SERVER_ERROR(500),
+
+    /**
+     * The request could not be handled at this time.
+     */
+    SERVICE_UNAVAILABLE(503);
 
     private final int code;
 

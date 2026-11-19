@@ -53,6 +53,7 @@ import net.zodac.tracker.framework.input.UserInputRequests;
 import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.framework.progress.TrackerStep;
 import net.zodac.tracker.framework.redactor.RedactionType;
+import net.zodac.tracker.framework.view.BrowserViews;
 import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
@@ -342,6 +343,18 @@ public final class RunManager implements ExecutionListener {
         return UserInputRequests.extend(inputId, INPUT_EXTENSION);
     }
 
+    /**
+     * Whether a tracker is waiting for a user input, which is the only time the user's input is sent to its browser from the web UI.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     * @return {@code true} if the tracker has a request waiting for a user input
+     */
+    public boolean isWaitingForInput(final String trackerName) {
+        return UserInputRequests.pending()
+            .stream()
+            .anyMatch(input -> input.trackerName().equalsIgnoreCase(trackerName));
+    }
+
     private void execute(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) {
         ExitState exitState = ExitState.FAILURE;
         try {
@@ -400,6 +413,8 @@ public final class RunManager implements ExecutionListener {
         // Clear any interrupt from cancelling, which is no longer needed (the thread is about to end)
         final boolean wasInterrupted = Thread.interrupted();
         LOGGER.trace("Execution thread was interrupted: {}", wasInterrupted);
+        // Every browser has been released (or quit by a cancellation), so no live view is left open
+        BrowserViews.closeAll();
 
         final RunStatus.State finalState;
         lock.lock();

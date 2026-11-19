@@ -1,3 +1,4 @@
+import {resumeBrowserViews} from './js/browser-view.mjs'
 import {DARK_SCHEME_QUERY, HIDDEN_POLL_INTERVAL_MS} from './js/constants.mjs'
 import {fetchLogs, trackerTiming} from './js/execution-trackers.mjs'
 import {
@@ -90,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             clearTimeout(statusTimer)
             refreshStatus()
+            resumeBrowserViews()
         }
     })
     setInterval(function () {

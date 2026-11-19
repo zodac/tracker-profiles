@@ -7,6 +7,7 @@ import {
     STATE_LABELS,
     STATUS_POLL_INTERVAL_MS,
 } from './constants.mjs'
+import {createBrowserView, startBrowserView} from './browser-view.mjs'
 import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs'
 import {updateExecutionDownload} from './screenshots.mjs'
 import {applyRunStateToSettings, currentSettingValue, findSetting} from './settings.mjs'
@@ -353,16 +354,26 @@ function createInputCard(input) {
         respondToInput(input, 'continue', continueButton)
     })
 
+    // The tracker's browser is shown in the card, and the user's input in it is sent to the browser
+    const browserView = createBrowserView(input.trackerName, true)
     const card = el('div', {className: 'input-card', role: 'alert', dataset: {id: String(input.id)}}, [
-        el('div', {className: 'input-text'}, [
-            el('h2', {text: `${input.trackerName} needs you`}),
-            el('p', {text: `${input.message} in the ${input.trackerName} browser window, then select Continue.`}),
-            el('p', {className: 'muted', text: 'Skipping fails this attempt for the tracker. Continuing is automatic if the page changes.'}),
+        el('div', {className: 'input-header'}, [
+            el('div', {className: 'input-text'}, [
+                el('h2', {text: `${input.trackerName} needs you`}),
+                el('p', {text: `${input.message} in the browser below, then select Continue.`}),
+                el('p', {
+                    className: 'muted',
+                    text: 'Click in the browser to use it: typing is sent to it while it is selected, and Ctrl+V pastes your clipboard. Skipping '
+                        + 'fails this attempt for the tracker. Continuing is automatic if the page changes.',
+                }),
+            ]),
+            el('div', {className: 'input-actions'}, [timer, extendButton, skipButton, continueButton]),
         ]),
-        el('div', {className: 'input-actions'}, [timer, extendButton, skipButton, continueButton]),
+        browserView,
     ])
     card.inputTimer = timer
     card.extendButton = extendButton
+    card.browserView = browserView
     return card
 }
 
@@ -383,6 +394,7 @@ function renderPendingInputs(pendingInputs) {
         if (!card) {
             card = createInputCard(input)
             container.append(card)
+            startBrowserView(card.browserView)
         }
         card.dataset.expiresAt = input.expiresAt === null ? '' : String(input.expiresAt)
         card.extendButton.hidden = input.expiresAt === null

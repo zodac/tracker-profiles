@@ -12,9 +12,6 @@
     - [Importing Trackers](#importing-trackers)
     - [Running With Docker Compose](#running-with-docker-compose)
     - [Browser UI](#browser-ui)
-        - [UI In Debian](#ui-in-debian)
-        - [UI In Windows](#ui-in-windows)
-        - [Disable UI](#disable-ui)
     - [Configuration Options](#configuration-options)
         - [Run Options](#run-options)
         - [Settings](#settings)
@@ -281,9 +278,9 @@ The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been s
 
 ### Manual Interaction
 
-If any of the following trackers are enabled, and **MANUAL** is included in the tracker order, then a browser UI must be available, since they open a
-visible browser window for you to complete the step below. Instructions for this in Docker can be seen [below](#browser-ui). The web UI asks you
-when to complete each step (see [Web UI](#web-ui)).
+If any of the following trackers are enabled, and **MANUAL** is included in the tracker order, they run in a browser with a UI, in which you complete
+the step below. The browser runs inside the container and is shown in the web UI, which asks you when to complete each step, so nothing needs to be
+set up on the host (see [Web UI](#web-ui) and [Browser UI](#browser-ui)).
 
 <table>
 <tr>
@@ -419,12 +416,13 @@ encrypted when the application starts.
 > **Note:** The web UI has no authentication. Do not expose the port outside your local network. Saved passwords are never sent back to the
 > browser.
 
-When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a dialog appears in front of the tracker's
-browser window, and a prompt at the top of the **Main** tab (and the tab title changes). You can answer either one, and the other closes. Complete the
-step in the tracker's browser window, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Skip
-tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS` is set, the prompt shows how long is left, and **+5 min** gives you
-more time. The browser window itself still needs a display, so `DISPLAY` must be configured to execute manual trackers (see [Browser
-UI](#browser-ui)).
+When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
+tab (and the tab title changes), showing the tracker's browser live. Click in the browser to use it: your clicks, scrolling and typing are sent to it
+while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code). Complete the step, then select **Continue**; the execution
+also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS`
+is set, the prompt shows how long is left, and **+5 min** gives you more time.
+
+The browser of any tracker in progress can also be watched (but not used) from its row on the **Main** tab, by opening **Live browser**.
 
 ### Importing Trackers
 
@@ -457,39 +455,17 @@ The example uses a fixed image version (the latest release), so update the `imag
   and limits on memory and processes. The limits suit the default of 5 parallel browsers, so raise them if `NUMBER_OF_PARALLEL_THREADS` or
   `BROWSER_RESOLUTION` is increased
 
-The example runs the browser with a UI on a Debian host (see [Browser UI](#browser-ui)). On Windows, set `DISPLAY` to `host.docker.internal:0`,
-remove the `/tmp/.X11-unix` volume, and save the screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
+The example works the same way on Linux and Windows, as the browsers are shown in the web UI (see [Browser UI](#browser-ui)). On Windows, save the
+screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
 
 ### Browser UI
 
-There are two ways to execute the application - with a UI browser and without. The [example compose file](./docs/docker-compose.example.yml) will
-execute [trackers that require a UI](#manual-interaction), so the UI will need to be configured to run through Docker. A UI browser is needed for
-trackers that require some user input during login, like a Captcha, 2FA, etc.
+[Manual trackers](#manual-interaction), whose login needs your input (a Captcha, 2FA, etc.), run in a browser with a UI, as does every tracker when
+`FORCE_UI_BROWSER` is **true**. These browsers run on a virtual display inside the container (started by [start.sh](./docker/scripts/start.sh)), and
+are shown in the [web UI](#web-ui), so the host needs no display, X server or `DISPLAY` variable, on Linux or Windows.
 
-Below will define how to do this for your host system.
-
-#### UI in Debian
-
-To run through Docker with a UI, local connections to the host display might need to be enabled:
-
-```bash
-# This seems to be reset upon reboot and may need to be reapplied
-xhost +local:
-```
-
-#### UI in Windows
-
-I use [VcXsrv](https://vcxsrv.com/) as the X server for UI. When configuring VcXsrv, make sure to set the following in
-the configuration:
-
-- **Multiple windows**
-- Display number **-1** or **0**
-- **Disable access control**
-
-#### Disable UI
-
-To disable the UI and run the browser in headless mode only, ensure `FORCE_UI_BROWSER` and `ENABLE_TRANSLATION_TO_ENGLISH` are set to **false**, and
-exclude **MANUAL** from `TRACKER_EXECUTION_ORDER`. `DISPLAY` and the `/tmp/.X11-unix` volume can then be removed from the compose file.
+> **Note:** Earlier versions showed the browser on the host's display. If your compose file still sets `DISPLAY` or mounts `/tmp/.X11-unix`, both
+> can be removed: they are no longer used.
 
 ### Configuration Options
 
@@ -509,7 +485,7 @@ These options apply from the next execution.
 
 | Environment Variable            | Description                                                                                                                                                         | Default Value   |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| *FORCE_UI_BROWSER*              | Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)                                                        | false           |
+| *FORCE_UI_BROWSER*              | Uses a browser with a UI (see [Browser UI](#browser-ui)) for each tracker, even for headless trackers (this will disable parallel execution)                        | false           |
 | *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
 | *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                               | 5               |
@@ -534,13 +510,12 @@ Changes to these options apply from the next execution.
 #### Startup-Only Options
 
 These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
-(marked as *Environment only*, with the value of `SECRET_KEY` hidden), but cannot be changed there. `DISPLAY`, `JAVA_OPTS` and
-`JAVA_ADDITIONAL_OPTS` configure the container itself, so are not shown in the web UI.
+(marked as *Environment only*, with the value of `SECRET_KEY` hidden), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure
+the container itself, so are not shown in the web UI.
 
 | Environment Variable   | Description                                                                                                                                                     | Default Value                 |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
 | *DATABASE_PATH*        | The path to the SQLite database storing tracker credentials, settings saved in the [web UI](#web-ui) and tracker results (inside the `/app/data` docker volume) | /app/data/tracker-profiles.db |
-| *DISPLAY*              | The X11 display used to render browser screenshots (see [Browser UI](#browser-ui))                                                                              |                               |
 | *JAVA_ADDITIONAL_OPTS* | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                  |                               |
 | *JAVA_OPTS*            | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                  |                               |
 | *SECRET_KEY*           | **Required.** The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown in the web UI)                       |                               |
@@ -651,7 +626,7 @@ To build and run the local [Dockerfile](./docker/Dockerfile), copy [docker-compo
 ```
 
 Then update the [configuration options](#configuration-options) for development (such as `FORCE_UI_BROWSER=true`, `LOG_LEVEL=TRACE`,
-`REDACTION_TYPE=NONE,BLUR,BOX` and `TAKE_SCREENSHOT_ON_ERROR=true`, which requires [the UI to be defined](#browser-ui)), and build and run it:
+`REDACTION_TYPE=NONE,BLUR,BOX` and `TAKE_SCREENSHOT_ON_ERROR=true`), and build and run it:
 
 ```bash
 docker compose up --build
@@ -679,8 +654,9 @@ for each tracker is retrieved by the tracker name saved in the web UI.
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to
 take screenshots. While the application usually runs in headless mode, this can be changed by updating the
-`FORCE_UI_BROWSER` value in the [configuration](#configuration-options). This will cause a new browser instance to
-launch when taking a screenshot, and can be used for debugging a new implementation.
+`FORCE_UI_BROWSER` value in the [configuration](#configuration-options). Every tracker then runs in a browser with a UI, which can be watched from
+its row on the **Main** tab (**Live browser**), and can be used for debugging a new implementation. Outside Docker, the browser is shown on the
+display of the host instead.
 
 ### Performance Analysis
 
@@ -732,4 +708,5 @@ The browser is also prepared so that it is not detected as automated:
 If the check cannot be passed automatically:
 
 - For a tracker running in a headless browser, the attempt fails (and is retried if `NUMBER_OF_SCREENSHOT_ATTEMPTS` allows)
-- For a tracker running in a UI browser (a `Manual` tracker, or when `FORCE_UI_BROWSER` is **true**), the user is asked to pass the check instead
+- For a tracker running in a UI browser (a `Manual` tracker, or when `FORCE_UI_BROWSER` is **true**), the user is asked to pass the check instead,
+  in the browser shown in the web UI

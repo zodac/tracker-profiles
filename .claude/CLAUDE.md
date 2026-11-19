@@ -36,6 +36,12 @@ The compose files harden the container (follow the same standard in any new comp
 extracted to `/app/native` when the image is built and loaded from there by `start.sh` (`org.sqlite.lib.path`). Chrome runs with `--no-sandbox`
 and `--disable-dev-shm-usage`, so it needs no capabilities, and keeps its shared memory in `/tmp`.
 
+Browsers with a UI (manual trackers, or every tracker with `FORCE_UI_BROWSER`) run on a virtual X11 display (Xvfb on `:99`) started by `start.sh`,
+which sets `DISPLAY` itself (replacing any value set for the container), and are shown to the user in the web UI (see
+[Live Browser View](#live-browser-view)). The host never needs a display, so no compose file or document may ask for `DISPLAY` or a
+`/tmp/.X11-unix` volume. Xvfb runs as UID `1000`, so it cannot create `/tmp/.X11-unix` and uses its abstract socket instead. There is no window
+manager on the virtual display.
+
 ### Reviewing Web UI Changes
 
 After any change to the web UI (anything in `src/main/resources/web/`, or a change to an API response it renders), run the `run-app` skill
@@ -63,7 +69,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 
 - **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers. `stop()` (also run by
   a shutdown hook) closes the database.
-- **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
+- **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `BrowserApiHandler` (`/api/browser`, see
+  [Live Browser View](#live-browser-view)), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`, and
   `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one transaction), `SettingsApiHandler` (`/api/settings`),
   `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`, keeping each file in memory with an
@@ -110,10 +117,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 - **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the element
   and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until the user responds in the web UI
   (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS` passes (read while waiting, so a
-  change applies to a waiting request). The request is also shown by a `UserInputPrompt`: `framework.gui.InputDialog` is an always-on-top Swing dialog
-  (FlatLaf) in front of the browser, so the user need not switch back to the web UI. It answers through `UserInputRequests.respond`, the same as the
-  web UI (whichever is answered first wins), and is closed by `await` once the request ends for any reason. With no display it shows nothing, and the
-  web UI still works.
+  change applies to a waiting request). The prompt in the web UI shows the tracker's browser, in which the user provides the input (see
+  [Live Browser View](#live-browser-view)). There is no dialog on the display: the virtual display is never seen by the user.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
   each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
   tracker, and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each
@@ -152,6 +157,27 @@ browser and a replaced screenshot is fetched again.
 
 In the UI, the screenshots are shown in each expanded tracker above its logs (re-rendered only when they change), and open in a `<dialog>` gallery.
 
+#### Live Browser View
+
+`framework.view.BrowserViews` holds a `BrowserView` for each tracker whose browser is open, by tracker name (case-insensitive):
+`AbstractTrackerHandler.configure` registers it once the driver is acquired, `close()` unregisters it before releasing the driver, and
+`RunManager.finish` closes any left. A `BrowserView` connects to the tracker's tab with the Chrome DevTools Protocol, through its own WebSocket
+(`java.net.http`) to the browser's DevTools address (`BrowserDevTools.debuggerAddress`, also used by `CloudflareSolver`) and the tab's target ID
+(the window handle), not through `chromedriver`, so it works while the tracker runs a WebDriver command. It is connected, and `Page.startScreencast`
+started, only when a frame is first requested; frames are acknowledged after 100ms (limiting the frame rate), and the screencast stops once no frame
+has been requested for 5s. Frame IDs increase across every view, so a new browser (on a retry) always has newer frames.
+
+`BrowserApiHandler` serves `GET /api/browser?tracker=X&after=N`: the latest JPEG frame (its ID in `X-Frame-Id`) once one is newer than `N`, or `204`
+after 1s, so the UI requests the next frame as soon as it has drawn the previous one. `POST /api/browser/input?tracker=X` (`{events: [...]}`) sends
+the user's input, and is rejected (`409`) unless the tracker is waiting for a user input (`RunManager.isWaitingForInput`). Each
+`BrowserInputEvent` (mouse, wheel, key or pasted text, with positions relative to the frame from `0` to `1`) is validated and clamped, then converted
+to an `Input.*` DevTools command, so the page receives it as a real input.
+
+In the UI (`js/browser-view.mjs`), frames are drawn on a `<canvas>` (the CSP does not allow `blob:` images), and streaming stops while the page is
+hidden or the view is not in the page. The input prompt shows an interactive view (pointer events with pointer capture, keys while it is focused
+except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. A running tracker's
+row on the Main tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
+
 #### Cancelling an Execution
 
 `POST /api/run/cancel` calls `RunManager.cancel()`, which stops the execution without stopping the application:
@@ -172,10 +198,10 @@ create a driver without registering it in `DriverPool` (or checking `ExecutionCa
 The frontend is plain HTML/CSS/JS in `src/main/resources/web/` (served with `Content-Security-Policy: default-src 'self'`, so no inline scripts or
 styles and no CDNs). `app.mjs` is the entry ES module (`<script type="module">`), wiring the event listeners at start up, and imports the modules
 in `web/js/`: `constants`, `util` (DOM helpers, `request`, toasts), `run` (execution status and user inputs), `execution-trackers` (the trackers of
-an execution and their logs), `screenshots`, `trackers` (Trackers tab and selection), `settings`, `tabs` and `theme-toggle`. Modules only assign
-their own variables (imports are read-only), and import each other freely, since nothing runs before `DOMContentLoaded`. ES modules must use the
-`.mjs` extension: the shared ESLint config (`code-quality-config/javascript/eslint.config.cjs`, which lints all JavaScript) parses `.mjs` files as
-modules and `.js` files as classic scripts (`theme.js` and the redaction scripts).
+an execution and their logs), `browser-view` (live view of a tracker's browser), `screenshots`, `trackers` (Trackers tab and selection), `settings`,
+`tabs` and `theme-toggle`. Modules only assign their own variables (imports are read-only), and import each other freely, since nothing runs before
+`DOMContentLoaded`. ES modules must use the `.mjs` extension: the shared ESLint config (`code-quality-config/javascript/eslint.config.cjs`, which
+lints all JavaScript) parses `.mjs` files as modules and `.js` files as classic scripts (`theme.js` and the redaction scripts).
 
 The status is polled every 2s during an execution (1s while an input is pending) and every 10s while idle. While the page is hidden nothing is
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
@@ -262,7 +288,8 @@ Two types control how the browser is created and whether user interaction is nee
 
 - **`HEADLESS`** — Runs Chrome without a UI. Default for most trackers.
 - **`MANUAL`** — Runs Chrome with a UI; pauses execution via `awaitUserInput(selector, instruction)` for captcha or 2FA entry, which highlights
-  the element and is answered by the user in the web UI or the input dialog (it logs the instruction, so the handler needs no log message of its own).
+  the element and is answered by the user in the web UI, using the browser shown there (it logs the instruction, so the handler needs no log message
+  of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
 Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`; `TrackerRetriever.groupByType` leaves out the trackers
@@ -295,7 +322,7 @@ real tracker login pages.
 the bytecode and sets `PYTHONDONTWRITEBYTECODE=1`.
 
 If the check cannot be passed automatically, a headless tracker throws `CloudflareVerificationException` (the attempt fails and may be retried),
-while a UI browser falls back to asking the user (in the web UI and the input dialog), highlighting `cloudflareSelector()`.
+while a UI browser falls back to asking the user (in the web UI, where the browser is shown), highlighting `cloudflareSelector()`.
 
 ### Counting Tracker Handlers
 

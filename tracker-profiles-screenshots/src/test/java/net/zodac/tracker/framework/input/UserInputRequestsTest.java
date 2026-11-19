@@ -143,7 +143,7 @@ class UserInputRequestsTest {
     }
 
     private static CompletableFuture<Void> awaitInBackground(final BooleanSupplier pageChanged) {
-        return CompletableFuture.runAsync(() -> UserInputRequests.await(TRACKER_NAME, MESSAGE, pageChanged, UserInputPrompt.NONE));
+        return CompletableFuture.runAsync(() -> UserInputRequests.await(TRACKER_NAME, MESSAGE, pageChanged));
     }
 
     private static UserInputRequests.PendingUserInput awaitPendingInput() throws InterruptedException {

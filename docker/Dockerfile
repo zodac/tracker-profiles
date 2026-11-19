@@ -158,7 +158,7 @@ ENV NO_AT_BRIDGE=1
 # - fonts-arphic-ukai (Chinese fonts)
 # - fonts-ipafont (Japanese fonts)
 # - python3 (Cloudflare solver, using zendriver)
-# - wmctrl (force browser to be active window)
+# - xvfb (virtual X11 display for browsers with a UI, which are shown in the web UI, so the host needs no display)
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
     apt-get install -yqq --no-install-recommends \
@@ -168,7 +168,7 @@ RUN apt-get update && \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
         python3="3.13.5-1" \
-        wmctrl="1.07+git20240228.1105759-1" \
+        xvfb="2:21.1.16-1.3+deb13u4" \
     && \
     apt-get autoremove && \
     apt-get clean && \

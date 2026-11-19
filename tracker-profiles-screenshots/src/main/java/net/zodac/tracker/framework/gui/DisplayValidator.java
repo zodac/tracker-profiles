@@ -29,7 +29,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Utility class to validate the UI/{@code DISPLAY} configuration is valid.
+ * Utility class to validate that a display is available for the browsers with a UI. The Docker image starts a virtual X11 display (Xvfb) and sets
+ * {@code DISPLAY} itself (see {@code start.sh}), and the browsers are shown in the web UI, so the host needs no display. Outside Docker, the
+ * display of the host is used.
  */
 public final class DisplayValidator {
 
@@ -67,7 +69,7 @@ public final class DisplayValidator {
     private static boolean isDisplayAvailable() {
         final String display = System.getenv("DISPLAY");
         if (display == null || display.isBlank()) {
-            LOGGER.error("Environment variable 'DISPLAY' is not configured");
+            LOGGER.error("No display is available for browsers with a UI, as the environment variable 'DISPLAY' is not set");
             return false;
         }
 
@@ -78,7 +80,7 @@ public final class DisplayValidator {
             return true;
         } catch (final AWTError e) {
             LOGGER.debug("Unable to connect to X11 display '{}'", display, e);
-            LOGGER.error("Unable to connect to X11 display '{}'", display);
+            LOGGER.error("Unable to connect to X11 display '{}' for browsers with a UI", display);
             return false;
         }
     }

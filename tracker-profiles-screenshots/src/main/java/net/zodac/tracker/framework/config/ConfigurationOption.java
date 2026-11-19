@@ -56,8 +56,9 @@ public enum ConfigurationOption {
     /**
      * Whether to force a UI browser for all trackers.
      */
-    FORCE_UI_BROWSER(Tab.MAIN, "Execution", "Show browser windows", "false", OptionType.BOOLEAN, List.of(),
-        "Forces a browser with UI for each tracker, even for headless trackers (this will disable parallel execution)", Scope.EXECUTION),
+    FORCE_UI_BROWSER(Tab.MAIN, "Execution", "Browser with UI for every tracker", "false", OptionType.BOOLEAN, List.of(),
+        "Uses a browser with a UI (on the container's virtual display, shown in the web UI) for each tracker, even for headless trackers (this will "
+            + "disable parallel execution)", Scope.EXECUTION),
 
     /**
      * The user input timeout in seconds.

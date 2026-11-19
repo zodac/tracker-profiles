@@ -20,7 +20,6 @@ package net.zodac.tracker.util;
 import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
@@ -321,7 +320,6 @@ public final class BrowserInteractionHelper {
      */
     public void translatePage(final By nonInteractiveElementSelector) {
         LOGGER.trace("Translating page to English");
-        setBrowserAsActiveWindow();
 
         try {
             // Find a non-interactive element to right-click
@@ -347,19 +345,6 @@ public final class BrowserInteractionHelper {
             explicitWait(DEFAULT_WAIT_FOR_TRANSLATION, "translation to complete");
         } catch (final AWTException e) {
             throw new TranslationException(e);
-        }
-    }
-
-    private static void setBrowserAsActiveWindow() {
-        LOGGER.trace("Setting Chromium browser as active window");
-        try (final Process process = new ProcessBuilder("/usr/bin/wmctrl", "-x", "-a", "Chromium").start()) {
-            final int exitValue = process.waitFor();
-            LOGGER.trace("Process result: {}", exitValue);
-        } catch (final IOException e) {
-            LOGGER.debug("Error setting browser as active window", e);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.debug("Error setting browser as active window", e);
         }
     }
 

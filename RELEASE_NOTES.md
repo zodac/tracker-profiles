@@ -16,8 +16,11 @@ exiting. The container keeps running, and each execution is started from the bro
 - **Settings**: every other option, preloaded from the environment variables. A value saved in the web UI overrides the environment variable,
   including after a restart
 
-Manual trackers ask for input (continue or skip) in a dialog in front of the tracker's browser window, as before, and also in the web UI (where
-you can also wait 5 more minutes). Answering either closes the other. The browser window itself still needs `DISPLAY` to be configured.
+Browsers with a UI (for manual trackers, or every tracker with `FORCE_UI_BROWSER`) now run on a virtual display inside the container, and are
+shown live in the web UI, so the host no longer needs a display or X server (such as VcXsrv on Windows), and Linux and Windows are set up the same
+way. When a manual tracker needs input, the prompt on the **Main** tab shows its browser: click in it to solve the captcha or enter the 2FA code
+(`Ctrl`+`V` pastes from your clipboard), then continue or skip (or wait 5 more minutes). The browser of any tracker in progress can also be watched
+from its row (**Live browser**).
 
 Tracker credentials, settings and the latest results are stored in a SQLite database in the `/app/data` volume, so mount a volume to keep them
 between containers (the [example compose file](docs/docker-compose.example.yml) uses the `tracker-profiles-data` volume). Passwords are encrypted, and are never sent back to the browser.
@@ -30,6 +33,7 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
   unchanged)
 - `BROWSER_WIDTH` and `BROWSER_HEIGHT` are replaced by `BROWSER_RESOLUTION` (e.g. `1680x1050`)
 - `INPUT_TIMEOUT_ENABLED` is removed, as `INPUT_TIMEOUT_SECONDS=0` now disables the timeout
+- `DISPLAY` and the `/tmp/.X11-unix` volume are no longer used, as browsers with a UI are shown in the web UI: remove them from your compose file
 - The following options are removed, along with the console progress bar:
     - `CSV_COMMENT_SYMBOL`
     - `FAIL_ON_UNSUPPORTED_TRACKER`

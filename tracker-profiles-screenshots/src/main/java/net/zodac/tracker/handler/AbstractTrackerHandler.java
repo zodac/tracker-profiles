@@ -32,6 +32,7 @@ import net.zodac.tracker.framework.exception.TrackerUnavailableException;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.framework.redaction.RedactionRegistry;
 import net.zodac.tracker.framework.redactor.Redactor;
+import net.zodac.tracker.framework.view.BrowserViews;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
 import net.zodac.tracker.handler.definition.HasCloudflareCheck;
 import net.zodac.tracker.handler.definition.HasProfilePageActions;
@@ -99,6 +100,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         }
         final RemoteWebDriver acquiredDriver = DriverPool.acquire(trackerDefinition.type(), extensions);
         context = TrackerHandlerContext.of(trackerDefinition, acquiredDriver);
+        BrowserViews.register(trackerDefinition.name(), acquiredDriver);
     }
 
     /**
@@ -123,11 +125,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
 
     /**
      * Highlights the element found by {@code elementToHighlight}, then waits for the user to follow the {@code instruction} in the browser. The
-     * request is shown in the web UI and in a dialog in front of the browser, and completes when the user responds in either, or the page in the
-     * browser changes.
+     * request is shown in the web UI with a live view of the browser, and completes when the user responds, or the page in the browser changes.
      *
      * @param elementToHighlight the {@link By} selector of the element the user needs to interact with
-     * @param instruction        what the user needs to do, shown in the web UI and the dialog
+     * @param instruction        what the user needs to do, shown in the web UI
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
      * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)
@@ -138,10 +139,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
 
     /**
      * Highlights the {@code elementToHighlight}, then waits for the user to follow the {@code instruction} in the browser. The request is shown in
-     * the web UI and in a dialog in front of the browser, and completes when the user responds in either, or the page in the browser changes.
+     * the web UI with a live view of the browser, and completes when the user responds, or the page in the browser changes.
      *
      * @param elementToHighlight the {@link WebElement} the user needs to interact with
-     * @param instruction        what the user needs to do, shown in the web UI and the dialog
+     * @param instruction        what the user needs to do, shown in the web UI
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
      * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)
@@ -560,6 +561,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
     @Override
     public void close() {
         LOGGER.trace("Releasing driver");
+        BrowserViews.unregister(trackerDefinition().name());
         DriverPool.release(driver());
     }
 

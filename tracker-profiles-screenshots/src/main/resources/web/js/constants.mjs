@@ -5,6 +5,10 @@ export const IDLE_POLL_INTERVAL_MS = 10000
 export const INPUT_POLL_INTERVAL_MS = 1000
 // While the page is hidden, the status is only checked during an execution (so the page title still shows when an input is needed)
 export const HIDDEN_POLL_INTERVAL_MS = 10000
+// How long a live browser view waits before trying again, when the browser is not open or cannot be reached
+export const BROWSER_VIEW_RETRY_MS = 2000
+// The longest text that can be pasted into a live browser view at once (see BrowserInputEvent)
+export const MAXIMUM_PASTED_TEXT_LENGTH = 1000
 export const TYPING_SAVE_DELAY_MS = 1000
 export const THEME_STORAGE_KEY = 'tracker-profiles-theme'
 // Shown (masked) in the password field of a tracker with a saved password, which is never sent to the browser. Private-use characters, so it

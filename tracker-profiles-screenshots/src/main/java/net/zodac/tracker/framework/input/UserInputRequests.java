@@ -65,19 +65,15 @@ public final class UserInputRequests {
      * @param trackerName the name of the tracker waiting for the input
      * @param message     what the user needs to do
      * @param pageChanged returns {@code true} once the page in the browser has changed, checked periodically while waiting
-     * @param prompt      shown (in addition to the web UI) while the request is waiting, and closed once it is not
      * @throws CancelledInputException thrown if the user selects {@link UserInputResponse#SKIP}
      * @throws NoUserInputException    thrown if no input is received before the timeout, or the waiting thread is interrupted
      * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution is cancelled while waiting
      */
-    public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged, final UserInputPrompt prompt) {
+    public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
         final long id = register(trackerName, message);
         LOGGER.info("Waiting for user input: {}", message);
 
-        Runnable closePrompt = () -> {
-        };
         try {
-            closePrompt = prompt.show(id);
             waitForResponse(id, pageChanged);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -89,7 +85,6 @@ public final class UserInputRequests {
             } finally {
                 LOCK.unlock();
             }
-            closePrompt.run();
         }
     }
 
