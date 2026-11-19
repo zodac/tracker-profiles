@@ -29,7 +29,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * Utility class used to ask the user for an input (such as solving a captcha) in the browser of a manual tracker. The request is shown in the web
- * UI, which the user answers once they have provided the input in the browser.
+ * UI and in an {@link InputDialog} in front of the browser, either of which the user answers once they have provided the input in the browser.
  */
 public final class DisplayUtils {
 
@@ -52,21 +52,21 @@ public final class DisplayUtils {
     }
 
     /**
-     * Asks the user (in the web UI) to provide an input to the loaded tracker, and waits until they confirm it has been provided, or the page in
-     * the browser changes.
+     * Asks the user (in the web UI, and in an {@link InputDialog} in front of the browser) to provide an input to the loaded tracker, and waits
+     * until they confirm it has been provided, or the page in the browser changes.
      *
      * @param trackerName the name of the tracker waiting for the input
      * @param label       what the user needs to do
      * @throws CancelledInputException thrown if the user chooses to skip the tracker
      * @throws NoUserInputException    thrown if no input is received in time
-     * @see UserInputRequests#await(String, String, java.util.function.BooleanSupplier)
+     * @see UserInputRequests#await(String, String, java.util.function.BooleanSupplier, net.zodac.tracker.framework.input.UserInputPrompt)
      */
     public void confirm(final String trackerName, final String label) {
         final String initialUrl = currentUrl();
         final String initialTitle = currentTitle();
         LOGGER.trace("Starting page change listener (initial url: '{}', initial title: '{}')", initialUrl, initialTitle);
 
-        UserInputRequests.await(trackerName, label, () -> hasPageChanged(initialUrl, initialTitle));
+        UserInputRequests.await(trackerName, label, () -> hasPageChanged(initialUrl, initialTitle), InputDialog.of(trackerName, label));
     }
 
     private boolean hasPageChanged(final @Nullable String initialUrl, final @Nullable String initialTitle) {

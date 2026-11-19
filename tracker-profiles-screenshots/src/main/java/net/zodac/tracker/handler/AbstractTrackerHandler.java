@@ -123,10 +123,11 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
 
     /**
      * Highlights the element found by {@code elementToHighlight}, then waits for the user to follow the {@code instruction} in the browser. The
-     * request is shown in the web UI, and completes when the user responds there or the page in the browser changes.
+     * request is shown in the web UI and in a dialog in front of the browser, and completes when the user responds in either, or the page in the
+     * browser changes.
      *
      * @param elementToHighlight the {@link By} selector of the element the user needs to interact with
-     * @param instruction        what the user needs to do, shown in the web UI
+     * @param instruction        what the user needs to do, shown in the web UI and the dialog
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
      * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)
@@ -137,10 +138,10 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
 
     /**
      * Highlights the {@code elementToHighlight}, then waits for the user to follow the {@code instruction} in the browser. The request is shown in
-     * the web UI, and completes when the user responds there or the page in the browser changes.
+     * the web UI and in a dialog in front of the browser, and completes when the user responds in either, or the page in the browser changes.
      *
      * @param elementToHighlight the {@link WebElement} the user needs to interact with
-     * @param instruction        what the user needs to do, shown in the web UI
+     * @param instruction        what the user needs to do, shown in the web UI and the dialog
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
      * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)

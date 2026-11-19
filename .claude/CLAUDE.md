@@ -104,10 +104,13 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
   default (the API can reset it, but the web UI has no reset). `RunManager.reloadConfiguration` only applies saved values for options that are
   `editableAtRuntime` (not `Scope.STARTUP`).
-- **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the
-  element and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until
-  the user responds in the web UI (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS`
-  passes (read while waiting, so a change applies to a waiting request). There is no Swing dialog; the browser window itself still needs `DISPLAY`.
+- **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the element
+  and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until the user responds in the web UI
+  (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS` passes (read while waiting, so a
+  change applies to a waiting request). The request is also shown by a `UserInputPrompt`: `framework.gui.InputDialog` is an always-on-top Swing dialog
+  (FlatLaf) in front of the browser, so the user need not switch back to the web UI. It answers through `UserInputRequests.respond`, the same as the
+  web UI (whichever is answered first wins), and is closed by `await` once the request ends for any reason. With no display it shows nothing, and the
+  web UI still works.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
   each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
   tracker, and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each
@@ -255,7 +258,7 @@ Two types control how the browser is created and whether user interaction is nee
 
 - **`HEADLESS`** — Runs Chrome without a UI. Default for most trackers.
 - **`MANUAL`** — Runs Chrome with a UI; pauses execution via `awaitUserInput(selector, instruction)` for captcha or 2FA entry, which highlights
-  the element and is answered by the user in the web UI (it logs the instruction, so the handler needs no log message of its own).
+  the element and is answered by the user in the web UI or the input dialog (it logs the instruction, so the handler needs no log message of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
 Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`; `TrackerRetriever.groupByType` leaves out the trackers
@@ -281,7 +284,7 @@ from the isolated world. A challenge may pass with no click at all; it must neve
 "Troubleshoot" link.
 
 If the check cannot be passed automatically, a headless tracker throws `CloudflareVerificationException` (the attempt fails and may be retried),
-while a UI browser falls back to asking the user (in the web UI), highlighting `cloudflareSelector()`.
+while a UI browser falls back to asking the user (in the web UI and the input dialog), highlighting `cloudflareSelector()`.
 
 ### Counting Tracker Handlers
 

@@ -15,8 +15,8 @@ exiting. The container keeps running, and each execution is started from the bro
 - **Settings**: every other option, preloaded from the environment variables. A value saved in the web UI overrides the environment variable,
   including after a restart
 
-Manual trackers now ask for input (continue, skip, or wait 5 more minutes) in the web UI, rather than in a Swing dialog. The browser window itself
-still needs `DISPLAY` to be configured.
+Manual trackers ask for input (continue or skip) in a dialog in front of the tracker's browser window, as before, and also in the web UI (where
+you can also wait 5 more minutes). Answering either closes the other. The browser window itself still needs `DISPLAY` to be configured.
 
 Tracker credentials, settings and the latest results are stored in a SQLite database in the `/app/data` volume, so mount a volume to keep them
 between containers (the [example compose file](docs/docker-compose.example.yml) uses the `tracker-profiles-data` volume). Passwords are encrypted, and are never sent back to the browser.

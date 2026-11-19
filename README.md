@@ -418,11 +418,12 @@ encrypted when the application starts.
 > **Note:** The web UI has no authentication. Do not expose the port outside your local network. Saved passwords are never sent back to the
 > browser.
 
-When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
-tab (and the tab title changes). Complete the step in the tracker's browser window, then select **Continue**; the execution also continues by itself
-if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS` is set, the prompt shows
-how long is left, and **+5 min** gives you more time. The browser window itself still needs a display, so `DISPLAY` must be configured to execute
-manual trackers (see [Browser UI](#browser-ui)).
+When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a dialog appears in front of the tracker's
+browser window, and a prompt at the top of the **Main** tab (and the tab title changes). You can answer either one, and the other closes. Complete the
+step in the tracker's browser window, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Skip
+tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS` is set, the prompt shows how long is left, and **+5 min** gives you
+more time. The browser window itself still needs a display, so `DISPLAY` must be configured to execute manual trackers (see [Browser
+UI](#browser-ui)).
 
 ### Importing Trackers
 

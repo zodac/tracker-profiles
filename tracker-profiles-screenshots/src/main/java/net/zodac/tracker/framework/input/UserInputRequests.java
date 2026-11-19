@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -64,15 +65,19 @@ public final class UserInputRequests {
      * @param trackerName the name of the tracker waiting for the input
      * @param message     what the user needs to do
      * @param pageChanged returns {@code true} once the page in the browser has changed, checked periodically while waiting
+     * @param prompt      shown (in addition to the web UI) while the request is waiting, and closed once it is not
      * @throws CancelledInputException thrown if the user selects {@link UserInputResponse#SKIP}
      * @throws NoUserInputException    thrown if no input is received before the timeout, or the waiting thread is interrupted
      * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution is cancelled while waiting
      */
-    public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
+    public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged, final UserInputPrompt prompt) {
         final long id = register(trackerName, message);
-        LOGGER.info("Waiting for user input in the web UI: {}", message);
+        LOGGER.info("Waiting for user input: {}", message);
 
+        Runnable closePrompt = () -> {
+        };
         try {
+            closePrompt = prompt.show(id);
             waitForResponse(id, pageChanged);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -84,6 +89,7 @@ public final class UserInputRequests {
             } finally {
                 LOCK.unlock();
             }
+            closePrompt.run();
         }
     }
 
@@ -153,6 +159,25 @@ public final class UserInputRequests {
                 }
             }
             return pending;
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
+     * Retrieves a request if it is still waiting for a user input.
+     *
+     * @param id the {@link PendingUserInput#id()}
+     * @return the {@link PendingUserInput}, or {@link Optional#empty()} if the request has finished
+     */
+    public static Optional<PendingUserInput> find(final long id) {
+        LOCK.lock();
+        try {
+            final Request request = PENDING.get(id);
+            if (request == null || request.response != null) {
+                return Optional.empty();
+            }
+            return Optional.of(request.toView());
         } finally {
             LOCK.unlock();
         }
