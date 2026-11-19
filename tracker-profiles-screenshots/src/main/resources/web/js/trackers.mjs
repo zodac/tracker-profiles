@@ -412,9 +412,9 @@ function renderTrackersWithMove(moved) {
     })
 }
 
-// ---------------------------------------------------------------------------------------------------------------
-// Trackers: selecting several trackers (Ctrl/Cmd+click, Ctrl/Cmd+Shift+click for a range) to change them together
-// ---------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------------
+// Trackers: selecting trackers to change them together (click selects one, Ctrl/Cmd+click adds or removes one, Shift+click a range)
+// ---------------------------------------------------------------------------------------------------------------------------
 
 export const selectedTrackers = new Set()
 let selectionAnchor = null
@@ -424,34 +424,52 @@ function isRowControl(target) {
     return Boolean(target.closest('input, button, a, label.switch, .tracker-screenshots'))
 }
 
+// The trackers shown between the anchor (the last tracker clicked without Shift) and this one, in the order they are listed
+function trackersInRange(name) {
+    const names = Array.from(document.querySelectorAll('#tracker-groups .tracker-row')).map(function (element) {
+        return element.dataset.name
+    })
+    const from = names.indexOf(selectionAnchor)
+    const to = names.indexOf(name)
+    if (from === -1 || to === -1) {
+        return null
+    }
+    return names.slice(Math.min(from, to), Math.max(from, to) + 1)
+}
+
 function onTrackerRowClick(event, name) {
-    if (!(event.ctrlKey || event.metaKey) || isRowControl(event.target)) {
+    // Alt+click is left to the browser, so the text of a row can still be selected
+    if (event.altKey || isRowControl(event.target)) {
         return
     }
     event.preventDefault()
+    const toggle = event.ctrlKey || event.metaKey
 
-    if (event.shiftKey && selectionAnchor) {
-        // The trackers shown between the last clicked tracker and this one, in the order they are listed
-        const names = Array.from(document.querySelectorAll('#tracker-groups .tracker-row')).map(function (element) {
-            return element.dataset.name
-        })
-        const from = names.indexOf(selectionAnchor)
-        const to = names.indexOf(name)
-        if (from !== -1 && to !== -1) {
-            names.slice(Math.min(from, to), Math.max(from, to) + 1).forEach(function (rangeName) {
-                selectedTrackers.add(rangeName)
-            })
-            renderSelection()
-            return
+    const range = event.shiftKey && selectionAnchor && selectedTrackers.size > 0 ? trackersInRange(name) : null
+    if (range) {
+        // Shift+click replaces the selection with the range, Ctrl/Cmd+Shift+click adds the range to it
+        if (!toggle) {
+            selectedTrackers.clear()
         }
-    }
-
-    if (selectedTrackers.has(name)) {
-        selectedTrackers.delete(name)
+        range.forEach(function (rangeName) {
+            selectedTrackers.add(rangeName)
+        })
+    } else if (toggle) {
+        if (selectedTrackers.has(name)) {
+            selectedTrackers.delete(name)
+        } else {
+            selectedTrackers.add(name)
+        }
+        selectionAnchor = name
+    } else if (selectedTrackers.size === 1 && selectedTrackers.has(name)) {
+        // Clicking the only selected tracker again deselects it
+        selectedTrackers.clear()
+        selectionAnchor = null
     } else {
+        selectedTrackers.clear()
         selectedTrackers.add(name)
+        selectionAnchor = name
     }
-    selectionAnchor = name
     renderSelection()
 }
 
@@ -774,10 +792,12 @@ function createTrackerRow(tracker) {
     row.addEventListener('click', function (event) {
         onTrackerRowClick(event, current.name)
     })
-    // Stops Ctrl/Shift+click from selecting the text of the rows
+    // Clicks select the row rather than its text, unless Alt is held
     row.addEventListener('mousedown', function (event) {
-        if ((event.ctrlKey || event.metaKey) && !isRowControl(event.target)) {
+        if (!event.altKey && !isRowControl(event.target)) {
             event.preventDefault()
+            // Preventing the default also keeps any text already selected, which a click would usually clear
+            window.getSelection().removeAllRanges()
         }
     })
 

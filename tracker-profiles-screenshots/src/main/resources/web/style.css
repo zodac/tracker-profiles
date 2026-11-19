@@ -17,6 +17,7 @@
     --danger-soft: #fbe6e4;
     --changed: #8b4fd6;
     --changed-soft: #f1e8fc;
+    --selected: #0a84ff;
     --log-bg: #11151c;
     --log-text: #d6dbe3;
     --log-muted: #7d8696;
@@ -46,6 +47,7 @@
     --danger-soft: #3a1b19;
     --changed: #b48af0;
     --changed-soft: #2b2140;
+    --selected: #3d9bff;
     --log-bg: #0a0d12;
     --shadow: none;
 }
@@ -1587,16 +1589,20 @@ a.icon-button {
     overflow-anchor: none;
 }
 
-/* Trackers selected (with Ctrl+click) to change together */
+/* Trackers selected to change together, marked with a bar on the left (like a changed setting) */
 .tracker-row.selected {
-    background: var(--accent-soft);
-    box-shadow: inset 3px 0 0 var(--accent);
+    box-shadow: inset 4px 0 0 var(--selected);
 }
 
+/* Floats just under the header, over the trackers, so showing or hiding it never moves the rows */
 .selection-bar {
-    position: sticky;
+    position: fixed;
     top: 64px;
-    z-index: 5;
+    left: 50%;
+    z-index: 9;
+    width: min(720px, calc(100% - 32px));
+    transform: translateX(-50%);
+    animation: selection-bar-in 0.15s ease-out;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1606,6 +1612,13 @@ a.icon-button {
     border-radius: var(--radius);
     background: var(--surface);
     box-shadow: 0 6px 18px rgba(16, 24, 40, 0.15);
+}
+
+@keyframes selection-bar-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -6px);
+    }
 }
 
 .selection-count {
