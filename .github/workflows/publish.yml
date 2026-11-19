@@ -7,6 +7,7 @@ on:
       - 'code-quality-config' # Submodule gitlink: a bump changes only this path, never the files inside it
       - 'code-quality-config-overrides/**'
       - 'docker/**'
+      - 'python/**'
       - 'tracker-profiles-screenshots/**'
       - 'pom.xml'
   workflow_dispatch: # allows manual trigger
@@ -38,10 +39,27 @@ jobs:
           SONARQUBE_PAT: ${{ secrets.SONARQUBE_RW_PAT }}
         run: mvn clean install -Dall -Dsonarqube
 
+  python-lint:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          submodules: true # code-quality-config: holds the shared ruff config
+
+      - name: Install Ruff
+        run: pip install ruff==0.17.6
+
+      - name: Run Ruff
+        run: ruff check python --config code-quality-config/python/ruff.toml
+
   docker-publish:
     name: Publish Docker Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: [ test, python-lint ]
     timeout-minutes: 30
     permissions:
       contents: write

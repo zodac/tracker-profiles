@@ -25,6 +25,8 @@ import java.time.Duration;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.cloudflare.CloudflareResult;
 import net.zodac.tracker.framework.cloudflare.CloudflareSolver;
+import net.zodac.tracker.framework.cloudflare.ZendriverCloudflareSolver;
+import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.JavaWebDriverFactory;
 import net.zodac.tracker.framework.exception.CloudflareVerificationException;
 import net.zodac.tracker.framework.gui.DisplayUtils;
@@ -67,7 +69,10 @@ public interface HasCloudflareCheck {
         logger.debug("Performing Cloudflare verification check");
 
         browserInteractionHelper.waitForPageToLoad(pageLoadDuration);
-        final CloudflareResult result = CloudflareSolver.forDriver(driver).solve();
+        final CloudflareResult result = switch (Configuration.get().cloudflareSolver()) {
+            case BUILTIN -> CloudflareSolver.forDriver(driver).solve();
+            case ZENDRIVER -> ZendriverCloudflareSolver.forDriver(driver).solve();
+        };
         if (result.passed()) {
             logger.debug("Cloudflare verification passed");
             return;

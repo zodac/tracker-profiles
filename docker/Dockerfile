@@ -104,6 +104,30 @@ RUN SECRET_KEY=appcds-training-secret \
         -jar /app/tracker-profiles.jar 2>/dev/null; \
     [ -f /app/app.jsa ] || touch /app/app.jsa
 
+# Python virtual environment with zendriver, for the zendriver Cloudflare solver (see python/cloudflare_check.py)
+# Built on the same base image as the runtime, so the virtual environment's interpreter link matches the runtime's python3
+FROM debian:13.7-slim AS python_builder
+# Install required applications using 'tracker-profiles/.github/scripts/update_dependency_versions.sh'
+# - python3 (Python interpreter, matching the runtime's)
+# - python3-venv (virtual environment for zendriver)
+# BEGIN DEBIAN PACKAGES
+RUN apt-get update && \
+    apt-get install -yqq --no-install-recommends \
+        python3="3.13.5-1" \
+        python3-venv="3.13.5-1" \
+    && \
+    apt-get autoremove && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+# END DEBIAN PACKAGES
+COPY ./python/requirements.txt /app/python/requirements.txt
+COPY ./python/cloudflare_check.py /app/python/cloudflare_check.py
+# The bytecode is compiled now, since the root file system is read-only when the container runs
+RUN python3 -m venv /app/python/venv && \
+    /app/python/venv/bin/pip install --no-cache-dir -r /app/python/requirements.txt && \
+    /app/python/venv/bin/pip uninstall -yq pip && \
+    /app/python/venv/bin/python -m compileall -q /app/python
+
 # Runtime
 FROM debian:13.7-slim AS runtime
 # Set the working directory
@@ -133,6 +157,7 @@ ENV NO_AT_BRIDGE=1
 # - chromium-driver (chromedriver matching the web browser version)
 # - fonts-arphic-ukai (Chinese fonts)
 # - fonts-ipafont (Japanese fonts)
+# - python3 (zendriver Cloudflare solver)
 # - wmctrl (force browser to be active window)
 # BEGIN DEBIAN PACKAGES
 RUN apt-get update && \
@@ -142,6 +167,7 @@ RUN apt-get update && \
         chromium-driver="156.0.8078.79-1~deb13u1" \
         fonts-arphic-ukai="0.2.20080216.2-5" \
         fonts-ipafont="00303-23" \
+        python3="3.13.5-1" \
         wmctrl="1.07+git20240228.1105759-1" \
     && \
     apt-get autoremove && \
@@ -161,6 +187,10 @@ COPY ./docker/browser_extensions/ublock_origin_lite_ddkjiahejlhfcafbddmgiahcphec
 
 # Copy scripts
 COPY --chmod=755 ./docker/scripts/start.sh /app/start.sh
+
+# Copy the zendriver Cloudflare solver (see ZendriverCloudflareSolver), never writing bytecode since the root file system is read-only
+COPY --from=python_builder /app/python /app/python
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Copy the SQLite native library (see start.sh)
 COPY --from=java_app_builder /app/native/libsqlitejdbc.so /app/native/libsqlitejdbc.so

@@ -16,6 +16,7 @@
 #                    java        - Run Java lints and tests with Maven
 #                    javascript  - Lint JavaScript files with eslint
 #                    markdown    - Lint Markdown files with markdownlint-cli2
+#                    python      - Lint Python files with ruff
 #
 #                  Examples:
 #                    ./lint_and_tests.sh
@@ -41,8 +42,9 @@ JAVA_BUILD_IMAGE="local/tracker-profiles-builder:latest"
 JDK_DOCKER_IMAGE="eclipse-temurin:27_35-jdk"
 MARKDOWNLINT_DOCKER_IMAGE="davidanson/markdownlint-cli2:v0.24.0"
 MAVEN_DOCKER_IMAGE="maven:3.10.0"
+RUFF_DOCKER_IMAGE="ghcr.io/astral-sh/ruff:0.17.6"
 
-VALID_STEPS=("docker" "java" "javascript" "markdown")
+VALID_STEPS=("docker" "java" "javascript" "markdown" "python")
 
 overall_exit_code=0
 
@@ -150,6 +152,23 @@ EOF
     fi
 }
 
+run_python() {
+    echo
+    echo "Running Python lint using [${RUFF_DOCKER_IMAGE}]"
+    docker pull "${RUFF_DOCKER_IMAGE}" >/dev/null
+    if output=$(docker run --rm \
+        -v "${PWD}":/app \
+        -w /app \
+        "${RUFF_DOCKER_IMAGE}" \
+        check python --config code-quality-config/python/ruff.toml 2>&1); then
+        echo "✅ Python lint passed"
+    else
+        echo "${output}"
+        echo "❌ Python lint failed"
+        overall_exit_code=1
+    fi
+}
+
 detect_changed_steps() {
     local latest_tag
     latest_tag=$(git tag --sort=-version:refname 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
@@ -162,7 +181,7 @@ detect_changed_steps() {
 
     echo "Checking changes since tag [${latest_tag}]..." >&2
 
-    local run_docker=false run_java=false run_javascript=false run_markdown=false
+    local run_docker=false run_java=false run_javascript=false run_markdown=false run_python=false
     local shared_config_changed=false
     local java_changed_files=()
     local file
@@ -180,6 +199,7 @@ detect_changed_steps() {
         fi
         [[ "${file}" =~ ^tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor/ ]] && run_javascript=true
         [[ "${file}" =~ \.md$ && "${file}" != "RELEASE_NOTES.md" ]] && run_markdown=true
+        [[ "${file}" =~ ^python/.*\.py$ ]] && run_python=true
     done < <(
         {
             git diff --name-only "${latest_tag}..HEAD"
@@ -212,6 +232,7 @@ detect_changed_steps() {
         run_java=true
         run_javascript=true
         run_markdown=true
+        run_python=true
     fi
 
     # A bump to any docker image pinned in this script must re-trigger the matching step,
@@ -231,12 +252,14 @@ detect_changed_steps() {
         grep -qE '^[+-][[:space:]]*(ESLINT_BUILD_IMAGE|ESLINT_NODE_IMAGE)='               <<<"${script_diff}" && run_javascript=true
         grep -qE '^[+-][[:space:]]*(JAVA_BUILD_IMAGE|JDK_DOCKER_IMAGE|MAVEN_DOCKER_IMAGE)=' <<<"${script_diff}" && run_java=true
         grep -qE '^[+-][[:space:]]*MARKDOWNLINT_DOCKER_IMAGE='                            <<<"${script_diff}" && run_markdown=true
+        grep -qE '^[+-][[:space:]]*RUFF_DOCKER_IMAGE='                                    <<<"${script_diff}" && run_python=true
     fi
 
     [[ "${run_docker}"     == true ]] && echo "docker"
     [[ "${run_java}"       == true ]] && echo "java"
     [[ "${run_javascript}" == true ]] && echo "javascript"
     [[ "${run_markdown}"   == true ]] && echo "markdown"
+    [[ "${run_python}"     == true ]] && echo "python"
 }
 
 # Parse and validate steps
@@ -268,6 +291,7 @@ for step in "${steps[@]}"; do
     java) run_java ;;
     javascript) run_javascript ;;
     markdown) run_markdown ;;
+    python) run_python ;;
     esac
 done
 

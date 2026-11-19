@@ -2,24 +2,30 @@
 # ------------------------------------------------------------------------------
 # Script Name:     update_dependency_versions.sh
 #
-# Description:     Updates version-pinned package declarations in a Dockerfile. Fetches the
-#                  latest versions of Debian and Ubuntu packages, then rewrites the
-#                  Dockerfile with those values.
+# Description:     Updates version-pinned package declarations in both a Dockerfile
+#                  and a Python requirements.txt file. Fetches the latest versions
+#                  of Debian, Ubuntu, and Python pip packages, then rewrites the
+#                  Dockerfile and requirements files with those values.
 #
-# Usage:           ./update_dependency_versions.sh <path_to_Dockerfile>
+# Usage:           ./update_dependency_versions.sh <path_to_Dockerfile> <path_to_requirements.txt>
 #
 # Requirements:
 #   - bash, awk, grep, jq, curl
 #   - Dockerfile must contain specific marker comments for package installs:
 #       # BEGIN DEBIAN PACKAGES / # END DEBIAN PACKAGES
 #       # BEGIN UBUNTU PACKAGES / # END UBUNTU PACKAGES
-#   - Internet access to fetch latest versions from apt
+#   - requirements.txt should contain lines in the format: `package>=version` or `package==version`
+#   - Internet access to fetch latest versions from PyPI and apt
 #
 # Behavior:
 #   - For the Dockerfile:
 #       - Updates Debian packages (defined in the Dockerfile) with the latest candidate versions from apt
 #       - Updates Ubuntu packages (defined in the Dockerfile) with the latest candidate versions from apt
 #       - Rewrites the install blocks in the Dockerfile between respective markers
+#   - For requirements.txt:
+#       - Updates packages defined with `>=` to their latest PyPI versions
+#       - Leaves `==` pinned packages untouched
+#       - Overwrites the original requirements.txt with the updated values
 #   - For pom.xml:
 #       - Runs `mvn versions:update-properties`
 #   - For ai-sandbox-configuration/Dockerfile:
@@ -40,6 +46,50 @@ DEBIAN_DOCKER_IMAGE_VERSION="13.7"
 # The sandbox image's project layer, and the ai-sandbox submodule whose update-versions bumps its Debian packages
 SANDBOX_DOCKERFILE="./ai-sandbox-configuration/Dockerfile"
 AI_SANDBOX_DIR="./ai-sandbox"
+
+get_pypi_version() {
+    version=$(curl -fsSL "https://pypi.org/pypi/${1}/json" | jq -r '.info.version // empty')
+    if [[ -z "$version" ]]; then
+        echo "⚠️ Could not fetch PyPI version for ${1}" >&2
+        return 1
+    fi
+    echo "$version"
+}
+
+update_requirements() {
+    for requirements in "$@"; do
+        name=$(basename "${requirements}")
+
+        echo
+        echo "🔍 Fetching ${name} versions from PyPI..."
+        while IFS= read -r line; do
+            # Match 'package>=version'
+            if [[ $line =~ ^([a-zA-Z0-9._-]+)'>='([0-9a-zA-Z._-]+)$ ]]; then
+                package="${BASH_REMATCH[1]}"
+                if ! latest_version=$(get_pypi_version "${package}"); then
+                    echo "  ⚠️ Skipping ${package} (keeping existing version)"
+                    echo "${line}" >>"${requirements}.tmp"
+                    continue
+                fi
+                echo "  ${package}=${latest_version}"
+                echo "${package}>=${latest_version}" >>"${requirements}.tmp"
+
+            # Match 'package==version'
+            elif [[ $line =~ ^([a-zA-Z0-9._-]+)'=='([0-9a-zA-Z._-]+)$ ]]; then
+                package="${BASH_REMATCH[1]}"
+                pinned_version="${BASH_REMATCH[2]}"
+                echo "  ${package}=${pinned_version} (pinned)"
+                echo "${line}" >>"${requirements}.tmp"
+            else
+                echo "${line}" >>"${requirements}.tmp"
+            fi
+        done <"${requirements}"
+
+        # Overwrite the original file
+        mv "${requirements}.tmp" "${requirements}"
+        echo "✅ ${requirements#./} updated successfully with latest packages"
+    done
+}
 
 update_debian_packages() {
     dockerfile="${1}"
@@ -388,6 +438,23 @@ update_lint_tool_versions() {
         fi
     fi
 
+    # ruff: GitHub releases use bare version tags (e.g. "0.11.0"), matching both the GHCR image tag and PyPI package version
+    local ruff_version
+    ruff_version=$(curl "${curl_args[@]}" "https://api.github.com/repos/astral-sh/ruff/releases/latest" | jq -r '.tag_name // empty')
+    if [[ -z "${ruff_version}" ]]; then
+        echo "  ⚠️ Could not fetch latest ruff version, skipping"
+    else
+        local pypi_status
+        pypi_status=$(curl -fsSL -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/ruff/${ruff_version}/json")
+        if [[ "${pypi_status}" != "200" ]]; then
+            echo "  ⚠️ ruff ${ruff_version} pip package not found on PyPI (HTTP ${pypi_status}), skipping to keep lint_and_tests.sh and publish.yml in sync"
+        else
+            echo "  ruff: ${ruff_version}"
+            sed -i "s|RUFF_DOCKER_IMAGE=\"ghcr.io/astral-sh/ruff:[^\"]*\"|RUFF_DOCKER_IMAGE=\"ghcr.io/astral-sh/ruff:${ruff_version}\"|" "${lint_script}"
+            sed -i "s|pip install ruff==[0-9.]*|pip install ruff==${ruff_version}|" ".github/workflows/publish.yml"
+        fi
+    fi
+
     echo "✅ Lint tool images updated in ${lint_script}"
 }
 
@@ -601,14 +668,20 @@ update_github_actions() {
 
 # Default paths assume the script is being run from the root of the project
 dockerfile="${1:-./docker/Dockerfile}"
+requirements="${2:-./python/requirements.txt}"
 
 if [[ ! -f "${dockerfile}" ]]; then
     echo "❌ Dockerfile not found: ${dockerfile}"
     exit 1
 fi
+if [[ ! -f "${requirements}" ]]; then
+    echo "❌ Python requirements.txt not found: ${requirements}"
+    exit 1
+fi
 
 update_debian_image_version "${dockerfile}" || echo "⚠️ Debian image version update failed, continuing..."
 update_debian_packages "${dockerfile}"      || echo "⚠️ Debian packages update failed, continuing..."
+update_requirements "${requirements}"       || echo "⚠️ Python requirements update failed, continuing..."
 update_pom_versions                         || echo "⚠️ Maven versions update failed, continuing..."
 update_maven_version "${dockerfile}"        || echo "⚠️ Maven version update failed, continuing..."
 update_java_version "${dockerfile}"         || echo "⚠️ Java version update failed, continuing..."
