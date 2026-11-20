@@ -81,8 +81,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   handlers. `stop()` (also run by a shutdown hook) closes the database.
 - **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `BrowserApiHandler` (`/api/browser`, see
   [Live Browser View](#live-browser-view)), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
-  `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`, and
-  `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one transaction), `SettingsApiHandler` (`/api/settings`),
+  `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`,
+  `GET /api/trackers/export` for a CSV file written by `TrackerCsvWriter` (every supported tracker with a username and password, or only the header
+  row if none, so it doubles as a sample file), and `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one
+  transaction), `SettingsApiHandler` (`/api/settings`),
   `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`, keeping each file in memory with an
   `ETag`). API handlers
   extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
@@ -94,7 +96,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   connection (WAL journal, `synchronous=NORMAL`), which holds a lock for each statement or transaction (`query`, `exists`, `update`, `batch`,
   `inTransaction`): SQLite allows one writer, so a connection pool would not help. Keep all SQL in the repositories, as constants using numbered
   parameters (`?1`), and wrap any multi-statement change in `inTransaction`. Lists for the web UI use `credentials().findAllStatuses()`, which never
-  decrypts a password; only an execution decrypts them (`credentials().findAll()`). Passwords are never returned by the API; a `null` password on save
+  decrypts a password; only an execution and the CSV export decrypt them (`credentials().findAll()`). Apart from the CSV export (a file download, so
+  that it can be imported again), passwords are never returned by the API; a `null` password on save
   keeps the stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in
   `js/constants.mjs`). Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the
   required `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if

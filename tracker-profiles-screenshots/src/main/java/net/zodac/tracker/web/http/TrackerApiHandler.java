@@ -20,6 +20,8 @@ package net.zodac.tracker.web.http;
 import com.google.gson.annotations.SerializedName;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerCsvReader;
+import net.zodac.tracker.framework.TrackerCsvWriter;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import net.zodac.tracker.framework.exception.InvalidCsvInputException;
@@ -48,7 +51,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Handles requests to list every tracker with its stored credentials, most recent result and its latest screenshots
  * ({@code GET}), save the credentials for a
- * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), and remove the stored credentials for a tracker
+ * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), export the credentials of every supported tracker
+ * with a username and password as a CSV file ({@code GET /api/trackers/export}), and remove the stored credentials for a tracker
  * ({@code DELETE /api/trackers/{name}}).
  *
  * <p>
@@ -59,7 +63,8 @@ import org.jspecify.annotations.Nullable;
  * tracker, and nothing stored for it is carried over to its new name.
  *
  * <p>
- * Passwords are never returned to the client; only whether a password has been saved.
+ * Passwords are never returned to the client (only whether a password has been saved), except in the CSV file downloaded from
+ * {@code GET /api/trackers/export}, so that it can be imported again.
  */
 public final class TrackerApiHandler extends ApiHandler {
 
@@ -70,6 +75,8 @@ public final class TrackerApiHandler extends ApiHandler {
 
     private static final String IMPORT_PATH = "import";
     private static final String BULK_PATH = "bulk";
+    private static final String EXPORT_PATH = "export";
+    private static final String EXPORT_FILE_NAME = "trackers.csv";
 
     private final ApplicationDatabase applicationDatabase;
     private final RunManager runManager;
@@ -93,7 +100,31 @@ public final class TrackerApiHandler extends ApiHandler {
 
     @Override
     protected void handleGet(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException, SQLException {
+        if (EXPORT_PATH.equals(pathParameter)) {
+            sendExport(exchange);
+            return;
+        }
         sendJson(exchange, HttpStatus.OK, listTrackers());
+    }
+
+    // Every supported tracker with a username and password (enabled or not), which is only the header row if there are none
+    private void sendExport(final HttpExchange exchange) throws IOException, SQLException {
+        final List<TrackerCredential> credentials = applicationDatabase.credentials().findAll()
+            .stream()
+            .filter(credential -> !credential.username().isBlank() && credential.hasPassword())
+            .filter(credential -> TrackerHandlerFactory.findMatchingHandler(credential.name()).isPresent())
+            .map(StoredTrackerCredential::toTrackerCredential)
+            .toList();
+
+        final byte[] csv = TrackerCsvWriter.write(credentials).getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/csv; charset=utf-8");
+        exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"%s\"".formatted(EXPORT_FILE_NAME));
+        exchange.getResponseHeaders().set("Cache-Control", "no-store");
+        exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
+        exchange.sendResponseHeaders(HttpStatus.OK.code(), csv.length);
+        try (final OutputStream outputStream = exchange.getResponseBody()) {
+            outputStream.write(csv);
+        }
     }
 
     @Override

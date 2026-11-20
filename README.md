@@ -435,6 +435,12 @@ or prefixed with `#` so they are ignored. The tracker names are case-insensitive
 Each imported tracker is enabled, and replaces any credentials already saved for it. Trackers in the file that are not supported are listed after
 the import, and are not saved.
 
+**Export CSV** downloads `trackers.csv` with every supported tracker that has a username and password (enabled or disabled), in the same format, so
+it can be imported again (for example, into a new container). If no tracker has been set yet, the file only has the header row, and can be used as a
+template for the import.
+
+> **Note:** The exported file contains your passwords in plain text, so keep it somewhere safe and delete it once it is no longer needed.
+
 ### Running With Docker Compose
 
 The application is run with Docker Compose. Download [docker-compose.example.yml](./docs/docker-compose.example.yml) as `docker-compose.yml` into an

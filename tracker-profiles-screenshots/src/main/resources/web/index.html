@@ -79,6 +79,8 @@
         <div class="toolbar">
             <input type="search" id="tracker-search" class="search" placeholder="Search trackers" aria-label="Search trackers">
             <span id="tracker-summary" class="muted"></span>
+            <a id="export-button" class="button" href="/api/trackers/export" download
+               title="Download the trackers with a username and password (including the passwords), or a sample file if there are none">Export CSV</a>
             <button id="import-button" class="button primary" type="button">Import CSV</button>
             <input type="file" id="import-file" accept=".csv,text/csv" hidden>
         </div>

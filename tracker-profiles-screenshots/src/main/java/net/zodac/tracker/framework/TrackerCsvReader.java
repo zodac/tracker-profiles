@@ -54,6 +54,15 @@ public final class TrackerCsvReader {
     }
 
     /**
+     * The header row of a CSV file of tracker credentials.
+     *
+     * @return the names of the columns, in order
+     */
+    static List<String> headers() {
+        return List.of(CSV_HEADERS);
+    }
+
+    /**
      * Reads the CSV content, and converts each row into a {@link TrackerCredential}. Rows for a tracker with no matching handler are not returned
      * as credentials, but are listed in {@link CsvContent#unsupportedTrackers()}.
      *
