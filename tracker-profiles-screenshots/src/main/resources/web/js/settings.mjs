@@ -1,11 +1,10 @@
 import {
     DEFAULT_INPUT_TIMEOUT_SECONDS,
-    EXECUTION_ORDER_SETTING,
     INPUT_TIMEOUT_SETTING,
     LOG_LEVEL_SETTING,
     TYPING_SAVE_DELAY_MS,
 } from './constants.mjs'
-import {formatTypeName, isActive, latestStatus, renderRunReadiness} from './run.mjs'
+import {formatTypeName, isActive, latestStatus} from './run.mjs'
 import {renderTrackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, hasKey, pluralise, request, showToast} from './util.mjs'
 
@@ -49,7 +48,6 @@ export function loadSettings() {
         if (trackersLoaded) {
             renderTrackers()
         }
-        renderRunReadiness()
     })
 }
 
@@ -98,14 +96,8 @@ function renderRunOptions() {
 
 // A one-line summary of the main run options, shown when the run options are collapsed
 function renderRunOptionsSummary() {
-    const order = currentSettingValue(EXECUTION_ORDER_SETTING)
     const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
     const parts = []
-    if (order) {
-        parts.push(order.split(',').map(function (type) {
-            return formatTypeName(type.trim())
-        }).join(' → '))
-    }
     if (attempts) {
         parts.push(pluralise(Number(attempts), 'attempt'))
     }
@@ -593,7 +585,6 @@ function saveSetting(name) {
                 settingRows[rowName].refresh()
             })
             renderRunOptionsSummary()
-            renderRunReadiness()
             showToast(settingsSavedMessage(savedNames))
         })
         .catch(function (error) {

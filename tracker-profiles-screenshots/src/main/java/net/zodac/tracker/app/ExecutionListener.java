@@ -37,8 +37,7 @@ public interface ExecutionListener {
     };
 
     /**
-     * Called once the trackers to be executed are known, before any are executed. Every {@link TrackerType} with an enabled tracker is included,
-     * since {@link net.zodac.tracker.framework.config.ApplicationConfiguration#trackerExecutionOrder()} can be changed during the execution.
+     * Called once the trackers to be executed are known, before any are executed. Every {@link TrackerType} with an enabled tracker is included.
      *
      * @param trackerNamesByType the names of the trackers of each {@link TrackerType}, in the order they are executed
      */

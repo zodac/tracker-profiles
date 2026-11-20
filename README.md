@@ -93,12 +93,11 @@ Below are examples of the different types of redaction from the [MooKo](https://
 This is the fastest way to run the application (no UI configuration required, headless trackers only).
 
 Download the [example compose file](./docs/docker-compose.example.yml) into an empty directory, set a new secret to encrypt the stored
-passwords, run only the headless trackers, create the screenshot directory (writable by the container user, UID `1000`), and start the container:
+passwords, create the screenshot directory (writable by the container user, UID `1000`), and start the container:
 
 ```bash
 curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/zodac/tracker-profiles/master/docs/docker-compose.example.yml
 sed -i "s|change-me-strong-secret|$(openssl rand -base64 32)|" docker-compose.yml
-sed -i 's/TRACKER_EXECUTION_ORDER: "HEADLESS,MANUAL"/TRACKER_EXECUTION_ORDER: "HEADLESS"/' docker-compose.yml
 mkdir -p /tmp/screenshots
 docker compose up -d
 ```
@@ -278,7 +277,7 @@ The following trackers do not require a UI, and can be run in the background:
 
 ### Manual Interaction
 
-If any of the following trackers are enabled, and **MANUAL** is included in the tracker order, they run in a browser with a UI, in which you complete
+If any of the following trackers are enabled, they run (after the headless trackers) in a browser with a UI, in which you complete
 the step below. The browser runs inside the container and is shown in the web UI, which asks you when to complete each step, so nothing needs to be
 set up on the host (see [Web UI](#web-ui) and [Browser UI](#browser-ui)).
 
@@ -368,7 +367,7 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       application restarts (the screenshots are still saved to the output directory as before)
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - **Run options** (open until an execution is started) holds the [options](#configuration-options) you are most likely to change for an execution,
-      such as the tracker order, the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
+      such as the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
       progress
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
@@ -495,7 +494,6 @@ These options apply from the next execution.
 | *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                           | 5               |
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                 | 1               |
 | *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                  | false           |
-| *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed, at least one must be selected (case-insensitive)                                                     | HEADLESS,MANUAL |
 
 #### Settings
 
@@ -680,7 +678,6 @@ mvn clean install && \
     SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
     TAKE_SCREENSHOT_ON_ERROR=true \
     TIMEZONE=UTC \
-    TRACKER_EXECUTION_ORDER=HEADLESS,MANUAL \
     java \
         --enable-preview \
         -Xms128m -Xmx512m \

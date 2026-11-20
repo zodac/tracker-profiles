@@ -4,12 +4,11 @@ The application is now run entirely through a web UI (on port `8080`, set with `
 exiting. The container keeps running, and each execution is started from the browser:
 
 - **Main**: start or cancel an execution and follow its progress. Each tracker is listed with its current step, attempt and duration, and can be
-  expanded to see its own logs, grouped by step. The run options you are most likely to change (tracker order, attempts, log level, etc.) are shown
+  expanded to see its own logs, grouped by step. The run options you are most likely to change (attempts, log level, etc.) are shown
   here, and are locked while an execution is in progress. An expanded tracker shows thumbnails of its screenshots (or its failure screenshot), which
   open in a gallery to move between the redaction types. Each screenshot can be downloaded, as can all screenshots of a tracker, or the latest
   screenshots of every tracker that has succeeded in any execution (as a `.zip` file, while they are still on disk). After an execution in which some
-  trackers failed, **Failures only** executes just those trackers again. If enabled trackers are of a type left out of the tracker order (such as
-  manual trackers), a warning says they will not be executed, and **Start** is disabled when there is nothing to execute
+  trackers failed, **Failures only** executes just those trackers again
 - **Trackers**: the credentials of every supported tracker, grouped as enabled, disabled or unset, with the result of its most recent execution and
   the screenshots of its most recent execution (kept across restarts, shown by expanding its row). Credentials can be imported from a CSV file, and
   several trackers can be selected (`Ctrl`+click, or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together
@@ -46,6 +45,8 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
     - `PROGRESS_BAR_LENGTH`
     - `TRACKER_INPUT_FILE_PATH`
 - `FORCE_UI_BROWSER` is removed, as the browser of any tracker in progress (headless or not) can be watched in the web UI
+- `TRACKER_EXECUTION_ORDER` is removed, as trackers are enabled or disabled on the **Trackers** tab: headless trackers are always executed first,
+  then manual trackers
 - New options: `DATABASE_PATH`, `SECRET_KEY` and `WEB_UI_PORT`
 
 ## Docker Compose

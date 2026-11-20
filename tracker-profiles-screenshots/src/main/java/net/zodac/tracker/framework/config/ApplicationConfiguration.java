@@ -56,7 +56,6 @@ import org.apache.logging.log4j.Logger;
  * @param secretKey                  the secret used to encrypt the passwords stored in the database
  * @param takeScreenshotOnError      whether to take a screenshot of the current page if an error occurs during screenshotting
  * @param timezone                   the local timezone, used for the name of the output directory and of downloaded screenshot archives
- * @param trackerExecutionOrder      the execution order of the different {@link TrackerType}s
  * @param webUiPort                  the port on which the web UI is served
  */
 public record ApplicationConfiguration(
@@ -74,7 +73,6 @@ public record ApplicationConfiguration(
     String secretKey,
     boolean takeScreenshotOnError,
     ZoneId timezone,
-    Set<TrackerType> trackerExecutionOrder,
     int webUiPort
 ) {
 
@@ -138,7 +136,6 @@ public record ApplicationConfiguration(
             source.get(ConfigurationOption.SECRET_KEY),
             source.bool(ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
             timezone,
-            source.multiSelect(ConfigurationOption.TRACKER_EXECUTION_ORDER, TrackerType::valueOf),
             source.integer(ConfigurationOption.WEB_UI_PORT)
         );
     }

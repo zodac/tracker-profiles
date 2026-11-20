@@ -23,7 +23,6 @@ services:
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"
       TAKE_SCREENSHOT_ON_ERROR: "false"
-      TRACKER_EXECUTION_ORDER: "HEADLESS,MANUAL"  # Set to "HEADLESS" to only run trackers that need no user input
       # Browser configuration (can also be changed on the 'Settings' tab of the web UI)
       BROWSER_RESOLUTION: "1680x1050"
       ENABLE_TRANSLATION_TO_ENGLISH: "true"

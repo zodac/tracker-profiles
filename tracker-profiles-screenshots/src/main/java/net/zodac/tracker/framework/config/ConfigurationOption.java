@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import org.jspecify.annotations.Nullable;
 
@@ -121,12 +120,6 @@ public enum ConfigurationOption {
      */
     TIMEZONE(Tab.SETTINGS, "Output", "Timezone", "UTC", OptionType.STRING, List.of(),
         "The local timezone, used for the date in the names of the output directory and of downloaded screenshots", Scope.EXECUTION),
-
-    /**
-     * The execution order of tracker types.
-     */
-    TRACKER_EXECUTION_ORDER(Tab.MAIN, "Execution", "Tracker order", "HEADLESS,MANUAL", OptionType.MULTI_SELECT, names(TrackerType.values()),
-        "The order in which different tracker types should be executed, at least one must be selected", Scope.EXECUTION),
 
     /**
      * The web UI port.

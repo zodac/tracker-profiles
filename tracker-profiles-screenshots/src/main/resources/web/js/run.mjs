@@ -1,5 +1,4 @@
 import {
-    EXECUTION_ORDER_SETTING,
     HIDDEN_POLL_INTERVAL_MS,
     IDLE_POLL_INTERVAL_MS,
     INPUT_POLL_INTERVAL_MS,
@@ -10,7 +9,7 @@ import {
 import {createBrowserView, startBrowserView} from './browser-view.mjs'
 import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs'
 import {updateExecutionDownload} from './screenshots.mjs'
-import {applyRunStateToSettings, currentSettingValue, findSetting} from './settings.mjs'
+import {applyRunStateToSettings} from './settings.mjs'
 import {loadTrackers, trackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
@@ -39,105 +38,15 @@ export function formatTypeName(value) {
     return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
-// Legacy trackers are never executed, even if they were enabled before they stopped being supported
-function enabledTrackers() {
-    return trackers.filter(function (tracker) {
-        return tracker.enabled && !tracker.legacy
-    })
-}
-
-// The tracker types executed, in order (from the saved run option), or null until the settings are loaded
-function executedTrackerTypes() {
-    const order = currentSettingValue(EXECUTION_ORDER_SETTING)
-    if (order === null) {
-        return null
-    }
-    return order.split(',').map(function (type) {
-        return type.trim()
-    }).filter(Boolean)
-}
-
-// The enabled trackers that an execution would leave out, as their type is not in the tracker order, counted by type
-function excludedTrackerCounts() {
-    const types = executedTrackerTypes()
-    const counts = {}
-    if (!trackersLoaded || types === null) {
-        return counts
-    }
-    enabledTrackers().forEach(function (tracker) {
-        if (!types.includes(tracker.type)) {
-            counts[tracker.type] = (counts[tracker.type] || 0) + 1
-        }
-    })
-    return counts
-}
-
-// Why an execution would have no tracker to execute, or null if it would (or this is not yet known)
-function nothingToExecuteReason() {
-    if (!trackersLoaded) {
-        return null
-    }
-    const enabled = enabledTrackers()
-    if (enabled.length === 0) {
-        return 'No trackers are enabled'
-    }
-    const excluded = Object.values(excludedTrackerCounts()).reduce(function (total, count) {
-        return total + count
-    }, 0)
-    return excluded === enabled.length ? 'None of the enabled trackers are included in the tracker order run option' : null
-}
-
-// Where the run options are, from where the warning is shown
-function excludedTrackersWarning(runOptionsLocation) {
-    const counts = excludedTrackerCounts()
-    const types = Object.keys(counts)
-    if (types.length === 0) {
-        return null
-    }
-
-    const setting = findSetting(EXECUTION_ORDER_SETTING)
-    const optionLabel = setting ? setting.label : 'Tracker order'
-    const excluded = types.map(function (type) {
-        return pluralise(counts[type], `enabled ${type.toLowerCase()} tracker`)
-    }).join(' and ')
-    const typeNames = types.map(function (type) {
-        return type.toLowerCase()
-    }).join(' and ')
-    const message = `${excluded} will not be executed, as ${typeNames} trackers are not included in the "${optionLabel}" run option`
-    return nothingToExecuteReason() === null
-        ? `${message}.`
-        : `${message}, so there is nothing to execute. Include them in the run options ${runOptionsLocation} to start an execution.`
-}
-
-// Updates the Start button and the warning about enabled trackers that would not be executed, whenever the trackers, the run options or the
-// execution status change
-export function renderRunReadiness() {
-    const active = isActive(latestStatus)
-    const reason = active ? null : nothingToExecuteReason()
-    const startButton = byId('start-button')
-    startButton.disabled = active || reason !== null
-    startButton.title = reason === null ? '' : `${reason}, so there is nothing to execute`
-
-    // The Trackers tab shows the same warning, since that is where the trackers are enabled
-    showWarning(byId('run-warning'), active ? null : excludedTrackersWarning('below'))
-    showWarning(byId('trackers-warning'), active ? null : excludedTrackersWarning('on the Main tab'))
-
-    if (latestStatus) {
-        byId('run-description').textContent = runDescription(latestStatus)
-    }
-}
-
-function showWarning(element, warning) {
-    element.hidden = warning === null
-    element.textContent = warning || ''
-}
-
 function enabledTrackersDescription() {
     if (!trackersLoaded) {
         return 'Takes a screenshot of the profile page of every enabled tracker.'
     }
 
-    const enabled = enabledTrackers()
+    // Legacy trackers are never executed, even if they were enabled before they stopped being supported
+    const enabled = trackers.filter(function (tracker) {
+        return tracker.enabled && !tracker.legacy
+    })
     if (enabled.length === 0) {
         return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab.'
     }
@@ -188,7 +97,9 @@ function renderStatus(status) {
     headerStatus.textContent = STATE_LABELS[headerState] || headerState
     document.title = waiting ? `(Input needed) ${PAGE_TITLE}` : PAGE_TITLE
 
-    byId('start-button').textContent = active ? 'Running…' : 'Start'
+    const startButton = byId('start-button')
+    startButton.disabled = active
+    startButton.textContent = active ? 'Running…' : 'Start'
 
     // Only the trackers that failed in the previous execution can be executed again, once it has ended
     const failedTrackers = status.failedTrackers
@@ -204,7 +115,7 @@ function renderStatus(status) {
     cancelButton.disabled = cancelling
     cancelButton.textContent = cancelling ? 'Cancelling…' : 'Cancel'
 
-    renderRunReadiness()
+    byId('run-description').textContent = runDescription(status)
 
     const succeeded = countTrackers(status, 'SUCCEEDED')
     const failed = countTrackers(status, 'FAILED')

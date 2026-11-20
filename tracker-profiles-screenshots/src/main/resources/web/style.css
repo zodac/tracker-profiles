@@ -524,7 +524,7 @@ select:disabled {
     font-weight: 500;
 }
 
-/* Wide controls (such as the tracker order) go on their own line, below the label */
+/* Wide controls (such as the redaction types) go on their own line, below the label */
 .option-row.wide .option-control {
     grid-column: 1 / -1;
     justify-content: space-between;
@@ -552,7 +552,7 @@ select:disabled {
     grid-column: 1 / -1;
 }
 
-/* Ordered choices (e.g. tracker order, redaction types), dragged into order */
+/* Ordered choices (e.g. redaction types), dragged into order */
 
 .sortable {
     display: flex;
@@ -1461,16 +1461,6 @@ a.icon-button {
     display: flex;
     flex: none;
     gap: 8px;
-}
-
-.run-warning {
-    margin: 16px 0 0;
-    font-size: 13px;
-}
-
-.trackers-warning {
-    margin: 0 0 16px;
-    font-size: 13px;
 }
 
 .run-progress {

@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +36,6 @@ class ApplicationConfigurationTest {
         final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of(
             "NUMBER_OF_PARALLEL_THREADS", "7",
             "REDACTION_TYPE", "BLUR,BOX",
-            "TRACKER_EXECUTION_ORDER", "MANUAL",
             "BROWSER_RESOLUTION", "1920x1080"
         ));
 
@@ -46,8 +43,6 @@ class ApplicationConfigurationTest {
             .isEqualTo(7);
         assertThat(applicationConfiguration.redactionTypes())
             .containsExactly(RedactionType.BLUR, RedactionType.BOX);
-        assertThat(applicationConfiguration.trackerExecutionOrder())
-            .isEqualTo(Set.of(TrackerType.MANUAL));
         assertThat(applicationConfiguration.browserDimensions())
             .isEqualTo("1920,1080");
     }

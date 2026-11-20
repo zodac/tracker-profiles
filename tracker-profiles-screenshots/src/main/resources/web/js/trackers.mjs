@@ -1,5 +1,5 @@
 import {REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
-import {renderRunReadiness} from './run.mjs'
+import {latestStatus, runDescription} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
@@ -22,6 +22,9 @@ export function loadTrackers() {
         trackers = loaded
         trackersLoaded = true
         renderTrackers()
+        if (latestStatus) {
+            byId('run-description').textContent = runDescription(latestStatus)
+        }
     })
 }
 
@@ -225,7 +228,6 @@ export function renderTrackers() {
     }).length
     byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(supported.length, 'supported tracker')} enabled`
     renderSelection()
-    renderRunReadiness()
 }
 
 function formatLastRun(epochMillis) {

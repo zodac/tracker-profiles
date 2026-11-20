@@ -30,7 +30,6 @@ import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.ExitState;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.exception.ExecutionCancelledException;
@@ -54,7 +53,7 @@ public final class ScreenshotOrchestrator {
      * Orchestrates the profile screenshot process by performing the following.
      * <ol>
      *   <li>Ensuring the output directory exists</li>
-     *   <li>Executing screenshots for each {@link TrackerType} in {@link ApplicationConfiguration#trackerExecutionOrder()}</li>
+     *   <li>Executing screenshots for each {@link TrackerType}, in the order they are declared (headless trackers first, as they need no input)</li>
      *   <li>Collecting and reporting results</li>
      * </ol>
      *
@@ -66,8 +65,7 @@ public final class ScreenshotOrchestrator {
      */
     public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final ExecutionListener executionListener)
         throws IOException {
-        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
-        final int numberOfTrackers = countTrackersToExecute(trackersByType, trackerExecutionOrder);
+        final int numberOfTrackers = countTrackersToExecute(trackersByType);
         if (numberOfTrackers == 0) {
             LOGGER.error("No trackers selected!");
             return ExitState.FAILURE;
@@ -78,9 +76,9 @@ public final class ScreenshotOrchestrator {
         final ResultCollector resultCollector = ResultCollector.start();
         try {
             LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers));
-            TrackerRetriever.printTrackersInfo(trackersByType, trackerExecutionOrder);
+            TrackerRetriever.printTrackersInfo(trackersByType);
 
-            for (final TrackerType trackerType : trackerExecutionOrder) {
+            for (final TrackerType trackerType : TrackerType.values()) {
                 if (ExecutionCancellation.isCancelled()) {
                     break;
                 }
@@ -96,14 +94,14 @@ public final class ScreenshotOrchestrator {
             LOGGER.debug("Execution cancelled, not generating a summary");
             return ExitState.FAILURE;
         }
-        return resultCollector.generateSummary(trackerExecutionOrder);
+        return resultCollector.generateSummary(List.of(TrackerType.values()));
     }
 
-    private static int countTrackersToExecute(final Map<TrackerType, Set<TrackerCredential>> trackersByType,
-        final Set<TrackerType> trackerExecutionOrder) {
-        return trackerExecutionOrder
+    private static int countTrackersToExecute(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
+        return trackersByType
+            .values()
             .stream()
-            .mapToInt(trackerType -> trackersByType.getOrDefault(trackerType, Set.of()).size())
+            .mapToInt(Set::size)
             .sum();
     }
 

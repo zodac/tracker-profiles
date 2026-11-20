@@ -50,7 +50,6 @@ export const TRACKER_GROUPS = [
     {state: 'SUCCEEDED', title: 'Succeeded'},
 ]
 export const LOG_LEVEL_SETTING = 'LOG_LEVEL'
-export const EXECUTION_ORDER_SETTING = 'TRACKER_EXECUTION_ORDER'
 export const INPUT_TIMEOUT_SETTING = 'INPUT_TIMEOUT_SECONDS'
 // The timeout used when the input timeout is switched on, unless another was set before
 export const DEFAULT_INPUT_TIMEOUT_SECONDS = 300

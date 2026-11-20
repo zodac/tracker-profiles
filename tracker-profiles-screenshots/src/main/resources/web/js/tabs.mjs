@@ -10,9 +10,8 @@ const TAB_LOADERS = {
     main: function () {
         return loadSettings()
     },
-    // The settings are also needed for the warning about enabled trackers excluded by the tracker order run option
     trackers: function () {
-        return Promise.all([loadTrackers(), loadSettings()])
+        return loadTrackers()
     },
     settings: function () {
         return loadSettings()

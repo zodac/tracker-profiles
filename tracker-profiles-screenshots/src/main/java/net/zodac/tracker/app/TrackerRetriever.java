@@ -27,8 +27,6 @@ import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
-import net.zodac.tracker.framework.config.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,18 +42,15 @@ public final class TrackerRetriever {
     }
 
     /**
-     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}, or whose
-     * {@link TrackerType} is not in {@link ApplicationConfiguration#trackerExecutionOrder()}.
+     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}.
      *
      * @param trackerCredentials the {@link TrackerCredential}s to organise
      * @return {@link Map} of {@link TrackerType} to their credentials
      */
     public static Map<TrackerType, Set<TrackerCredential>> groupByType(final Collection<TrackerCredential> trackerCredentials) {
-        final Set<TrackerType> trackerExecutionOrder = Configuration.get().trackerExecutionOrder();
         final Map<TrackerType, Set<TrackerCredential>> trackersByType = new EnumMap<>(TrackerType.class);
         for (final TrackerCredential trackerCredential : trackerCredentials) {
             findHandler(trackerCredential)
-                .filter(handler -> trackerExecutionOrder.contains(handler.type()))
                 .ifPresent(handler -> trackersByType.computeIfAbsent(handler.type(), _ -> new TreeSet<>()).add(trackerCredential));
         }
 
@@ -76,12 +71,11 @@ public final class TrackerRetriever {
     /**
      * Prints summary information about all {@link TrackerHandler}s, if {@link Logger#isDebugEnabled()} is {@code true}.
      *
-     * @param trackersByType        the {@link Map} of trackers organised by {@link TrackerType}
-     * @param trackerExecutionOrder the execution order of the {@link TrackerType}s
+     * @param trackersByType the {@link Map} of trackers organised by {@link TrackerType}
      */
-    static void printTrackersInfo(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final Set<TrackerType> trackerExecutionOrder) {
+    static void printTrackersInfo(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
         if (LOGGER.isDebugEnabled()) {
-            for (final TrackerType trackerType : trackerExecutionOrder) {
+            for (final TrackerType trackerType : TrackerType.values()) {
                 trackerType.printSummary(trackersByType);
             }
         }

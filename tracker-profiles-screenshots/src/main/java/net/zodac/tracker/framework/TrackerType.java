@@ -48,7 +48,7 @@ public enum TrackerType {
     public void printSummary(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
         final Set<TrackerCredential> trackers = trackersByType.get(this);
         if (trackers == null) {
-            LOGGER.trace("Tracker type {} not in execution order", this);
+            LOGGER.trace("No trackers of type {}", this);
             return;
         }
 

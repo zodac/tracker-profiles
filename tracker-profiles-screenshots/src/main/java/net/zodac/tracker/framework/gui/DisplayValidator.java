@@ -41,7 +41,7 @@ public final class DisplayValidator {
 
     /**
      * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers. If the loaded trackers include at least
-     * one {@link TrackerType#MANUAL} tracker in the execution order, a display is required, so {@link #isDisplayAvailable()} is called to verify
+     * one {@link TrackerType#MANUAL} tracker to execute, a display is required, so {@link #isDisplayAvailable()} is called to verify
      * the {@code DISPLAY} environment variable is set and a connection to the X11 server can be established.
      *
      * <p>
