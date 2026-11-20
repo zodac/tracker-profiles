@@ -213,7 +213,7 @@ The status is polled every 2s during an execution (1s while an input is pending)
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section (open until Start is pressed). The tracker
+  tracker stays expanded), and shows the options with `Tab.MAIN` in the run card, below the Start button (there is no separate section). The tracker
   list and execution log are hidden until an execution has started. While an execution is running, every option (on both tabs) is locked. The Settings
   tab shows the `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last. `MULTI_SELECT` options are a list dragged into order
   (or moved with the arrow keys on the handle), each with a switch to include it.

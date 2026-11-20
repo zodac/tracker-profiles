@@ -80,10 +80,6 @@ export function runDescription(status) {
 }
 
 function renderStatus(status) {
-    // The run options are open until an execution starts (or if one is already running when the page is opened)
-    if (latestStatus === null) {
-        byId('run-options-panel').open = !isActive(status)
-    }
     const wasActive = isActive(latestStatus)
     latestStatus = status
     const running = status.state === 'RUNNING'
@@ -196,7 +192,6 @@ export function scheduleStatusRefresh(delay) {
 export function startRun(failedTrackersOnly) {
     byId('start-button').disabled = true
     byId('start-failed-button').disabled = true
-    byId('run-options-panel').open = false
     request('POST', failedTrackersOnly ? '/api/run/failed' : '/api/run', {})
         .then(renderStatus)
         .catch(function (error) {

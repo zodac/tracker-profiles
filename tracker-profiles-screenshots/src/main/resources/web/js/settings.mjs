@@ -1,13 +1,10 @@
-import {
-    LOG_LEVEL_SETTING,
-    TYPING_SAVE_DELAY_MS,
-} from './constants.mjs'
+import {TYPING_SAVE_DELAY_MS} from './constants.mjs'
 import {formatTypeName, isActive, latestStatus} from './run.mjs'
 import {renderTrackers, trackersLoaded} from './trackers.mjs'
-import {byId, el, hasKey, pluralise, request, showToast} from './util.mjs'
+import {byId, el, hasKey, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
-// Settings (shown as run options on the Main tab, or on the Settings tab)
+// Settings (shown as run options in the run card of the Main tab, or on the Settings tab)
 // ---------------------------------------------------------------------------------------------------------------
 
 let settings = []
@@ -89,21 +86,6 @@ function renderRunOptions() {
             return setting.tab === 'MAIN'
         })
         .map(renderOptionRow))
-    renderRunOptionsSummary()
-}
-
-// A one-line summary of the main run options, shown when the run options are collapsed
-function renderRunOptionsSummary() {
-    const attempts = currentSettingValue('NUMBER_OF_SCREENSHOT_ATTEMPTS')
-    const parts = []
-    if (attempts) {
-        parts.push(pluralise(Number(attempts), 'attempt'))
-    }
-    const logLevel = currentSettingValue(LOG_LEVEL_SETTING)
-    if (logLevel) {
-        parts.push(`${formatTypeName(logLevel)} logs`)
-    }
-    byId('run-options-summary').textContent = parts.join(' · ')
 }
 
 // Settings cannot be changed while an execution is in progress, so every setting is locked until it ends
@@ -518,7 +500,6 @@ function saveSetting(name) {
             Object.keys(settingRows).forEach(function (rowName) {
                 settingRows[rowName].refresh()
             })
-            renderRunOptionsSummary()
             showToast(settingsSavedMessage(savedNames))
         })
         .catch(function (error) {

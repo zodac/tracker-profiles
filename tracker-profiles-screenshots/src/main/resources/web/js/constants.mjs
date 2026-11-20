@@ -49,4 +49,3 @@ export const TRACKER_GROUPS = [
     {state: 'CANCELLED', title: 'Cancelled'},
     {state: 'SUCCEEDED', title: 'Succeeded'},
 ]
-export const LOG_LEVEL_SETTING = 'LOG_LEVEL'

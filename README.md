@@ -366,8 +366,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
       application restarts (the screenshots are still saved to the output directory as before)
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
-    - **Run options** (open until an execution is started) holds the [options](#configuration-options) you are most likely to change for an execution,
-      such as the number of attempts per tracker or the log level. Run options and settings are locked while an execution is in
+    - The [run options](#run-options) you are most likely to change for an execution (the number of parallel browsers, the attempts per tracker
+      and the log level) are shown below the **Start** button. Run options and settings are locked while an execution is in
       progress
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
