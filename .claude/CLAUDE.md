@@ -185,11 +185,14 @@ to an `Input.*` DevTools command, so the page receives it as a real input.
 
 In the UI (`js/browser-view.mjs`), frames are drawn on a `<canvas>` (the CSP does not allow `blob:` images), and streaming stops while the page is
 hidden or the view is not in the page. The input prompt shows an interactive view (pointer events with pointer capture, keys while it is focused
-except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. Every view has a
-toolbar to zoom the frame (`Fit`, which scales it down to the page, or a fixed level from `BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also
-Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is focused) or show it in full screen. Zooming only changes how the frame is drawn, never
-the page in the browser (which would change its screenshots), and the chosen zoom is kept in `localStorage`, separately for input and view-only views.
-A running tracker's row on the Main tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
+except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. The wheel scrolls the
+browser while the pointer is over an interactive view or one is focused (a window listener), and the page otherwise; an interactive view that receives
+it has a ring in the `--selected` colour. The prompts are in one collapsible `#pending-inputs` card below the run card (open by default, and again
+once none are pending), and their views stream only while it is open. Every view has a toolbar to zoom the frame (`Fit`, which scales it down to the
+page, or a fixed level from `BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is
+focused) or show it in full screen. Zooming only changes how the frame is drawn, never the page in the browser (which would change its screenshots),
+and the zoom chosen for a view-only view is kept in `localStorage` (an interactive view always starts at `Fit`). A running tracker's row on the Main
+tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
 
 #### Cancelling an Execution
 
@@ -220,11 +223,12 @@ The status is polled every 2s during an execution (1s while an input is pending)
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded). It has no options. Its description shows how many trackers are enabled, and Start is disabled while none are
-  (`renderRunSummary`, also called by `renderTrackers`). The tracker list and execution log are hidden until an execution has started. The
-  Settings tab shows every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by
-  group), so the run options come first, with `Scope.STARTUP` options read-only. While an execution is running, every option is locked.
-  `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
+  tracker stays expanded). It has no options. Before the first execution (`IDLE`), the enabled trackers are listed as waiting, as they would be once
+  it starts, and Start is disabled while none are (`renderRunSummary`, also called by `renderTrackers`). The execution log is hidden until an
+  execution has started. The tab is wider than the others (90% of the window), for the browsers of the inputs. The Settings tab shows every option
+  under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run options come first,
+  with `Scope.STARTUP` options read-only. While an execution is running, every option is locked. `MULTI_SELECT` options are a list dragged into order
+  (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click

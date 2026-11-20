@@ -6,7 +6,7 @@ import {
     STATE_LABELS,
     STATUS_POLL_INTERVAL_MS,
 } from './constants.mjs'
-import {createBrowserView, startBrowserView} from './browser-view.mjs'
+import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
 import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs'
 import {updateExecutionDownload} from './screenshots.mjs'
 import {applyRunStateToSettings} from './settings.mjs'
@@ -39,29 +39,26 @@ export function formatTypeName(value) {
 }
 
 // Legacy trackers are never executed, even if they were enabled before they stopped being supported
-function enabledTrackerCount() {
+export function enabledTrackers() {
     return trackers.filter(function (tracker) {
         return tracker.enabled && !tracker.legacy
-    }).length
+    })
 }
 
-function enabledTrackersDescription() {
-    if (!trackersLoaded) {
-        return 'Takes a screenshot of the profile page of every enabled tracker'
-    }
-    return `${pluralise(enabledTrackerCount(), 'tracker')} enabled`
-}
-
-// The Start button and description, which also change when trackers are enabled or disabled. Start needs at least one enabled tracker
+// The Start button, and the trackers waiting for the first execution, which change when trackers are enabled or disabled. Start needs at least
+// one enabled tracker
 export function renderRunSummary() {
     if (!latestStatus) {
         return
     }
     const active = isActive(latestStatus)
     const startButton = byId('start-button')
-    startButton.disabled = active || (trackersLoaded && enabledTrackerCount() === 0)
+    startButton.disabled = active || (trackersLoaded && enabledTrackers().length === 0)
     startButton.textContent = active ? 'Running…' : 'Start'
     byId('run-description').textContent = runDescription(latestStatus)
+    if (latestStatus.state === 'IDLE') {
+        renderExecutionTrackers(latestStatus)
+    }
 }
 
 export function runDescription(status) {
@@ -73,15 +70,14 @@ export function runDescription(status) {
         return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed`
     }
 
-    const description = enabledTrackersDescription()
     if (status.state === 'CANCELLED' && status.finishedAt) {
-        return `${description} · Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}`
+        return `Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}`
     }
     if (status.finishedAt) {
-        return `${description} · Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
+        return `Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
             + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${formatDuration(status.finishedAt - status.startedAt)})`
     }
-    return description
+    return 'Takes a screenshot of the profile page of every enabled tracker'
 }
 
 function renderStatus(status) {
@@ -266,9 +262,9 @@ function createInputCard(input) {
                 el('p', {text: `${input.message} in the browser below, then select Continue`}),
                 el('p', {
                     className: 'muted',
-                    text: 'Click in the browser to use it: typing is sent to it while it is selected, and Ctrl+V pastes your clipboard. Zoom in '
-                        + 'with its toolbar or Ctrl+scroll, or show it on the whole screen. Skipping fails this attempt for the tracker. Continuing is '
-                        + 'automatic if the page changes',
+                    text: 'Scrolling over the browser scrolls its page. Click in it to select it: your clicks, scrolling and typing go to it until '
+                        + 'you click elsewhere, and Ctrl+V pastes your clipboard. Zoom in with its toolbar or Ctrl+scroll, or show it on the whole '
+                        + 'screen. Skipping fails this attempt for the tracker. Continuing is automatic if the page changes',
                 }),
             ]),
             el('div', {className: 'input-actions'}, [skipButton, continueButton]),
@@ -279,14 +275,16 @@ function createInputCard(input) {
     return card
 }
 
-// Cards are updated in place (not re-rendered), so a focused button is never replaced
+// Cards are updated in place (not re-rendered), so a focused button is never replaced. Their browsers are only streamed while the group is open
 function renderPendingInputs(pendingInputs) {
-    const container = byId('pending-inputs')
+    const group = byId('pending-inputs')
+    const container = byId('pending-input-list')
     const pendingIds = pendingInputs.map(function (input) {
         return String(input.id)
     })
     Array.from(container.children).forEach(function (card) {
         if (!pendingIds.includes(card.dataset.id)) {
+            stopBrowserView(card.browserView)
             card.remove()
         }
     })
@@ -296,7 +294,26 @@ function renderPendingInputs(pendingInputs) {
         if (!card) {
             card = createInputCard(input)
             container.append(card)
+            if (group.open) {
+                startBrowserView(card.browserView)
+            }
+        }
+    })
+
+    byId('pending-inputs-title').textContent = `Waiting for your input (${pendingInputs.length})`
+    group.hidden = pendingInputs.length === 0
+    if (group.hidden) {
+        group.open = true
+    }
+}
+
+export function togglePendingInputs() {
+    const open = byId('pending-inputs').open
+    byId('pending-input-list').querySelectorAll('.input-card').forEach(function (card) {
+        if (open) {
             startBrowserView(card.browserView)
+        } else {
+            stopBrowserView(card.browserView)
         }
     })
 }

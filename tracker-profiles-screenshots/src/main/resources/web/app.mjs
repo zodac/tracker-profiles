@@ -10,6 +10,7 @@ import {
     scheduleStatusRefresh,
     startRun,
     statusTimer,
+    togglePendingInputs,
 } from './js/run.mjs'
 import {setUpGallery} from './js/screenshots.mjs'
 import {unsavedSettings} from './js/settings.mjs'
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         startRun(true)
     })
     byId('cancel-button').addEventListener('click', cancelRun)
+    byId('pending-inputs').addEventListener('toggle', togglePendingInputs)
     setUpGallery()
     const executionLog = byId('execution-log')
     executionLog.addEventListener('toggle', function () {

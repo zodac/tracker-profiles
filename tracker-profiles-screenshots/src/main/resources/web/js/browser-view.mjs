@@ -49,7 +49,8 @@ export function createBrowserView(trackerName, interactive) {
     view.screen = screen
     view.canvas = canvas
     view.placeholder = placeholder
-    view.zoom = savedZoom(interactive)
+    // The browser of an input is always fitted to the page at first, so all of it is seen
+    view.zoom = interactive ? null : savedZoom()
     view.wheelZoomDistance = 0
     view.lastFrameId = 0
     view.wanted = false
@@ -182,20 +183,26 @@ function createToolbar() {
     return toolbar
 }
 
-function savedZoom(interactive) {
+function savedZoom() {
     try {
-        const zoom = Number(JSON.parse(window.localStorage.getItem(BROWSER_VIEW_ZOOM_STORAGE_KEY) || '{}')[interactive ? 'input' : 'live'])
+        const zoom = Number(window.localStorage.getItem(BROWSER_VIEW_ZOOM_STORAGE_KEY))
         return BROWSER_VIEW_ZOOM_LEVELS.includes(zoom) ? zoom : null
     } catch {
         return null
     }
 }
 
+// Only the zoom of the view-only panel is kept
 function saveZoom(view) {
+    if (view.interactive) {
+        return
+    }
     try {
-        const saved = JSON.parse(window.localStorage.getItem(BROWSER_VIEW_ZOOM_STORAGE_KEY) || '{}')
-        saved[view.interactive ? 'input' : 'live'] = view.zoom
-        window.localStorage.setItem(BROWSER_VIEW_ZOOM_STORAGE_KEY, JSON.stringify(saved))
+        if (view.zoom === null) {
+            window.localStorage.removeItem(BROWSER_VIEW_ZOOM_STORAGE_KEY)
+        } else {
+            window.localStorage.setItem(BROWSER_VIEW_ZOOM_STORAGE_KEY, String(view.zoom))
+        }
     } catch {
         // Storage is unavailable, so the zoom is only kept for this view
     }
@@ -439,6 +446,36 @@ function keyInput(event, action) {
     }
 }
 
+function wheelInput(view, event, point) {
+    // Lines (deltaMode 1) and pages (deltaMode 2) are converted to pixels
+    const scale = event.deltaMode === 1 ? 40 : (event.deltaMode === 2 ? 800 : 1)
+    return {type: 'wheel', x: point.x, y: point.y, deltaX: event.deltaX * scale, deltaY: event.deltaY * scale, modifiers: modifiers(event)}
+}
+
+function clampedPosition(view, event) {
+    const point = position(view, event)
+    return {x: Math.min(1, Math.max(0, point.x)), y: Math.min(1, Math.max(0, point.y))}
+}
+
+// Scrolling goes to the browser of an input while the pointer is over it, or anywhere while it is selected (clicked into, until something else
+// is clicked), and otherwise scrolls this page. Ctrl+scroll zooms the view instead (see addZoomListeners)
+window.addEventListener('wheel', function (event) {
+    if (event.ctrlKey || event.metaKey) {
+        return
+    }
+    const hovered = event.target instanceof Element ? event.target.closest('.browser-view-screen.interactive') : null
+    const selected = document.activeElement instanceof Element && document.activeElement.matches('.browser-view-screen.interactive')
+        ? document.activeElement : null
+    const screen = hovered || selected
+    const view = screen ? screen.parentElement : null
+    if (!view || !views.has(view) || view.canvas.hidden) {
+        return
+    }
+    event.preventDefault()
+    // Outside the selected browser, the middle of its page is scrolled
+    queueInput(view, wheelInput(view, event, hovered ? clampedPosition(view, event) : {x: 0.5, y: 0.5}))
+}, {passive: false})
+
 function isPasteShortcut(event) {
     return (event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'v'
 }
@@ -462,19 +499,6 @@ function addInputListeners(view) {
     view.canvas.addEventListener('contextmenu', function (event) {
         event.preventDefault()
     })
-    view.canvas.addEventListener('wheel', function (event) {
-        // Ctrl+scroll zooms the view instead (see addZoomListeners)
-        if (event.ctrlKey || event.metaKey) {
-            return
-        }
-        event.preventDefault()
-        const point = position(view, event)
-        // Lines (deltaMode 1) and pages (deltaMode 2) are converted to pixels
-        const scale = event.deltaMode === 1 ? 40 : (event.deltaMode === 2 ? 800 : 1)
-        queueInput(view, {
-            type: 'wheel', x: point.x, y: point.y, deltaX: event.deltaX * scale, deltaY: event.deltaY * scale, modifiers: modifiers(event),
-        })
-    }, {passive: false})
 
     // Every key goes to the browser while the view is focused (including Tab, which moves between its fields), except the paste shortcut, so
     // the text is pasted from the user's clipboard, and the zoom shortcuts, which zoom the view

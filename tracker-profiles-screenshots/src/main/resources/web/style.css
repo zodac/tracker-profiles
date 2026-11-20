@@ -153,6 +153,11 @@ main {
     padding: 24px;
 }
 
+/* The Main tab is wider, so the browsers of the inputs have more room */
+main:has(> #tab-main:not([hidden])) {
+    max-width: max(1320px, 90vw);
+}
+
 .tab-panel {
     display: flex;
     flex-direction: column;
@@ -581,14 +586,46 @@ select:disabled {
 
 /* Requests for a user input */
 
+.input-group {
+    border-color: var(--warning);
+}
+
+.input-group > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.input-group > summary::-webkit-details-marker {
+    display: none;
+}
+
+.input-group > summary::before {
+    content: "\25B8";
+    color: var(--text-muted);
+    transition: transform 0.15s;
+}
+
+.input-group[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.input-group > summary h2 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.input-group > .pending-inputs {
+    padding: 0 20px 20px;
+}
+
 .pending-inputs {
     display: flex;
     flex-direction: column;
     gap: 12px;
-}
-
-.pending-inputs:empty {
-    display: none;
 }
 
 .input-card {
@@ -619,9 +656,10 @@ select:disabled {
     background: var(--surface-muted);
 }
 
-.browser-view:has(> .browser-view-screen:focus) {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+/* The browser of an input that receives the scrolling (while the pointer is over it) or the keys and scrolling (while it is selected) */
+.browser-view:has(> .browser-view-screen.interactive:is(:hover, :focus)) {
+    border-color: var(--selected);
+    box-shadow: 0 0 0 2px var(--selected);
 }
 
 .browser-view-toolbar {

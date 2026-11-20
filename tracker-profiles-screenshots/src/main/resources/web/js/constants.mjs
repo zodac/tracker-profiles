@@ -9,8 +9,8 @@ export const HIDDEN_POLL_INTERVAL_MS = 10000
 export const BROWSER_VIEW_RETRY_MS = 2000
 // The longest text that can be pasted into a live browser view at once (see BrowserInputEvent)
 export const MAXIMUM_PASTED_TEXT_LENGTH = 1000
-// The zoom levels of a live browser view (1 shows each pixel of the browser as one pixel of the page), and where the chosen zoom is remembered,
-// separately for the interactive view of an input and the view-only panel
+// The zoom levels of a live browser view (1 shows each pixel of the browser as one pixel of the page), and where the zoom chosen for the
+// view-only panel is remembered (the browser of an input is always fitted at first)
 export const BROWSER_VIEW_ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
 export const BROWSER_VIEW_ZOOM_STORAGE_KEY = 'tracker-profiles-browser-zoom'
 export const TYPING_SAVE_DELAY_MS = 1000

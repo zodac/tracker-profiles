@@ -1,8 +1,9 @@
 import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
 import {MAXIMUM_LOG_LINES, TRACKER_GROUPS, TRACKER_STEPS} from './constants.mjs'
-import {formatDuration, isActive, latestStatus} from './run.mjs'
+import {enabledTrackers, formatDuration, isActive, latestStatus} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {currentSettingValue} from './settings.mjs'
+import {trackersLoaded} from './trackers.mjs'
 import {byId, el, formatTime, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -30,6 +31,29 @@ function stepBar(tracker) {
         }))
 }
 
+// An execution has ended (rather than not started yet, or in progress)
+function isFinished(status) {
+    return status.state !== 'IDLE' && !isActive(status)
+}
+
+// Before the first execution, the enabled trackers are shown waiting, as they would be once it starts
+function waitingTrackers() {
+    return enabledTrackers().map(function (tracker) {
+        return {
+            name: tracker.name,
+            type: tracker.type,
+            state: 'WAITING',
+            attempt: 0,
+            completedSteps: [],
+            stepCompletedAt: {},
+            startedAt: null,
+            finishedAt: null,
+            latestMessage: '',
+            screenshots: [],
+        }
+    })
+}
+
 export function trackerTiming(tracker) {
     if (tracker.startedAt === null) {
         return ''
@@ -40,7 +64,7 @@ export function trackerTiming(tracker) {
 
 function trackerDetail(tracker) {
     if (tracker.state === 'WAITING') {
-        return latestStatus && isActive(latestStatus) ? 'Waiting' : 'Not run'
+        return latestStatus && isFinished(latestStatus) ? 'Not run' : 'Waiting'
     }
     if (tracker.state === 'SUCCEEDED') {
         return tracker.screenshots.length === 0 ? '' : pluralise(tracker.screenshots.length, 'screenshot')
@@ -293,22 +317,29 @@ export function renderExecutionTrackers(status) {
         })
     }
 
-    // Nothing is shown until an execution has started
-    if (status.state === 'IDLE') {
+    if (status.state === 'IDLE' && !trackersLoaded) {
         container.replaceChildren()
         return
     }
-    if (status.trackers.length === 0) {
+    const executionTrackers = status.state === 'IDLE' ? waitingTrackers() : status.trackers
+    if (status.state === 'IDLE' && executionTrackers.length === 0) {
+        const group = groupFor('WAITING')
+        group.title.textContent = 'Waiting (0)'
+        group.list.replaceChildren(el('div', {className: 'empty-group', text: 'No trackers enabled'}))
+        container.replaceChildren(group.card)
+        return
+    }
+    if (executionTrackers.length === 0) {
         container.replaceChildren(el('div', {className: 'card empty-execution'}, [
             el('p', {className: 'muted', text: isActive(status) ? 'Preparing the trackers…' : 'No trackers were executed'}),
         ]))
         return
     }
 
-    const active = isActive(status)
+    const finished = isFinished(status)
     const groups = []
     TRACKER_GROUPS.forEach(function (definition) {
-        const inGroup = sortForGroup(definition.state, status.trackers.filter(function (tracker) {
+        const inGroup = sortForGroup(definition.state, executionTrackers.filter(function (tracker) {
             return tracker.state === definition.state
         }))
         if (inGroup.length === 0) {
@@ -316,7 +347,7 @@ export function renderExecutionTrackers(status) {
         }
 
         const group = groupFor(definition.state)
-        const title = !active && definition.titleWhenFinished ? definition.titleWhenFinished : definition.title
+        const title = finished && definition.titleWhenFinished ? definition.titleWhenFinished : definition.title
         group.title.textContent = `${title} (${inGroup.length})`
         inGroup.forEach(function (tracker) {
             let row = trackerRows.get(tracker.name)
@@ -327,6 +358,14 @@ export function renderExecutionTrackers(status) {
             updateExecutionRow(row, tracker)
             // Appending moves the row to the end of its (possibly new) group, keeping it expanded
             group.list.append(row)
+        })
+        // Rows of trackers no longer in the group (such as a tracker disabled before the first execution) are removed
+        Array.from(group.list.children).forEach(function (child) {
+            if (!inGroup.some(function (tracker) {
+                return tracker.name === child.dataset.name
+            })) {
+                child.remove()
+            }
         })
         groups.push(group.card)
     })

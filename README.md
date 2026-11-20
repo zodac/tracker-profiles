@@ -349,8 +349,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
     - **Start** executes every enabled tracker (it is disabled until at least one tracker is enabled). Once an execution has ended with failed
       trackers, **Failures only** executes just those trackers again (any that have since been disabled are left out). The run options and
       settings can be changed between executions
-    - Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. A tracker moves between groups as the execution
-      continues, so once it finishes the trackers are grouped by whether they succeeded or failed
+    - Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. Before the first execution, the enabled
+      trackers are listed as waiting. A tracker moves between groups as the execution continues, so once it finishes the trackers are grouped by
+      whether they succeeded or failed
     - Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its
       latest message (for a failed tracker, why it failed) and how long it took. Expand a tracker to see its own logs, which update while it runs.
       The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
@@ -414,17 +415,18 @@ encrypted when the application starts.
 > **Note:** The web UI has no authentication. Do not expose the port outside your local network. Saved passwords are never sent back to the
 > browser.
 
-When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
-tab (and the tab title changes), showing the tracker's browser live. Click in the browser to use it: your clicks, scrolling and typing are sent to it
-while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code). Complete the step, then select **Continue**; the execution
-also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. The prompt waits until you
-respond (or the execution is cancelled). Manual and headless trackers run together (as many as `NUMBER_OF_PARALLEL_THREADS` at once), with the
-manual trackers started first, so their prompts are shown straight away and several can be shown at once, each with its own browser, and answered
-in any order while the headless trackers continue.
+When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears on the **Main** tab, below
+**Screenshot trackers** (and the tab title changes), showing the tracker's browser live. All prompts are in one **Waiting for your input** section,
+which can be collapsed to put them aside. Scrolling over a browser scrolls its page, and clicking in it selects it (marked with a blue ring), after
+which your clicks, scrolling and typing are sent to it until you click elsewhere. `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code).
+Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Skip tracker** fails the
+current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run together (as
+many as `NUMBER_OF_PARALLEL_THREADS` at once), with the manual trackers started first, so their prompts are shown straight away and several can be
+shown at once, each with its own browser, and answered in any order while the headless trackers continue.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
-selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. The zoom is remembered for the
-next prompt.
+selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. Each prompt starts with the
+browser fitted to the page.
 
 The browser of any tracker in progress can also be watched (but not used) from its row on the **Main** tab, by opening **Live browser**.
 

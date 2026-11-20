@@ -36,8 +36,6 @@
 <main>
     <!-- Main -->
     <section id="tab-main" class="tab-panel" role="tabpanel">
-        <div id="pending-inputs" class="pending-inputs" aria-live="assertive"></div>
-
         <div class="card run-card">
             <div class="run-summary">
                 <div>
@@ -62,6 +60,12 @@
                 </div>
             </div>
         </div>
+
+        <!-- Collapsible, so the inputs can be put aside, and opened again by default once none are pending -->
+        <details id="pending-inputs" class="card input-group" open hidden>
+            <summary><h2 id="pending-inputs-title"></h2></summary>
+            <div id="pending-input-list" class="pending-inputs" aria-live="assertive"></div>
+        </details>
 
         <div id="execution-trackers" class="execution-trackers"></div>
 
