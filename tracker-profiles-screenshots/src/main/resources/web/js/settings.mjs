@@ -94,7 +94,6 @@ export function applyRunStateToSettings(status) {
     Object.keys(settingRows).forEach(function (name) {
         settingRows[name].setLocked(active)
     })
-    byId('run-options-locked').hidden = !active
     byId('settings-locked').hidden = !active
 }
 

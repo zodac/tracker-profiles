@@ -509,11 +509,6 @@ select:disabled {
     border-top: none;
 }
 
-.run-options-locked {
-    margin: 12px 0 0;
-    font-size: 13px;
-}
-
 .option-row.editing input {
     border-color: var(--accent);
 }
