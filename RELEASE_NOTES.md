@@ -20,7 +20,8 @@ Browsers with a UI (for manual trackers) now run on a virtual display inside the
 shown live in the web UI, so the host no longer needs a display or X server (such as VcXsrv on Windows), and Linux and Windows are set up the same
 way. When a manual tracker needs input, the prompt on the **Main** tab shows its browser: click in it to solve the captcha or enter the 2FA code
 (`Ctrl`+`V` pastes from your clipboard, and its toolbar zooms in on small text or shows it on the whole screen), then continue or skip (or wait 5 more minutes). The browser of any tracker in progress can also be watched
-from its row (**Live browser**).
+from its row (**Live browser**). Manual trackers now run in parallel, like headless trackers (up to `NUMBER_OF_PARALLEL_THREADS` at once), so
+their prompts can be answered in any order instead of waiting for each tracker in turn.
 
 Tracker credentials, settings and the latest results are stored in a SQLite database in the `/app/data` volume, so mount a volume to keep them
 between containers (the [example compose file](docs/docker-compose.example.yml) uses the `tracker-profiles-data` volume). Passwords are encrypted, and are never sent back to the browser.

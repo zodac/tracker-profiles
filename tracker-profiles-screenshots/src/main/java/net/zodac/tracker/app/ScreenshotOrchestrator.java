@@ -122,7 +122,7 @@ public final class ScreenshotOrchestrator {
         }
 
         final int numberOfTrackers = trackersByType.getOrDefault(trackerType, Set.of()).size();
-        final int effectiveThreadCount = getEffectiveThreadCount(trackerType, numberOfTrackers);
+        final int effectiveThreadCount = getEffectiveThreadCount(numberOfTrackers);
         DriverPool.initialise(trackerType, effectiveThreadCount);
 
         LOGGER.info("Executing {} trackers{}", trackerType.formattedName(),
@@ -170,13 +170,7 @@ public final class ScreenshotOrchestrator {
         executionListener.trackerCompleted(trackerType, tracker.name(), success);
     }
 
-    private static int getEffectiveThreadCount(final TrackerType trackerType, final int numberOfTrackers) {
-        // Currently only supporting parallel execution for HEADLESS trackers
-        if (trackerType != TrackerType.HEADLESS) {
-            LOGGER.debug("Tracker type is {}, parallelism disabled", trackerType.formattedName());
-            return 1;
-        }
-
+    private static int getEffectiveThreadCount(final int numberOfTrackers) {
         LOGGER.trace("numberOfParallelThreads: {}, numberOfTrackers: {}", Configuration.get().numberOfParallelThreads(), numberOfTrackers);
         return Math.min(Configuration.get().numberOfParallelThreads(), numberOfTrackers);
     }

@@ -42,6 +42,12 @@ which sets `DISPLAY` itself (replacing any value set for the container), and are
 `/tmp/.X11-unix` volume. Xvfb runs as UID `1000`, so it cannot create `/tmp/.X11-unix` and uses its abstract socket instead. There is no window
 manager on the virtual display.
 
+Manual trackers run in parallel (`NUMBER_OF_PARALLEL_THREADS`, like headless trackers), so their browsers share the virtual display. Selenium
+commands and the user's input (DevTools `Input.*`) reach a tab whichever window has the focus, and every browser with a UI has focus emulation
+enabled (`Emulation.setFocusEmulationEnabled`, in `JavaWebDriverFactory`), so each page behaves as if focused. Anything sent to the display
+itself (`java.awt.Robot`, as in `BrowserInteractionHelper.translatePage`) must hold `DisplayFocus.lock()` and call `DisplayFocus.bringToFront`
+first; creating a browser with a UI holds the same lock, as a new window takes the focus.
+
 ### Reviewing Web UI Changes
 
 After any change to the web UI (anything in `src/main/resources/web/`, or a change to an API response it renders), run the `run-app` skill
@@ -295,8 +301,8 @@ Two types control how the browser is created and whether user interaction is nee
   of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
-Default execution order: `HEADLESS` → `MANUAL`. Configurable via `TRACKER_EXECUTION_ORDER`; `TrackerRetriever.groupByType` leaves out the trackers
-of any type not in the order.
+Trackers of each type run in parallel (`NUMBER_OF_PARALLEL_THREADS`), one type after another. Default execution order: `HEADLESS` → `MANUAL`.
+Configurable via `TRACKER_EXECUTION_ORDER`; `TrackerRetriever.groupByType` leaves out the trackers of any type not in the order.
 
 ### Cloudflare Verification
 

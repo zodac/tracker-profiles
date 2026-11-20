@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 import net.zodac.tracker.framework.exception.TranslationException;
+import net.zodac.tracker.framework.gui.DisplayFocus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Alert;
@@ -310,6 +311,7 @@ public final class BrowserInteractionHelper {
     /**
      * Translates the web page into English. Performs the following actions:
      * <ol>
+     *     <li>Brings the browser to the front, holding {@link DisplayFocus#lock()} until done</li>
      *     <li>Loads a non-interactive element on the web page</li>
      *      <li>Performs a right-click</li>
      *      <li>Using {@link Robot}, performs 3 'UP' keyboard presses to highlight the 'Translate to English' option</li>
@@ -321,7 +323,11 @@ public final class BrowserInteractionHelper {
     public void translatePage(final By nonInteractiveElementSelector) {
         LOGGER.trace("Translating page to English");
 
+        // The keys are sent to the focused window of the virtual display, which is shared with the browsers of other manual trackers
+        DisplayFocus.lock().lock();
         try {
+            DisplayFocus.bringToFront(driver);
+
             // Find a non-interactive element to right-click
             final WebElement bodyElement = driver.findElement(nonInteractiveElementSelector);
 
@@ -345,6 +351,8 @@ public final class BrowserInteractionHelper {
             explicitWait(DEFAULT_WAIT_FOR_TRANSLATION, "translation to complete");
         } catch (final AWTException e) {
             throw new TranslationException(e);
+        } finally {
+            DisplayFocus.lock().unlock();
         }
     }
 

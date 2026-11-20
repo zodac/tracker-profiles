@@ -105,8 +105,8 @@ public final class DriverPool {
      */
     public static void initialise(final TrackerType trackerType, final int numberOfParallelThreads) {
         ExecutionCancellation.throwIfCancelled();
-        final int count = (trackerType == TrackerType.HEADLESS) ? numberOfParallelThreads : 1;
-        LOGGER.debug("Initializing {} pooled {} driver{}", count, trackerType.formattedName(), StringUtils.pluralise(count));
+        LOGGER.debug("Initializing {} pooled {} driver{}", numberOfParallelThreads, trackerType.formattedName(),
+            StringUtils.pluralise(numberOfParallelThreads));
         try {
             BrowserDirectories.createAll();
         } catch (final IOException e) {
@@ -114,7 +114,7 @@ public final class DriverPool {
         }
         JavaWebDriverFactory.sweepStaleUserDataDirs();
 
-        final List<RemoteWebDriver> drivers = createDrivers(trackerType, count);
+        final List<RemoteWebDriver> drivers = createDrivers(trackerType, numberOfParallelThreads);
 
         final DriverPool instance = get();
         final BlockingDeque<RemoteWebDriver> deque = new LinkedBlockingDeque<>();

@@ -49,7 +49,7 @@ import org.apache.logging.log4j.Logger;
  * @param existingScreenshotAction   the {@link ExistingScreenshotAction} to perform when a screenshot exists for a tracker
  * @param inputTimeoutDuration       how long to wait for a user-input, where {@link Duration#ZERO} waits until the user responds
  * @param logLevel                   the log level for the application, must be one of: {@code INFO, DEBUG, TRACE, WARNING, ERROR}
- * @param numberOfParallelThreads    the number of parallel browser threads to use for {@link TrackerType#HEADLESS} trackers
+ * @param numberOfParallelThreads    the number of trackers of the same {@link TrackerType} to execute in parallel
  * @param numberOfScreenshotAttempts the number of times to attempt to screenshot a tracker
  * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
  * @param redactionTypes             the {@link RedactionType}s to perform redaction of sensitive information on the user profile page, in order

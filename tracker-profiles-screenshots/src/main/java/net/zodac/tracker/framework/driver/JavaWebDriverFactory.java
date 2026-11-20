@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.extension.Extension;
+import net.zodac.tracker.framework.gui.DisplayFocus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -130,7 +131,7 @@ public final class JavaWebDriverFactory {
         }
         LOGGER.trace("Creating driver with following options: {}", chromeOptions);
 
-        final ChromeDriver driver = startDriver(chromeOptions);
+        final ChromeDriver driver = usesHeadlessBrowser(trackerType) ? startDriver(chromeOptions) : startUiDriver(chromeOptions);
         applyConfiguredSize(driver);
         LOGGER.trace("Returning created driver");
         USER_DATA_DIRS.put(driver, userDataDir);
@@ -146,6 +147,22 @@ public final class JavaWebDriverFactory {
      */
     public static boolean usesHeadlessBrowser(final TrackerType trackerType) {
         return trackerType != TrackerType.MANUAL;
+    }
+
+    // A new window takes the focus of the virtual display, so it is not created while an action depends on the focus. Manual trackers run in
+    // parallel, so each page is told it has the focus (as in a headless browser), even when its window does not
+    private static ChromeDriver startUiDriver(final ChromeOptions chromeOptions) {
+        final ChromeDriver driver;
+        DisplayFocus.lock().lock();
+        try {
+            driver = startDriver(chromeOptions);
+        } finally {
+            DisplayFocus.lock().unlock();
+        }
+
+        LOGGER.trace("Enabling focus emulation for browser with UI");
+        driver.executeCdpCommand("Emulation.setFocusEmulationEnabled", Map.of("enabled", true));
+        return driver;
     }
 
     private static ChromeDriver startDriver(final ChromeOptions chromeOptions) {

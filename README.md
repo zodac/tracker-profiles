@@ -420,7 +420,8 @@ When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter
 tab (and the tab title changes), showing the tracker's browser live. Click in the browser to use it: your clicks, scrolling and typing are sent to it
 while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code). Complete the step, then select **Continue**; the execution
 also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS`
-is set, the prompt shows how long is left, and **+5 min** gives you more time.
+is set, the prompt shows how long is left, and **+5 min** gives you more time. Manual trackers run in parallel (as many as
+`NUMBER_OF_PARALLEL_THREADS`), so several prompts can be shown at once, each with its own browser, and answered in any order.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
 selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. The zoom is remembered for the
@@ -491,7 +492,7 @@ These options apply from the next execution.
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
 | *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
-| *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                               | 5               |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                           | 5               |
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                 | 1               |
 | *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                  | false           |
 | *TRACKER_EXECUTION_ORDER*       | The order in which different tracker types should be executed, at least one must be selected (case-insensitive)                                                     | HEADLESS,MANUAL |
