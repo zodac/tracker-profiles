@@ -36,7 +36,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.contains
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttribute;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withAttributeFunction;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClass;
-import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withExactText;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withHref;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withId;
 import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withName;
@@ -307,16 +306,6 @@ class XpathBuilderTest {
 
         assertThat(actual)
             .isEqualTo("//li[last()]");
-    }
-
-    @Test
-    void testWithExactTextShouldAppendNormalizeSpaceEqualsPredicate() {
-        final String actual = XpathBuilder
-            .from(span, withExactText("hello world"))
-            .toString();
-
-        assertThat(actual)
-            .isEqualTo("//span[normalize-space()='hello world']");
     }
 
     @Test

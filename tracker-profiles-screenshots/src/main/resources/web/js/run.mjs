@@ -40,7 +40,7 @@ export function formatTypeName(value) {
 
 function enabledTrackersDescription() {
     if (!trackersLoaded) {
-        return 'Takes a screenshot of the profile page of every enabled tracker.'
+        return 'Takes a screenshot of the profile page of every enabled tracker'
     }
 
     // Legacy trackers are never executed, even if they were enabled before they stopped being supported
@@ -48,9 +48,9 @@ function enabledTrackersDescription() {
         return tracker.enabled && !tracker.legacy
     })
     if (enabled.length === 0) {
-        return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab.'
+        return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab'
     }
-    return `${pluralise(enabled.length, 'enabled tracker')}.`
+    return pluralise(enabled.length, 'enabled tracker')
 }
 
 export function runDescription(status) {
@@ -64,11 +64,11 @@ export function runDescription(status) {
 
     const description = enabledTrackersDescription()
     if (status.state === 'CANCELLED' && status.finishedAt) {
-        return `${description} Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}.`
+        return `${description} · Last execution cancelled at ${new Date(status.finishedAt).toLocaleTimeString()}`
     }
     if (status.finishedAt) {
-        return `${description} Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
-            + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${formatDuration(status.finishedAt - status.startedAt)}).`
+        return `${description} · Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
+            + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${formatDuration(status.finishedAt - status.startedAt)})`
     }
     return description
 }
@@ -197,7 +197,7 @@ export function startRun(failedTrackersOnly) {
 }
 
 export function cancelRun() {
-    if (!window.confirm('Cancel the current execution? All browsers will be closed, and trackers in progress will not be screenshot.')) {
+    if (!window.confirm('Cancel the current execution? All browsers will be closed, and trackers in progress will not be screenshot')) {
         return
     }
 
@@ -255,12 +255,12 @@ function createInputCard(input) {
         el('div', {className: 'input-header'}, [
             el('div', {className: 'input-text'}, [
                 el('h2', {text: `${input.trackerName} needs you`}),
-                el('p', {text: `${input.message} in the browser below, then select Continue.`}),
+                el('p', {text: `${input.message} in the browser below, then select Continue`}),
                 el('p', {
                     className: 'muted',
                     text: 'Click in the browser to use it: typing is sent to it while it is selected, and Ctrl+V pastes your clipboard. Zoom in '
                         + 'with its toolbar or Ctrl+scroll, or show it on the whole screen. Skipping fails this attempt for the tracker. Continuing is '
-                        + 'automatic if the page changes.',
+                        + 'automatic if the page changes',
                 }),
             ]),
             el('div', {className: 'input-actions'}, [skipButton, continueButton]),

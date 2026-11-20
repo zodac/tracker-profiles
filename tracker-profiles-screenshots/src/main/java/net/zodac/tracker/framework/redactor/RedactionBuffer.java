@@ -55,14 +55,4 @@ public record RedactionBuffer(int up, int down, int left, int right) {
     public static RedactionBuffer withLeftOffset(final int leftOffset) {
         return of(0, 0, leftOffset, 0);
     }
-
-    /**
-     * Static constructor to create an {@link RedactionBuffer} with only a right offset.
-     *
-     * @param rightOffset pixels to extend the redaction to the right of the element
-     * @return the created {@link RedactionBuffer}
-     */
-    public static RedactionBuffer withRightOffset(final int rightOffset) {
-        return of(0, 0, 0, rightOffset);
-    }
 }

@@ -239,25 +239,6 @@ public final class XpathAttributePredicate {
     }
 
     /**
-     * Update the XPATH query to filter the element at the current position to only return elements whose text is an exact match for the supplied
-     * text.
-     *
-     * <p>
-     * Adds:
-     *
-     * <pre>
-     *      //existing_query<u>[normalize-space()='wanted text']</u>
-     * </pre>
-     *
-     * @param value the exact text for the HTML element
-     * @return this {@link XpathAttributePredicate}
-     * @see #withAttributeFunction(String, String)
-     */
-    public static XpathPredicate withExactText(final String value) {
-        return withAttributeFunction("normalize-space()", value);
-    }
-
-    /**
      * Update the XPATH query to filter the element at the current position if it has exactly the provided number of direct children of the given
      * {@link Element} type.
      *

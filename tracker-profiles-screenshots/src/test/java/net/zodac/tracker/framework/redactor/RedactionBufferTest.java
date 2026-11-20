@@ -53,14 +53,4 @@ class RedactionBufferTest {
         assertThat(buffer.left()).isEqualTo(7);
         assertThat(buffer.right()).isZero();
     }
-
-    @Test
-    void givenRightOffset_whenWithRightOffset_thenOnlyRightIsSet() {
-        final RedactionBuffer buffer = RedactionBuffer.withRightOffset(9);
-
-        assertThat(buffer.up()).isZero();
-        assertThat(buffer.down()).isZero();
-        assertThat(buffer.left()).isZero();
-        assertThat(buffer.right()).isEqualTo(9);
-    }
 }

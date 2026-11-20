@@ -152,7 +152,7 @@ function showGalleryScreenshot(index) {
     })
     image.addEventListener('error', function () {
         viewport.classList.remove('loading')
-        viewport.replaceChildren(el('p', {className: 'gallery-error', text: 'The screenshot could not be loaded.'}))
+        viewport.replaceChildren(el('p', {className: 'gallery-error', text: 'The screenshot could not be loaded'}))
     })
     // Scaled down to 1080p, since a full-size screenshot at a high resolution can be too large for the browser to show
     image.src = screenshotUrl(gallery.trackerName, screenshot, 'preview', gallery.latest)

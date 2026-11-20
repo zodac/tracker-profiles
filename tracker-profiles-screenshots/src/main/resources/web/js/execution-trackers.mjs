@@ -300,7 +300,7 @@ export function renderExecutionTrackers(status) {
     }
     if (status.trackers.length === 0) {
         container.replaceChildren(el('div', {className: 'card empty-execution'}, [
-            el('p', {className: 'muted', text: isActive(status) ? 'Preparing the trackers…' : 'No trackers were executed.'}),
+            el('p', {className: 'muted', text: isActive(status) ? 'Preparing the trackers…' : 'No trackers were executed'}),
         ]))
         return
     }

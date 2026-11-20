@@ -307,9 +307,9 @@ export function importTrackers(file) {
             trackers = result.trackers
             renderTrackers()
 
-            let message = `Imported ${file.name}: ${result.added} added, ${result.updated} updated.`
+            let message = `Imported ${file.name}: ${result.added} added, ${result.updated} updated`
             if (result.unsupported.length > 0) {
-                message += ` Not imported, since they are not supported: ${result.unsupported.join(', ')}.`
+                message += `. Not imported, since they are not supported: ${result.unsupported.join(', ')}`
             }
             const notice = byId('import-result')
             notice.textContent = message
@@ -508,7 +508,7 @@ export function changeSelectedTrackers(action) {
         let question = `Remove the saved credentials for ${pluralise(targets.length, 'tracker')}?`
         if (legacyCount > 0) {
             question += ` ${pluralise(legacyCount, 'legacy tracker')} will be removed from the list with ${legacyCount === 1 ? 'its' : 'their'} last`
-                + ' run and screenshots (the screenshot files are kept).'
+                + ' run and screenshots (the screenshot files are kept)'
         }
         if (!window.confirm(question)) {
             return
@@ -751,7 +751,7 @@ function createTrackerRow(tracker) {
     removeButton.addEventListener('click', function () {
         const question = current.legacy
             ? `Remove ${current.name}, with its saved credentials, last run and screenshots? It is no longer supported, so cannot be added again`
-                + ' (the screenshot files are kept).'
+                + ' (the screenshot files are kept)'
             : `Remove the saved credentials for ${current.name}?`
         if (!window.confirm(question)) {
             return
