@@ -171,11 +171,6 @@ public final class ScreenshotOrchestrator {
     }
 
     private static int getEffectiveThreadCount(final TrackerType trackerType, final int numberOfTrackers) {
-        if (Configuration.get().forceUiBrowser()) {
-            LOGGER.debug("Forcing UI browser, parallelism disabled");
-            return 1;
-        }
-
         // Currently only supporting parallel execution for HEADLESS trackers
         if (trackerType != TrackerType.HEADLESS) {
             LOGGER.debug("Tracker type is {}, parallelism disabled", trackerType.formattedName());

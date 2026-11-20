@@ -31,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import net.zodac.tracker.framework.TrackerType;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.extension.Extension;
 import org.apache.logging.log4j.LogManager;
@@ -64,15 +63,8 @@ public final class JavaWebDriverFactory {
      * Java Selenium {@link RemoteWebDriver}, with some arguments to configure it for simpler automation.
      *
      * <p>
-     * This {@link RemoteWebDriver} may run in headless mode, if the following conditions are met:
-     *
-     * <ul>
-     *     <li>{@link ApplicationConfiguration#forceUiBrowser()} is not {@code true}</li>
-     *     <li>{@link TrackerType} is not {@link TrackerType#MANUAL}</li>
-     * </ul>
-     *
-     * <p>
-     * Otherwise it will run in full UI mode.
+     * This {@link RemoteWebDriver} runs in headless mode, unless the {@link TrackerType} is {@link TrackerType#MANUAL}, in which case it runs in
+     * full UI mode.
      *
      * @param trackerType whether {@link TrackerType} defining the execution method for this tracker
      * @param extensions  any {@link Extension}s to be installed
@@ -147,22 +139,12 @@ public final class JavaWebDriverFactory {
 
     /**
      * Whether a tracker of the given {@link TrackerType} is executed in a headless browser, or in a browser with a UI. A headless browser is used
-     * when both of the following conditions are met:
-     *
-     * <ul>
-     *     <li>{@link ApplicationConfiguration#forceUiBrowser()} is not {@code true}</li>
-     *     <li>{@link TrackerType} is not {@link TrackerType#MANUAL}</li>
-     * </ul>
+     * for every {@link TrackerType} except {@link TrackerType#MANUAL}.
      *
      * @param trackerType the {@link TrackerType} of the tracker
      * @return {@code true} if the tracker is executed in a headless browser
      */
     public static boolean usesHeadlessBrowser(final TrackerType trackerType) {
-        if (Configuration.get().forceUiBrowser()) {
-            LOGGER.trace("UI browser is forced");
-            return false;
-        }
-
         return trackerType != TrackerType.MANUAL;
     }
 

@@ -122,7 +122,7 @@ The implementation for these trackers can be found in the [handler](./tracker-pr
 
 ### Headless
 
-The following trackers do not require a UI (unless `FORCE_UI_BROWSER` has been set to **true**), and can be run in the background:
+The following trackers do not require a UI, and can be run in the background:
 
 <table>
 <tr>
@@ -422,6 +422,10 @@ while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 
 also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS`
 is set, the prompt shows how long is left, and **+5 min** gives you more time.
 
+If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
+selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. The zoom is remembered for the
+next prompt.
+
 The browser of any tracker in progress can also be watched (but not used) from its row on the **Main** tab, by opening **Live browser**.
 
 ### Importing Trackers
@@ -460,9 +464,9 @@ screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
 
 ### Browser UI
 
-[Manual trackers](#manual-interaction), whose login needs your input (a Captcha, 2FA, etc.), run in a browser with a UI, as does every tracker when
-`FORCE_UI_BROWSER` is **true**. These browsers run on a virtual display inside the container (started by [start.sh](./docker/scripts/start.sh)), and
-are shown in the [web UI](#web-ui), so the host needs no display, X server or `DISPLAY` variable, on Linux or Windows.
+[Manual trackers](#manual-interaction), whose login needs your input (a Captcha, 2FA, etc.), run in a browser with a UI. These browsers run on a
+virtual display inside the container (started by [start.sh](./docker/scripts/start.sh)), and are shown in the [web UI](#web-ui), so the host needs no
+display, X server or `DISPLAY` variable, on Linux or Windows.
 
 > **Note:** Earlier versions showed the browser on the host's display. If your compose file still sets `DISPLAY` or mounts `/tmp/.X11-unix`, both
 > can be removed: they are no longer used.
@@ -485,7 +489,6 @@ These options apply from the next execution.
 
 | Environment Variable            | Description                                                                                                                                                         | Default Value   |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| *FORCE_UI_BROWSER*              | Uses a browser with a UI (see [Browser UI](#browser-ui)) for each tracker, even for headless trackers (this will disable parallel execution)                        | false           |
 | *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
 | *NUMBER_OF_PARALLEL_THREADS*    | The number of parallel browser threads to use for Headless trackers [min: 1, max: 32]                                                                               | 5               |
@@ -625,8 +628,8 @@ To build and run the local [Dockerfile](./docker/Dockerfile), copy [docker-compo
     image: tracker-profiles-dev
 ```
 
-Then update the [configuration options](#configuration-options) for development (such as `FORCE_UI_BROWSER=true`, `LOG_LEVEL=TRACE`,
-`REDACTION_TYPE=NONE,BLUR,BOX` and `TAKE_SCREENSHOT_ON_ERROR=true`), and build and run it:
+Then update the [configuration options](#configuration-options) for development (such as `LOG_LEVEL=TRACE`, `REDACTION_TYPE=NONE,BLUR,BOX` and
+`TAKE_SCREENSHOT_ON_ERROR=true`), and build and run it:
 
 ```bash
 docker compose up --build
@@ -653,10 +656,8 @@ The [AbstractTrackerHandler.java](./tracker-profiles-screenshots/src/main/java/n
 for each tracker is retrieved by the tracker name saved in the web UI.
 
 [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) is used to leverage the Chromium web browser to
-take screenshots. While the application usually runs in headless mode, this can be changed by updating the
-`FORCE_UI_BROWSER` value in the [configuration](#configuration-options). Every tracker then runs in a browser with a UI, which can be watched from
-its row on the **Main** tab (**Live browser**), and can be used for debugging a new implementation. Outside Docker, the browser is shown on the
-display of the host instead.
+take screenshots. The browser of any tracker in progress can be watched from its row on the **Main** tab (**Live browser**), including headless
+browsers, which can be used for debugging a new implementation.
 
 ### Performance Analysis
 
@@ -668,7 +669,6 @@ execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost
 mvn clean install && \
     BROWSER_RESOLUTION=1680x1050 \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
-    FORCE_UI_BROWSER=true \
     INPUT_TIMEOUT_SECONDS=300 \
     LOG_LEVEL=TRACE \
     NUMBER_OF_PARALLEL_THREADS=5 \
@@ -708,5 +708,5 @@ The browser is also prepared so that it is not detected as automated:
 If the check cannot be passed automatically:
 
 - For a tracker running in a headless browser, the attempt fails (and is retried if `NUMBER_OF_SCREENSHOT_ATTEMPTS` allows)
-- For a tracker running in a UI browser (a `Manual` tracker, or when `FORCE_UI_BROWSER` is **true**), the user is asked to pass the check instead,
+- For a tracker running in a UI browser (a `Manual` tracker), the user is asked to pass the check instead,
   in the browser shown in the web UI

@@ -47,7 +47,6 @@ import org.apache.logging.log4j.Logger;
  * @param databasePath               the {@link Path} to the SQLite database used by the web UI
  * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
  * @param existingScreenshotAction   the {@link ExistingScreenshotAction} to perform when a screenshot exists for a tracker
- * @param forceUiBrowser             whether to use a UI-based browser or not
  * @param inputTimeoutDuration       how long to wait for a user-input, where {@link Duration#ZERO} waits until the user responds
  * @param logLevel                   the log level for the application, must be one of: {@code INFO, DEBUG, TRACE, WARNING, ERROR}
  * @param numberOfParallelThreads    the number of parallel browser threads to use for {@link TrackerType#HEADLESS} trackers
@@ -66,7 +65,6 @@ public record ApplicationConfiguration(
     Path databasePath,
     boolean enableTranslationToEnglish,
     ExistingScreenshotAction existingScreenshotAction,
-    boolean forceUiBrowser,
     Duration inputTimeoutDuration,
     String logLevel,
     int numberOfParallelThreads,
@@ -131,7 +129,6 @@ public record ApplicationConfiguration(
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
             source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
             ExistingScreenshotAction.valueOf(source.select(ConfigurationOption.SCREENSHOT_EXISTS_ACTION)),
-            source.bool(ConfigurationOption.FORCE_UI_BROWSER),
             Duration.ofSeconds(source.integer(ConfigurationOption.INPUT_TIMEOUT_SECONDS)),
             source.select(ConfigurationOption.LOG_LEVEL),
             source.integer(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS),

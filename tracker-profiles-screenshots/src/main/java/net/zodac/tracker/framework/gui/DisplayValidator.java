@@ -23,8 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
-import net.zodac.tracker.framework.config.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,10 +40,9 @@ public final class DisplayValidator {
     }
 
     /**
-     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers. If
-     * {@link ApplicationConfiguration#forceUiBrowser()} is {@code true}, or the loaded trackers include at least one {@link TrackerType#MANUAL}
-     * tracker in the execution order, a display is required, so {@link #isDisplayAvailable()} is called to verify the {@code DISPLAY} environment
-     * variable is set and a connection to the X11 server can be established.
+     * Validates that the UI/{@code DISPLAY} configuration is valid for the given set of loaded trackers. If the loaded trackers include at least
+     * one {@link TrackerType#MANUAL} tracker in the execution order, a display is required, so {@link #isDisplayAvailable()} is called to verify
+     * the {@code DISPLAY} environment variable is set and a connection to the X11 server can be established.
      *
      * <p>
      * {@code java.awt.headless} is never set, since it cannot be changed once AWT is initialised, and a later execution in the same JVM may need a
@@ -63,7 +60,7 @@ public final class DisplayValidator {
     }
 
     private static boolean needsDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return Configuration.get().forceUiBrowser() || trackersByType.containsKey(TrackerType.MANUAL);
+        return trackersByType.containsKey(TrackerType.MANUAL);
     }
 
     private static boolean isDisplayAvailable() {

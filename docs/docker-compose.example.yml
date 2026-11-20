@@ -19,7 +19,6 @@ services:
     memswap_limit: "10G"
     environment:
       # Execution configuration (can also be changed on the 'Main' tab of the web UI)
-      FORCE_UI_BROWSER: "false"
       INPUT_TIMEOUT_SECONDS: "0"                  # How long to wait for user input for a manual tracker, 0 waits until the user responds
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"

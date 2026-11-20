@@ -36,7 +36,7 @@ The compose files harden the container (follow the same standard in any new comp
 extracted to `/app/native` when the image is built and loaded from there by `start.sh` (`org.sqlite.lib.path`). Chrome runs with `--no-sandbox`
 and `--disable-dev-shm-usage`, so it needs no capabilities, and keeps its shared memory in `/tmp`.
 
-Browsers with a UI (manual trackers, or every tracker with `FORCE_UI_BROWSER`) run on a virtual X11 display (Xvfb on `:99`) started by `start.sh`,
+Browsers with a UI (manual trackers) run on a virtual X11 display (Xvfb on `:99`) started by `start.sh`,
 which sets `DISPLAY` itself (replacing any value set for the container), and are shown to the user in the web UI (see
 [Live Browser View](#live-browser-view)). The host never needs a display, so no compose file or document may ask for `DISPLAY` or a
 `/tmp/.X11-unix` volume. Xvfb runs as UID `1000`, so it cannot create `/tmp/.X11-unix` and uses its abstract socket instead. There is no window
@@ -175,8 +175,11 @@ to an `Input.*` DevTools command, so the page receives it as a real input.
 
 In the UI (`js/browser-view.mjs`), frames are drawn on a `<canvas>` (the CSP does not allow `blob:` images), and streaming stops while the page is
 hidden or the view is not in the page. The input prompt shows an interactive view (pointer events with pointer capture, keys while it is focused
-except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. A running tracker's
-row on the Main tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
+except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. Every view has a
+toolbar to zoom the frame (`Fit`, which scales it down to the page, or a fixed level from `BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also
+Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is focused) or show it in full screen. Zooming only changes how the frame is drawn, never
+the page in the browser (which would change its screenshots), and the chosen zoom is kept in `localStorage`, separately for input and view-only views.
+A running tracker's row on the Main tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
 
 #### Cancelling an Execution
 

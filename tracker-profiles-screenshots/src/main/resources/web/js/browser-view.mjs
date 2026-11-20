@@ -1,4 +1,4 @@
-import {BROWSER_VIEW_RETRY_MS, MAXIMUM_PASTED_TEXT_LENGTH} from './constants.mjs'
+import {BROWSER_VIEW_RETRY_MS, BROWSER_VIEW_ZOOM_LEVELS, BROWSER_VIEW_ZOOM_STORAGE_KEY, MAXIMUM_PASTED_TEXT_LENGTH} from './constants.mjs'
 import {el, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -18,6 +18,12 @@ const SHIFT_MODIFIER = 8
 const MOUSE_BUTTONS = ['left', 'middle', 'right']
 const DOUBLE_CLICK_MS = 500
 const DOUBLE_CLICK_DISTANCE = 5
+// Each zoom step changes the size by at least this factor, so zooming in from 'Fit' (at any size) makes a visible difference
+const MINIMUM_ZOOM_STEP = 1.1
+// The scroll distance (in pixels) of Ctrl+scroll for each zoom level, so a touchpad pinch (many small scrolls) does not zoom too quickly
+const WHEEL_ZOOM_DISTANCE = 50
+// The height of the frame shown at 'Fit', as a fraction of the window height (outside full screen), as set for .browser-view-screen
+const FIT_HEIGHT_FRACTION = 0.75
 
 function delay(milliseconds) {
     return new Promise(function (resolve) {
@@ -28,22 +34,30 @@ function delay(milliseconds) {
 // An interactive view sends the user's mouse and keyboard input to the browser, which the server only accepts while the tracker is waiting for
 // an input
 export function createBrowserView(trackerName, interactive) {
-    const canvas = el('canvas', {className: 'browser-view-canvas', hidden: true})
+    const canvas = el('canvas', {className: 'browser-view-canvas fit', hidden: true})
     const placeholder = el('div', {className: 'browser-view-placeholder muted', text: 'Loading the browser…'})
-    const view = el('div', {
-        className: `browser-view${interactive ? ' interactive' : ''}`,
+    // The frame is shown in its own scrolled area, and the keys typed while it is focused go to the browser (not those typed in the toolbar)
+    const screen = el('div', {
+        className: `browser-view-screen${interactive ? ' interactive' : ''}`,
         tabindex: interactive ? '0' : null,
         role: interactive ? 'application' : 'img',
         'aria-label': interactive ? `${trackerName} browser: click to use it, and type while it is focused` : `${trackerName} browser`,
     }, [canvas, placeholder])
+    const view = el('div', {className: 'browser-view'}, [createToolbar(), screen])
     view.trackerName = trackerName
+    view.interactive = interactive
+    view.screen = screen
     view.canvas = canvas
     view.placeholder = placeholder
+    view.zoom = savedZoom(interactive)
+    view.wheelZoomDistance = 0
     view.lastFrameId = 0
     view.wanted = false
     view.streaming = false
     view.pendingEvents = []
     view.sending = false
+    addZoomListeners(view)
+    applyZoom(view)
     if (interactive) {
         addInputListeners(view)
     }
@@ -116,18 +130,212 @@ async function fetchFrame(view) {
 
     try {
         const bitmap = await createImageBitmap(await response.blob())
-        if (view.canvas.width !== bitmap.width || view.canvas.height !== bitmap.height) {
+        const resized = view.canvas.width !== bitmap.width || view.canvas.height !== bitmap.height
+        if (resized) {
             view.canvas.width = bitmap.width
             view.canvas.height = bitmap.height
         }
         view.canvas.getContext('2d').drawImage(bitmap, 0, 0)
         bitmap.close()
         view.lastFrameId = Number(response.headers.get('X-Frame-Id')) || view.lastFrameId
+        const firstFrame = view.canvas.hidden
         showPlaceholder(view, null)
+        if (resized || firstFrame) {
+            applyZoom(view)
+        }
     } catch {
         await delay(BROWSER_VIEW_RETRY_MS)
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Zoom and full screen, which only change how the frame is shown (the page in the browser is not zoomed, so its screenshots are unchanged)
+// ---------------------------------------------------------------------------------------------------------------
+
+function toolbarButton(className, text, title, action) {
+    return el('button', {className: `button small ${className}`, type: 'button', text: text, title: title, 'aria-label': title, onclick: action})
+}
+
+function createToolbar() {
+    const toolbar = el('div', {className: 'browser-view-toolbar'})
+    function view() {
+        return toolbar.parentElement
+    }
+    toolbar.append(
+        toolbarButton('browser-view-zoom-out', '\u2212', 'Zoom out (Ctrl+-)', function () {
+            zoomOut(view())
+        }),
+        el('span', {className: 'browser-view-zoom muted', 'aria-live': 'polite'}),
+        toolbarButton('browser-view-zoom-in', '+', 'Zoom in (Ctrl+=)', function () {
+            zoomIn(view())
+        }),
+        toolbarButton('browser-view-fit', 'Fit', 'Fit the browser to the page (Ctrl+0)', function () {
+            setZoom(view(), null)
+        }),
+        toolbarButton('browser-view-actual', '100%', 'Show the browser at its actual size', function () {
+            setZoom(view(), 1)
+        }),
+        document.fullscreenEnabled ? toolbarButton('browser-view-fullscreen', 'Full screen', 'Show the browser on the whole screen', function () {
+            toggleFullscreen(view())
+        }) : null,
+    )
+    return toolbar
+}
+
+function savedZoom(interactive) {
+    try {
+        const zoom = Number(JSON.parse(window.localStorage.getItem(BROWSER_VIEW_ZOOM_STORAGE_KEY) || '{}')[interactive ? 'input' : 'live'])
+        return BROWSER_VIEW_ZOOM_LEVELS.includes(zoom) ? zoom : null
+    } catch {
+        return null
+    }
+}
+
+function saveZoom(view) {
+    try {
+        const saved = JSON.parse(window.localStorage.getItem(BROWSER_VIEW_ZOOM_STORAGE_KEY) || '{}')
+        saved[view.interactive ? 'input' : 'live'] = view.zoom
+        window.localStorage.setItem(BROWSER_VIEW_ZOOM_STORAGE_KEY, JSON.stringify(saved))
+    } catch {
+        // Storage is unavailable, so the zoom is only kept for this view
+    }
+}
+
+function isFullscreen(view) {
+    return document.fullscreenElement === view
+}
+
+// The zoom at which the whole frame fits the page (never above 1, so a small frame is not enlarged)
+function fitZoom(view) {
+    const canvas = view.canvas
+    if (canvas.hidden || canvas.width === 0 || canvas.height === 0) {
+        return 1
+    }
+    const height = isFullscreen(view) ? view.screen.clientHeight : window.innerHeight * FIT_HEIGHT_FRACTION
+    return Math.min(1, view.screen.clientWidth / canvas.width, height / canvas.height)
+}
+
+function currentZoom(view) {
+    return view.zoom === null ? fitZoom(view) : view.zoom
+}
+
+function zoomIn(view, anchor) {
+    const current = currentZoom(view)
+    const next = BROWSER_VIEW_ZOOM_LEVELS.find(function (zoom) {
+        return zoom >= current * MINIMUM_ZOOM_STEP
+    })
+    if (next !== undefined) {
+        setZoom(view, next, anchor)
+    }
+}
+
+// Zooming out below the size that fits the page shows it fitted instead, since the frame would only be smaller
+function zoomOut(view, anchor) {
+    const current = currentZoom(view)
+    const next = BROWSER_VIEW_ZOOM_LEVELS.findLast(function (zoom) {
+        return zoom <= current / MINIMUM_ZOOM_STEP
+    })
+    setZoom(view, next === undefined || next <= fitZoom(view) ? null : next, anchor)
+}
+
+// The point under the pointer (or the middle of the view) stays in place as the zoom changes
+function setZoom(view, zoom, anchor) {
+    const screen = view.screen
+    const before = view.canvas.getBoundingClientRect()
+    const bounds = screen.getBoundingClientRect()
+    const anchorX = anchor ? anchor.clientX : bounds.left + (screen.clientWidth / 2)
+    const anchorY = anchor ? anchor.clientY : bounds.top + (screen.clientHeight / 2)
+    const fractionX = before.width === 0 ? 0.5 : (anchorX - before.left) / before.width
+    const fractionY = before.height === 0 ? 0.5 : (anchorY - before.top) / before.height
+
+    view.zoom = zoom
+    applyZoom(view)
+    saveZoom(view)
+    if (zoom !== null) {
+        const after = view.canvas.getBoundingClientRect()
+        screen.scrollLeft += after.left + (fractionX * after.width) - anchorX
+        screen.scrollTop += after.top + (fractionY * after.height) - anchorY
+    }
+}
+
+// At 'Fit' the frame is scaled down by the stylesheet (so it follows the size of the page), otherwise it is given its zoomed size, and scrolls
+function applyZoom(view) {
+    const canvas = view.canvas
+    canvas.classList.toggle('fit', view.zoom === null)
+    canvas.style.width = view.zoom === null ? '' : `${Math.round(canvas.width * view.zoom)}px`
+    canvas.style.height = view.zoom === null ? '' : `${Math.round(canvas.height * view.zoom)}px`
+    updateZoomLabel(view)
+}
+
+function updateZoomLabel(view) {
+    const percentage = `${Math.round(currentZoom(view) * 100)}%`
+    view.querySelector('.browser-view-zoom').textContent = view.zoom === null ? `Fit (${percentage})` : percentage
+    view.querySelector('.browser-view-fit').disabled = view.zoom === null
+    view.querySelector('.browser-view-actual').disabled = view.zoom === 1
+    view.querySelector('.browser-view-zoom-in').disabled = currentZoom(view) >= BROWSER_VIEW_ZOOM_LEVELS[BROWSER_VIEW_ZOOM_LEVELS.length - 1]
+    view.querySelector('.browser-view-zoom-out').disabled = view.zoom === null
+}
+
+function toggleFullscreen(view) {
+    if (isFullscreen(view)) {
+        document.exitFullscreen().catch(function () {
+            // Already left
+        })
+        return
+    }
+    view.requestFullscreen().then(function () {
+        if (view.interactive) {
+            view.screen.focus({preventScroll: true})
+        }
+    }).catch(function (error) {
+        showToast(`Unable to show the browser on the whole screen: ${error.message}`, 'error')
+    })
+}
+
+function isZoomShortcut(event) {
+    return (event.ctrlKey || event.metaKey) && !event.altKey && ['=', '+', '-', '_', '0'].includes(event.key)
+}
+
+function zoomWithShortcut(view, event) {
+    if (event.key === '0') {
+        setZoom(view, null)
+    } else if (event.key === '-' || event.key === '_') {
+        zoomOut(view)
+    } else {
+        zoomIn(view)
+    }
+}
+
+function addZoomListeners(view) {
+    // Ctrl+scroll (or a touchpad pinch) zooms the view, rather than the page or the browser
+    view.screen.addEventListener('wheel', function (event) {
+        if (!event.ctrlKey && !event.metaKey) {
+            return
+        }
+        event.preventDefault()
+        view.wheelZoomDistance += event.deltaMode === 0 ? event.deltaY : event.deltaY * WHEEL_ZOOM_DISTANCE
+        if (Math.abs(view.wheelZoomDistance) >= WHEEL_ZOOM_DISTANCE) {
+            if (view.wheelZoomDistance < 0) {
+                zoomIn(view, event)
+            } else {
+                zoomOut(view, event)
+            }
+            view.wheelZoomDistance = 0
+        }
+    }, {passive: false})
+    view.addEventListener('fullscreenchange', function () {
+        const button = view.querySelector('.browser-view-fullscreen')
+        button.textContent = isFullscreen(view) ? 'Exit full screen' : 'Full screen'
+        button.title = isFullscreen(view) ? 'Exit full screen (Esc)' : 'Show the browser on the whole screen'
+        button.setAttribute('aria-label', button.title)
+        updateZoomLabel(view)
+    })
+}
+
+// The size that fits the page changes with the window
+window.addEventListener('resize', function () {
+    views.forEach(updateZoomLabel)
+})
 
 // ---------------------------------------------------------------------------------------------------------------
 // Input, sent in order: events are queued while a request is in progress, then sent together
@@ -239,7 +447,7 @@ function addInputListeners(view) {
     // The pointer is captured while a button is held, so a drag that ends outside the view still releases the button in the browser
     view.canvas.addEventListener('pointerdown', function (event) {
         event.preventDefault()
-        view.focus()
+        view.screen.focus({preventScroll: true})
         view.canvas.setPointerCapture(event.pointerId)
         view.inputErrorShown = false
         queueInput(view, mouseInput(view, event, 'mousePressed', clickCount(view, event)))
@@ -255,6 +463,10 @@ function addInputListeners(view) {
         event.preventDefault()
     })
     view.canvas.addEventListener('wheel', function (event) {
+        // Ctrl+scroll zooms the view instead (see addZoomListeners)
+        if (event.ctrlKey || event.metaKey) {
+            return
+        }
         event.preventDefault()
         const point = position(view, event)
         // Lines (deltaMode 1) and pages (deltaMode 2) are converted to pixels
@@ -265,22 +477,29 @@ function addInputListeners(view) {
     }, {passive: false})
 
     // Every key goes to the browser while the view is focused (including Tab, which moves between its fields), except the paste shortcut, so
-    // the text is pasted from the user's clipboard
-    view.addEventListener('keydown', function (event) {
+    // the text is pasted from the user's clipboard, and the zoom shortcuts, which zoom the view
+    view.screen.addEventListener('keydown', function (event) {
         if (isPasteShortcut(event)) {
             return
         }
         event.preventDefault()
+        if (isZoomShortcut(event)) {
+            zoomWithShortcut(view, event)
+            return
+        }
         queueInput(view, keyInput(event, 'keyDown'))
     })
-    view.addEventListener('keyup', function (event) {
+    view.screen.addEventListener('keyup', function (event) {
         if (isPasteShortcut(event)) {
             return
         }
         event.preventDefault()
+        if (isZoomShortcut(event)) {
+            return
+        }
         queueInput(view, keyInput(event, 'keyUp'))
     })
-    view.addEventListener('paste', function (event) {
+    view.screen.addEventListener('paste', function (event) {
         event.preventDefault()
         const text = event.clipboardData ? event.clipboardData.getData('text') : ''
         if (text) {

@@ -70,7 +70,7 @@ public final class BrowserView {
     private static final Duration SEND_TIMEOUT = Duration.ofSeconds(5L);
     private static final Duration IDLE_TIMEOUT = Duration.ofSeconds(5L);
     private static final Duration FRAME_INTERVAL = Duration.ofMillis(100L);
-    private static final int JPEG_QUALITY = 70;
+    private static final int JPEG_QUALITY = 85;
     private static final int MAXIMUM_FRAME_WIDTH = 1920;
     private static final int MAXIMUM_FRAME_HEIGHT = 1200;
     // Shared by every view, so a tracker's new browser (such as on a retry) always has newer frames than the one the web UI last showed

@@ -696,60 +696,77 @@ select:disabled {
 }
 
 .input-card .browser-view {
-    background: var(--surface);
-}
-
-.input-text {
-    min-width: 0;
-}
-
-.input-text p {
-    margin: 4px 0 0;
-}
-
-.input-actions {
+    --browser-view-toolbar-height: 40px;
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.input-timer {
-    font-family: var(--mono);
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: var(--warning);
-}
-
-/* Live view of a tracker's browser, running in the container */
-
-.browser-view {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 120px;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface-muted);
 }
 
-/* Scaled down (keeping its aspect ratio) to fit the page, and never scaled up */
+.browser-view:has(> .browser-view-screen:focus) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.browser-view-toolbar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    height: var(--browser-view-toolbar-height);
+    padding: 0 8px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.browser-view-zoom {
+    min-width: 6.5em;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+/* Scrolls when the frame is zoomed in beyond the page, and centres it otherwise (keeping its start reachable when it is larger) */
+.browser-view-screen {
+    display: flex;
+    align-items: safe center;
+    justify-content: safe center;
+    min-height: 120px;
+    max-height: 75vh;
+    overflow: auto;
+    outline: none;
+}
+
 .browser-view-canvas {
     display: block;
+    flex: none;
+}
+
+/* At 'Fit', scaled down (keeping its aspect ratio) to fit the page, and never scaled up */
+.browser-view-canvas.fit {
     width: auto;
     height: auto;
     max-width: 100%;
     max-height: 75vh;
 }
 
-.browser-view.interactive {
-    outline: none;
+.browser-view:fullscreen {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
-.browser-view.interactive:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+.browser-view:fullscreen > .browser-view-screen {
+    flex: 1;
+    max-height: none;
+}
+
+.browser-view:fullscreen .browser-view-canvas.fit {
+    max-height: calc(100vh - var(--browser-view-toolbar-height));
 }
 
 .browser-view-placeholder {

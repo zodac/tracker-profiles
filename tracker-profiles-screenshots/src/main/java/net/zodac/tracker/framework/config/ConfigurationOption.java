@@ -54,13 +54,6 @@ public enum ConfigurationOption {
         "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
-     * Whether to force a UI browser for all trackers.
-     */
-    FORCE_UI_BROWSER(Tab.MAIN, "Execution", "Browser with UI for every tracker", "false", OptionType.BOOLEAN, List.of(),
-        "Uses a browser with a UI (on the container's virtual display, shown in the web UI) for each tracker, even for headless trackers (this will "
-            + "disable parallel execution)", Scope.EXECUTION),
-
-    /**
      * The user input timeout in seconds.
      */
     INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", Range.of(0, Integer.MAX_VALUE),

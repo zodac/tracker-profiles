@@ -363,8 +363,9 @@ function createInputCard(input) {
                 el('p', {text: `${input.message} in the browser below, then select Continue.`}),
                 el('p', {
                     className: 'muted',
-                    text: 'Click in the browser to use it: typing is sent to it while it is selected, and Ctrl+V pastes your clipboard. Skipping '
-                        + 'fails this attempt for the tracker. Continuing is automatic if the page changes.',
+                    text: 'Click in the browser to use it: typing is sent to it while it is selected, and Ctrl+V pastes your clipboard. Zoom in '
+                        + 'with its toolbar or Ctrl+scroll, or show it on the whole screen. Skipping fails this attempt for the tracker. Continuing is '
+                        + 'automatic if the page changes.',
                 }),
             ]),
             el('div', {className: 'input-actions'}, [timer, extendButton, skipButton, continueButton]),
