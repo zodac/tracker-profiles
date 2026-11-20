@@ -38,6 +38,7 @@ import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The web UI server. Serves the static web UI and its JSON API using the JDK {@link HttpServer}, handling each request on a virtual thread.
@@ -57,8 +58,8 @@ public final class WebServer {
     }
 
     /**
-     * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists), then starts the web UI server. The
-     * database is closed again if the server cannot be started, and otherwise by {@link #stop()}.
+     * Opens the {@link ApplicationDatabase} (removing any setting saved for an option that no longer exists, or can only be set as an environment
+     * variable), then starts the web UI server. The database is closed again if the server cannot be started, and otherwise by {@link #stop()}.
      *
      * @param applicationConfiguration the {@link ApplicationConfiguration} loaded from environment variables
      * @param webLogAppender           the {@link WebLogAppender} capturing the log messages shown in the web UI
@@ -119,17 +120,22 @@ public final class WebServer {
     private static void removeObsoleteSettings(final ApplicationDatabase applicationDatabase) throws SQLException {
         final Map<String, String> savedSettings = applicationDatabase.settings().findAll();
         final Map<String, String> currentSettings = new LinkedHashMap<>(savedSettings);
-        currentSettings.keySet().removeIf(name -> ConfigurationOption.find(name) == null);
+        currentSettings.keySet().removeIf(name -> !isEditable(ConfigurationOption.find(name)));
 
         if (currentSettings.size() == savedSettings.size()) {
             return;
         }
 
-        LOGGER.debug("Removing saved settings for options that no longer exist: {}", savedSettings.keySet()
+        LOGGER.debug("Removing saved settings for options that no longer exist or are only set as environment variables: {}", savedSettings
+            .keySet()
             .stream()
             .filter(name -> !currentSettings.containsKey(name))
             .toList());
         applicationDatabase.settings().replaceAll(currentSettings);
+    }
+
+    private static boolean isEditable(final @Nullable ConfigurationOption option) {
+        return option != null && option.editableAtRuntime();
     }
 
     private static void applyStoredSettings(final ApplicationDatabase applicationDatabase) throws SQLException {

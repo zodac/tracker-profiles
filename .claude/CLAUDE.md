@@ -77,8 +77,8 @@ With the system property `tracker-profiles.appcds-training=true`, `ApplicationLa
 Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServer` (module `jdk.httpserver`, included in the `jlink` list in
 `docker/Dockerfile`) with virtual threads, Gson for JSON, and no web framework.
 
-- **`WebServer`** — opens the database, removes saved settings for options that no longer exist, and registers the handlers. `stop()` (also run by
-  a shutdown hook) closes the database.
+- **`WebServer`** — opens the database, removes saved settings for options that no longer exist or are `Scope.STARTUP`, and registers the
+  handlers. `stop()` (also run by a shutdown hook) closes the database.
 - **`web.http`** — one handler per context: `RunApiHandler` (`/api/run`), `BrowserApiHandler` (`/api/browser`, see
   [Live Browser View](#live-browser-view)), `LogApiHandler` (`/api/logs?tracker={name}&after={id}`),
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`, and

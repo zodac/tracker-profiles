@@ -92,7 +92,7 @@ public enum ConfigurationOption {
      * The local timezone.
      */
     TIMEZONE(Group.SYSTEM, "Timezone", "UTC", OptionType.STRING, List.of(),
-        "The local timezone, used for the date in the names of the output directory and of downloaded screenshots", Scope.EXECUTION),
+        "The local timezone, used for the date in the names of the output directory and of downloaded screenshots", Scope.STARTUP),
 
     /**
      * The web UI port.

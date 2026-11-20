@@ -27,7 +27,7 @@ services:
       # Output configuration (can also be changed on the 'Settings' tab of the web UI)
       OUTPUT_DIRECTORY_NAME_FORMAT: "yyyy-MM-dd"
       OUTPUT_DIRECTORY_PARENT_PATH: "/app/screenshots"
-      # System configuration (TIMEZONE can also be changed on the 'Settings' tab of the web UI, the others are only read on startup)
+      # System configuration (only read on startup)
       DATABASE_PATH: "/app/data/tracker-profiles.db"
       SECRET_KEY: "change-me-strong-secret"  # <--- TODO: Change this, generate using `openssl rand -base64 32`, and keep it for as long as the database is used
       TIMEZONE: "UTC"

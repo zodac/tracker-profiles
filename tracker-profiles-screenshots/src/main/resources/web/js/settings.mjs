@@ -340,9 +340,6 @@ function renderSettingRow(setting) {
         if (current.source === 'WEB_UI') {
             badges.push(el('span', {className: 'badge source-web_ui', text: 'Saved'}))
         }
-        if (!current.editable) {
-            badges.push(el('span', {className: 'badge', text: 'Environment only', title: 'Read at startup; set as an environment variable'}))
-        }
         nameLine.replaceChildren.apply(nameLine, badges)
 
         const overridesEnvironment = current.source === 'WEB_UI' && current.environmentValue !== null

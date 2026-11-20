@@ -504,13 +504,12 @@ Changes to these options apply from the next execution.
 |--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|
 | *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)) | yyyy-MM-dd       |
 | *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of the new directory created for the screenshots                                                                                                                                     | /app/screenshots |
-| *TIMEZONE*                     | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                 | UTC              |
 
 #### Startup-Only Options
 
 These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
-(marked as *Environment only*, with the value of `SECRET_KEY` hidden), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure
-the container itself, so are not shown in the web UI.
+(greyed out, with the value of `SECRET_KEY` hidden), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
+itself, so are not shown in the web UI.
 
 | Environment Variable   | Description                                                                                                                                                     | Default Value                 |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
@@ -518,6 +517,7 @@ the container itself, so are not shown in the web UI.
 | *JAVA_ADDITIONAL_OPTS* | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                  |                               |
 | *JAVA_OPTS*            | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                  |                               |
 | *SECRET_KEY*           | **Required.** The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown in the web UI)                       |                               |
+| *TIMEZONE*             | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                        | UTC                           |
 | *WEB_UI_PORT*          | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                          | 8080                          |
 
 #### JVM Options
