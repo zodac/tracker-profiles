@@ -38,19 +38,30 @@ export function formatTypeName(value) {
     return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
+// Legacy trackers are never executed, even if they were enabled before they stopped being supported
+function enabledTrackerCount() {
+    return trackers.filter(function (tracker) {
+        return tracker.enabled && !tracker.legacy
+    }).length
+}
+
 function enabledTrackersDescription() {
     if (!trackersLoaded) {
         return 'Takes a screenshot of the profile page of every enabled tracker'
     }
+    return `${pluralise(enabledTrackerCount(), 'tracker')} enabled`
+}
 
-    // Legacy trackers are never executed, even if they were enabled before they stopped being supported
-    const enabled = trackers.filter(function (tracker) {
-        return tracker.enabled && !tracker.legacy
-    })
-    if (enabled.length === 0) {
-        return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab'
+// The Start button and description, which also change when trackers are enabled or disabled. Start needs at least one enabled tracker
+export function renderRunSummary() {
+    if (!latestStatus) {
+        return
     }
-    return pluralise(enabled.length, 'enabled tracker')
+    const active = isActive(latestStatus)
+    const startButton = byId('start-button')
+    startButton.disabled = active || (trackersLoaded && enabledTrackerCount() === 0)
+    startButton.textContent = active ? 'Running…' : 'Start'
+    byId('run-description').textContent = runDescription(latestStatus)
 }
 
 export function runDescription(status) {
@@ -87,9 +98,7 @@ function renderStatus(status) {
     headerStatus.textContent = STATE_LABELS[headerState] || headerState
     document.title = waiting ? `(Input needed) ${PAGE_TITLE}` : PAGE_TITLE
 
-    const startButton = byId('start-button')
-    startButton.disabled = active
-    startButton.textContent = active ? 'Running…' : 'Start'
+    renderRunSummary()
 
     // Only the trackers that failed in the previous execution can be executed again, once it has ended
     const failedTrackers = status.failedTrackers
@@ -105,7 +114,6 @@ function renderStatus(status) {
     cancelButton.disabled = cancelling
     cancelButton.textContent = cancelling ? 'Cancelling…' : 'Cancel'
 
-    byId('run-description').textContent = runDescription(status)
 
     const succeeded = countTrackers(status, 'SUCCEEDED')
     const failed = countTrackers(status, 'FAILED')

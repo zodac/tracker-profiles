@@ -346,8 +346,9 @@ this type of automated access.
 The application is used through a web UI on port `8080` (configurable with `WEB_UI_PORT`), which has three tabs:
 
 - **Main**: start an execution and follow its progress
-    - **Start** executes every enabled tracker. Once an execution has ended with failed trackers, **Failures only** executes just those trackers
-      again (any that have since been disabled are left out). The run options and settings can be changed between executions
+    - **Start** executes every enabled tracker (it is disabled until at least one tracker is enabled). Once an execution has ended with failed
+      trackers, **Failures only** executes just those trackers again (any that have since been disabled are left out). The run options and
+      settings can be changed between executions
     - Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. A tracker moves between groups as the execution
       continues, so once it finishes the trackers are grouped by whether they succeeded or failed
     - Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its

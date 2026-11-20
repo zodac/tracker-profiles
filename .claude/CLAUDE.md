@@ -220,10 +220,11 @@ The status is polled every 2s during an execution (1s while an input is pending)
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded). It has no options. The tracker list and execution log are hidden until an execution has started. The Settings tab shows
-  every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run
-  options come first, with `Scope.STARTUP` options read-only. While an execution is running, every option is locked. `MULTI_SELECT` options are a
-  list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
+  tracker stays expanded). It has no options. Its description shows how many trackers are enabled, and Start is disabled while none are
+  (`renderRunSummary`, also called by `renderTrackers`). The tracker list and execution log are hidden until an execution has started. The
+  Settings tab shows every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by
+  group), so the run options come first, with `Scope.STARTUP` options read-only. While an execution is running, every option is locked.
+  `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
