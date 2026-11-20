@@ -637,25 +637,6 @@ select:disabled {
     background: var(--surface-muted);
 }
 
-/* Timeout (disabled, or a number of seconds) */
-
-.timeout-input {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.timeout-seconds {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-}
-
-.timeout-seconds input[type="number"] {
-    width: 96px;
-}
-
 .locked-notice {
     margin: 12px 16px 0;
     font-size: 13px;

@@ -1,6 +1,4 @@
 import {
-    DEFAULT_INPUT_TIMEOUT_SECONDS,
-    INPUT_TIMEOUT_SETTING,
     LOG_LEVEL_SETTING,
     TYPING_SAVE_DELAY_MS,
 } from './constants.mjs'
@@ -271,74 +269,10 @@ function sortableChoiceInput(setting, onChange, label) {
     }
 }
 
-// A timeout that is either disabled (0), or a number of seconds
-function timeoutInput(setting, onChange, onFlush) {
-    const label = setting.label
-    const checkbox = el('input', {type: 'checkbox', role: 'switch', 'aria-label': `${label} enabled`})
-    const seconds = el('input', {type: 'number', min: '1', 'aria-label': `${label} in seconds`})
-    const secondsField = el('span', {className: 'timeout-seconds'}, [seconds, el('span', {className: 'muted', text: 'seconds'})])
-    let lastEnabledValue = String(DEFAULT_INPUT_TIMEOUT_SECONDS)
-    let disabled = !setting.editable
-
-    function refresh() {
-        secondsField.hidden = !checkbox.checked
-        checkbox.disabled = disabled
-        seconds.disabled = disabled
-    }
-
-    checkbox.addEventListener('change', function () {
-        if (checkbox.checked) {
-            seconds.value = lastEnabledValue
-            refresh()
-            onChange(lastEnabledValue, true)
-            seconds.focus()
-        } else {
-            refresh()
-            onChange('0', true)
-        }
-    })
-    seconds.addEventListener('input', function () {
-        if (Number(seconds.value) > 0) {
-            lastEnabledValue = seconds.value
-        }
-        onChange(seconds.value, false)
-    })
-    seconds.addEventListener('blur', onFlush)
-    seconds.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
-            onFlush()
-        }
-    })
-
-    return {
-        element: el('span', {className: 'timeout-input'}, [
-            secondsField,
-            el('label', {className: 'switch'}, [checkbox, el('span', {className: 'switch-track'})]),
-        ]),
-        setValue: function (value) {
-            const enabled = Number(value) > 0
-            checkbox.checked = enabled
-            if (enabled) {
-                seconds.value = value
-                lastEnabledValue = value
-            }
-            refresh()
-        },
-        setDisabled: function (isDisabled) {
-            disabled = isDisabled || !setting.editable
-            refresh()
-        },
-    }
-}
-
 // Creates the input for a setting. 'onChange' is called with the new value and whether to save it immediately (rather than after typing)
 function settingInput(setting, onChange, onFlush) {
     const disabled = !setting.editable
     const label = setting.label
-
-    if (setting.name === INPUT_TIMEOUT_SETTING) {
-        return timeoutInput(setting, onChange, onFlush)
-    }
 
     if (setting.type === 'BOOLEAN') {
         const checkbox = el('input', {type: 'checkbox', role: 'switch', disabled: disabled, 'aria-label': label})

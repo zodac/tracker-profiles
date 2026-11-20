@@ -130,7 +130,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @param elementToHighlight the {@link By} selector of the element the user needs to interact with
      * @param instruction        what the user needs to do, shown in the web UI
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
-     * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)
      */
     protected final void awaitUserInput(final By elementToHighlight, final String instruction) {
@@ -144,7 +143,6 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
      * @param elementToHighlight the {@link WebElement} the user needs to interact with
      * @param instruction        what the user needs to do, shown in the web UI
      * @throws net.zodac.tracker.framework.exception.CancelledInputException if the user skips the input
-     * @throws net.zodac.tracker.framework.exception.NoUserInputException    if no input is provided before the timeout
      * @see DisplayUtils#confirm(String, String)
      */
     protected final void awaitUserInput(final WebElement elementToHighlight, final String instruction) {

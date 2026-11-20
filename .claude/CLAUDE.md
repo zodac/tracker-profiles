@@ -119,8 +119,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `editableAtRuntime` (not `Scope.STARTUP`).
 - **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the element
   and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until the user responds in the web UI
-  (`POST /api/run/input/{id}/continue|skip|extend`), the page in the browser changes, or `INPUT_TIMEOUT_SECONDS` passes (read while waiting, so a
-  change applies to a waiting request). The prompt in the web UI shows the tracker's browser, in which the user provides the input (see
+  (`POST /api/run/input/{id}/continue|skip`) or the page in the browser changes; it never times out (only a cancellation ends it otherwise). The
+  prompt in the web UI shows the tracker's browser, in which the user provides the input (see
   [Live Browser View](#live-browser-view)). There is no dialog on the display: the virtual display is never seen by the user.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
   each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
@@ -132,8 +132,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
 
 #### Screenshots
 
-`ProfileScreenshotExecutor` reports each saved screenshot to the `ExecutionListener` (`trackerScreenshotSaved`, also for an existing screenshot that
-is skipped, and `trackerFailureScreenshotSaved`). `RunManager` keeps the latest one per `RedactionType` (a retry replaces it) and the latest failure
+`ProfileScreenshotExecutor` reports each saved screenshot to the `ExecutionListener` (`trackerScreenshotSaved` and
+`trackerFailureScreenshotSaved`). `RunManager` keeps the latest one per `RedactionType` (a retry replaces it) and the latest failure
 screenshot (dropped when the tracker succeeds, as the file is deleted), and lists them in each `RunStatus.TrackerProgress`: a succeeded tracker
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
 execution is kept, in memory, except that `RunManager` keeps each tracker's latest screenshots across all executions: the profile screenshots of
@@ -216,8 +216,7 @@ polled, except the status every 10s during an execution (no logs), so the page t
   tracker stays expanded), and shows the options with `Tab.MAIN` in a collapsible "Run options" section (open until Start is pressed). The tracker
   list and execution log are hidden until an execution has started. While an execution is running, every option (on both tabs) is locked. The Settings
   tab shows the `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last. `MULTI_SELECT` options are a list dragged into order
-  (or moved with the arrow keys on the handle), each with a switch to include it; `INPUT_TIMEOUT_SECONDS` is a switch (off saves `0`) with a seconds
-  field.
+  (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab groups trackers as enabled (headless/manual), disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
@@ -253,7 +252,9 @@ polled, except the status every 10s during an execution (no logs), so the page t
 and reports it to the `ExecutionListener` the first time it succeeds, and it reports saved screenshots. Pass the `TrackerRun` rather than the
 tracker name, listener and completed steps separately.
 
-Failure-screenshot writes go to `ScreenshotDirectories.errors()`, created by `ScreenshotDirectories.createAll()` when `TAKE_SCREENSHOT_ON_ERROR=true`.
+A failure screenshot is always taken when an attempt fails, in `ScreenshotDirectories.errors()` (created with the output directory by
+`ScreenshotDirectories.createAll()`). Screenshots are named after the tracker (and redaction type), so an existing screenshot from the same date is
+always overwritten.
 
 The configuration cannot change during an execution (settings are locked), so code reads each value when it needs it and never re-reads it to pick
 up a change mid-execution.

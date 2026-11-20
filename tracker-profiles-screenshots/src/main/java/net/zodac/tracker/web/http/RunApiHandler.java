@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Handles requests to start an execution ({@code POST /api/run}), start an execution of only the trackers that failed in the previous execution
  * ({@code POST /api/run/failed}), cancel the running execution ({@code POST /api/run/cancel}), respond to a
- * request for a user input ({@code POST /api/run/input/{id}/continue}, {@code .../skip} or {@code .../extend}), and retrieve the status of the
+ * request for a user input ({@code POST /api/run/input/{id}/continue} or {@code .../skip}), and retrieve the status of the
  * execution ({@code GET /api/run}).
  */
 public final class RunApiHandler extends ApiHandler {
@@ -117,7 +117,6 @@ public final class RunApiHandler extends ApiHandler {
         final boolean waiting = switch (parts[1]) {
             case "continue" -> runManager.respondToInput(inputId, UserInputResponse.CONTINUE);
             case "skip" -> runManager.respondToInput(inputId, UserInputResponse.SKIP);
-            case "extend" -> runManager.extendInput(inputId);
             default -> throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown input action: '%s'".formatted(parts[1]));
         };
 

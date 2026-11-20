@@ -20,10 +20,6 @@ package net.zodac.tracker.app;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -32,10 +28,8 @@ import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.config.Configuration;
-import net.zodac.tracker.framework.config.ExistingScreenshotAction;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import net.zodac.tracker.framework.exception.CloudflareVerificationException;
-import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.framework.exception.ScreenshotWriteError;
 import net.zodac.tracker.framework.exception.TrackerUnavailableException;
 import net.zodac.tracker.framework.exception.TranslationException;
@@ -133,10 +127,6 @@ final class ProfileScreenshotExecutor {
         } catch (final NoSuchElementException e) {
             LOGGER.debug("No tracker handler implementation found", e);
             LOGGER.warn("No tracker handler implementation found");
-        } catch (final NoUserInputException e) {
-            final String errorMessage = e.getCause() == null ? e.getMessage() : e.getCause().getMessage();
-            LOGGER.debug("User provided no manual input", e);
-            LOGGER.warn("User provided no manual input: {}", errorMessage);
         } catch (final ScreenshotWriteError e) {
             LOGGER.debug("Error writing screenshot", e);
             LOGGER.warn("Error writing screenshot");
@@ -219,11 +209,6 @@ final class ProfileScreenshotExecutor {
     }
 
     private static void screenshotOnError(final @Nullable AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun) {
-        if (!Configuration.get().takeScreenshotOnError()) {
-            LOGGER.trace("Error occurred, but screenshots for errors are not enabled");
-            return;
-        }
-
         if (trackerHandler == null) {
             LOGGER.warn("Unable to take failure screenshot, trackerHandler is unexpectedly null");
             return;
@@ -232,7 +217,7 @@ final class ProfileScreenshotExecutor {
         try {
             LOGGER.trace("Taking failure screenshot");
             final File screenshot =
-                ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.errors(), trackerRun.name(), false, 0).get();
+                ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.errors(), trackerRun.name(), false).get();
             LOGGER.warn("Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
             trackerRun.failureScreenshotSaved(screenshot.toPath());
         } catch (final ExecutionException e) {
@@ -247,22 +232,6 @@ final class ProfileScreenshotExecutor {
 
     private static void screenshotProfile(final AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun) {
         LOGGER.trace("Starting to take screenshot of profile");
-        final Set<RedactionType> redactionTypes = Configuration.get().redactionTypes();
-        final List<RedactionType> redactionsToExecute = redactionTypesToExecute(trackerRun.name(), redactionTypes);
-        if (redactionsToExecute.isEmpty()) {
-            LOGGER.warn("Screenshots already exist for all redaction types, skipping");
-            reportExistingScreenshots(trackerRun, redactionTypes);
-            trackerRun.completeAllSteps();
-            return;
-        }
-
-        if (redactionsToExecute.size() != redactionTypes.size()) {
-            LOGGER.warn("Some screenshots already exist, only executing: {}", redactionsToExecute);
-            final Set<RedactionType> existingRedactions = new LinkedHashSet<>(redactionTypes);
-            redactionsToExecute.forEach(existingRedactions::remove);
-            reportExistingScreenshots(trackerRun, existingRedactions);
-        }
-
         trackerRun.step(TrackerStep.OPEN_TRACKER, () -> {
             trackerHandler.openTracker();
             trackerHandler.navigateToLoginPage();
@@ -281,8 +250,7 @@ final class ProfileScreenshotExecutor {
 
         trackerRun.step(TrackerStep.OPEN_PROFILE_PAGE, trackerHandler::openProfilePage);
 
-        final int numberOfUpdates = trackerRun.stepWithResult(TrackerStep.TAKE_SCREENSHOTS, () -> takeScreenshots(trackerHandler, trackerRun,
-            redactionsToExecute));
+        final int numberOfUpdates = trackerRun.stepWithResult(TrackerStep.TAKE_SCREENSHOTS, () -> takeScreenshots(trackerHandler, trackerRun));
 
         trackerRun.step(TrackerStep.LOGOUT, () -> {
             if (numberOfUpdates > 0) {
@@ -295,21 +263,16 @@ final class ProfileScreenshotExecutor {
     }
 
     // Returns the number of updates made to the profile page before the screenshots were taken
-    private static int takeScreenshots(final AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun,
-        final List<RedactionType> redactionsToExecute) {
+    private static int takeScreenshots(final AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun) {
         final boolean scrollDuringScreenshot = !(trackerHandler instanceof DoesNotScrollDuringScreenshot);
 
         // If the tracker has no sensitive information, all redaction types produce identical screenshots, so we take a single one
-        final List<RedactionType> effectiveRedactions;
+        final Set<RedactionType> effectiveRedactions;
         if (RedactionRegistry.hasAnyRedaction(trackerHandler)) {
-            effectiveRedactions = redactionsToExecute;
+            effectiveRedactions = Configuration.get().redactionTypes();
         } else {
             LOGGER.debug("No sensitive information to redact, taking a single screenshot");
-            effectiveRedactions = redactionTypesToExecute(trackerRun.name(), Set.of(RedactionType.NONE));
-            if (effectiveRedactions.isEmpty()) {
-                LOGGER.warn("Screenshot already exists with no sensitive information, skipping");
-                reportExistingScreenshots(trackerRun, Set.of(RedactionType.NONE));
-            }
+            effectiveRedactions = Set.of(RedactionType.NONE);
         }
 
         final int numberOfUpdates = updateProfilePage(trackerHandler);
@@ -343,7 +306,7 @@ final class ProfileScreenshotExecutor {
 
         trackerHandler.actionBeforeScreenshot();
         final Future<File> pendingWrite = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), Configuration.get().outputDirectory(), baseName,
-            scrollDuringScreenshot, screenshotIndex(baseName));
+            scrollDuringScreenshot);
         trackerHandler.actionAfterScreenshot();
 
         try {
@@ -420,41 +383,6 @@ final class ProfileScreenshotExecutor {
             LOGGER.info("Redacted the text of {} element{}", numberOfRedactedElements, StringUtils.pluralise(numberOfRedactedElements));
         }
         return redactor;
-    }
-
-    private static List<RedactionType> redactionTypesToExecute(final String trackerName, final Set<RedactionType> redactionTypes) {
-        if (Configuration.get().existingScreenshotAction() != ExistingScreenshotAction.SKIP) {
-            return redactionTypes.stream().toList();
-        }
-
-        // If ExistingScreenshotAction == SKIP, we need to verify if any screenshots have already been taken and exclude those from being taken again
-        final List<RedactionType> typesToProcess = new ArrayList<>();
-        for (final RedactionType type : redactionTypes) {
-            final String baseName = screenshotBaseName(trackerName, type);
-            if (ScreenshotTaker.howManyScreenshotsAlreadyExist(baseName, Configuration.get().outputDirectory()) == 0) {
-                typesToProcess.add(type);
-            } else {
-                LOGGER.debug("Screenshot already exists for '{}', skipping", baseName);
-            }
-        }
-        return typesToProcess;
-    }
-
-    // Existing screenshots that are skipped are still reported, so they are shown as the result of the tracker. If several exist, the first one
-    // (with no index) is reported
-    private static void reportExistingScreenshots(final TrackerRun trackerRun, final Set<RedactionType> redactionTypes) {
-        for (final RedactionType redactionType : redactionTypes) {
-            final Path screenshot = Configuration.get().outputDirectory().resolve(screenshotBaseName(trackerRun.name(), redactionType) + ".png");
-            if (Files.isRegularFile(screenshot)) {
-                trackerRun.screenshotSaved(redactionType, screenshot.toAbsolutePath());
-            }
-        }
-    }
-
-    private static int screenshotIndex(final String baseName) {
-        return Configuration.get().existingScreenshotAction() == ExistingScreenshotAction.CREATE_ANOTHER
-            ? ScreenshotTaker.howManyScreenshotsAlreadyExist(baseName, Configuration.get().outputDirectory())
-            : 0;
     }
 
     private static String screenshotBaseName(final String trackerName, final RedactionType redactionType) {

@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -87,7 +86,6 @@ import org.jspecify.annotations.Nullable;
 public final class RunManager implements ExecutionListener {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Duration INPUT_EXTENSION = Duration.ofMinutes(5L);
 
     private final Lock lock = new ReentrantLock();
     private final ApplicationDatabase applicationDatabase;
@@ -331,16 +329,6 @@ public final class RunManager implements ExecutionListener {
      */
     public boolean respondToInput(final long inputId, final UserInputResponse response) {
         return UserInputRequests.respond(inputId, response);
-    }
-
-    /**
-     * Gives the user five more minutes to respond to a request waiting for a user input.
-     *
-     * @param inputId the {@link UserInputRequests.PendingUserInput#id()}
-     * @return {@code true} if the request was waiting for a response
-     */
-    public boolean extendInput(final long inputId) {
-        return UserInputRequests.extend(inputId, INPUT_EXTENSION);
     }
 
     /**

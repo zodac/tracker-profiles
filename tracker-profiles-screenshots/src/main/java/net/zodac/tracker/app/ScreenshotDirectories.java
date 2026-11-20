@@ -20,7 +20,6 @@ package net.zodac.tracker.app;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,7 +55,7 @@ public final class ScreenshotDirectories {
     }
 
     /**
-     * Creates {@link #output()} and, if {@link ApplicationConfiguration#takeScreenshotOnError()} is enabled, {@link #errors()}.
+     * Creates {@link #output()} and {@link #errors()}.
      *
      * @throws IOException if any directory cannot be created
      * @see Files#createDirectories(Path, java.nio.file.attribute.FileAttribute[])
@@ -67,11 +66,9 @@ public final class ScreenshotDirectories {
             Files.createDirectories(output);
             LOGGER.trace("Created screenshot output directory: [{}]", output);
 
-            if (Configuration.get().takeScreenshotOnError()) {
-                final Path errors = errors();
-                Files.createDirectories(errors);
-                LOGGER.trace("Created error screenshot directory: [{}]", errors);
-            }
+            final Path errors = errors();
+            Files.createDirectories(errors);
+            LOGGER.trace("Created error screenshot directory: [{}]", errors);
         } catch (final IOException e) {
             throw new IOException("Unable to create output directories: %s".formatted(e.getMessage()), e);
         }

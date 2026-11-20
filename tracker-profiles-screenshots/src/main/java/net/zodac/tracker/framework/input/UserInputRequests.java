@@ -17,7 +17,6 @@
 
 package net.zodac.tracker.framework.input;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,9 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
 import net.zodac.tracker.framework.ExecutionCancellation;
-import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.exception.CancelledInputException;
-import net.zodac.tracker.framework.exception.NoUserInputException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -41,8 +38,8 @@ import org.jspecify.annotations.Nullable;
  * the input, and the web UI, which shows each {@link PendingUserInput} and sends the user's {@link UserInputResponse}.
  *
  * <p>
- * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves), and
- * fails if {@link net.zodac.tracker.framework.config.ApplicationConfiguration#inputTimeoutDuration()} passes first.
+ * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves). A
+ * request never times out: it waits until the user responds, or the execution is cancelled.
  */
 public final class UserInputRequests {
 
@@ -66,7 +63,6 @@ public final class UserInputRequests {
      * @param message     what the user needs to do
      * @param pageChanged returns {@code true} once the page in the browser has changed, checked periodically while waiting
      * @throws CancelledInputException thrown if the user selects {@link UserInputResponse#SKIP}
-     * @throws NoUserInputException    thrown if no input is received before the timeout, or the waiting thread is interrupted
      * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution is cancelled while waiting
      */
     public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
@@ -76,8 +72,10 @@ public final class UserInputRequests {
         try {
             waitForResponse(id, pageChanged);
         } catch (final InterruptedException e) {
+            // The waiting thread is only interrupted when the execution is cancelled
             Thread.currentThread().interrupt();
-            throw new NoUserInputException(Configuration.get().inputTimeoutDuration(), e);
+            ExecutionCancellation.throwIfCancelled();
+            throw new IllegalStateException("Interrupted while waiting for user input", e);
         } finally {
             LOCK.lock();
             try {
@@ -93,7 +91,7 @@ public final class UserInputRequests {
         try {
             final long id = nextId;
             nextId++;
-            PENDING.put(id, new Request(id, trackerName, message, System.currentTimeMillis(), Configuration.get().inputTimeoutDuration()));
+            PENDING.put(id, new Request(id, trackerName, message));
             return id;
         } finally {
             LOCK.unlock();
@@ -118,12 +116,6 @@ public final class UserInputRequests {
                     }
                     LOGGER.trace("User provided the input for request #{}", id);
                     return;
-                }
-
-                final Long expiresAt = request.expiresAt();
-                if (expiresAt != null && System.currentTimeMillis() >= expiresAt) {
-                    LOGGER.trace("Request #{} timed out with no input", id);
-                    throw new NoUserInputException(Duration.ofMillis(expiresAt - request.requestedAt), new IllegalStateException("Timed out"));
                 }
 
                 final boolean signalled = RESPONDED.await(POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
@@ -201,37 +193,13 @@ public final class UserInputRequests {
     }
 
     /**
-     * Gives the user more time to provide the input for a waiting request. Has no effect if user inputs do not time out.
-     *
-     * @param id        the {@link PendingUserInput#id()}
-     * @param extension how much longer to wait
-     * @return {@code true} if the request was waiting for a response, {@code false} if it has already finished
-     */
-    public static boolean extend(final long id, final Duration extension) {
-        LOCK.lock();
-        try {
-            final Request request = PENDING.get(id);
-            if (request == null || request.response != null) {
-                return false;
-            }
-            request.extensionMillis += extension.toMillis();
-            RESPONDED.signalAll();
-            return true;
-        } finally {
-            LOCK.unlock();
-        }
-    }
-
-    /**
      * A request for a user input that has not yet been answered, as shown in the web UI.
      *
      * @param id          the identifier of the request, used to respond to it
      * @param trackerName the name of the tracker waiting for the input
      * @param message     what the user needs to do
-     * @param requestedAt when the input was requested, as epoch milliseconds
-     * @param expiresAt   when the request times out, as epoch milliseconds, or {@code null} if it does not time out
      */
-    public record PendingUserInput(long id, String trackerName, String message, long requestedAt, @Nullable Long expiresAt) {
+    public record PendingUserInput(long id, String trackerName, String message) {
 
     }
 
@@ -241,29 +209,16 @@ public final class UserInputRequests {
         private final long id;
         private final String trackerName;
         private final String message;
-        private final long requestedAt;
-        private final Duration timeout;
-        private long extensionMillis;
         private @Nullable UserInputResponse response;
 
-        private Request(final long id, final String trackerName, final String message, final long requestedAt, final Duration timeout) {
+        private Request(final long id, final String trackerName, final String message) {
             this.id = id;
             this.trackerName = trackerName;
             this.message = message;
-            this.requestedAt = requestedAt;
-            this.timeout = timeout;
-        }
-
-        // No expiry when the timeout is disabled (zero)
-        private @Nullable Long expiresAt() {
-            if (timeout.isZero()) {
-                return null;
-            }
-            return requestedAt + timeout.toMillis() + extensionMillis;
         }
 
         private PendingUserInput toView() {
-            return new PendingUserInput(id, trackerName, message, requestedAt, expiresAt());
+            return new PendingUserInput(id, trackerName, message);
         }
     }
 }

@@ -18,7 +18,7 @@ exiting. The container keeps running, and each execution is started from the bro
 Browsers with a UI (for manual trackers) now run on a virtual display inside the container, and are
 shown live in the web UI, so the host no longer needs a display or X server (such as VcXsrv on Windows), and Linux and Windows are set up the same
 way. When a manual tracker needs input, the prompt on the **Main** tab shows its browser: click in it to solve the captcha or enter the 2FA code
-(`Ctrl`+`V` pastes from your clipboard, and its toolbar zooms in on small text or shows it on the whole screen), then continue or skip (or wait 5 more minutes). The browser of any tracker in progress can also be watched
+(`Ctrl`+`V` pastes from your clipboard, and its toolbar zooms in on small text or shows it on the whole screen), then continue or skip. A prompt waits until you respond. The browser of any tracker in progress can also be watched
 from its row (**Live browser**). Manual trackers now run in parallel, like headless trackers (up to `NUMBER_OF_PARALLEL_THREADS` at once), so
 their prompts can be answered in any order instead of waiting for each tracker in turn.
 
@@ -32,7 +32,6 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
 - The trackers are no longer read from a CSV file on each execution: import the CSV file once on the **Trackers** tab instead (the format is
   unchanged)
 - `BROWSER_WIDTH` and `BROWSER_HEIGHT` are replaced by `BROWSER_RESOLUTION` (e.g. `1680x1050`)
-- `INPUT_TIMEOUT_ENABLED` is removed, as `INPUT_TIMEOUT_SECONDS=0` now disables the timeout
 - `DISPLAY` and the `/tmp/.X11-unix` volume are no longer used, as browsers with a UI are shown in the web UI: remove them from your compose file
 - The following options are removed, along with the console progress bar:
     - `CSV_COMMENT_SYMBOL`
@@ -47,6 +46,10 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
 - `FORCE_UI_BROWSER` is removed, as the browser of any tracker in progress (headless or not) can be watched in the web UI
 - `TRACKER_EXECUTION_ORDER` is removed, as trackers are enabled or disabled on the **Trackers** tab: headless trackers are always executed first,
   then manual trackers
+- `INPUT_TIMEOUT_ENABLED` and `INPUT_TIMEOUT_SECONDS` are removed: a prompt for a manual tracker waits until you respond (or the execution is
+  cancelled)
+- `TAKE_SCREENSHOT_ON_ERROR` is removed: a screenshot is always taken when a tracker fails (in the `errors` subdirectory)
+- `SCREENSHOT_EXISTS_ACTION` is removed: an existing screenshot for the tracker on the same date is always overwritten
 - New options: `DATABASE_PATH`, `SECRET_KEY` and `WEB_UI_PORT`
 
 ## Docker Compose

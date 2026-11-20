@@ -53,14 +53,6 @@ public enum ConfigurationOption {
         "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
-     * The user input timeout in seconds.
-     */
-    INPUT_TIMEOUT_SECONDS(Tab.MAIN, "Execution", "Manual input timeout", "0", Range.of(0, Integer.MAX_VALUE),
-        "How long to wait for a user input for a manual tracker, in seconds, before the attempt fails (if disabled, or 0, waits until the user"
-            + " responds)",
-        Scope.EXECUTION),
-
-    /**
      * The application log level.
      */
     LOG_LEVEL(Tab.MAIN, "Logging", "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
@@ -97,23 +89,10 @@ public enum ConfigurationOption {
         "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
 
     /**
-     * The action when a screenshot already exists.
-     */
-    SCREENSHOT_EXISTS_ACTION(Tab.SETTINGS, "Output", "If a screenshot already exists", ExistingScreenshotAction.CREATE_ANOTHER.name(),
-        OptionType.SELECT, names(ExistingScreenshotAction.values()),
-        "What to do when a screenshot for the tracker for the given date already exists", Scope.EXECUTION),
-
-    /**
      * The secret used to encrypt the passwords stored in the database.
      */
     SECRET_KEY(Tab.SETTINGS, "System", "Secret key", "", OptionType.STRING, List.of(),
         "The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown)", Scope.STARTUP),
-
-    /**
-     * Whether to take a screenshot on error.
-     */
-    TAKE_SCREENSHOT_ON_ERROR(Tab.MAIN, "Execution", "Screenshot on error", "false", OptionType.BOOLEAN, List.of(),
-        "Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called 'errors')", Scope.EXECUTION),
 
     /**
      * The local timezone.

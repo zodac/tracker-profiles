@@ -10,7 +10,6 @@ import {
     scheduleStatusRefresh,
     startRun,
     statusTimer,
-    updateInputTimers,
 } from './js/run.mjs'
 import {setUpGallery} from './js/screenshots.mjs'
 import {unsavedSettings} from './js/settings.mjs'
@@ -98,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (document.hidden) {
             return
         }
-        updateInputTimers()
         if (isActive(latestStatus)) {
             byId('run-description').textContent = runDescription(latestStatus)
             document.querySelectorAll('details.execution-tracker[data-state="RUNNING"] .execution-time').forEach(function (time) {

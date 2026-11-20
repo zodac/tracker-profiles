@@ -20,7 +20,6 @@ package net.zodac.tracker.framework.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import net.zodac.tracker.framework.redactor.RedactionType;
@@ -66,33 +65,6 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void givenZeroInputTimeout_whenLoad_thenInputTimeoutIsDisabled() {
-        final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of("INPUT_TIMEOUT_SECONDS", "0"));
-
-        assertThat(applicationConfiguration.inputTimeoutEnabled())
-            .isFalse();
-    }
-
-    @Test
-    void givenPositiveInputTimeout_whenLoad_thenInputTimeoutIsEnabled() {
-        final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of("INPUT_TIMEOUT_SECONDS", "120"));
-
-        assertThat(applicationConfiguration.inputTimeoutEnabled())
-            .isTrue();
-        assertThat(applicationConfiguration.inputTimeoutDuration())
-            .isEqualTo(Duration.ofSeconds(120L));
-    }
-
-    @Test
-    void givenNegativeInputTimeout_whenLoad_thenExceptionIsThrown() {
-        final Map<String, String> overrides = Map.of("INPUT_TIMEOUT_SECONDS", "-1");
-
-        assertThatThrownBy(() -> ApplicationConfiguration.load(overrides))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("INPUT_TIMEOUT_SECONDS");
-    }
-
-    @Test
     void givenEveryOptionAtItsDefaultValue_whenLoad_thenConfigurationIsValid() {
         final Map<String, String> defaults = new HashMap<>();
         for (final ConfigurationOption option : ConfigurationOption.ALL_VALUES) {
@@ -105,7 +77,5 @@ class ApplicationConfigurationTest {
             .isEqualTo(8080);
         assertThat(applicationConfiguration.browserDimensions())
             .isEqualTo("1680,1050");
-        assertThat(applicationConfiguration.inputTimeoutEnabled())
-            .isFalse();
     }
 }

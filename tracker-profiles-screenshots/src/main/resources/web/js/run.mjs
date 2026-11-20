@@ -230,9 +230,7 @@ function respondToInput(input, action, button) {
     button.disabled = true
     request('POST', `/api/run/input/${input.id}/${action}`, {})
         .then(function (status) {
-            if (action === 'extend') {
-                showToast(`Gave you 5 more minutes for ${input.trackerName}`)
-            } else if (action === 'skip') {
+            if (action === 'skip') {
                 showToast(`Skipped ${input.trackerName}`)
             } else {
                 showToast(`Continuing ${input.trackerName}`)
@@ -249,15 +247,10 @@ function respondToInput(input, action, button) {
 }
 
 function createInputCard(input) {
-    const timer = el('span', {className: 'input-timer', 'aria-label': 'Time remaining'})
-    const extendButton = el('button', {className: 'button', type: 'button', text: '+5 min', title: 'Wait 5 more minutes before timing out'})
     const skipButton = el('button', {
         className: 'button', type: 'button', text: 'Skip tracker', title: 'Fail this attempt for the tracker, and move on',
     })
     const continueButton = el('button', {className: 'button primary', type: 'button', text: 'Continue'})
-    extendButton.addEventListener('click', function () {
-        respondToInput(input, 'extend', extendButton)
-    })
     skipButton.addEventListener('click', function () {
         respondToInput(input, 'skip', skipButton)
     })
@@ -279,12 +272,10 @@ function createInputCard(input) {
                         + 'automatic if the page changes.',
                 }),
             ]),
-            el('div', {className: 'input-actions'}, [timer, extendButton, skipButton, continueButton]),
+            el('div', {className: 'input-actions'}, [skipButton, continueButton]),
         ]),
         browserView,
     ])
-    card.inputTimer = timer
-    card.extendButton = extendButton
     card.browserView = browserView
     return card
 }
@@ -307,19 +298,6 @@ function renderPendingInputs(pendingInputs) {
             card = createInputCard(input)
             container.append(card)
             startBrowserView(card.browserView)
-        }
-        card.dataset.expiresAt = input.expiresAt === null ? '' : String(input.expiresAt)
-        card.extendButton.hidden = input.expiresAt === null
-    })
-    updateInputTimers()
-}
-
-export function updateInputTimers() {
-    byId('pending-inputs').querySelectorAll('.input-card').forEach(function (card) {
-        const expiresAt = card.dataset.expiresAt
-        card.inputTimer.hidden = !expiresAt
-        if (expiresAt) {
-            card.inputTimer.textContent = formatDuration(Number(expiresAt) - Date.now())
         }
     })
 }

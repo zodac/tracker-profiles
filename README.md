@@ -355,8 +355,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
       warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
       attempt are separated within each step, and the screenshot messages are separated by redaction type
-    - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed
-      (with `TAKE_SCREENSHOT_ON_ERROR` enabled). Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
+    - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed.
+      Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
       and move between the redaction types with the arrows (or the arrow keys)
     - Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the latest screenshots of
       every tracker that has succeeded in any execution (also before a restart): a tracker executed again only has the screenshots of its
@@ -418,8 +418,8 @@ encrypted when the application starts.
 When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears at the top of the **Main**
 tab (and the tab title changes), showing the tracker's browser live. Click in the browser to use it: your clicks, scrolling and typing are sent to it
 while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code). Complete the step, then select **Continue**; the execution
-also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. If `INPUT_TIMEOUT_SECONDS`
-is set, the prompt shows how long is left, and **+5 min** gives you more time. Manual trackers run in parallel (as many as
+also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. The prompt waits until you
+respond (or the execution is cancelled). Manual trackers run in parallel (as many as
 `NUMBER_OF_PARALLEL_THREADS`), so several prompts can be shown at once, each with its own browser, and answered in any order.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
@@ -489,11 +489,9 @@ These options apply from the next execution.
 
 | Environment Variable            | Description                                                                                                                                                         | Default Value   |
 |---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| *INPUT_TIMEOUT_SECONDS*         | How long to wait for a user input for a [manual tracker](#manual-interaction), in seconds, before the attempt fails (0 waits until the user responds)               | 0               |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
 | *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                           | 5               |
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                 | 1               |
-| *TAKE_SCREENSHOT_ON_ERROR*      | Whether to take a screenshot of the current tracker page if any failure occurs (in a subdirectory called `errors`)                                                  | false           |
 
 #### Settings
 
@@ -506,7 +504,6 @@ Changes to these options apply from the next execution.
 | *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html))                                        | yyyy-MM-dd       |
 | *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of the new directory created for the screenshots                                                                                                                                                                            | /app/screenshots |
 | *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX              |
-| *SCREENSHOT_EXISTS_ACTION*      | What to do when a screenshot for the tracker for the given date already exists [CREATE_ANOTHER, OVERWRITE, SKIP](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/config/ExistingScreenshotAction.java)                 | CREATE_ANOTHER   |
 | *TIMEZONE*                      | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                                                        | UTC              |
 
 #### Startup-Only Options
@@ -627,8 +624,8 @@ To build and run the local [Dockerfile](./docker/Dockerfile), copy [docker-compo
     image: tracker-profiles-dev
 ```
 
-Then update the [configuration options](#configuration-options) for development (such as `LOG_LEVEL=TRACE`, `REDACTION_TYPE=NONE,BLUR,BOX` and
-`TAKE_SCREENSHOT_ON_ERROR=true`), and build and run it:
+Then update the [configuration options](#configuration-options) for development (such as `LOG_LEVEL=TRACE` and
+`REDACTION_TYPE=NONE,BLUR,BOX`), and build and run it:
 
 ```bash
 docker compose up --build
@@ -668,15 +665,12 @@ execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost
 mvn clean install && \
     BROWSER_RESOLUTION=1680x1050 \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
-    INPUT_TIMEOUT_SECONDS=300 \
     LOG_LEVEL=TRACE \
     NUMBER_OF_PARALLEL_THREADS=5 \
     NUMBER_OF_SCREENSHOT_ATTEMPTS=5 \
     OUTPUT_DIRECTORY_NAME_FORMAT=yyyy-MM-dd \
     OUTPUT_DIRECTORY_PARENT_PATH=/tmp/screenshots \
     REDACTION_TYPE=NONE,BLUR,BOX \
-    SCREENSHOT_EXISTS_ACTION=CREATE_ANOTHER \
-    TAKE_SCREENSHOT_ON_ERROR=true \
     TIMEZONE=UTC \
     java \
         --enable-preview \

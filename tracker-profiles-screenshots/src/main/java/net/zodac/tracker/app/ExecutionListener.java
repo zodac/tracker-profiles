@@ -85,8 +85,8 @@ public interface ExecutionListener {
     }
 
     /**
-     * Called each time a profile screenshot of a tracker has been saved, or has been found to already exist (when existing screenshots are
-     * skipped). A later screenshot for the same {@link RedactionType} (on a retry) replaces the earlier one.
+     * Called each time a profile screenshot of a tracker has been saved. A later screenshot for the same {@link RedactionType} (on a retry)
+     * replaces the earlier one.
      *
      * @param trackerName   the name of the tracker
      * @param redactionType the {@link RedactionType} of the screenshot

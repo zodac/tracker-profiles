@@ -114,15 +114,6 @@ final class TrackerRun {
     }
 
     /**
-     * Reports every {@link TrackerStep} as completed, when there is nothing left to do for the tracker.
-     */
-    void completeAllSteps() {
-        for (final TrackerStep trackerStep : TrackerStep.values()) {
-            completeStep(trackerStep);
-        }
-    }
-
-    /**
      * Whether every {@link TrackerStep} has been completed, in this or an earlier attempt.
      *
      * @return {@code true} if all steps are completed

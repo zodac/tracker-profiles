@@ -22,7 +22,6 @@ import java.lang.reflect.RecordComponent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.DateTimeException;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -46,15 +45,12 @@ import org.apache.logging.log4j.Logger;
  * @param browserDimensions          the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param databasePath               the {@link Path} to the SQLite database used by the web UI
  * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
- * @param existingScreenshotAction   the {@link ExistingScreenshotAction} to perform when a screenshot exists for a tracker
- * @param inputTimeoutDuration       how long to wait for a user-input, where {@link Duration#ZERO} waits until the user responds
  * @param logLevel                   the log level for the application, must be one of: {@code INFO, DEBUG, TRACE, WARNING, ERROR}
  * @param numberOfParallelThreads    the number of trackers of the same {@link TrackerType} to execute in parallel
  * @param numberOfScreenshotAttempts the number of times to attempt to screenshot a tracker
  * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
  * @param redactionTypes             the {@link RedactionType}s to perform redaction of sensitive information on the user profile page, in order
  * @param secretKey                  the secret used to encrypt the passwords stored in the database
- * @param takeScreenshotOnError      whether to take a screenshot of the current page if an error occurs during screenshotting
  * @param timezone                   the local timezone, used for the name of the output directory and of downloaded screenshot archives
  * @param webUiPort                  the port on which the web UI is served
  */
@@ -63,15 +59,12 @@ public record ApplicationConfiguration(
     String browserDimensions,
     Path databasePath,
     boolean enableTranslationToEnglish,
-    ExistingScreenshotAction existingScreenshotAction,
-    Duration inputTimeoutDuration,
     String logLevel,
     int numberOfParallelThreads,
     int numberOfScreenshotAttempts,
     Path outputDirectory,
     Set<RedactionType> redactionTypes,
     String secretKey,
-    boolean takeScreenshotOnError,
     ZoneId timezone,
     int webUiPort
 ) {
@@ -126,27 +119,15 @@ public record ApplicationConfiguration(
             source.select(ConfigurationOption.BROWSER_RESOLUTION).replace('x', ','),
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
             source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
-            ExistingScreenshotAction.valueOf(source.select(ConfigurationOption.SCREENSHOT_EXISTS_ACTION)),
-            Duration.ofSeconds(source.integer(ConfigurationOption.INPUT_TIMEOUT_SECONDS)),
             source.select(ConfigurationOption.LOG_LEVEL),
             source.integer(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS),
             source.integer(ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS),
             getOutputDirectory(source, timezone),
             source.multiSelect(ConfigurationOption.REDACTION_TYPE, RedactionType::valueOf),
             source.get(ConfigurationOption.SECRET_KEY),
-            source.bool(ConfigurationOption.TAKE_SCREENSHOT_ON_ERROR),
             timezone,
             source.integer(ConfigurationOption.WEB_UI_PORT)
         );
-    }
-
-    /**
-     * Whether a user input times out, as defined by {@link #inputTimeoutDuration()}.
-     *
-     * @return {@code true} if a user input has a timeout
-     */
-    public boolean inputTimeoutEnabled() {
-        return !inputTimeoutDuration.isZero();
     }
 
     private static Path getOutputDirectory(final Source source, final ZoneId timezone) {

@@ -30,7 +30,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.imageio.ImageIO;
 import net.zodac.tracker.framework.config.Configuration;
-import net.zodac.tracker.framework.redactor.RedactionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
@@ -57,39 +56,6 @@ public final class ScreenshotTaker {
     }
 
     /**
-     * Checks how many screenshots already exist for the given base name in the given directory. The base name is either the tracker name alone (for
-     * {@link RedactionType#NONE}) or the tracker name with the redaction type appended (e.g.
-     * {@code trackerName_Text}).
-     *
-     * <p>
-     * A file is counted if it matches exactly {@code baseName.png} or {@code baseName_N.png} where {@code N} is a positive integer. This avoids
-     * counting files for other redaction types that share the same tracker name prefix.
-     *
-     * @param baseName  the base file name to match against (tracker name, with optional redaction type suffix)
-     * @param directory the directory in which to check for existing screenshots
-     * @return the number of screenshots for the base name that already exist in the given directory
-     */
-    public static int howManyScreenshotsAlreadyExist(final String baseName, final Path directory) {
-        final File outputDir = directory.toAbsolutePath().toFile();
-        final File[] matchingFiles = outputDir.listFiles((_, name) -> {
-            if (!name.endsWith(".png")) {
-                return false;
-            }
-            final String nameWithoutExtension = name.substring(0, name.length() - ".png".length());
-            if (nameWithoutExtension.equals(baseName)) {
-                return true;
-            }
-            if (!nameWithoutExtension.startsWith(baseName + "_")) {
-                return false;
-            }
-            final String indexSuffix = nameWithoutExtension.substring(baseName.length() + 1);
-            return !indexSuffix.isEmpty() && indexSuffix.chars().allMatch(Character::isDigit);
-        });
-
-        return matchingFiles == null ? 0 : matchingFiles.length;
-    }
-
-    /**
      * Takes a screenshot of the current web page loaded by the {@link RemoteWebDriver}. The browser viewport is then saved as a {@code .png} file in
      * the provided {@code outputDirectory}. The file name will be {@code trackerName.png}.
      *
@@ -101,13 +67,12 @@ public final class ScreenshotTaker {
      * @param outputDirectory        the directory in which the screenshot should be saved
      * @param baseName               the base file name for the screenshot (tracker name, with optional redaction type suffix)
      * @param scrollDuringScreenshot whether to scroll the profile page during the screenshot
-     * @param index                  how many screenshots already exist for this base name
      * @return a {@link Future} that resolves to the saved screenshot {@link File} once PNG encoding is complete
      */
     public static Future<File> takeScreenshot(final RemoteWebDriver driver, final Path outputDirectory, final String baseName,
-        final boolean scrollDuringScreenshot, final int index) {
+        final boolean scrollDuringScreenshot) {
         final BufferedImage screenshotImage = takeScreenshotOfEntirePage(driver, scrollDuringScreenshot);
-        final File screenshot = createOutputFileHandle(outputDirectory.toAbsolutePath(), baseName, index);
+        final File screenshot = outputDirectory.toAbsolutePath().resolve(baseName + ".png").toFile();
 
         return getOrCreateWriteExecutor().submit(() -> {
             ImageIO.write(screenshotImage, "PNG", screenshot);
@@ -161,14 +126,6 @@ public final class ScreenshotTaker {
         } finally {
             WRITE_EXECUTOR_LOCK.unlock();
         }
-    }
-
-    private static File createOutputFileHandle(final Path outputDirectory, final String baseName, final int index) {
-        if (index == 0) {
-            return new File(outputDirectory + File.separator + baseName + ".png");
-        }
-
-        return new File(outputDirectory + File.separator + baseName + "_" + index + ".png");
     }
 
     private static BufferedImage takeScreenshotOfEntirePage(final RemoteWebDriver driver, final boolean scrollDuringScreenshot) {

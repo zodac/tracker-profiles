@@ -19,7 +19,6 @@ package net.zodac.tracker.framework.gui;
 
 import java.util.Objects;
 import net.zodac.tracker.framework.exception.CancelledInputException;
-import net.zodac.tracker.framework.exception.NoUserInputException;
 import net.zodac.tracker.framework.input.UserInputRequests;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +58,6 @@ public final class DisplayUtils {
      * @param trackerName the name of the tracker waiting for the input
      * @param label       what the user needs to do
      * @throws CancelledInputException thrown if the user chooses to skip the tracker
-     * @throws NoUserInputException    thrown if no input is received in time
      * @see UserInputRequests#await(String, String, java.util.function.BooleanSupplier)
      */
     public void confirm(final String trackerName, final String label) {
