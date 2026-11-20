@@ -93,10 +93,6 @@ a {
     color: var(--text-muted);
 }
 
-.hint {
-    margin: 0 0 12px;
-}
-
 /* Header and tabs */
 
 .app-header {
@@ -1648,12 +1644,6 @@ kbd {
     background: var(--surface-muted);
     font-family: var(--mono);
     font-size: 11px;
-}
-
-.group-hint {
-    margin-left: auto;
-    font-size: 12px;
-    font-weight: 400;
 }
 
 .tracker-row.editing input[type="text"],

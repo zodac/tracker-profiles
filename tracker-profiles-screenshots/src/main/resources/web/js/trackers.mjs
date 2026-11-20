@@ -144,20 +144,12 @@ function buildTrackerGroups() {
         groups.disabled.list, groups.disabled.empty,
     ])
     const unsetCard = el('details', {className: 'card group', open: true}, [
-        el('summary', {}, [
-            el('h2', {text: 'Unset'}),
-            counts.unset,
-            el('span', {className: 'group-hint muted', text: 'Add a username and password to enable a tracker'}),
-        ]),
+        el('summary', {}, [el('h2', {text: 'Unset'}), counts.unset]),
         groups.unset.list, groups.unset.empty,
     ])
     // Only shown while there are legacy trackers
     const legacyCard = el('details', {className: 'card group', open: true, hidden: true}, [
-        el('summary', {}, [
-            el('h2', {text: 'Legacy'}),
-            counts.legacy,
-            el('span', {className: 'group-hint muted', text: 'No longer supported, so never executed. Kept until removed, to keep their screenshots'}),
-        ]),
+        el('summary', {}, [el('h2', {text: 'Legacy'}), counts.legacy]),
         groups.legacy.list,
     ])
     byId('tracker-groups').replaceChildren(enabledCard, disabledCard, legacyCard, unsetCard)
