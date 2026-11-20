@@ -307,7 +307,7 @@ Two types control how the browser is created and whether user interaction is nee
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
 Trackers of both types run together, up to `NUMBER_OF_PARALLEL_THREADS` at once, in the order of `TrackerRetriever.schedule`: manual
-trackers first (so their prompts are shown as soon as the execution starts), then by name. The type is only shown as a tag (a "Manual" badge)
+trackers first (so their prompts are shown as soon as the execution starts), then by name. The type is only shown as a tag (a "Manual input" badge)
 in the web UI, never as a separate group. `DriverPool` keeps idle browsers of each type, but never more than `NUMBER_OF_PARALLEL_THREADS` open in
 total: a tracker reuses an idle browser of its type, otherwise one is started (closing an idle browser of another type first if the pool is
 full), so no tracker waits for a browser.

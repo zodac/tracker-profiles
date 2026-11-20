@@ -799,7 +799,7 @@ function createTrackerRow(tracker) {
 
     const nameCell = el('div', {className: 'tracker-name'}, [
         trackerNameContent(tracker),
-        tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual', title: 'Requires user input (e.g. captcha)'}) : null,
+        tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual input', title: 'Requires user input (e.g. captcha)'}) : null,
     ])
     const enabledCell = el('label', {className: 'switch tracker-extra', title: 'Enabled'}, [enabledInput, el('span', {className: 'switch-track'})])
 

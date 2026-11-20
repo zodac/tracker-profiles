@@ -368,7 +368,7 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
-- **Trackers**: every supported tracker, grouped by enabled/disabled (manual trackers are tagged as *Manual*), with trackers
+- **Trackers**: every supported tracker, grouped by enabled/disabled (manual trackers are tagged as *Manual input*), with trackers
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).

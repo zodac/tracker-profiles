@@ -115,7 +115,7 @@ function updateExecutionRow(row, tracker) {
     summary.replaceChildren(
         el('span', {className: 'execution-name'}, [
             tracker.name,
-            tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual'}) : null,
+            tracker.type === 'MANUAL' ? el('span', {className: 'badge manual', text: 'Manual input'}) : null,
             needsInput ? el('span', {className: 'badge needs-input', text: 'Needs you'}) : null,
         ]),
         stepBar(tracker),
