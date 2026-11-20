@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,12 +59,16 @@ class SettingsServiceTest {
     }
 
     @Test
-    void givenNoSavedSettings_whenListed_thenEveryOptionIsReturned() throws SQLException {
+    void givenNoSavedSettings_whenListed_thenEveryOptionIsReturnedInGroupOrder() throws SQLException {
         final List<SettingsService.SettingView> settings = settingsService.listSettings();
 
         assertThat(settings)
             .extracting(SettingsService.SettingView::name)
-            .containsExactlyElementsOf(ConfigurationOption.ALL_VALUES.stream().map(Enum::name).toList());
+            .containsExactlyElementsOf(namesInGroupOrder());
+        assertThat(settings)
+            .extracting(SettingsService.SettingView::group)
+            .startsWith(ConfigurationOption.Group.RUN_OPTIONS.label())
+            .endsWith(ConfigurationOption.Group.SYSTEM.label());
         assertThat(find(settings, OPTION))
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value)
             .returns(SettingsService.Source.DEFAULT, SettingsService.SettingView::source)
@@ -226,5 +231,13 @@ class SettingsServiceTest {
 
     private ApplicationDatabase openDatabase() throws IOException, SQLException {
         return ApplicationDatabase.open(tempDirectory.resolve("test.db"), SECRET_KEY);
+    }
+
+    private static List<String> namesInGroupOrder() {
+        return ConfigurationOption.ALL_VALUES
+            .stream()
+            .sorted(Comparator.comparing(ConfigurationOption::group))
+            .map(Enum::name)
+            .toList();
     }
 }

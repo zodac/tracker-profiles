@@ -159,13 +159,27 @@ public abstract class ApiHandler implements HttpHandler {
      * @throws HttpRequestException thrown if the request body is empty or invalid JSON
      */
     protected static <T> T readJson(final HttpExchange exchange, final Class<T> type) throws IOException {
+        final T result = readOptionalJson(exchange, type);
+        if (result == null) {
+            throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Request body must not be empty");
+        }
+        return result;
+    }
+
+    /**
+     * Reads the request body as JSON, if there is one.
+     *
+     * @param exchange the {@link HttpExchange}
+     * @param type     the {@link Class} to convert the JSON into
+     * @param <T>      the type of the request body
+     * @return the converted request body, or {@code null} if it is empty
+     * @throws IOException          thrown if the request body cannot be read
+     * @throws HttpRequestException thrown if the request body is invalid JSON
+     */
+    protected static <T> @Nullable T readOptionalJson(final HttpExchange exchange, final Class<T> type) throws IOException {
         try (final InputStream inputStream = exchange.getRequestBody()) {
             final String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            final T result = GSON.fromJson(body, type);
-            if (result == null) {
-                throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Request body must not be empty");
-            }
-            return result;
+            return GSON.fromJson(body, type);
         } catch (final JsonParseException e) {
             throw new HttpRequestException(HttpStatus.BAD_REQUEST, "Request body is not valid JSON", e);
         }

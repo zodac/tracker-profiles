@@ -485,79 +485,8 @@ select:disabled {
     border-bottom: 1px solid var(--border);
 }
 
-/* Run options */
-
-.option-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 4px 12px;
-    padding: 12px 0 12px 13px;
-    border-top: 1px solid var(--border);
-}
-
-.run-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 0 24px;
-    margin-top: 16px;
-    border-top: 1px solid var(--border);
-}
-
-.run-options .option-row {
-    padding: 12px 0 0;
-    border-top: none;
-}
-
-.option-row.editing input {
-    border-color: var(--accent);
-}
-
-.option-row.invalid input,
-.option-row.invalid select {
-    border-color: var(--danger);
-}
-
-.option-row.locked .option-label,
-.option-row.locked .option-description,
 .setting-row.locked .setting-description {
     opacity: 0.6;
-}
-
-.option-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    font-weight: 500;
-}
-
-/* Wide controls (such as the redaction types) go on their own line, below the label */
-.option-row.wide .option-control {
-    grid-column: 1 / -1;
-    justify-content: space-between;
-}
-
-.option-control {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.option-control input[type="number"] {
-    width: 84px;
-}
-
-.option-description {
-    grid-column: 1 / -1;
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.option-row .setting-error {
-    grid-column: 1 / -1;
 }
 
 /* Ordered choices (e.g. redaction types), dragged into order */
@@ -1862,27 +1791,6 @@ kbd {
 }
 
 /* Settings tab */
-
-.legend {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 8px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.legend .badge + .badge,
-.legend .badge {
-    margin-left: 8px;
-}
-
-.legend .changed-bar {
-    width: 3px;
-    height: 14px;
-    border-radius: 2px;
-    background: var(--changed);
-}
 
 #settings-groups {
     display: flex;

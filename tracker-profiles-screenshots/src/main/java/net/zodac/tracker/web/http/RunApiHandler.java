@@ -19,13 +19,15 @@ package net.zodac.tracker.web.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.web.RunManager;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Handles requests to start an execution ({@code POST /api/run}), start an execution of only the trackers that failed in the previous execution
- * ({@code POST /api/run/failed}), cancel the running execution ({@code POST /api/run/cancel}), respond to a
+ * ({@code POST /api/run/failed}), both with the optional body {@code {"screenWidth": 1920, "screenHeight": 1080}} for the resolution of the browsers
+ * with a UI, cancel the running execution ({@code POST /api/run/cancel}), respond to a
  * request for a user input ({@code POST /api/run/input/{id}/continue} or {@code .../skip}), and retrieve the status of the
  * execution ({@code GET /api/run}).
  */
@@ -74,7 +76,7 @@ public final class RunApiHandler extends ApiHandler {
         }
 
         if (FAILED_PATH.equals(pathParameter)) {
-            if (!runManager.startFailedTrackers()) {
+            if (!runManager.startFailedTrackers(readUiBrowserResolution(exchange))) {
                 final String message = runManager.isExecutionInProgress()
                     ? "An execution is already in progress"
                     : "No tracker failed in the previous execution";
@@ -94,10 +96,18 @@ public final class RunApiHandler extends ApiHandler {
             throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown action: '%s'".formatted(pathParameter));
         }
 
-        if (!runManager.start()) {
+        if (!runManager.start(readUiBrowserResolution(exchange))) {
             throw new HttpRequestException(HttpStatus.CONFLICT, "An execution is already in progress");
         }
         sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
+    }
+
+    // Browsers with a UI are shown in the web UI, so they use the resolution of its screen (when sent, as the request body is optional)
+    private static BrowserResolution readUiBrowserResolution(final HttpExchange exchange) throws IOException {
+        final StartRequest startRequest = readOptionalJson(exchange, StartRequest.class);
+        return startRequest == null
+            ? BrowserResolution.DEFAULT
+            : BrowserResolution.fromScreen(startRequest.screenWidth(), startRequest.screenHeight());
     }
 
     // Path is '{id}/{action}'
@@ -123,5 +133,15 @@ public final class RunApiHandler extends ApiHandler {
         if (!waiting) {
             throw new HttpRequestException(HttpStatus.CONFLICT, "The tracker is no longer waiting for this input");
         }
+    }
+
+    /**
+     * The optional request body to start an execution.
+     *
+     * @param screenWidth  the width of the screen of the web UI, in pixels
+     * @param screenHeight the height of the screen of the web UI, in pixels
+     */
+    record StartRequest(@Nullable Integer screenWidth, @Nullable Integer screenHeight) {
+
     }
 }

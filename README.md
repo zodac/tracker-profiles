@@ -366,9 +366,6 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
       application restarts (the screenshots are still saved to the output directory as before)
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
-    - The [run options](#run-options) you are most likely to change for an execution (the number of parallel browsers, the attempts per tracker
-      and the log level) are shown below the **Start** button. Run options and settings are locked while an execution is in
-      progress
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
 - **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with trackers
@@ -385,8 +382,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   screenshots from the database (the screenshot files are kept on disk). Trackers are identified only by name (ignoring case), so a tracker that
   is renamed in the application is treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and
   the new name as a separate tracker without credentials, which must be entered again (or imported) before it is executed
-- **Settings**: the remaining [configuration options](#configuration-options), preloaded from the environment variables. Any value that differs
-  from its default is marked with a bar, and a value saved in the web UI is marked as *Saved*
+- **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run options** (those
+  you are most likely to change for an execution), **Output** and **System**. Any value that differs from its default is marked with a bar, and a
+  value saved in the web UI is marked as *Saved*. Settings are locked while an execution is in progress
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
@@ -456,8 +454,8 @@ The example uses a fixed image version (the latest release), so update the `imag
 - The web UI is only reachable from the host itself (`127.0.0.1:8080:8080`), since it has no authentication. To reach it from other devices on your
   local network, change it to `8080:8080`
 - The container runs as a non-root user with no Linux capabilities, a read-only root filesystem (with `/tmp` in memory, and the data in volumes),
-  and limits on memory and processes. The limits suit the default of 5 parallel browsers, so raise them if `NUMBER_OF_PARALLEL_THREADS` or
-  `BROWSER_RESOLUTION` is increased
+  and limits on memory and processes. The limits suit the default of 5 parallel browsers, so raise them if `NUMBER_OF_PARALLEL_THREADS` is
+  increased
 
 The example works the same way on Linux and Windows, as the browsers are shown in the web UI (see [Browser UI](#browser-ui)). On Windows, save the
 screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
@@ -476,35 +474,37 @@ display, X server or `DISPLAY` variable, on Linux or Windows.
 All options are set with environment variables on the docker image, and most can also be changed in the [web UI](#web-ui). They fall into three
 groups:
 
-- [Run Options](#run-options) are shown on the **Main** tab, next to the controls to start an execution
-- [Settings](#settings) are shown on the **Settings** tab
+- [Run Options](#run-options) are shown first on the **Settings** tab, as they are the most likely to be changed for an execution
+- [Settings](#settings) are shown below them on the **Settings** tab, under **Output** and **System**
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
 
 A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including after the
 container is restarted. Run options and settings cannot be changed while an execution is in progress.
 
+Headless browsers always use a resolution of 1920x1080. Browsers with a UI (for [manual trackers](#manual-interaction)) are shown in the web UI, so
+they use the resolution of the screen of the browser that started the execution (between 800x600 and 7680x4320).
+
 #### Run Options
 
 These options apply from the next execution.
 
-| Environment Variable            | Description                                                                                                                                                         | Default Value   |
-|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)       | INFO            |
-| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                           | 5               |
-| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                 | 1               |
+| Environment Variable            | Description                                                                                                                                                                                                                                     | Default Value |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
+| *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                   | INFO          |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                                                                                                       | 5             |
+| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
+| *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX           |
 
 #### Settings
 
 Changes to these options apply from the next execution.
 
-| Environment Variable            | Description                                                                                                                                                                                                                                     | Default Value    |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|
-| *BROWSER_RESOLUTION*            | The resolution (`widthxheight`, in pixels) of the web browser used to take screenshots [1280x1024, 1600x1000, 1600x1200, 1680x1050, 1920x1080, 1920x1200, 2560x1440, 7680x4320]                                                                 | 1680x1050        |
-| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true             |
-| *OUTPUT_DIRECTORY_NAME_FORMAT*  | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html))                                        | yyyy-MM-dd       |
-| *OUTPUT_DIRECTORY_PARENT_PATH*  | The output location of the new directory created for the screenshots                                                                                                                                                                            | /app/screenshots |
-| *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX              |
-| *TIMEZONE*                      | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                                                        | UTC              |
+| Environment Variable           | Description                                                                                                                                                                                              | Default Value    |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|
+| *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)) | yyyy-MM-dd       |
+| *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of the new directory created for the screenshots                                                                                                                                     | /app/screenshots |
+| *TIMEZONE*                     | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                 | UTC              |
 
 #### Startup-Only Options
 
@@ -663,7 +663,6 @@ execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost
 
 ```bash
 mvn clean install && \
-    BROWSER_RESOLUTION=1680x1050 \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
     LOG_LEVEL=TRACE \
     NUMBER_OF_PARALLEL_THREADS=5 \

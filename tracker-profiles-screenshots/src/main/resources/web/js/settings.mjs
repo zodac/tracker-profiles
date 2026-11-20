@@ -4,7 +4,7 @@ import {renderTrackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, hasKey, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
-// Settings (shown as run options in the run card of the Main tab, or on the Settings tab)
+// Settings (on the Settings tab)
 // ---------------------------------------------------------------------------------------------------------------
 
 let settings = []
@@ -38,7 +38,6 @@ export function loadSettings() {
     return request('GET', '/api/settings').then(function (loaded) {
         settings = loaded
         renderSettings()
-        renderRunOptions()
         applyRunStateToSettings(latestStatus)
         if (trackersLoaded) {
             renderTrackers()
@@ -48,44 +47,22 @@ export function loadSettings() {
 
 function renderSettings() {
     const groups = []
-    settings
-        .filter(function (setting) {
-            return setting.tab === 'SETTINGS'
+    // Settings are listed in the order of their groups
+    settings.forEach(function (setting) {
+        let group = groups.find(function (existing) {
+            return existing.name === setting.group
         })
-        .forEach(function (setting) {
-            let group = groups.find(function (existing) {
-                return existing.name === setting.group
-            })
-            if (!group) {
-                group = {name: setting.group, settings: []}
-                groups.push(group)
-            }
-            group.settings.push(setting)
-        })
-
-    // Groups that cannot be changed in the UI (only set as environment variables) are shown last
-    const isReadOnly = function (group) {
-        return group.settings.every(function (setting) {
-            return !setting.editable
-        })
-    }
-    groups.sort(function (first, second) {
-        return Number(isReadOnly(first)) - Number(isReadOnly(second))
+        if (!group) {
+            group = {name: setting.group, settings: []}
+            groups.push(group)
+        }
+        group.settings.push(setting)
     })
 
     const container = byId('settings-groups')
     container.replaceChildren.apply(container, groups.map(function (group) {
         return el('div', {className: 'card settings-group'}, [el('h2', {text: group.name})].concat(group.settings.map(renderSettingRow)))
     }))
-}
-
-function renderRunOptions() {
-    const container = byId('run-options')
-    container.replaceChildren.apply(container, settings
-        .filter(function (setting) {
-            return setting.tab === 'MAIN'
-        })
-        .map(renderOptionRow))
 }
 
 // Settings cannot be changed while an execution is in progress, so every setting is locked until it ends
@@ -341,40 +318,6 @@ function showRowError(row, errorMessage, message) {
     row.classList.toggle('invalid', Boolean(message))
     errorMessage.textContent = message || ''
     errorMessage.hidden = !message
-}
-
-// A run option on the Main tab
-function renderOptionRow(setting) {
-    const name = setting.name
-    const row = el('div', {className: `option-row${setting.type === 'MULTI_SELECT' ? ' wide' : ''}`, title: name})
-    const errorMessage = el('p', {className: 'setting-error', hidden: true})
-    const control = createControl(setting)
-
-    function refresh() {
-        // Run options are expected to change between executions, so they are not marked when they differ from the default
-        row.classList.toggle('editing', hasKey(unsavedSettings, name))
-    }
-
-    settingRows[name] = {
-        refresh: refresh,
-        setValue: control.setValue,
-        showError: function (message) {
-            showRowError(row, errorMessage, message)
-        },
-        setLocked: function (locked) {
-            row.classList.toggle('locked', locked)
-            control.setDisabled(locked)
-        },
-    }
-    refresh()
-
-    row.append(
-        el('div', {className: 'option-label'}, [el('span', {text: setting.label})]),
-        el('div', {className: 'option-control'}, [control.element]),
-        el('p', {className: 'option-description', text: setting.description}),
-        errorMessage
-    )
-    return row
 }
 
 // A setting on the Settings tab

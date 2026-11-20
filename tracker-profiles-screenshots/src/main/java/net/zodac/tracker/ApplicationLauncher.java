@@ -44,19 +44,28 @@ public final class ApplicationLauncher {
      */
     private static final String APPCDS_TRAINING_PROPERTY = "tracker-profiles.appcds-training";
 
+    private static final String BROWSER_RESOLUTION_REPLACEMENT = "headless browsers use 1920x1080, and browsers with a UI the screen of the web UI";
+    private static final String USER_INPUT_REPLACEMENT = "a user input waits until the user responds";
+
     // Environment variables that are no longer used, with what replaces them
     private static final Map<String, String> REMOVED_ENVIRONMENT_VARIABLES = Map.ofEntries(
-        Map.entry("BROWSER_HEIGHT", "use BROWSER_RESOLUTION"),
-        Map.entry("BROWSER_WIDTH", "use BROWSER_RESOLUTION"),
+        Map.entry("BROWSER_HEIGHT", BROWSER_RESOLUTION_REPLACEMENT),
+        Map.entry("BROWSER_RESOLUTION", BROWSER_RESOLUTION_REPLACEMENT),
+        Map.entry("BROWSER_WIDTH", BROWSER_RESOLUTION_REPLACEMENT),
         Map.entry("CSV_COMMENT_SYMBOL", "import trackers from the web UI"),
         Map.entry("FAIL_ON_UNSUPPORTED_TRACKER", "import trackers from the web UI"),
-        Map.entry("INPUT_TIMEOUT_ENABLED", "set INPUT_TIMEOUT_SECONDS to 0 to disable the timeout"),
+        Map.entry("FORCE_UI_BROWSER", "watch the browser of any tracker in progress in the web UI"),
+        Map.entry("INPUT_TIMEOUT_ENABLED", USER_INPUT_REPLACEMENT),
+        Map.entry("INPUT_TIMEOUT_SECONDS", USER_INPUT_REPLACEMENT),
         Map.entry("LOG_TRACKER_NAME", "filter the logs by tracker in the web UI"),
         Map.entry("PROGRESS_BAR_COMPLETE_CHARACTER", "progress is shown in the web UI"),
         Map.entry("PROGRESS_BAR_ENABLED", "progress is shown in the web UI"),
         Map.entry("PROGRESS_BAR_FORMAT", "progress is shown in the web UI"),
         Map.entry("PROGRESS_BAR_INCOMPLETE_CHARACTER", "progress is shown in the web UI"),
         Map.entry("PROGRESS_BAR_LENGTH", "progress is shown in the web UI"),
+        Map.entry("SCREENSHOT_EXISTS_ACTION", "an existing screenshot is always overwritten"),
+        Map.entry("TAKE_SCREENSHOT_ON_ERROR", "a failure screenshot is always taken"),
+        Map.entry("TRACKER_EXECUTION_ORDER", "enable or disable each tracker in the web UI"),
         Map.entry("TRACKER_INPUT_FILE_PATH", "import trackers from the web UI"),
         Map.entry("WEB_UI_ENABLED", "the web UI is always started")
     );

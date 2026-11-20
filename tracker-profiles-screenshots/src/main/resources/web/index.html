@@ -50,7 +50,6 @@
                     <button id="start-button" class="button primary large" type="button">Start</button>
                 </div>
             </div>
-            <div id="run-options" class="run-options" aria-label="Run options"></div>
             <div id="run-progress" class="run-progress" hidden>
                 <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
                 <div class="progress-counts">
@@ -106,15 +105,7 @@
 
     <!-- Settings -->
     <section id="tab-settings" class="tab-panel" role="tabpanel" hidden>
-        <p class="muted hint">
-            Values are loaded from the environment variables of the application. Changes are saved automatically, take precedence over the
-            environment variables, and apply from the next execution. Options you are likely to change for an execution are on the Main tab.
-        </p>
         <p id="settings-locked" class="notice locked-notice" hidden>Settings cannot be changed while an execution is in progress.</p>
-        <div class="legend">
-            <span class="changed-bar" aria-hidden="true"></span> value differs from the default
-            <span class="badge source-web_ui">Saved</span> changed in this UI
-        </div>
         <div id="settings-groups"></div>
     </section>
 </main>

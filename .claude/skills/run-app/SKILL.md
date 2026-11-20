@@ -15,7 +15,7 @@ S=<scratchpad directory>/ui-review
 
 - Tabs are `main`, `trackers` and `settings` (opened by the URL hash), and default to all three.
 - Environment variables are passed through to the application, so set any option to a non-default value to show the state being reviewed (for
-  example `NUMBER_OF_PARALLEL_THREADS=3 LOG_LEVEL=DEBUG BROWSER_RESOLUTION=1920x1080`). `DATABASE_PATH`, `SECRET_KEY`, `WEB_UI_PORT` (default
+  example `NUMBER_OF_PARALLEL_THREADS=3 LOG_LEVEL=DEBUG REDACTION_TYPE=BLUR,BOX`). `DATABASE_PATH`, `SECRET_KEY`, `WEB_UI_PORT` (default
   `8099`) and `OUTPUT_DIRECTORY_PARENT_PATH` are set by the script, since their defaults point at `/app`.
 - `SKIP_BUILD=true` reuses the JAR in `tracker-profiles-screenshots/target` (only when nothing changed since the last build: the web resources
   are served from the JAR). `WINDOW_SIZE` (default `1400,2200`) sets the viewport, so a wider or narrower layout can be checked.

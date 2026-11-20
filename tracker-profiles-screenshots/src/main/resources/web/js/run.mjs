@@ -192,7 +192,9 @@ export function scheduleStatusRefresh(delay) {
 export function startRun(failedTrackersOnly) {
     byId('start-button').disabled = true
     byId('start-failed-button').disabled = true
-    request('POST', failedTrackersOnly ? '/api/run/failed' : '/api/run', {})
+    // Browsers with a UI are shown in this page, so they use the resolution of this screen
+    const body = {screenWidth: window.screen.width, screenHeight: window.screen.height}
+    request('POST', failedTrackersOnly ? '/api/run/failed' : '/api/run', body)
         .then(renderStatus)
         .catch(function (error) {
             showToast(error.message, 'error')

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
+import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
@@ -203,7 +204,7 @@ class RunManagerTest {
         runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
         completeTracker(runManager, "Alpha", "Alpha.png", true);
 
-        assertThat(runManager.startFailedTrackers())
+        assertThat(runManager.startFailedTrackers(BrowserResolution.DEFAULT))
             .isFalse();
         assertThat(runManager.status())
             .returns(RunStatus.State.IDLE, RunStatus::state)

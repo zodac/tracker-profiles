@@ -26,7 +26,7 @@ mvn test -Dtests -pl tracker-profiles-screenshots -Dtest=TextSearcherTest
 
 The application is run with Docker Compose. `docs/docker-compose.example.yml` is the only run example referenced by the README (do not add
 `docker run` or `docker build` commands to the documentation). Its image is pinned to the latest release, rewritten by `publish.yml` on each
-release, and its environment variables are grouped as on the web UI (execution, browser, output, logging, application and container). For local
+release, and its environment variables are grouped as on the web UI (run options, output, system and container). For local
 testing, `docker-compose.yml` in the repository root (git-ignored) builds `docker/Dockerfile` with the same hardening: `docker compose up --build`
 (requires `TRACKER_PROFILES_SECRET_KEY`).
 
@@ -48,6 +48,10 @@ enabled (`Emulation.setFocusEmulationEnabled`, in `JavaWebDriverFactory`), so ea
 itself (`java.awt.Robot`, as in `BrowserInteractionHelper.translatePage`) must hold `DisplayFocus.lock()` and call `DisplayFocus.bringToFront`
 first; creating a browser with a UI holds the same lock, as a new window takes the focus.
 
+There is no resolution option (`BrowserResolution`): a headless browser is always 1920x1080, and a browser with a UI uses the screen resolution of
+the web UI that started the execution (sent in the body of `POST /api/run` and `/api/run/failed`, set by `RunManager` with
+`BrowserResolution.useForUiBrowsers`), clamped to 800x600–7680x4320, or 1920x1080 if not sent.
+
 ### Reviewing Web UI Changes
 
 After any change to the web UI (anything in `src/main/resources/web/`, or a change to an API response it renders), run the `run-app` skill
@@ -61,9 +65,9 @@ with `SendUserFile` for review, with any option set to a non-default value throu
 The application is used only through its web UI (there is no CLI mode). Each execution is started from the browser, and for each enabled tracker:
 opens a browser, logs in, navigates to the user profile page, redacts sensitive information, takes a full-page screenshot, and logs out.
 
-Entry point: `ApplicationLauncher` (starts the web UI, see [Web UI](#web-ui)) → `RunManager.start()` (loads the enabled trackers from the database) →
-`TrackerRetriever.groupByType` → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` → `ProfileScreenshotExecutor` (per tracker) →
-`AbstractTrackerHandler` subclass.
+Entry point: `ApplicationLauncher` (starts the web UI, see [Web UI](#web-ui)) → `RunManager.start(BrowserResolution)` (loads the enabled trackers
+from the database) → `TrackerRetriever.groupByType` → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` →
+`ProfileScreenshotExecutor` (per tracker) → `AbstractTrackerHandler` subclass.
 
 With the system property `tracker-profiles.appcds-training=true`, `ApplicationLauncher` starts and immediately stops the web UI; this is only used by
 `docker/Dockerfile` to generate the AppCDS archive.
@@ -107,9 +111,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   overrides saved in the database, so settings take effect without a restart. Implements `ExecutionListener` to track the progress of every tracker
   (`TrackerState`: waiting, running, succeeded, failed or cancelled, with its attempt and completed `TrackerStep`s), which `RunStatus` returns to the
   UI along with any pending user inputs.
-- **Failures only** — `POST /api/run/failed` calls `RunManager.startFailedTrackers()`, which executes only the trackers that are `FAILED` in the
-  current (or most recent) execution (`RunStatus.failedTrackers`, empty while one is in progress) and are still enabled. The UI shows the button
-  next to Start only when that list is not empty.
+- **Failures only** — `POST /api/run/failed` calls `RunManager.startFailedTrackers(BrowserResolution)`, which executes only the trackers that
+  are `FAILED` in the current (or most recent) execution (`RunStatus.failedTrackers`, empty while one is in progress) and are still enabled. The UI
+  shows the button next to Start only when that list is not empty.
 - **No setting changes during an execution** — `SettingsService` rejects every save or reset with `IllegalStateException` (HTTP 409) while
   `RunManager.isExecutionInProgress()`, and the web UI locks every setting, so an execution always uses the configuration loaded when it started.
   After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.
@@ -213,10 +217,10 @@ The status is polled every 2s during an execution (1s while an input is pending)
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded), and shows the options with `Tab.MAIN` in the run card, below the Start button (there is no separate section). The tracker
-  list and execution log are hidden until an execution has started. While an execution is running, every option (on both tabs) is locked. The Settings
-  tab shows the `Tab.SETTINGS` options, with `Scope.STARTUP` options read-only and grouped last. `MULTI_SELECT` options are a list dragged into order
-  (or moved with the arrow keys on the handle), each with a switch to include it.
+  tracker stays expanded). It has no options. The tracker list and execution log are hidden until an execution has started. The Settings tab shows
+  every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run
+  options come first, with `Scope.STARTUP` options read-only. While an execution is running, every option is locked. `MULTI_SELECT` options are a
+  list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab groups trackers as enabled (headless/manual), disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
@@ -359,15 +363,16 @@ protected By usernameFieldSelector() {
 private static final ApplicationConfiguration CONFIG = Configuration.get();
 ```
 
-Every env var is defined once in the `ConfigurationOption` enum (web UI `Tab`, group, label, default value, `OptionType`, allowed values,
+Every env var is defined once in the `ConfigurationOption` enum (web UI `Group`, label, default value, `OptionType`, allowed values,
 description, and `Scope`: `STARTUP` (environment only) or `EXECUTION` (read when an execution starts)). This
 drives both loading and the web UI. Values are resolved as: override (saved in the web
 UI) → environment variable → `ConfigurationOption.defaultValue()`, via the private `Source` record in `ApplicationConfiguration`.
 
 New env vars must be:
 
-1. Added to `ConfigurationOption` (alphabetical order). Use `Tab.MAIN` for options likely to be changed for an execution, otherwise
-   `Tab.SETTINGS`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect), otherwise `Scope.EXECUTION`.
+1. Added to `ConfigurationOption` (alphabetical order). Use `Group.RUN_OPTIONS` for options likely to be changed for an execution, otherwise
+   `Group.OUTPUT` or `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect),
+   otherwise `Scope.EXECUTION`.
    An `OptionType.INTEGER` option is declared with its `Range.of(min, max)` (use `Integer.MAX_VALUE` for unbounded), which validates it
    (`parseInteger`), is appended to its description when bounded, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
    against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
@@ -375,9 +380,9 @@ New env vars must be:
 2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically
 3. Loaded in the `load()` constructor call with the `Source` parser for its type (`source.bool(...)`, `integer(...)`, `select(...)`,
    `multiSelect(...)`, or `get(...)` for a string), or a private static `getXxx(source)` method for anything else
-4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Tab.MAIN`, the `Settings` table for other editable
-   options, otherwise the `Startup-Only Options` table, in the `environment` of `docs/docker-compose.example.yml` (and the local, git-ignored
-   `docker-compose.yml` if it exists), and in the README performance analysis block, all in alphabetical order
+4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Group.RUN_OPTIONS`, the `Settings` table for
+   other editable options, otherwise the `Startup-Only Options` table, in the `environment` of `docs/docker-compose.example.yml` (and the local,
+   git-ignored `docker-compose.yml` if it exists), and in the README performance analysis block, all in alphabetical order
 
 ### Redaction
 

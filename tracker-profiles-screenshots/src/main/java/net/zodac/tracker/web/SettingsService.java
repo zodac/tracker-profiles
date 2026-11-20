@@ -18,6 +18,7 @@
 package net.zodac.tracker.web;
 
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,7 @@ public final class SettingsService {
         final Map<String, String> overrides = applicationDatabase.settings().findAll();
         return ConfigurationOption.ALL_VALUES
             .stream()
+            .sorted(Comparator.comparing(ConfigurationOption::group))
             .map(option -> SettingView.of(option, overrides.get(option.name())))
             .toList();
     }
@@ -151,8 +153,7 @@ public final class SettingsService {
      * A {@link ConfigurationOption} and its current value, as returned to the web UI.
      *
      * @param name               the environment variable name
-     * @param tab                the {@link ConfigurationOption.Tab} the setting is displayed on
-     * @param group              the group the setting is displayed under
+     * @param group              the label of the {@link ConfigurationOption.Group} the setting is displayed under
      * @param label              the user-facing name of the setting
      * @param type               the {@link ConfigurationOption.OptionType}
      * @param description        the description
@@ -170,7 +171,6 @@ public final class SettingsService {
      */
     public record SettingView(
         String name,
-        ConfigurationOption.Tab tab,
         String group,
         String label,
         ConfigurationOption.OptionType type,
@@ -216,8 +216,7 @@ public final class SettingsService {
 
             return new SettingView(
                 option.name(),
-                option.tab(),
-                option.group(),
+                option.group().label(),
                 option.label(),
                 option.type(),
                 option.description(),
@@ -250,7 +249,7 @@ public final class SettingsService {
         private static SettingView sensitive(final ConfigurationOption option) {
             final boolean set = option.environmentValue().filter(value -> !value.isEmpty()).isPresent();
             final String maskedValue = set ? MASKED_VALUE : "";
-            return new SettingView(option.name(), option.tab(), option.group(), option.label(), option.type(), option.description(),
+            return new SettingView(option.name(), option.group().label(), option.label(), option.type(), option.description(),
                 option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
                 option.editableAtRuntime(), option.scope());
         }

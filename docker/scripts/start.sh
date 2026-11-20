@@ -31,7 +31,7 @@
 
 set -eu
 
-# Large enough for the default browser resolutions (a larger browser window is not limited to the screen, so it still works)
+# Large enough for most screen resolutions, used by the browsers with a UI (a larger browser window is not limited to the screen, so it still works)
 VIRTUAL_DISPLAY=":99"
 VIRTUAL_SCREEN="2560x1600x24"
 VIRTUAL_DISPLAY_LOCK_FILE="/tmp/.X99-lock"

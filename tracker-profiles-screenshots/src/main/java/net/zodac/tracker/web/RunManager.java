@@ -46,6 +46,7 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
+import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
 import net.zodac.tracker.framework.input.UserInputRequests;
@@ -77,11 +78,11 @@ import org.jspecify.annotations.Nullable;
  * {@link Configuration} loaded when it started.
  *
  * <p>
- * An execution either includes every enabled tracker ({@link #start()}), or only the trackers that failed in the previous execution
- * ({@link #startFailedTrackers()}). The profile screenshots of each tracker's latest successful execution, and the failure screenshot of its latest
- * execution if it failed, are kept across executions, and saved in the {@link ApplicationDatabase} so they are kept across restarts. The Trackers
- * tab only shows the screenshots of each tracker's latest execution (see {@link #latestScreenshots(String)}), while the profile screenshots of the
- * latest success of every tracker can be downloaded together (see {@link #latestSuccessfulScreenshots()}).
+ * An execution either includes every enabled tracker ({@link #start(BrowserResolution)}), or only the trackers that failed in the previous
+ * execution ({@link #startFailedTrackers(BrowserResolution)}). The profile screenshots of each tracker's latest successful execution, and the
+ * failure screenshot of its latest execution if it failed, are kept across executions, and saved in the {@link ApplicationDatabase} so they are
+ * kept across restarts. The Trackers tab only shows the screenshots of each tracker's latest execution (see {@link #latestScreenshots(String)}),
+ * while the profile screenshots of the latest success of every tracker can be downloaded together (see {@link #latestSuccessfulScreenshots()}).
  */
 public final class RunManager implements ExecutionListener {
 
@@ -218,16 +219,17 @@ public final class RunManager implements ExecutionListener {
     /**
      * Starts a new execution of every enabled tracker in the background, unless one is already running.
      *
+     * @param uiBrowserResolution the {@link BrowserResolution} of the browsers with a UI (the screen resolution of the web UI)
      * @return {@code true} if an execution was started, {@code false} if one is already running
      */
-    public boolean start() {
+    public boolean start(final BrowserResolution uiBrowserResolution) {
         lock.lock();
         try {
             if (state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING) {
                 return false;
             }
 
-            startExecution(Set.of(), false);
+            startExecution(Set.of(), false, uiBrowserResolution);
         } finally {
             lock.unlock();
         }
@@ -238,9 +240,10 @@ public final class RunManager implements ExecutionListener {
      * Starts a new execution in the background of only the trackers that failed in the current (or most recent) execution, unless an execution is
      * already running or no tracker failed. A failed tracker that has since been disabled (or had its credentials removed) is not executed.
      *
+     * @param uiBrowserResolution the {@link BrowserResolution} of the browsers with a UI (the screen resolution of the web UI)
      * @return {@code true} if an execution was started, {@code false} if one is already running or no tracker failed
      */
-    public boolean startFailedTrackers() {
+    public boolean startFailedTrackers(final BrowserResolution uiBrowserResolution) {
         lock.lock();
         try {
             if (state == RunStatus.State.RUNNING || state == RunStatus.State.CANCELLING) {
@@ -251,7 +254,7 @@ public final class RunManager implements ExecutionListener {
             if (failedTrackerNames.isEmpty()) {
                 return false;
             }
-            startExecution(failedTrackerNames, true);
+            startExecution(failedTrackerNames, true, uiBrowserResolution);
         } finally {
             lock.unlock();
         }
@@ -259,7 +262,7 @@ public final class RunManager implements ExecutionListener {
     }
 
     // Must be called while holding the lock
-    private void startExecution(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) {
+    private void startExecution(final Set<String> failedTrackerNames, final boolean failedTrackersOnly, final BrowserResolution uiBrowserResolution) {
         state = RunStatus.State.RUNNING;
         startedAt = System.currentTimeMillis();
         finishedAt = 0L;
@@ -267,6 +270,7 @@ public final class RunManager implements ExecutionListener {
         trackers.clear();
         webLogAppender.clear();
         ExecutionCancellation.reset();
+        BrowserResolution.useForUiBrowsers(uiBrowserResolution);
         executionThread = Thread.ofPlatform()
             .name("web-execution")
             .start(() -> execute(failedTrackerNames, failedTrackersOnly));

@@ -35,15 +35,15 @@ class ApplicationConfigurationTest {
         final ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.load(Map.of(
             "NUMBER_OF_PARALLEL_THREADS", "7",
             "REDACTION_TYPE", "BLUR,BOX",
-            "BROWSER_RESOLUTION", "1920x1080"
+            "LOG_LEVEL", "DEBUG"
         ));
 
         assertThat(applicationConfiguration.numberOfParallelThreads())
             .isEqualTo(7);
         assertThat(applicationConfiguration.redactionTypes())
             .containsExactly(RedactionType.BLUR, RedactionType.BOX);
-        assertThat(applicationConfiguration.browserDimensions())
-            .isEqualTo("1920,1080");
+        assertThat(applicationConfiguration.logLevel())
+            .isEqualTo("DEBUG");
     }
 
     @Test
@@ -56,12 +56,12 @@ class ApplicationConfigurationTest {
     }
 
     @Test
-    void givenUnsupportedResolutionOverride_whenLoad_thenExceptionIsThrown() {
-        final Map<String, String> overrides = Map.of("BROWSER_RESOLUTION", "1920x1050");
+    void givenUnsupportedSelectOverride_whenLoad_thenExceptionIsThrown() {
+        final Map<String, String> overrides = Map.of("LOG_LEVEL", "VERBOSE");
 
         assertThatThrownBy(() -> ApplicationConfiguration.load(overrides))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("1920x1050");
+            .hasMessageContaining("VERBOSE");
     }
 
     @Test
@@ -75,7 +75,7 @@ class ApplicationConfigurationTest {
 
         assertThat(applicationConfiguration.webUiPort())
             .isEqualTo(8080);
-        assertThat(applicationConfiguration.browserDimensions())
-            .isEqualTo("1680,1050");
+        assertThat(applicationConfiguration.logLevel())
+            .isEqualTo("INFO");
     }
 }

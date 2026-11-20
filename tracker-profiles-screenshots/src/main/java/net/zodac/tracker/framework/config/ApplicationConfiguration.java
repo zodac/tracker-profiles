@@ -27,7 +27,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +41,6 @@ import org.apache.logging.log4j.Logger;
  * Utility file that loads the application configuration from environment variables.
  *
  * @param browserDataStoragePath     the file path in which to store browser data (profiles, caches, etc.)
- * @param browserDimensions          the dimensions in the format {@code width,height} for the {@code Selenium} web browser
  * @param databasePath               the {@link Path} to the SQLite database used by the web UI
  * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
  * @param logLevel                   the log level for the application, must be one of: {@code INFO, DEBUG, TRACE, WARNING, ERROR}
@@ -56,7 +54,6 @@ import org.apache.logging.log4j.Logger;
  */
 public record ApplicationConfiguration(
     String browserDataStoragePath,
-    String browserDimensions,
     Path databasePath,
     boolean enableTranslationToEnglish,
     String logLevel,
@@ -68,20 +65,6 @@ public record ApplicationConfiguration(
     ZoneId timezone,
     int webUiPort
 ) {
-
-    /**
-     * The supported browser resolutions, in the format {@code widthxheight}.
-     */
-    public static final List<String> VALID_RESOLUTIONS = List.of(
-        "1280x1024",
-        "1600x1000",
-        "1600x1200",
-        "1680x1050",
-        "1920x1080",
-        "1920x1200",
-        "2560x1440",
-        "7680x4320"
-    );
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -116,7 +99,6 @@ public record ApplicationConfiguration(
         final ZoneId timezone = getTimezone(source);
         return new ApplicationConfiguration(
             BROWSER_DATA_STORAGE_PATH,
-            source.select(ConfigurationOption.BROWSER_RESOLUTION).replace('x', ','),
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
             source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
             source.select(ConfigurationOption.LOG_LEVEL),

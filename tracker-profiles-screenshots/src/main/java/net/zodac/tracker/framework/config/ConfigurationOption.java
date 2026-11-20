@@ -28,82 +28,76 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Definition of every environment variable that configures the application, used as the single source of truth for each variable's name, default
- * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render each option on the tab
- * given by its {@link Tab}.
+ * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render each option on the
+ * Settings tab, under its {@link Group}.
  */
 public enum ConfigurationOption {
 
     /**
-     * The resolution of the web browser.
-     */
-    BROWSER_RESOLUTION(Tab.SETTINGS, "Browser", "Resolution", "1680x1050", OptionType.SELECT, ApplicationConfiguration.VALID_RESOLUTIONS,
-        "The resolution (width x height, in pixels) of the web browser used to take screenshots", Scope.EXECUTION),
-
-    /**
      * The path to the SQLite database used by the web UI.
      */
-    DATABASE_PATH(Tab.SETTINGS, "System", "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
+    DATABASE_PATH(Group.SYSTEM, "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
         "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)",
         Scope.STARTUP),
 
     /**
      * Whether to translate non-English trackers.
      */
-    ENABLE_TRANSLATION_TO_ENGLISH(Tab.SETTINGS, "Browser", "Translate to English", "true", OptionType.BOOLEAN, List.of(),
+    ENABLE_TRANSLATION_TO_ENGLISH(Group.RUN_OPTIONS, "Translate to English", "true", OptionType.BOOLEAN, List.of(),
         "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
      * The application log level.
      */
-    LOG_LEVEL(Tab.MAIN, "Logging", "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
+    LOG_LEVEL(Group.RUN_OPTIONS, "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
         "The logging level for application output", Scope.EXECUTION),
 
     /**
      * The number of parallel threads for each tracker type.
      */
-    NUMBER_OF_PARALLEL_THREADS(Tab.MAIN, "Execution", "Parallel browsers", "5", Range.of(1, 32),
+    NUMBER_OF_PARALLEL_THREADS(Group.RUN_OPTIONS, "Parallel browsers", "5", Range.of(1, 32),
         "The number of trackers of the same type to execute in parallel, each in its own browser", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.
      */
-    NUMBER_OF_SCREENSHOT_ATTEMPTS(Tab.MAIN, "Execution", "Attempts per tracker", "1", Range.of(1, 5),
+    NUMBER_OF_SCREENSHOT_ATTEMPTS(Group.RUN_OPTIONS, "Attempts per tracker", "1", Range.of(1, 5),
         "The number of times to attempt to screenshot a tracker before marking it as a fail", Scope.EXECUTION),
 
     /**
      * The date format used to name the output directory.
      */
-    OUTPUT_DIRECTORY_NAME_FORMAT(Tab.SETTINGS, "Output", "Folder name format", "yyyy-MM-dd", OptionType.STRING, List.of(),
+    OUTPUT_DIRECTORY_NAME_FORMAT(Group.OUTPUT, "Folder name format", "yyyy-MM-dd", OptionType.STRING, List.of(),
         "The date format used to name the output directory created for the screenshots", Scope.EXECUTION),
 
     /**
      * The parent path of the output directory.
      */
-    OUTPUT_DIRECTORY_PARENT_PATH(Tab.SETTINGS, "Output", "Screenshot folder", "/app/screenshots", OptionType.STRING, List.of(),
+    OUTPUT_DIRECTORY_PARENT_PATH(Group.OUTPUT, "Screenshot folder", "/app/screenshots", OptionType.STRING, List.of(),
         "The location in which the dated output directory for the screenshots is created", Scope.EXECUTION),
 
     /**
      * The redaction types to apply.
      */
-    REDACTION_TYPE(Tab.SETTINGS, "Output", "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
+    REDACTION_TYPE(Group.RUN_OPTIONS, "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
         "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
 
     /**
      * The secret used to encrypt the passwords stored in the database.
      */
-    SECRET_KEY(Tab.SETTINGS, "System", "Secret key", "", OptionType.STRING, List.of(),
+    SECRET_KEY(Group.SYSTEM, "Secret key", "", OptionType.STRING, List.of(),
         "The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown)", Scope.STARTUP),
 
     /**
      * The local timezone.
      */
-    TIMEZONE(Tab.SETTINGS, "Output", "Timezone", "UTC", OptionType.STRING, List.of(),
+    TIMEZONE(Group.SYSTEM, "Timezone", "UTC", OptionType.STRING, List.of(),
         "The local timezone, used for the date in the names of the output directory and of downloaded screenshots", Scope.EXECUTION),
 
     /**
      * The web UI port.
      */
-    WEB_UI_PORT(Tab.SETTINGS, "System", "Port", "8080", Range.of(1, 65_535),
+    WEB_UI_PORT(Group.SYSTEM, "Port", "8080", Range.of(1, 65_535),
         "The port on which the web UI is served", Scope.STARTUP);
 
     /**
@@ -111,8 +105,7 @@ public enum ConfigurationOption {
      */
     public static final Collection<ConfigurationOption> ALL_VALUES = List.of(values());
 
-    private final Tab tab;
-    private final String group;
+    private final Group group;
     private final String label;
     private final String defaultValue;
     private final OptionType type;
@@ -121,20 +114,19 @@ public enum ConfigurationOption {
     private final Scope scope;
     private final @Nullable Range range;
 
-    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final OptionType type,
+    ConfigurationOption(final Group group, final String label, final String defaultValue, final OptionType type,
         final List<String> allowedValues, final String description, final Scope scope) {
-        this(tab, group, label, defaultValue, type, allowedValues, description, scope, null);
+        this(group, label, defaultValue, type, allowedValues, description, scope, null);
     }
 
     // An OptionType.INTEGER option, with the range of valid values
-    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final Range range,
+    ConfigurationOption(final Group group, final String label, final String defaultValue, final Range range,
         final String description, final Scope scope) {
-        this(tab, group, label, defaultValue, OptionType.INTEGER, List.of(), description, scope, range);
+        this(group, label, defaultValue, OptionType.INTEGER, List.of(), description, scope, range);
     }
 
-    ConfigurationOption(final Tab tab, final String group, final String label, final String defaultValue, final OptionType type,
+    ConfigurationOption(final Group group, final String label, final String defaultValue, final OptionType type,
         final List<String> allowedValues, final String description, final Scope scope, final @Nullable Range range) {
-        this.tab = tab;
         this.group = group;
         this.label = label;
         this.defaultValue = defaultValue;
@@ -179,20 +171,11 @@ public enum ConfigurationOption {
     }
 
     /**
-     * The web UI {@link Tab} the option is displayed on.
+     * The {@link Group} the option is displayed under on the Settings tab of the web UI.
      *
-     * @return the {@link Tab}
+     * @return the {@link Group}
      */
-    public Tab tab() {
-        return tab;
-    }
-
-    /**
-     * The group the option is displayed under in the web UI.
-     *
-     * @return the group name
-     */
-    public String group() {
+    public Group group() {
         return group;
     }
 
@@ -365,19 +348,39 @@ public enum ConfigurationOption {
     }
 
     /**
-     * The web UI tab on which a {@link ConfigurationOption} is displayed.
+     * The group under which a {@link ConfigurationOption} is displayed on the Settings tab of the web UI, in the order of the constants.
      */
-    public enum Tab {
+    public enum Group {
 
         /**
-         * The main tab, alongside the controls to start an execution, for options likely to be changed for an execution.
+         * Options likely to be changed for an execution.
          */
-        MAIN,
+        RUN_OPTIONS("Run options"),
 
         /**
-         * The settings tab, for preferences that are rarely changed.
+         * Where and how the screenshots are saved.
          */
-        SETTINGS
+        OUTPUT("Output"),
+
+        /**
+         * The application itself.
+         */
+        SYSTEM("System");
+
+        private final String label;
+
+        Group(final String label) {
+            this.label = label;
+        }
+
+        /**
+         * The user-facing name of the group, displayed in the web UI.
+         *
+         * @return the label
+         */
+        public String label() {
+            return label;
+        }
     }
 
     /**

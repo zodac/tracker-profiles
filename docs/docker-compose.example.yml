@@ -14,26 +14,23 @@ services:
     deploy:
       resources:
         limits:
-          memory: "10G"   # ~400M per parallel browser and ~512M for the JVM (~4.5G with 10 browsers), with 2x headroom: raise it for more browsers or a larger BROWSER_RESOLUTION
+          memory: "10G"   # ~400M per parallel browser and ~512M for the JVM (~4.5G with 10 browsers), with 2x headroom: raise it for more browsers
           pids: "8192"    # ~200 per parallel browser (~2k with 10 browsers), with headroom: raise it if NUMBER_OF_PARALLEL_THREADS is above 20
     memswap_limit: "10G"
     environment:
-      # Execution configuration (can also be changed on the 'Main' tab of the web UI)
+      # Run options (can also be changed on the 'Settings' tab of the web UI)
+      ENABLE_TRANSLATION_TO_ENGLISH: "true"
+      LOG_LEVEL: "INFO"
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"
-      # Browser configuration (can also be changed on the 'Settings' tab of the web UI)
-      BROWSER_RESOLUTION: "1680x1050"
-      ENABLE_TRANSLATION_TO_ENGLISH: "true"
+      REDACTION_TYPE: "BOX"
       # Output configuration (can also be changed on the 'Settings' tab of the web UI)
       OUTPUT_DIRECTORY_NAME_FORMAT: "yyyy-MM-dd"
       OUTPUT_DIRECTORY_PARENT_PATH: "/app/screenshots"
-      REDACTION_TYPE: "BOX"
-      TIMEZONE: "UTC"
-      # Logging configuration (can also be changed on the 'Main' tab of the web UI)
-      LOG_LEVEL: "INFO"
-      # Application configuration (only read on startup)
+      # System configuration (TIMEZONE can also be changed on the 'Settings' tab of the web UI, the others are only read on startup)
       DATABASE_PATH: "/app/data/tracker-profiles.db"
       SECRET_KEY: "change-me-strong-secret"  # <--- TODO: Change this, generate using `openssl rand -base64 32`, and keep it for as long as the database is used
+      TIMEZONE: "UTC"
       WEB_UI_PORT: "8080"
       # Container configuration (only read on startup)
       JAVA_ADDITIONAL_OPTS: ""     # Extra JVM options, appended to the defaults

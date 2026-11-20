@@ -76,8 +76,9 @@ public final class JavaWebDriverFactory {
         final ChromeOptions chromeOptions = new ChromeOptions();
         final Path userDataDir = BrowserDirectories.sessions().resolve(UUID.randomUUID().toString());
 
-        // User-defined options
-        chromeOptions.addArguments("--window-size=" + Configuration.get().browserDimensions());
+        final BrowserResolution resolution = BrowserResolution.forTrackerType(trackerType);
+        LOGGER.trace("Using browser resolution {}", resolution);
+        chromeOptions.addArguments("--window-size=%d,%d".formatted(resolution.width(), resolution.height()));
         if (usesHeadlessBrowser(trackerType)) {
             LOGGER.trace("Using headless browser");
             chromeOptions.addArguments("--headless=new");
@@ -132,7 +133,7 @@ public final class JavaWebDriverFactory {
         LOGGER.trace("Creating driver with following options: {}", chromeOptions);
 
         final ChromeDriver driver = usesHeadlessBrowser(trackerType) ? startDriver(chromeOptions) : startUiDriver(chromeOptions);
-        applyConfiguredSize(driver);
+        applySize(driver, resolution);
         LOGGER.trace("Returning created driver");
         USER_DATA_DIRS.put(driver, userDataDir);
         return driver;
@@ -300,26 +301,17 @@ public final class JavaWebDriverFactory {
         }
     }
 
-    private static void applyConfiguredSize(final ChromeDriver driver) {
+    private static void applySize(final ChromeDriver driver, final BrowserResolution resolution) {
         LOGGER.trace("Applying display size for driver");
-        final Dimension size = parseDimensions();
-        driver.manage().window().setSize(size);
+        driver.manage().window().setSize(new Dimension(resolution.width(), resolution.height()));
 
         final Map<String, Object> cdpOverrides = HashMap.newHashMap(4);
-        cdpOverrides.put("width", size.getWidth());
-        cdpOverrides.put("height", size.getHeight());
+        cdpOverrides.put("width", resolution.width());
+        cdpOverrides.put("height", resolution.height());
         cdpOverrides.put("deviceScaleFactor", 1);
         cdpOverrides.put("mobile", false);
 
         driver.executeCdpCommand("Emulation.setDeviceMetricsOverride", cdpOverrides);
-    }
-
-    // No need to perform any validation, browserDimensions has been parsed already
-    private static Dimension parseDimensions() {
-        final String[] parts = Configuration.get().browserDimensions().split(",", -1);
-        final int width = Integer.parseInt(parts[0].trim());
-        final int height = Integer.parseInt(parts[1].trim());
-        return new Dimension(width, height);
     }
 
     private static Map<String, String> getTranslationWhitelist() {
