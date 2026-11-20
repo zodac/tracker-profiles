@@ -18,10 +18,6 @@
 package net.zodac.tracker.framework;
 
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Enum defining the different types of trackers. This can be used to perform different executions for different trackers.
@@ -37,26 +33,6 @@ public enum TrackerType {
      * The tracker requires some manual input (like a Captcha or 2FA login), requiring a browser with the UI enabled.
      */
     MANUAL;
-
-    private static final Logger LOGGER = LogManager.getLogger();
-
-    /**
-     * Prints the information on the user-defined trackers for this {@link TrackerType}.
-     *
-     * @param trackersByType all user-defined trackers by the {@link TrackerType}
-     */
-    public void printSummary(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        final Set<TrackerCredential> trackers = trackersByType.get(this);
-        if (trackers == null) {
-            LOGGER.trace("No trackers of type {}", this);
-            return;
-        }
-
-        if (!trackers.isEmpty()) {
-            LOGGER.info("{}: {}", formattedName(), trackers.size());
-            LOGGER.debug("{} trackers: {}", formattedName(), trackers.stream().map(TrackerCredential::name).sorted().toList());
-        }
-    }
 
     /**
      * Formats the name of the {@link TrackerType}. Also capitalises the name and replaces any {@code _} characters with a {@code -}. Note that the

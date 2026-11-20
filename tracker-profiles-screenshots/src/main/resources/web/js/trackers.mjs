@@ -43,8 +43,8 @@ function isRemovable(tracker) {
     return tracker.legacy || Boolean(tracker.username) || tracker.hasPassword
 }
 
-// The group a tracker belongs in: 'headless' or 'manual' (enabled), 'disabled', 'unset' (no username or password), or 'legacy' (no longer
-// supported, but kept until the user removes it)
+// The group a tracker belongs in: 'enabled', 'disabled', 'unset' (no username or password), or 'legacy' (no longer supported, but kept until
+// the user removes it)
 function trackerGroupOf(tracker) {
     if (tracker.legacy) {
         return 'legacy'
@@ -55,7 +55,7 @@ function trackerGroupOf(tracker) {
     if (!tracker.enabled) {
         return 'disabled'
     }
-    return tracker.type === 'MANUAL' ? 'manual' : 'headless'
+    return 'enabled'
 }
 
 function displayedGroupOf(tracker) {
@@ -114,19 +114,16 @@ export function releasePinnedTrackersOutside(target) {
 }
 
 function createTrackerGroup(key, emptyMessage) {
-    return {key: key, list: el('div', {className: 'tracker-list'}), empty: el('div', {className: 'empty-group', text: emptyMessage}), title: null}
+    return {key: key, list: el('div', {className: 'tracker-list'}), empty: el('div', {className: 'empty-group', text: emptyMessage})}
 }
 
 function buildTrackerGroups() {
     const groups = {
-        headless: createTrackerGroup('headless', 'No enabled headless trackers'),
-        manual: createTrackerGroup('manual', 'No enabled manual trackers'),
+        enabled: createTrackerGroup('enabled', 'No enabled trackers'),
         disabled: createTrackerGroup('disabled', ''),
         unset: createTrackerGroup('unset', ''),
         legacy: createTrackerGroup('legacy', ''),
     }
-    groups.headless.title = el('div', {className: 'subgroup-title'})
-    groups.manual.title = el('div', {className: 'subgroup-title'})
     const counts = {
         enabled: el('span', {className: 'group-count'}),
         disabled: el('span', {className: 'group-count'}),
@@ -136,8 +133,7 @@ function buildTrackerGroups() {
 
     const enabledCard = el('details', {className: 'card group', open: true}, [
         el('summary', {}, [el('h2', {text: 'Enabled'}), counts.enabled]),
-        groups.headless.title, groups.headless.list, groups.headless.empty,
-        groups.manual.title, groups.manual.list, groups.manual.empty,
+        groups.enabled.list, groups.enabled.empty,
     ])
     const disabledCard = el('details', {className: 'card group', open: true}, [
         el('summary', {}, [el('h2', {text: 'Disabled'}), counts.disabled]),
@@ -175,7 +171,7 @@ export function renderTrackers() {
     }
 
     const search = byId('tracker-search').value.trim().toLowerCase()
-    const rowsByGroup = {headless: [], manual: [], disabled: [], unset: [], legacy: []}
+    const rowsByGroup = {enabled: [], disabled: [], unset: [], legacy: []}
     // A removed legacy tracker is no longer listed, so its row is dropped
     trackerRowsByName.forEach(function (row, name) {
         if (!findTracker(name)) {
@@ -204,9 +200,9 @@ export function renderTrackers() {
     groups.disabled.empty.hidden = rowsByGroup.disabled.length > 0
     groups.unset.empty.textContent = search ? 'No unset trackers match the search' : 'Every tracker has credentials'
     groups.unset.empty.hidden = rowsByGroup.unset.length > 0
-    groups.headless.title.textContent = `Headless (${rowsByGroup.headless.length})`
-    groups.manual.title.textContent = `Manual (${rowsByGroup.manual.length})`
-    trackerGroups.counts.enabled.textContent = `(${rowsByGroup.headless.length + rowsByGroup.manual.length})`
+    groups.enabled.empty.textContent = search ? 'No enabled trackers match the search' : 'No enabled trackers'
+    groups.enabled.empty.hidden = rowsByGroup.enabled.length > 0
+    trackerGroups.counts.enabled.textContent = `(${rowsByGroup.enabled.length})`
     trackerGroups.counts.disabled.textContent = `(${rowsByGroup.disabled.length})`
     trackerGroups.counts.unset.textContent = `(${rowsByGroup.unset.length})`
     trackerGroups.counts.legacy.textContent = `(${rowsByGroup.legacy.length})`

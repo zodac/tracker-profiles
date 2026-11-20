@@ -36,6 +36,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import net.zodac.tracker.app.ExecutionListener;
+import net.zodac.tracker.app.ScheduledTracker;
 import net.zodac.tracker.app.ScreenshotOrchestrator;
 import net.zodac.tracker.app.TrackerRetriever;
 import net.zodac.tracker.framework.ExecutionCancellation;
@@ -91,7 +92,6 @@ public final class RunManager implements ExecutionListener {
     private final Lock lock = new ReentrantLock();
     private final ApplicationDatabase applicationDatabase;
     private final WebLogAppender webLogAppender;
-    private final Set<TrackerType> startedTrackerTypes = new LinkedHashSet<>();
     private final Map<String, TrackerProgressState> trackers = new LinkedHashMap<>();
     // Kept across executions (and saved in the database), ordered by tracker name: the profile screenshots of the latest success (replaced when
     // the tracker succeeds again), followed by the failure screenshot of the latest execution if it failed (replaced when it fails again)
@@ -266,7 +266,6 @@ public final class RunManager implements ExecutionListener {
         state = RunStatus.State.RUNNING;
         startedAt = System.currentTimeMillis();
         finishedAt = 0L;
-        startedTrackerTypes.clear();
         trackers.clear();
         webLogAppender.clear();
         ExecutionCancellation.reset();
@@ -383,12 +382,12 @@ public final class RunManager implements ExecutionListener {
             LOGGER.warn("{} failed tracker(s) no longer enabled, not executed", failedTrackerNames.size() - enabledTrackers.size());
         }
 
-        final Map<TrackerType, Set<TrackerCredential>> trackersByType = TrackerRetriever.groupByType(enabledTrackers);
-        if (!DisplayValidator.isValid(trackersByType)) {
+        final List<ScheduledTracker> scheduledTrackers = TrackerRetriever.schedule(enabledTrackers);
+        if (!DisplayValidator.isValid(scheduledTrackers.stream().map(ScheduledTracker::type).toList())) {
             return ExitState.FAILURE;
         }
 
-        return ScreenshotOrchestrator.start(trackersByType, this);
+        return ScreenshotOrchestrator.start(scheduledTrackers, this);
     }
 
     // A legacy tracker (whose handler has since been removed) keeps its saved credentials, so is still enabled, but can no longer be executed
@@ -460,7 +459,6 @@ public final class RunManager implements ExecutionListener {
                 nullIfUnset(startedAt),
                 nullIfUnset(finishedAt),
                 shownTrackers.size(),
-                startedTrackerTypes.stream().map(Enum::name).toList(),
                 shownTrackers,
                 failedTrackerNames(),
                 downloadableScreenshots.size(),
@@ -585,24 +583,10 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void executionStarted(final Map<TrackerType, List<String>> trackerNamesByType) {
+    public void executionStarted(final Map<String, TrackerType> trackerTypesByName) {
         lock.lock();
         try {
-            trackerNamesByType.forEach((trackerType, trackerNames) -> {
-                for (final String trackerName : trackerNames) {
-                    trackers.put(trackerName, new TrackerProgressState(trackerName, trackerType));
-                }
-            });
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @Override
-    public void trackerTypeStarted(final TrackerType trackerType) {
-        lock.lock();
-        try {
-            startedTrackerTypes.add(trackerType);
+            trackerTypesByName.forEach((trackerName, trackerType) -> trackers.put(trackerName, new TrackerProgressState(trackerName, trackerType)));
         } finally {
             lock.unlock();
         }

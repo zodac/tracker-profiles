@@ -368,7 +368,7 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
     - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container
-- **Trackers**: every supported tracker, grouped by enabled/disabled (enabled trackers are further grouped into headless/manual), with trackers
+- **Trackers**: every supported tracker, grouped by enabled/disabled (manual trackers are tagged as *Manual*), with trackers
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
@@ -417,8 +417,9 @@ When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter
 tab (and the tab title changes), showing the tracker's browser live. Click in the browser to use it: your clicks, scrolling and typing are sent to it
 while it is selected, and `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code). Complete the step, then select **Continue**; the execution
 also continues by itself if the page in the browser changes. **Skip tracker** fails the current attempt for that tracker. The prompt waits until you
-respond (or the execution is cancelled). Manual trackers run in parallel (as many as
-`NUMBER_OF_PARALLEL_THREADS`), so several prompts can be shown at once, each with its own browser, and answered in any order.
+respond (or the execution is cancelled). Manual and headless trackers run together (as many as `NUMBER_OF_PARALLEL_THREADS` at once), with the
+manual trackers started first, so their prompts are shown straight away and several can be shown at once, each with its own browser, and answered
+in any order while the headless trackers continue.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
 selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. The zoom is remembered for the
@@ -498,7 +499,7 @@ These options apply from the next execution.
 |---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
 | *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                   | INFO          |
-| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers of the same type to execute in parallel, each in its own browser [min: 1, max: 32]                                                                                                                                       | 5             |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers to execute in parallel, each in its own browser [min: 1, max: 32]                                                                                                                                                        | 5             |
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
 | *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX           |
 

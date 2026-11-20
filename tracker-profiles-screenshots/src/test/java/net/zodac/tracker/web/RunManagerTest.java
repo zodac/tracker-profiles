@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.TrackerType;
@@ -89,8 +90,7 @@ class RunManagerTest {
     @Test
     void givenScreenshotsSaved_whenTrackerSucceeds_thenProfileScreenshotsAreShownWithoutFailureScreenshot() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Tracker", "Other")));
-        runManager.trackerTypeStarted(TrackerType.HEADLESS);
+        runManager.executionStarted(headless("Tracker", "Other"));
         runManager.trackerStarted(TrackerType.HEADLESS, "Tracker");
 
         // First attempt fails, second attempt succeeds (replacing the first BOX screenshot)
@@ -118,7 +118,7 @@ class RunManagerTest {
     @Test
     void givenTrackerFails_whenScreenshotsRetrieved_thenOnlyFailureScreenshotIsShown() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Tracker")));
+        runManager.executionStarted(headless("Tracker"));
         runManager.trackerStarted(TrackerType.HEADLESS, "Tracker");
         runManager.trackerScreenshotSaved("Tracker", RedactionType.NONE, tempDirectory.resolve("Tracker.png"));
         runManager.trackerFailureScreenshotSaved("Tracker", tempDirectory.resolve("errors").resolve("Tracker.png"));
@@ -134,7 +134,7 @@ class RunManagerTest {
     void givenSeveralTrackersFinished_whenSuccessfulScreenshotsRetrieved_thenOnlySuccessfulTrackersAreIncludedByName()
         throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Zeta", "Alpha", "Failed")));
+        runManager.executionStarted(headless("Zeta", "Alpha", "Failed"));
         for (final String trackerName : List.of("Zeta", "Alpha", "Failed")) {
             runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
             runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, createScreenshot(trackerName + ".png"));
@@ -152,7 +152,7 @@ class RunManagerTest {
     void givenTrackersSucceededInDifferentExecutions_whenLatestScreenshotsRetrieved_thenOnlyLatestScreenshotOfEachTrackerIsIncluded()
         throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta", "Gamma")));
+        runManager.executionStarted(headless("Alpha", "Beta", "Gamma"));
         completeTracker(runManager, "Alpha", "Alpha_1.png", true);
         completeTracker(runManager, "Beta", "Beta_1.png", false);
         completeTracker(runManager, "Gamma", "Gamma_1.png", true);
@@ -173,7 +173,7 @@ class RunManagerTest {
     @Test
     void givenTrackersForgotten_whenLatestScreenshotsRetrieved_thenOnlyOtherTrackersAreIncluded() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+        runManager.executionStarted(headless("Alpha", "Beta"));
         completeTracker(runManager, "Alpha", "Alpha.png", true);
         completeTracker(runManager, "Beta", "Beta.png", true);
 
@@ -189,7 +189,7 @@ class RunManagerTest {
     @Test
     void givenTrackersFailed_whenStatusRetrieved_thenFailedTrackersAreListed() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta", "Gamma")));
+        runManager.executionStarted(headless("Alpha", "Beta", "Gamma"));
         completeTracker(runManager, "Alpha", "Alpha.png", false);
         completeTracker(runManager, "Beta", "Beta.png", true);
         completeTracker(runManager, "Gamma", "Gamma.png", false);
@@ -201,7 +201,7 @@ class RunManagerTest {
     @Test
     void givenNoTrackerFailed_whenFailedTrackersStarted_thenNoExecutionIsStarted() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+        runManager.executionStarted(headless("Alpha"));
         completeTracker(runManager, "Alpha", "Alpha.png", true);
 
         assertThat(runManager.startFailedTrackers(BrowserResolution.DEFAULT))
@@ -214,7 +214,7 @@ class RunManagerTest {
     @Test
     void givenSuccessfulScreenshotDeleted_whenStatusRetrieved_thenItIsNotDownloadable() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
-        runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+        runManager.executionStarted(headless("Alpha", "Beta"));
         completeTracker(runManager, "Alpha", "Alpha.png", true);
         completeTracker(runManager, "Beta", "Beta.png", true);
 
@@ -232,7 +232,7 @@ class RunManagerTest {
     void givenTrackersSucceededBeforeRestart_whenRunManagerCreated_thenLatestScreenshotsAreKeptInTheirOrder() throws IOException, SQLException {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha", "Beta")));
+            runManager.executionStarted(headless("Alpha", "Beta"));
             runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
@@ -260,13 +260,13 @@ class RunManagerTest {
     void givenTrackerSucceedsAgain_whenRunManagerCreated_thenOnlyItsLatestScreenshotsAreKept() throws IOException, SQLException {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
             runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", true);
 
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha_2.png", true);
         }
 
@@ -282,10 +282,10 @@ class RunManagerTest {
         throws IOException, SQLException {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha.png", true);
 
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
             runManager.trackerFailureScreenshotSaved("Alpha", createScreenshot("Alpha_failure.png"));
             runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", false);
@@ -302,7 +302,7 @@ class RunManagerTest {
                 .extracting(ScreenshotFile::fileName)
                 .containsExactly("Alpha.png");
 
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha_2.png", true);
         }
 
@@ -317,7 +317,7 @@ class RunManagerTest {
     void givenTrackerFailsWithoutFailureScreenshot_whenLatestScreenshotsRetrieved_thenNoScreenshotsAreShown() throws IOException, SQLException {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
-            runManager.executionStarted(Map.of(TrackerType.HEADLESS, List.of("Alpha")));
+            runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha.png", true);
             runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
             runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", false);
@@ -346,6 +346,15 @@ class RunManagerTest {
     // Only screenshots that exist can be downloaded
     private Path createScreenshot(final String fileName) throws IOException {
         return Files.writeString(tempDirectory.resolve(fileName), "");
+    }
+
+    // Headless trackers, in execution order
+    private static Map<String, TrackerType> headless(final String... trackerNames) {
+        final Map<String, TrackerType> trackerTypesByName = new LinkedHashMap<>();
+        for (final String trackerName : trackerNames) {
+            trackerTypesByName.put(trackerName, TrackerType.HEADLESS);
+        }
+        return trackerTypesByName;
     }
 
     private static List<String> screenshotIds(final RunManager runManager, final String trackerName) {

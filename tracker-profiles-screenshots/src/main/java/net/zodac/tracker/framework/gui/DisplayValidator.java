@@ -19,9 +19,7 @@ package net.zodac.tracker.framework.gui;
 
 import java.awt.AWTError;
 import java.awt.GraphicsEnvironment;
-import java.util.Map;
-import java.util.Set;
-import net.zodac.tracker.framework.TrackerCredential;
+import java.util.Collection;
 import net.zodac.tracker.framework.TrackerType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,19 +46,15 @@ public final class DisplayValidator {
      * {@code java.awt.headless} is never set, since it cannot be changed once AWT is initialised, and a later execution in the same JVM may need a
      * display.
      *
-     * @param trackersByType the loaded trackers grouped by {@link TrackerType}
+     * @param trackerTypes the {@link TrackerType} of each tracker to be executed
      * @return {@code true} if the display state is valid for the trackers to be executed
      */
-    public static boolean isValid(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        if (needsDisplay(trackersByType)) {
+    public static boolean isValid(final Collection<TrackerType> trackerTypes) {
+        if (trackerTypes.contains(TrackerType.MANUAL)) {
             LOGGER.trace("DISPLAY needs to be set");
             return isDisplayAvailable();
         }
         return true;
-    }
-
-    private static boolean needsDisplay(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return trackersByType.containsKey(TrackerType.MANUAL);
     }
 
     private static boolean isDisplayAvailable() {

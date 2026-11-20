@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
  * @param databasePath               the {@link Path} to the SQLite database used by the web UI
  * @param enableTranslationToEnglish whether to translate non-English {@link TrackerType}s to English
  * @param logLevel                   the log level for the application, must be one of: {@code INFO, DEBUG, TRACE, WARNING, ERROR}
- * @param numberOfParallelThreads    the number of trackers of the same {@link TrackerType} to execute in parallel
+ * @param numberOfParallelThreads    the number of trackers to execute in parallel (of any {@link TrackerType})
  * @param numberOfScreenshotAttempts the number of times to attempt to screenshot a tracker
  * @param outputDirectory            the output {@link Path} to the directory within which the screenshots will be saved
  * @param redactionTypes             the {@link RedactionType}s to perform redaction of sensitive information on the user profile page, in order

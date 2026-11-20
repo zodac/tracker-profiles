@@ -18,12 +18,9 @@
 package net.zodac.tracker.app;
 
 import java.util.Collection;
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantLock;
 import net.zodac.tracker.framework.ExitState;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.util.StringUtils;
 import net.zodac.tracker.util.TimingUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,8 +35,8 @@ final class ResultCollector {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final ReentrantLock addResultLock = new ReentrantLock();
-    private final Map<TrackerType, Collection<String>> successfulTrackers = new EnumMap<>(TrackerType.class);
-    private final Map<TrackerType, Collection<String>> unsuccessfulTrackers = new EnumMap<>(TrackerType.class);
+    private final Collection<String> successfulTrackers = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private final Collection<String> unsuccessfulTrackers = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private final long executionStartNanos;
 
@@ -64,17 +61,13 @@ final class ResultCollector {
     /**
      * Records the result of a screenshot attempt.
      *
-     * @param trackerType   the type of tracker
      * @param trackerName   the name of the tracker
      * @param wasSuccessful whether the screenshot was successful
      */
-    void addResult(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
+    void addResult(final String trackerName, final boolean wasSuccessful) {
         addResultLock.lock();
         try {
-            final Map<TrackerType, Collection<String>> targetMap = wasSuccessful ? successfulTrackers : unsuccessfulTrackers;
-            targetMap
-                .computeIfAbsent(trackerType, _ -> new TreeSet<>())
-                .add(trackerName);
+            (wasSuccessful ? successfulTrackers : unsuccessfulTrackers).add(trackerName);
         } finally {
             addResultLock.unlock();
         }
@@ -83,18 +76,11 @@ final class ResultCollector {
     /**
      * Generates a summary of all results and returns the appropriate {@link ExitState}.
      *
-     * @param executedTrackerTypes the {@link TrackerType}s that were executed, in execution order
      * @return the {@link ExitState} based on success/failure counts
      */
-    ExitState generateSummary(final Collection<TrackerType> executedTrackerTypes) {
-        final int totalSuccessful = successfulTrackers.values()
-            .stream()
-            .mapToInt(Collection::size)
-            .sum();
-        final int totalUnsuccessful = unsuccessfulTrackers.values()
-            .stream()
-            .mapToInt(Collection::size)
-            .sum();
+    ExitState generateSummary() {
+        final int totalSuccessful = successfulTrackers.size();
+        final int totalUnsuccessful = unsuccessfulTrackers.size();
 
         if (totalSuccessful == 0 && totalUnsuccessful == 0) {
             LOGGER.error("Unexpectedly had no trackers execute");
@@ -111,7 +97,7 @@ final class ResultCollector {
             return success;
         }
 
-        return handlePartialFailure(executedTrackerTypes, totalSuccessful, totalUnsuccessful);
+        return handlePartialFailure(totalSuccessful, totalUnsuccessful);
     }
 
     private @Nullable ExitState handleFailure(final int totalSuccessful, final int totalUnsuccessful) {
@@ -120,7 +106,7 @@ final class ResultCollector {
         }
 
         LOGGER.error("{} selected tracker{} failed in {}:", totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
-        unsuccessfulTrackers.forEach((type, trackers) -> LOGGER.error("{}: {}", type.formattedName(), String.join(", ", trackers)));
+        LOGGER.error("Failed: {}", String.join(", ", unsuccessfulTrackers));
         return ExitState.FAILURE;
     }
 
@@ -130,22 +116,14 @@ final class ResultCollector {
         }
 
         LOGGER.info("{} selected tracker{} successfully screenshot in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful), executionTime());
-        successfulTrackers.forEach((type, trackers) -> LOGGER.debug("{} ({}): {}", type.formattedName(), trackers.size(), trackers));
+        LOGGER.debug("Succeeded: {}", String.join(", ", successfulTrackers));
         return ExitState.SUCCESS;
     }
 
-    private ExitState handlePartialFailure(final Collection<TrackerType> executedTrackerTypes, final int totalSuccessful,
-        final int totalUnsuccessful) {
+    private ExitState handlePartialFailure(final int totalSuccessful, final int totalUnsuccessful) {
         LOGGER.warn("{} tracker{} successfully screenshot, {} tracker{} failed in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful),
             totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
-
-        for (final TrackerType trackerType : executedTrackerTypes) {
-            final Collection<String> trackers = unsuccessfulTrackers.get(trackerType);
-            if (trackers == null || trackers.isEmpty()) {
-                continue;
-            }
-            LOGGER.warn("{}: {}", trackerType.formattedName(), String.join(", ", trackers));
-        }
+        LOGGER.warn("Failed: {}", String.join(", ", unsuccessfulTrackers));
         return ExitState.PARTIAL_FAILURE;
     }
 

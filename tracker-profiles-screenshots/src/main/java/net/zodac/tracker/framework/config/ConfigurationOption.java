@@ -53,10 +53,10 @@ public enum ConfigurationOption {
         "The logging level for application output", Scope.EXECUTION),
 
     /**
-     * The number of parallel threads for each tracker type.
+     * The number of trackers executed in parallel.
      */
     NUMBER_OF_PARALLEL_THREADS(Group.RUN_OPTIONS, "Parallel browsers", "5", Range.of(1, 32),
-        "The number of trackers of the same type to execute in parallel, each in its own browser", Scope.EXECUTION),
+        "The number of trackers to execute in parallel, each in its own browser", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.

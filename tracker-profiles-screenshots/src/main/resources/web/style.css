@@ -1552,20 +1552,6 @@ a.icon-button {
     font-weight: 400;
 }
 
-.subgroup-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--surface-muted);
-    border-top: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
 .tracker-row {
     display: grid;
     grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(140px, 1fr) 96px 48px 36px 72px;

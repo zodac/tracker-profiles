@@ -28,12 +28,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
 import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
@@ -59,12 +58,12 @@ class DriverPoolTest {
     }
 
     @BeforeEach
-    void resetPool() throws Exception {
+    void resetPool() throws ReflectiveOperationException {
         final DriverPool instance = getInstance();
-        clearField(instance, "pool");
-        clearField(instance, "allPooledDrivers");
-        clearField(instance, "driverTypeMap");
+        clearField(instance, "idleDrivers");
+        clearField(instance, "pooledDrivers");
         clearField(instance, "freshDrivers");
+        setCapacity(Integer.MAX_VALUE);
         ExecutionCancellation.reset();
     }
 
@@ -74,8 +73,8 @@ class DriverPoolTest {
     }
 
     @Test
-    void givenCancelledExecution_whenAcquire_thenExceptionThrownAndNoDriverCreated() throws Exception {
-        injectPooledDriver(mock(RemoteWebDriver.class), TrackerType.HEADLESS);
+    void givenCancelledExecution_whenAcquire_thenExceptionThrownAndNoDriverCreated() throws ReflectiveOperationException {
+        injectIdleDriver(mock(RemoteWebDriver.class), TrackerType.HEADLESS);
         ExecutionCancellation.requestCancellation();
 
         try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
@@ -85,6 +84,100 @@ class DriverPoolTest {
                 .isInstanceOf(ExecutionCancelledException.class);
             factory.verifyNoInteractions();
         }
+    }
+
+    @Test
+    void givenIdleDriverOfType_whenAcquire_thenIdleDriverReturned() throws ReflectiveOperationException {
+        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
+        injectIdleDriver(expected, TrackerType.HEADLESS);
+        setCapacity(1);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            assertThat(DriverPool.acquire(TrackerType.HEADLESS, List.of()))
+                .isSameAs(expected);
+            factory.verifyNoInteractions();
+        }
+        assertThat(getIdleDrivers().get(TrackerType.HEADLESS))
+            .isEmpty();
+    }
+
+    @Test
+    void givenNoIdleDriverAndSpareCapacity_whenAcquire_thenPooledDriverCreatedAndIdleDriversKept() throws ReflectiveOperationException {
+        final RemoteWebDriver idleHeadless = mock(RemoteWebDriver.class);
+        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
+        injectIdleDriver(idleHeadless, TrackerType.HEADLESS);
+        setCapacity(2);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(TrackerType.MANUAL, List.of())).thenReturn(expected);
+
+            assertThat(DriverPool.acquire(TrackerType.MANUAL, List.of()))
+                .isSameAs(expected);
+        }
+        verify(idleHeadless, never()).quit();
+        assertThat(getPooledDrivers())
+            .containsEntry(expected, TrackerType.MANUAL)
+            .containsKey(idleHeadless);
+    }
+
+    @Test
+    void givenFullPoolWithIdleDriverOfOtherType_whenAcquire_thenIdleDriverQuitAndNewDriverCreated() throws ReflectiveOperationException {
+        final RemoteWebDriver idleHeadless = mock(RemoteWebDriver.class);
+        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
+        injectIdleDriver(idleHeadless, TrackerType.HEADLESS);
+        setCapacity(1);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(TrackerType.MANUAL, List.of())).thenReturn(expected);
+
+            assertThat(DriverPool.acquire(TrackerType.MANUAL, List.of()))
+                .isSameAs(expected);
+        }
+        verify(idleHeadless).quit();
+        assertThat(getPooledDrivers())
+            .containsOnlyKeys(expected);
+    }
+
+    @Test
+    void givenExtensions_whenAcquire_thenFreshDriverCreatedAndConfigured() throws ReflectiveOperationException {
+        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
+        final Extension extension = mock(Extension.class);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(expected);
+
+            assertThat(DriverPool.acquire(TrackerType.HEADLESS, List.of(extension)))
+                .isSameAs(expected);
+        }
+        verify(extension).configure(expected);
+        assertThat(getFreshDrivers())
+            .contains(expected);
+        assertThat(getPooledDrivers())
+            .isEmpty();
+    }
+
+    @Test
+    void givenExtensionsAndFullPool_whenAcquire_thenIdleDriverQuitAndFreshDriverQuitOnRelease() throws ReflectiveOperationException {
+        final RemoteWebDriver idle = mock(RemoteWebDriver.class);
+        final RemoteWebDriver fresh = mock(RemoteWebDriver.class);
+        final Extension extension = mock(Extension.class);
+        injectIdleDriver(idle, TrackerType.HEADLESS);
+        setCapacity(1);
+
+        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
+            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(fresh);
+
+            final RemoteWebDriver acquired = DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
+            verify(idle).quit();
+            assertThat(acquired)
+                .isSameAs(fresh);
+
+            DriverPool.release(acquired);
+            factory.verify(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList()));
+        }
+        verify(fresh).quit();
+        assertThat(getFreshDrivers())
+            .isEmpty();
     }
 
     @Test
@@ -102,108 +195,20 @@ class DriverPoolTest {
     }
 
     @Test
-    void givenCancelledExecution_whenDeadPooledDriverReleased_thenNoReplacementCreated() throws Exception {
-        final RemoteWebDriver dead = mock(RemoteWebDriver.class);
-        when(dead.navigate()).thenThrow(new WebDriverException("session closed"));
-        injectPooledDriver(dead, TrackerType.HEADLESS);
-        DriverPool.acquire(TrackerType.HEADLESS, List.of());
-        ExecutionCancellation.requestCancellation();
-
-        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
-            DriverPool.release(dead);
-            factory.verify(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList()), never());
-        }
-
-        verify(dead).quit();
-    }
-
-    @Test
-    void givenPooledDriver_whenAcquire_thenDriverReturnedFromPool() throws Exception {
-        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
-        injectPooledDriver(expected, TrackerType.HEADLESS);
-
-        final RemoteWebDriver actual = DriverPool.acquire(TrackerType.HEADLESS, List.of());
-        assertThat(actual)
-            .isSameAs(expected);
-    }
-
-    @Test
-    void givenExtensions_whenAcquire_thenFreshDriverCreatedAndConfigured() {
-        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
-        final Extension extension = mock(Extension.class);
-
-        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
-            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(expected);
-
-            final RemoteWebDriver actual = DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
-            verify(extension).configure(expected);
-            assertThat(actual)
-                .isSameAs(expected);
-        }
-    }
-
-    @Test
-    void givenExtensionsAndPool_whenAcquire_thenPooledSlotEvictedAndReplacedOnRelease() throws Exception {
-        final RemoteWebDriver pooled = mock(RemoteWebDriver.class);
-        final RemoteWebDriver fresh = mock(RemoteWebDriver.class);
-        final RemoteWebDriver replacement = mock(RemoteWebDriver.class);
-        final Extension extension = mock(Extension.class);
-        injectPooledDriver(pooled, TrackerType.HEADLESS);
-
-        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
-            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(fresh, replacement);
-
-            final RemoteWebDriver acquired = DriverPool.acquire(TrackerType.HEADLESS, List.of(extension));
-            verify(extension).configure(fresh);
-            verify(pooled).quit();
-            assertThat(acquired)
-                .isSameAs(fresh);
-            assertThat(getPool().get(TrackerType.HEADLESS))
-                .isEmpty();
-            assertThat(getAllPooledDrivers())
-                .doesNotContain(pooled);
-
-            DriverPool.release(acquired);
-            verify(fresh).quit();
-            assertThat(getPool().get(TrackerType.HEADLESS))
-                .containsExactly(replacement);
-            assertThat(getAllPooledDrivers())
-                .contains(replacement);
-        }
-    }
-
-    @Test
-    void givenNoPool_whenAcquire_thenLazyDriverCreatedAndRegistered() throws Exception {
-        final RemoteWebDriver expected = mock(RemoteWebDriver.class);
-
-        try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
-            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(expected);
-
-            final RemoteWebDriver actual = DriverPool.acquire(TrackerType.HEADLESS, List.of());
-            assertThat(actual)
-                .isSameAs(expected);
-            assertThat(getAllPooledDrivers())
-                .contains(expected);
-            assertThat(getDriverTypeMap())
-                .containsKey(expected);
-        }
-    }
-
-    @Test
-    void givenHealthyPooledDriver_whenRelease_thenDriverReturnedToPool() throws Exception {
+    void givenHealthyPooledDriver_whenRelease_thenDriverReturnedToIdleDrivers() throws ReflectiveOperationException {
         final RemoteWebDriver driver = mock(RemoteWebDriver.class);
         final WebDriver.Navigation navigation = mock(WebDriver.Navigation.class);
         when(driver.navigate()).thenReturn(navigation);
-        injectPooledDriver(driver, TrackerType.HEADLESS);
-        DriverPool.acquire(TrackerType.HEADLESS, List.of());
+        injectIdleDriver(driver, TrackerType.MANUAL);
+        DriverPool.acquire(TrackerType.MANUAL, List.of());
 
         DriverPool.release(driver);
-        assertThat(getPool().get(TrackerType.HEADLESS))
-            .contains(driver);
+        assertThat(getIdleDrivers().get(TrackerType.MANUAL))
+            .containsExactly(driver);
     }
 
     @Test
-    void givenFreshDriver_whenRelease_thenDriverQuit() {
+    void givenUnknownDriver_whenRelease_thenDriverQuit() {
         final RemoteWebDriver driver = mock(RemoteWebDriver.class);
         try (final var _ = mockStatic(JavaWebDriverFactory.class)) {
             DriverPool.release(driver);
@@ -213,31 +218,30 @@ class DriverPoolTest {
     }
 
     @Test
-    void givenDeadPooledDriver_whenRelease_thenDeadDriverReplacedInPool() throws Exception {
+    void givenDeadPooledDriver_whenRelease_thenDriverQuitAndNotReplaced() throws ReflectiveOperationException {
         final RemoteWebDriver deadDriver = mock(RemoteWebDriver.class);
-        final RemoteWebDriver replacement = mock(RemoteWebDriver.class);
         when(deadDriver.navigate()).thenThrow(new WebDriverException("session closed"));
-        injectPooledDriver(deadDriver, TrackerType.HEADLESS);
+        injectIdleDriver(deadDriver, TrackerType.HEADLESS);
         DriverPool.acquire(TrackerType.HEADLESS, List.of());
 
         try (final MockedStatic<JavaWebDriverFactory> factory = mockStatic(JavaWebDriverFactory.class)) {
-            factory.when(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList())).thenReturn(replacement);
             DriverPool.release(deadDriver);
+            factory.verify(() -> JavaWebDriverFactory.createDriver(any(TrackerType.class), anyList()), never());
         }
 
         verify(deadDriver).quit();
-        assertThat(getAllPooledDrivers())
-            .doesNotContain(deadDriver).contains(replacement);
-        assertThat(getPool().get(TrackerType.HEADLESS))
-            .contains(replacement);
+        assertThat(getPooledDrivers())
+            .isEmpty();
+        assertThat(getIdleDrivers().get(TrackerType.HEADLESS))
+            .isEmpty();
     }
 
     @Test
-    void givenPooledDrivers_whenShutdown_thenAllDriversQuitAndStateCleared() throws Exception {
+    void givenPooledDrivers_whenShutdown_thenAllDriversQuitAndStateCleared() throws ReflectiveOperationException {
         final RemoteWebDriver driver1 = mock(RemoteWebDriver.class);
         final RemoteWebDriver driver2 = mock(RemoteWebDriver.class);
-        injectPooledDriver(driver1, TrackerType.HEADLESS);
-        injectPooledDriver(driver2, TrackerType.MANUAL);
+        injectIdleDriver(driver1, TrackerType.HEADLESS);
+        injectIdleDriver(driver2, TrackerType.MANUAL);
 
         try (final var _ = mockStatic(JavaWebDriverFactory.class)) {
             DriverPool.shutdown();
@@ -245,31 +249,36 @@ class DriverPoolTest {
 
         verify(driver1).quit();
         verify(driver2).quit();
-        assertThat(getAllPooledDrivers())
+        assertThat(getPooledDrivers())
             .isEmpty();
-        assertThat(getPool())
+        assertThat(getIdleDrivers())
             .isEmpty();
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<TrackerType, BlockingDeque<RemoteWebDriver>> getPool() throws ReflectiveOperationException {
-        return (Map<TrackerType, BlockingDeque<RemoteWebDriver>>) getField(getInstance(), "pool");
+    private static Map<TrackerType, Deque<RemoteWebDriver>> getIdleDrivers() throws ReflectiveOperationException {
+        return (Map<TrackerType, Deque<RemoteWebDriver>>) getField(getInstance(), "idleDrivers");
     }
 
     @SuppressWarnings("unchecked")
-    private static Set<RemoteWebDriver> getAllPooledDrivers() throws ReflectiveOperationException {
-        return (Set<RemoteWebDriver>) getField(getInstance(), "allPooledDrivers");
+    private static Map<RemoteWebDriver, TrackerType> getPooledDrivers() throws ReflectiveOperationException {
+        return (Map<RemoteWebDriver, TrackerType>) getField(getInstance(), "pooledDrivers");
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<RemoteWebDriver, TrackerType> getDriverTypeMap() throws ReflectiveOperationException {
-        return (Map<RemoteWebDriver, TrackerType>) getField(getInstance(), "driverTypeMap");
+    private static Collection<RemoteWebDriver> getFreshDrivers() throws ReflectiveOperationException {
+        return (Collection<RemoteWebDriver>) getField(getInstance(), "freshDrivers");
     }
 
-    private static void injectPooledDriver(final RemoteWebDriver driver, final TrackerType type) throws ReflectiveOperationException {
-        getAllPooledDrivers().add(driver);
-        getDriverTypeMap().put(driver, type);
-        getPool().computeIfAbsent(type, _ -> new LinkedBlockingDeque<>()).addLast(driver);
+    private static void injectIdleDriver(final RemoteWebDriver driver, final TrackerType type) throws ReflectiveOperationException {
+        getPooledDrivers().put(driver, type);
+        getIdleDrivers().computeIfAbsent(type, _ -> new ArrayDeque<>()).addLast(driver);
+    }
+
+    private static void setCapacity(final int capacity) throws ReflectiveOperationException {
+        final Field field = DriverPool.class.getDeclaredField("capacity");
+        field.setAccessible(true); // NOPMD: AvoidAccessibilityAlteration - required to set private fields in tests
+        field.setInt(getInstance(), capacity);
     }
 
     private static void clearField(final DriverPool instance, final String fieldName) throws ReflectiveOperationException {

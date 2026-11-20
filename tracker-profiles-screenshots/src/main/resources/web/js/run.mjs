@@ -50,11 +50,7 @@ function enabledTrackersDescription() {
     if (enabled.length === 0) {
         return 'No trackers are enabled yet. Enable them, or import a CSV file, on the Trackers tab.'
     }
-
-    const manual = enabled.filter(function (tracker) {
-        return tracker.type === 'MANUAL'
-    }).length
-    return `${pluralise(enabled.length, 'enabled tracker')}: ${enabled.length - manual} headless, ${manual} manual.`
+    return `${pluralise(enabled.length, 'enabled tracker')}.`
 }
 
 export function runDescription(status) {
@@ -62,10 +58,8 @@ export function runDescription(status) {
         return 'Cancelling: closing all browsers and stopping in-progress trackers…'
     }
     if (status.state === 'RUNNING') {
-        const currentType = status.startedTrackerTypes[status.startedTrackerTypes.length - 1]
         const elapsed = formatDuration(Date.now() - status.startedAt)
-        const typeDescription = currentType ? ` · ${formatTypeName(currentType)} trackers` : ''
-        return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed${typeDescription}`
+        return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed`
     }
 
     const description = enabledTrackersDescription()

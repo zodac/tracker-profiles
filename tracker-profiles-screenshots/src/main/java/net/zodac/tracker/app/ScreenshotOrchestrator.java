@@ -18,17 +18,14 @@
 package net.zodac.tracker.app;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.ExitState;
-import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
@@ -53,38 +50,36 @@ public final class ScreenshotOrchestrator {
      * Orchestrates the profile screenshot process by performing the following.
      * <ol>
      *   <li>Ensuring the output directory exists</li>
-     *   <li>Executing screenshots for each {@link TrackerType}, in the order they are declared (headless trackers first, as they need no input)</li>
+     *   <li>Executing every tracker, up to {@code NUMBER_OF_PARALLEL_THREADS} at once (of any {@link TrackerType}), in the order provided</li>
      *   <li>Collecting and reporting results</li>
      * </ol>
      *
-     * @param trackersByType    the trackers to execute, organised by {@link TrackerType}
+     * @param scheduledTrackers the trackers to execute, in execution order
      * @param executionListener the {@link ExecutionListener} to notify of progress
      * @return the {@link ExitState} of the execution
      * @throws IOException thrown if the output directories cannot be created
      * @see ScreenshotDirectories#createAll()
+     * @see TrackerRetriever#schedule(java.util.Collection)
      */
-    public static ExitState start(final Map<TrackerType, Set<TrackerCredential>> trackersByType, final ExecutionListener executionListener)
-        throws IOException {
-        final int numberOfTrackers = countTrackersToExecute(trackersByType);
+    public static ExitState start(final List<ScheduledTracker> scheduledTrackers, final ExecutionListener executionListener) throws IOException {
+        final int numberOfTrackers = scheduledTrackers.size();
         if (numberOfTrackers == 0) {
             LOGGER.error("No trackers selected!");
             return ExitState.FAILURE;
         }
 
         ScreenshotDirectories.createAll();
-        executionListener.executionStarted(namesByType(trackersByType));
+        executionListener.executionStarted(typesByName(scheduledTrackers));
         final ResultCollector resultCollector = ResultCollector.start();
         try {
-            LOGGER.info("Screenshotting {} tracker{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers));
-            TrackerRetriever.printTrackersInfo(trackersByType);
+            final int effectiveThreadCount = Math.min(Configuration.get().numberOfParallelThreads(), numberOfTrackers);
+            LOGGER.info("Screenshotting {} tracker{}{}", numberOfTrackers, StringUtils.pluralise(numberOfTrackers),
+                effectiveThreadCount == 1 ? "" : " (%d in parallel)".formatted(effectiveThreadCount));
+            LOGGER.debug("Trackers: {}", scheduledTrackers.stream().map(ScheduledTracker::name).toList());
 
-            for (final TrackerType trackerType : TrackerType.values()) {
-                if (ExecutionCancellation.isCancelled()) {
-                    break;
-                }
-                executionListener.trackerTypeStarted(trackerType);
-                screenshotTrackerByType(trackerType, trackersByType, resultCollector, executionListener);
-            }
+            // The first trackers to start each need a browser of their type, so those are started up front
+            DriverPool.initialise(effectiveThreadCount, scheduledTrackers.stream().limit(effectiveThreadCount).map(ScheduledTracker::type).toList());
+            screenshotTrackers(scheduledTrackers, effectiveThreadCount, resultCollector, executionListener);
         } finally {
             ScreenshotTaker.shutdown();
             DriverPool.shutdown();
@@ -94,82 +89,59 @@ public final class ScreenshotOrchestrator {
             LOGGER.debug("Execution cancelled, not generating a summary");
             return ExitState.FAILURE;
         }
-        return resultCollector.generateSummary(List.of(TrackerType.values()));
+        return resultCollector.generateSummary();
     }
 
-    private static int countTrackersToExecute(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        return trackersByType
-            .values()
-            .stream()
-            .mapToInt(Set::size)
-            .sum();
+    private static Map<String, TrackerType> typesByName(final List<ScheduledTracker> scheduledTrackers) {
+        final Map<String, TrackerType> trackerTypesByName = new LinkedHashMap<>();
+        for (final ScheduledTracker scheduledTracker : scheduledTrackers) {
+            trackerTypesByName.put(scheduledTracker.name(), scheduledTracker.type());
+        }
+        return trackerTypesByName;
     }
 
-    private static Map<TrackerType, List<String>> namesByType(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        final Map<TrackerType, List<String>> trackerNamesByType = new EnumMap<>(TrackerType.class);
-        trackersByType.forEach((trackerType, trackers) ->
-            trackerNamesByType.put(trackerType, trackers.stream().map(TrackerCredential::name).toList()));
-        return trackerNamesByType;
-    }
-
-    private static void screenshotTrackerByType(final TrackerType trackerType, final Map<TrackerType, Set<TrackerCredential>> trackersByType,
+    private static void screenshotTrackers(final List<ScheduledTracker> scheduledTrackers, final int threadCount,
         final ResultCollector resultCollector, final ExecutionListener executionListener) {
-        if (!trackersByType.containsKey(trackerType)) {
-            LOGGER.trace("No trackers of type {}", trackerType);
-            return;
-        }
-
-        final int numberOfTrackers = trackersByType.getOrDefault(trackerType, Set.of()).size();
-        final int effectiveThreadCount = getEffectiveThreadCount(numberOfTrackers);
-        DriverPool.initialise(trackerType, effectiveThreadCount);
-
-        LOGGER.info("Executing {} trackers{}", trackerType.formattedName(),
-            effectiveThreadCount == 1 ? "" : " (with %d threads)".formatted(effectiveThreadCount));
-
-        final List<Callable<Void>> trackerScreenshotTasks = new ArrayList<>();
-        for (final TrackerCredential tracker : trackersByType.get(trackerType)) {
-            trackerScreenshotTasks.add(() -> {
-                screenshotTracker(tracker, trackerType, resultCollector, executionListener);
+        final List<Callable<Void>> trackerScreenshotTasks = scheduledTrackers
+            .stream()
+            .map(scheduledTracker -> (Callable<Void>) () -> {
+                screenshotTracker(scheduledTracker, resultCollector, executionListener);
                 return null;
-            });
-        }
+            })
+            .toList();
 
-        try (final ExecutorService executor = Executors.newFixedThreadPool(effectiveThreadCount)) {
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
             executor.invokeAll(trackerScreenshotTasks);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.debug("Parallel execution interrupted for {} trackers", trackerType.formattedName(), e);
+            LOGGER.debug("Parallel execution interrupted", e);
             if (!ExecutionCancellation.isCancelled()) {
-                LOGGER.warn("Parallel execution interrupted for {} trackers: {}", trackerType.formattedName(), e.getMessage());
+                LOGGER.warn("Parallel execution interrupted: {}", e.getMessage());
             }
         }
     }
 
     // A tracker that is not started, or fails, because the execution was cancelled is not recorded as a result
-    private static void screenshotTracker(final TrackerCredential tracker, final TrackerType trackerType, final ResultCollector resultCollector,
+    private static void screenshotTracker(final ScheduledTracker scheduledTracker, final ResultCollector resultCollector,
         final ExecutionListener executionListener) {
         if (ExecutionCancellation.isCancelled()) {
             return;
         }
 
-        executionListener.trackerStarted(trackerType, tracker.name());
+        final String trackerName = scheduledTracker.name();
+        executionListener.trackerStarted(scheduledTracker.type(), trackerName);
         final boolean success;
         try {
-            success = ProfileScreenshotExecutor.takeScreenshot(tracker, executionListener);
+            success = ProfileScreenshotExecutor.takeScreenshot(scheduledTracker.credential(), executionListener);
         } catch (final ExecutionCancelledException e) {
-            LOGGER.debug("Execution cancelled for tracker '{}'", tracker.name(), e);
+            LOGGER.debug("Execution cancelled for tracker '{}'", trackerName, e);
             return;
         }
 
         if (!success && ExecutionCancellation.isCancelled()) {
             return;
         }
-        resultCollector.addResult(trackerType, tracker.name(), success);
-        executionListener.trackerCompleted(trackerType, tracker.name(), success);
-    }
-
-    private static int getEffectiveThreadCount(final int numberOfTrackers) {
-        LOGGER.trace("numberOfParallelThreads: {}, numberOfTrackers: {}", Configuration.get().numberOfParallelThreads(), numberOfTrackers);
-        return Math.min(Configuration.get().numberOfParallelThreads(), numberOfTrackers);
+        resultCollector.addResult(trackerName, success);
+        executionListener.trackerCompleted(scheduledTracker.type(), trackerName, success);
     }
 }

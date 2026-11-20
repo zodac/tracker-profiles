@@ -42,7 +42,7 @@ which sets `DISPLAY` itself (replacing any value set for the container), and are
 `/tmp/.X11-unix` volume. Xvfb runs as UID `1000`, so it cannot create `/tmp/.X11-unix` and uses its abstract socket instead. There is no window
 manager on the virtual display.
 
-Manual trackers run in parallel (`NUMBER_OF_PARALLEL_THREADS`, like headless trackers), so their browsers share the virtual display. Selenium
+Manual trackers run in parallel with each other and with headless trackers, so their browsers share the virtual display. Selenium
 commands and the user's input (DevTools `Input.*`) reach a tab whichever window has the focus, and every browser with a UI has focus emulation
 enabled (`Emulation.setFocusEmulationEnabled`, in `JavaWebDriverFactory`), so each page behaves as if focused. Anything sent to the display
 itself (`java.awt.Robot`, as in `BrowserInteractionHelper.translatePage`) must hold `DisplayFocus.lock()` and call `DisplayFocus.bringToFront`
@@ -66,7 +66,7 @@ The application is used only through its web UI (there is no CLI mode). Each exe
 opens a browser, logs in, navigates to the user profile page, redacts sensitive information, takes a full-page screenshot, and logs out.
 
 Entry point: `ApplicationLauncher` (starts the web UI, see [Web UI](#web-ui)) → `RunManager.start(BrowserResolution)` (loads the enabled trackers
-from the database) → `TrackerRetriever.groupByType` → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` →
+from the database) → `TrackerRetriever.schedule` → `DisplayValidator` (AWT/display check) → `ScreenshotOrchestrator` →
 `ProfileScreenshotExecutor` (per tracker) → `AbstractTrackerHandler` subclass.
 
 With the system property `tracker-profiles.appcds-training=true`, `ApplicationLauncher` starts and immediately stops the web UI; this is only used by
@@ -224,7 +224,7 @@ polled, except the status every 10s during an execution (no logs), so the page t
   every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run
   options come first, with `Scope.STARTUP` options read-only. While an execution is running, every option is locked. `MULTI_SELECT` options are a
   list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
-- The Trackers tab groups trackers as enabled (headless/manual), disabled, and unset (no username or password, with the last run, enable and
+- The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
   selects a range from the last tracker clicked without Shift, Ctrl/Cmd+Shift+click adds it), and Alt+click is left to the browser to select text
@@ -306,8 +306,11 @@ Two types control how the browser is created and whether user interaction is nee
   of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
-Trackers of each type run in parallel (`NUMBER_OF_PARALLEL_THREADS`), one type after another, in the order of the `TrackerType` constants
-(`HEADLESS` → `MANUAL`). There is no option to choose the types or their order: the user enables or disables each tracker.
+Trackers of both types run together, up to `NUMBER_OF_PARALLEL_THREADS` at once, in the order of `TrackerRetriever.schedule`: manual
+trackers first (so their prompts are shown as soon as the execution starts), then by name. The type is only shown as a tag (a "Manual" badge)
+in the web UI, never as a separate group. `DriverPool` keeps idle browsers of each type, but never more than `NUMBER_OF_PARALLEL_THREADS` open in
+total: a tracker reuses an idle browser of its type, otherwise one is started (closing an idle browser of another type first if the pool is
+full), so no tracker waits for a browser.
 
 ### Cloudflare Verification
 
@@ -429,8 +432,8 @@ Log4j2 is used throughout. Apply levels as follows:
 
 ### Progress
 
-Progress is reported to the web UI through `ExecutionListener` (implemented by `RunManager`): `executionStarted`, `trackerTypeStarted`,
-`trackerStarted`, `trackerStepCompleted` (once per `TrackerStep`, the first time it succeeds, even across retries) and `trackerCompleted`.
+Progress is reported to the web UI through `ExecutionListener` (implemented by `RunManager`): `executionStarted`, `trackerStarted`,
+`trackerStepCompleted` (once per `TrackerStep`, the first time it succeeds, even across retries) and `trackerCompleted`.
 
 `TrackerLogContext` sets the Log4j `ThreadContext` of a tracker's thread: its name (key `tracker`, which the console pattern prints as a prefix), the
 attempt, the `TrackerStep` in progress, and an optional section of the step (the redaction type while taking screenshots). `ProfileScreenshotExecutor`

@@ -19,8 +19,8 @@ Browsers with a UI (for manual trackers) now run on a virtual display inside the
 shown live in the web UI, so the host no longer needs a display or X server (such as VcXsrv on Windows), and Linux and Windows are set up the same
 way. When a manual tracker needs input, the prompt on the **Main** tab shows its browser: click in it to solve the captcha or enter the 2FA code
 (`Ctrl`+`V` pastes from your clipboard, and its toolbar zooms in on small text or shows it on the whole screen), then continue or skip. A prompt waits until you respond. The browser of any tracker in progress can also be watched
-from its row (**Live browser**). Manual trackers now run in parallel, like headless trackers (up to `NUMBER_OF_PARALLEL_THREADS` at once), so
-their prompts can be answered in any order instead of waiting for each tracker in turn.
+from its row (**Live browser**). Manual and headless trackers now run together (up to `NUMBER_OF_PARALLEL_THREADS` at once, in total), so
+the prompts of manual trackers can be answered in any order, while the headless trackers continue, instead of waiting for each tracker in turn.
 
 Tracker credentials, settings and the latest results are stored in a SQLite database in the `/app/data` volume, so mount a volume to keep them
 between containers (the [example compose file](docs/docker-compose.example.yml) uses the `tracker-profiles-data` volume). Passwords are encrypted, and are never sent back to the browser.
@@ -45,8 +45,8 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
     - `PROGRESS_BAR_LENGTH`
     - `TRACKER_INPUT_FILE_PATH`
 - `FORCE_UI_BROWSER` is removed, as the browser of any tracker in progress (headless or not) can be watched in the web UI
-- `TRACKER_EXECUTION_ORDER` is removed, as trackers are enabled or disabled on the **Trackers** tab: headless trackers are always executed first,
-  then manual trackers
+- `TRACKER_EXECUTION_ORDER` is removed, as trackers are enabled or disabled on the **Trackers** tab, and headless and manual trackers now run
+  together (manual trackers are started first, so their prompts are shown straight away)
 - `INPUT_TIMEOUT_ENABLED` and `INPUT_TIMEOUT_SECONDS` are removed: a prompt for a manual tracker waits until you respond (or the execution is
   cancelled)
 - `TAKE_SCREENSHOT_ON_ERROR` is removed: a screenshot is always taken when a tracker fails (in the `errors` subdirectory)

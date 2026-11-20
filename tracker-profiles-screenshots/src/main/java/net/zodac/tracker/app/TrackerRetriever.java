@@ -18,11 +18,9 @@
 package net.zodac.tracker.app;
 
 import java.util.Collection;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
@@ -37,25 +35,31 @@ public final class TrackerRetriever {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    // Manual trackers are executed first, so their prompts are shown as soon as the execution starts, while headless trackers run alongside them
+    private static final Comparator<ScheduledTracker> EXECUTION_ORDER = Comparator
+        .comparing((final ScheduledTracker tracker) -> tracker.type() != TrackerType.MANUAL)
+        .thenComparing(ScheduledTracker::credential);
+
     private TrackerRetriever() {
 
     }
 
     /**
-     * Organises the provided {@link TrackerCredential}s by {@link TrackerType}, excluding any tracker that has no {@link TrackerHandler}.
+     * Lists the provided {@link TrackerCredential}s in the order they are executed (manual trackers first, then by name), excluding any tracker that
+     * has no {@link TrackerHandler}.
      *
-     * @param trackerCredentials the {@link TrackerCredential}s to organise
-     * @return {@link Map} of {@link TrackerType} to their credentials
+     * @param trackerCredentials the {@link TrackerCredential}s to execute
+     * @return the {@link ScheduledTracker}s, in execution order
      */
-    public static Map<TrackerType, Set<TrackerCredential>> groupByType(final Collection<TrackerCredential> trackerCredentials) {
-        final Map<TrackerType, Set<TrackerCredential>> trackersByType = new EnumMap<>(TrackerType.class);
-        for (final TrackerCredential trackerCredential : trackerCredentials) {
-            findHandler(trackerCredential)
-                .ifPresent(handler -> trackersByType.computeIfAbsent(handler.type(), _ -> new TreeSet<>()).add(trackerCredential));
-        }
+    public static List<ScheduledTracker> schedule(final Collection<TrackerCredential> trackerCredentials) {
+        final List<ScheduledTracker> scheduledTrackers = trackerCredentials
+            .stream()
+            .flatMap(credential -> findHandler(credential).map(handler -> new ScheduledTracker(credential, handler.type())).stream())
+            .sorted(EXECUTION_ORDER)
+            .toList();
 
-        LOGGER.trace("Trackers by type to be screenshot: {}", trackersByType);
-        return trackersByType;
+        LOGGER.trace("Trackers to be screenshot: {}", scheduledTrackers);
+        return scheduledTrackers;
     }
 
     private static Optional<TrackerHandler> findHandler(final TrackerCredential trackerCredential) {
@@ -66,18 +70,5 @@ public final class TrackerRetriever {
         }
 
         return trackerHandlerOptional;
-    }
-
-    /**
-     * Prints summary information about all {@link TrackerHandler}s, if {@link Logger#isDebugEnabled()} is {@code true}.
-     *
-     * @param trackersByType the {@link Map} of trackers organised by {@link TrackerType}
-     */
-    static void printTrackersInfo(final Map<TrackerType, Set<TrackerCredential>> trackersByType) {
-        if (LOGGER.isDebugEnabled()) {
-            for (final TrackerType trackerType : TrackerType.values()) {
-                trackerType.printSummary(trackersByType);
-            }
-        }
     }
 }

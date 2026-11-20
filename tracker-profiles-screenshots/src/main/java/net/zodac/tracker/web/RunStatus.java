@@ -30,7 +30,6 @@ import org.jspecify.annotations.Nullable;
  * @param startedAt               the start time of the execution as epoch milliseconds, or {@code null} if never started
  * @param finishedAt              the end time of the execution as epoch milliseconds, or {@code null} if not finished
  * @param totalTrackers           the number of trackers in {@code trackers}
- * @param startedTrackerTypes     the tracker types that have started executing, in order (the last one is in progress while running)
  * @param trackers                every tracker in the execution
  * @param failedTrackers          the names of the trackers that failed in the execution, which can be executed again on their own (empty while an
  *                                execution is in progress)
@@ -45,7 +44,6 @@ public record RunStatus(
     @Nullable Long startedAt,
     @Nullable Long finishedAt,
     int totalTrackers,
-    List<String> startedTrackerTypes,
     List<TrackerProgress> trackers,
     List<String> failedTrackers,
     int downloadableTrackers,
