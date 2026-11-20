@@ -18,9 +18,7 @@
 package net.zodac.tracker.app;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,7 +66,7 @@ public final class ScreenshotOrchestrator {
         }
 
         ScreenshotDirectories.createAll();
-        executionListener.executionStarted(typesByName(scheduledTrackers));
+        executionListener.executionStarted(scheduledTrackers);
         final ResultCollector resultCollector = ResultCollector.start();
         try {
             final int effectiveThreadCount = Math.min(Configuration.get().numberOfParallelThreads(), numberOfTrackers);
@@ -88,14 +86,6 @@ public final class ScreenshotOrchestrator {
             return ExitState.FAILURE;
         }
         return resultCollector.generateSummary();
-    }
-
-    private static Map<String, TrackerType> typesByName(final List<ScheduledTracker> scheduledTrackers) {
-        final Map<String, TrackerType> trackerTypesByName = new LinkedHashMap<>();
-        for (final ScheduledTracker scheduledTracker : scheduledTrackers) {
-            trackerTypesByName.put(scheduledTracker.name(), scheduledTracker.type());
-        }
-        return trackerTypesByName;
     }
 
     private static void screenshotTrackers(final List<ScheduledTracker> scheduledTrackers, final int threadCount,

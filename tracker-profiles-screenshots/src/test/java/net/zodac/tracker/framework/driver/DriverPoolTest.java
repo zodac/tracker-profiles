@@ -28,7 +28,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
@@ -97,8 +96,21 @@ class DriverPoolTest {
                 .isSameAs(expected);
             factory.verifyNoInteractions();
         }
-        assertThat(getIdleDrivers().get(TrackerType.HEADLESS))
+        assertThat(getIdleDrivers())
             .isEmpty();
+    }
+
+    @Test
+    void givenIdleDriversOfBothTypes_whenAcquire_thenIdleDriverOfRequestedTypeReturned() throws ReflectiveOperationException {
+        final RemoteWebDriver idleHeadless = mock(RemoteWebDriver.class);
+        final RemoteWebDriver idleManual = mock(RemoteWebDriver.class);
+        injectIdleDriver(idleHeadless, TrackerType.HEADLESS);
+        injectIdleDriver(idleManual, TrackerType.MANUAL);
+
+        assertThat(DriverPool.acquire(TrackerType.MANUAL, List.of()))
+            .isSameAs(idleManual);
+        assertThat(getIdleDrivers())
+            .containsExactly(idleHeadless);
     }
 
     @Test
@@ -203,7 +215,7 @@ class DriverPoolTest {
         DriverPool.acquire(TrackerType.MANUAL, List.of());
 
         DriverPool.release(driver);
-        assertThat(getIdleDrivers().get(TrackerType.MANUAL))
+        assertThat(getIdleDrivers())
             .containsExactly(driver);
     }
 
@@ -232,7 +244,7 @@ class DriverPoolTest {
         verify(deadDriver).quit();
         assertThat(getPooledDrivers())
             .isEmpty();
-        assertThat(getIdleDrivers().get(TrackerType.HEADLESS))
+        assertThat(getIdleDrivers())
             .isEmpty();
     }
 
@@ -256,8 +268,8 @@ class DriverPoolTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<TrackerType, Deque<RemoteWebDriver>> getIdleDrivers() throws ReflectiveOperationException {
-        return (Map<TrackerType, Deque<RemoteWebDriver>>) getField(getInstance(), "idleDrivers");
+    private static Deque<RemoteWebDriver> getIdleDrivers() throws ReflectiveOperationException {
+        return (Deque<RemoteWebDriver>) getField(getInstance(), "idleDrivers");
     }
 
     @SuppressWarnings("unchecked")
@@ -272,7 +284,7 @@ class DriverPoolTest {
 
     private static void injectIdleDriver(final RemoteWebDriver driver, final TrackerType type) throws ReflectiveOperationException {
         getPooledDrivers().put(driver, type);
-        getIdleDrivers().computeIfAbsent(type, _ -> new ArrayDeque<>()).addLast(driver);
+        getIdleDrivers().addLast(driver);
     }
 
     private static void setCapacity(final int capacity) throws ReflectiveOperationException {

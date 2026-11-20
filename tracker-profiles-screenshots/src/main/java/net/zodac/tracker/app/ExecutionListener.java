@@ -18,8 +18,7 @@
 package net.zodac.tracker.app;
 
 import java.nio.file.Path;
-import java.util.Map;
-import net.zodac.tracker.framework.TrackerType;
+import java.util.List;
 import net.zodac.tracker.framework.progress.TrackerStep;
 import net.zodac.tracker.framework.redactor.RedactionType;
 
@@ -32,9 +31,9 @@ public interface ExecutionListener {
     /**
      * Called once the trackers to be executed are known, before any are executed.
      *
-     * @param trackerTypesByName the {@link TrackerType} of each tracker, by tracker name, in the order they are executed
+     * @param scheduledTrackers the trackers to be executed, in execution order
      */
-    default void executionStarted(final Map<String, TrackerType> trackerTypesByName) {
+    default void executionStarted(final List<ScheduledTracker> scheduledTrackers) {
         // Do nothing by default
     }
 

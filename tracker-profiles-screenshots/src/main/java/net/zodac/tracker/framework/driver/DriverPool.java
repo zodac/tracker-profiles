@@ -23,11 +23,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -73,8 +71,8 @@ public final class DriverPool {
     private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(3L);
 
     private final Lock lock = new ReentrantLock();
-    // Idle pooled drivers of each type, the most recently used first
-    private final Map<TrackerType, Deque<RemoteWebDriver>> idleDrivers = new EnumMap<>(TrackerType.class);
+    // Idle pooled drivers (of any type), the most recently used first
+    private final Deque<RemoteWebDriver> idleDrivers = new ArrayDeque<>();
     // Every pooled driver (idle or in use), with its type
     private final IdentityHashMap<RemoteWebDriver, TrackerType> pooledDrivers = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
     // Extension-equipped drivers currently in use, which are not pooled but must still be quit if the execution is cancelled
@@ -126,7 +124,7 @@ public final class DriverPool {
                 final RemoteWebDriver driver = drivers.get(i);
                 final TrackerType trackerType = driverTypes.get(i);
                 instance.pooledDrivers.put(driver, trackerType);
-                instance.idleDrivers.computeIfAbsent(trackerType, _ -> new ArrayDeque<>()).addLast(driver);
+                instance.idleDrivers.addLast(driver);
             }
         } finally {
             instance.lock.unlock();
@@ -202,10 +200,11 @@ public final class DriverPool {
         final RemoteWebDriver evicted;
         instance.lock.lock();
         try {
-            final Deque<RemoteWebDriver> idle = instance.idleDrivers.get(trackerType);
-            if (pooled && idle != null && !idle.isEmpty()) {
+            final RemoteWebDriver idleDriver = pooled ? instance.findIdleDriver(trackerType) : null;
+            if (idleDriver != null) {
                 LOGGER.trace("Acquiring idle pooled {} driver", trackerType);
-                return idle.removeFirst();
+                instance.idleDrivers.remove(idleDriver);
+                return idleDriver;
             }
 
             evicted = instance.removeIdleDriverIfFull(trackerType);
@@ -268,17 +267,25 @@ public final class DriverPool {
             return null;
         }
 
-        final List<Map.Entry<TrackerType, Deque<RemoteWebDriver>>> evictionOrder = new ArrayList<>(idleDrivers.entrySet());
-        evictionOrder.sort((first, second) -> Boolean.compare(first.getKey() == neededType, second.getKey() == neededType));
-        for (final Map.Entry<TrackerType, Deque<RemoteWebDriver>> entry : evictionOrder) {
-            final Deque<RemoteWebDriver> idle = entry.getValue();
-            if (!idle.isEmpty()) {
-                final RemoteWebDriver evicted = idle.removeLast();
-                pooledDrivers.remove(evicted);
-                return evicted;
-            }
+        // The least recently used idle driver of another type, otherwise of the same type
+        final RemoteWebDriver evicted = idleDrivers.reversed()
+            .stream()
+            .filter(driver -> pooledDrivers.get(driver) != neededType)
+            .findFirst()
+            .orElseGet(idleDrivers::peekLast);
+        if (evicted != null) {
+            idleDrivers.remove(evicted);
+            pooledDrivers.remove(evicted);
         }
-        return null;
+        return evicted;
+    }
+
+    // The most recently used idle driver of the given type. Must be called while holding the lock
+    private @Nullable RemoteWebDriver findIdleDriver(final TrackerType trackerType) {
+        return idleDrivers.stream()
+            .filter(driver -> pooledDrivers.get(driver) == trackerType)
+            .findFirst()
+            .orElse(null);
     }
 
     // If cancelled while a driver was being created, the cancellation's shutdown() may have run before it was registered, so quit it here
@@ -337,7 +344,7 @@ public final class DriverPool {
         try {
             // Not returned if the pool was shut down in the meantime
             if (instance.pooledDrivers.containsKey(driver)) {
-                instance.idleDrivers.computeIfAbsent(trackerType, _ -> new ArrayDeque<>()).addFirst(driver);
+                instance.idleDrivers.addFirst(driver);
                 return;
             }
         } finally {
@@ -349,11 +356,8 @@ public final class DriverPool {
     private static void removeFromTracking(final DriverPool instance, final RemoteWebDriver driver) {
         instance.lock.lock();
         try {
-            final TrackerType trackerType = instance.pooledDrivers.remove(driver);
-            final Deque<RemoteWebDriver> idle = trackerType == null ? null : instance.idleDrivers.get(trackerType);
-            if (idle != null) {
-                idle.remove(driver);
-            }
+            instance.pooledDrivers.remove(driver);
+            instance.idleDrivers.remove(driver);
             instance.freshDrivers.remove(driver);
         } finally {
             instance.lock.unlock();

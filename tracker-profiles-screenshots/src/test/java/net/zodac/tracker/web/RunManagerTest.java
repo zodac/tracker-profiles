@@ -24,9 +24,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import net.zodac.tracker.app.ScheduledTracker;
+import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.BrowserResolution;
@@ -349,12 +351,10 @@ class RunManagerTest {
     }
 
     // Headless trackers, in execution order
-    private static Map<String, TrackerType> headless(final String... trackerNames) {
-        final Map<String, TrackerType> trackerTypesByName = new LinkedHashMap<>();
-        for (final String trackerName : trackerNames) {
-            trackerTypesByName.put(trackerName, TrackerType.HEADLESS);
-        }
-        return trackerTypesByName;
+    private static List<ScheduledTracker> headless(final String... trackerNames) {
+        return Arrays.stream(trackerNames)
+            .map(trackerName -> new ScheduledTracker(new TrackerCredential(trackerName, "username", "password"), TrackerType.HEADLESS))
+            .toList();
     }
 
     private static List<String> screenshotIds(final RunManager runManager, final String trackerName) {

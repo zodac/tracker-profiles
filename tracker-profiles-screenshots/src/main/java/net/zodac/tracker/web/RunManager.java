@@ -571,10 +571,12 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void executionStarted(final Map<String, TrackerType> trackerTypesByName) {
+    public void executionStarted(final List<ScheduledTracker> scheduledTrackers) {
         lock.lock();
         try {
-            trackerTypesByName.forEach((trackerName, trackerType) -> trackers.put(trackerName, new TrackerProgressState(trackerName, trackerType)));
+            for (final ScheduledTracker scheduledTracker : scheduledTrackers) {
+                trackers.put(scheduledTracker.name(), new TrackerProgressState(scheduledTracker.name(), scheduledTracker.type()));
+            }
         } finally {
             lock.unlock();
         }
