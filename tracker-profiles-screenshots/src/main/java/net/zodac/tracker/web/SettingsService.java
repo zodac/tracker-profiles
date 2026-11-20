@@ -159,7 +159,7 @@ public final class SettingsService {
      * @param description        the description
      * @param allowedValues      the allowed values, for selection types
      * @param minimum            the smallest valid value, for an integer type
-     * @param maximum            the largest valid value, for an integer type (or {@code null} if unbounded)
+     * @param maximum            the largest valid value, for an integer type
      * @param defaultValue       the default value
      * @param environmentValue   the value set by the environment variable, or {@code null} if not set
      * @param savedValue         the value saved in the web UI, or {@code null} if not set
@@ -167,7 +167,6 @@ public final class SettingsService {
      * @param source             where {@code value} comes from
      * @param changedFromDefault whether {@code value} differs from {@code defaultValue}
      * @param editable           whether the setting can be changed in the web UI
-     * @param scope              the {@link ConfigurationOption.Scope}, defining when a change takes effect
      */
     public record SettingView(
         String name,
@@ -184,8 +183,7 @@ public final class SettingsService {
         String value,
         Source source,
         boolean changedFromDefault,
-        boolean editable,
-        ConfigurationOption.Scope scope
+        boolean editable
     ) {
 
         /**
@@ -203,7 +201,8 @@ public final class SettingsService {
             final String environmentValue = option.environmentValue().orElse(null);
             final String value;
             final Source source;
-            if (savedValue != null && option.editableAtRuntime()) {
+            // A setting that can only be set as an environment variable never has a saved value (removed on startup, and never saved)
+            if (savedValue != null) {
                 value = savedValue;
                 source = Source.WEB_UI;
             } else if (environmentValue != null) {
@@ -229,8 +228,7 @@ public final class SettingsService {
                 value,
                 source,
                 !value.equals(option.defaultValue()),
-                option.editableAtRuntime(),
-                option.scope()
+                option.editableAtRuntime()
             );
         }
 
@@ -239,10 +237,7 @@ public final class SettingsService {
         }
 
         private static @Nullable Integer maximum(final ConfigurationOption option) {
-            return option.range()
-                .map(ConfigurationOption.Range::maximum)
-                .filter(maximum -> maximum != Integer.MAX_VALUE)
-                .orElse(null);
+            return option.range().map(ConfigurationOption.Range::maximum).orElse(null);
         }
 
         // A secret value is never returned, only whether it is set
@@ -251,7 +246,7 @@ public final class SettingsService {
             final String maskedValue = set ? MASKED_VALUE : "";
             return new SettingView(option.name(), option.group().label(), option.label(), option.type(), option.description(),
                 option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
-                option.editableAtRuntime(), option.scope());
+                option.editableAtRuntime());
         }
     }
 

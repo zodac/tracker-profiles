@@ -17,11 +17,10 @@
 
 package net.zodac.tracker.framework.input;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -31,7 +30,6 @@ import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.exception.CancelledInputException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Coordinates requests for a user input (such as solving a captcha in the browser of a manual tracker) between the execution, which waits for
@@ -48,7 +46,9 @@ public final class UserInputRequests {
 
     private static final Lock LOCK = new ReentrantLock();
     private static final Condition RESPONDED = LOCK.newCondition();
-    private static final Map<Long, Request> PENDING = new LinkedHashMap<>();
+    // Every registered request, and the response to each request the user has responded to (until its tracker sees it)
+    private static final Map<Long, PendingUserInput> PENDING = new LinkedHashMap<>();
+    private static final Map<Long, UserInputResponse> RESPONSES = new HashMap<>();
     private static long nextId = 1L;
 
     private UserInputRequests() {
@@ -80,6 +80,7 @@ public final class UserInputRequests {
             LOCK.lock();
             try {
                 PENDING.remove(id);
+                RESPONSES.remove(id);
             } finally {
                 LOCK.unlock();
             }
@@ -91,7 +92,7 @@ public final class UserInputRequests {
         try {
             final long id = nextId;
             nextId++;
-            PENDING.put(id, new Request(id, trackerName, message));
+            PENDING.put(id, new PendingUserInput(id, trackerName, message));
             return id;
         } finally {
             LOCK.unlock();
@@ -104,13 +105,13 @@ public final class UserInputRequests {
 
             LOCK.lock();
             try {
-                final Request request = PENDING.get(id);
-                if (request == null) {
+                if (!PENDING.containsKey(id)) {
                     throw new IllegalStateException("Request #%d is no longer registered".formatted(id));
                 }
 
-                if (request.response != null) {
-                    if (request.response == UserInputResponse.SKIP) {
+                final UserInputResponse response = RESPONSES.get(id);
+                if (response != null) {
+                    if (response == UserInputResponse.SKIP) {
                         LOGGER.trace("User skipped the input for request #{}", id);
                         throw new CancelledInputException();
                     }
@@ -139,32 +140,10 @@ public final class UserInputRequests {
     public static List<PendingUserInput> pending() {
         LOCK.lock();
         try {
-            final List<PendingUserInput> pending = new ArrayList<>();
-            for (final Request request : PENDING.values()) {
-                if (request.response == null) {
-                    pending.add(request.toView());
-                }
-            }
-            return pending;
-        } finally {
-            LOCK.unlock();
-        }
-    }
-
-    /**
-     * Retrieves a request if it is still waiting for a user input.
-     *
-     * @param id the {@link PendingUserInput#id()}
-     * @return the {@link PendingUserInput}, or {@link Optional#empty()} if the request has finished
-     */
-    public static Optional<PendingUserInput> find(final long id) {
-        LOCK.lock();
-        try {
-            final Request request = PENDING.get(id);
-            if (request == null || request.response != null) {
-                return Optional.empty();
-            }
-            return Optional.of(request.toView());
+            return PENDING.values()
+                .stream()
+                .filter(request -> !RESPONSES.containsKey(request.id()))
+                .toList();
         } finally {
             LOCK.unlock();
         }
@@ -180,11 +159,10 @@ public final class UserInputRequests {
     public static boolean respond(final long id, final UserInputResponse response) {
         LOCK.lock();
         try {
-            final Request request = PENDING.get(id);
-            if (request == null || request.response != null) {
+            if (!PENDING.containsKey(id) || RESPONSES.containsKey(id)) {
                 return false;
             }
-            request.response = response;
+            RESPONSES.put(id, response);
             RESPONDED.signalAll();
             return true;
         } finally {
@@ -201,24 +179,5 @@ public final class UserInputRequests {
      */
     public record PendingUserInput(long id, String trackerName, String message) {
 
-    }
-
-    // Mutable state of a request, only accessed while holding LOCK
-    private static final class Request {
-
-        private final long id;
-        private final String trackerName;
-        private final String message;
-        private @Nullable UserInputResponse response;
-
-        private Request(final long id, final String trackerName, final String message) {
-            this.id = id;
-            this.trackerName = trackerName;
-            this.message = message;
-        }
-
-        private PendingUserInput toView() {
-            return new PendingUserInput(id, trackerName, message);
-        }
     }
 }

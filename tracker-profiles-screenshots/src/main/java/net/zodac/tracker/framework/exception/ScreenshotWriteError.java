@@ -18,7 +18,6 @@
 package net.zodac.tracker.framework.exception;
 
 import java.io.Serial;
-import java.time.Duration;
 
 /**
  * Exception used to indicate that writing a screenshot to disk had an error.
@@ -29,9 +28,10 @@ public class ScreenshotWriteError extends RuntimeException {
     private static final long serialVersionUID = -4567630877374812049L;
 
     /**
-     * Takes the {@link Duration} and constructs an error message for the {@link ScreenshotWriteError}.
+     * Constructs a {@link ScreenshotWriteError} for a screenshot that could not be written to disk.
      *
-     * @param cause the cause {@link Throwable}
+     * @param screenshotName the name of the screenshot
+     * @param cause          the cause {@link Throwable}
      */
     public ScreenshotWriteError(final String screenshotName, final Throwable cause) {
         super("Error writing screenshot '%s' to disk".formatted(screenshotName), cause);

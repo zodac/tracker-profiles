@@ -25,7 +25,6 @@ import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
-import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.web.WebServer;
 import net.zodac.tracker.web.log.WebLogAppender;
 import org.apache.logging.log4j.LogManager;
@@ -124,13 +123,9 @@ public final class ApplicationLauncher {
         }
     }
 
-    // Drain the PNG executor before the driver pool so queued writes complete before the chromedriver IPC channels are torn down
-    // Both shutdown() methods are idempotent, so they remain safe to call alongside the existing finally block on a normal exit
+    // DriverPool.shutdown() is idempotent, so it remains safe to call alongside the finally block of an execution
     private static void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            ScreenshotTaker.shutdown();
-            DriverPool.shutdown();
-        }, "application-shutdown-hook"));
+        Runtime.getRuntime().addShutdownHook(new Thread(DriverPool::shutdown, "application-shutdown-hook"));
     }
 
     private static void exit(final ExitState exitState) {

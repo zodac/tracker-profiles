@@ -30,7 +30,6 @@ import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.exception.ExecutionCancelledException;
-import net.zodac.tracker.util.ScreenshotTaker;
 import net.zodac.tracker.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +80,6 @@ public final class ScreenshotOrchestrator {
             DriverPool.initialise(effectiveThreadCount, scheduledTrackers.stream().limit(effectiveThreadCount).map(ScheduledTracker::type).toList());
             screenshotTrackers(scheduledTrackers, effectiveThreadCount, resultCollector, executionListener);
         } finally {
-            ScreenshotTaker.shutdown();
             DriverPool.shutdown();
         }
 
@@ -129,7 +127,7 @@ public final class ScreenshotOrchestrator {
         }
 
         final String trackerName = scheduledTracker.name();
-        executionListener.trackerStarted(scheduledTracker.type(), trackerName);
+        executionListener.trackerStarted(trackerName);
         final boolean success;
         try {
             success = ProfileScreenshotExecutor.takeScreenshot(scheduledTracker.credential(), executionListener);
@@ -142,6 +140,6 @@ public final class ScreenshotOrchestrator {
             return;
         }
         resultCollector.addResult(trackerName, success);
-        executionListener.trackerCompleted(scheduledTracker.type(), trackerName, success);
+        executionListener.trackerCompleted(trackerName, success);
     }
 }

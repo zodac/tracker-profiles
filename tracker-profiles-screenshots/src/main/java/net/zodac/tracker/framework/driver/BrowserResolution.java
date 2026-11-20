@@ -95,7 +95,7 @@ public final class BrowserResolution {
      * @return {@link #DEFAULT} for a headless browser, otherwise the resolution set by {@link #useForUiBrowsers(BrowserResolution)}
      */
     public static BrowserResolution forTrackerType(final TrackerType trackerType) {
-        return JavaWebDriverFactory.usesHeadlessBrowser(trackerType) ? DEFAULT : Objects.requireNonNullElse(UI_BROWSER_RESOLUTION.get(), DEFAULT);
+        return trackerType.usesHeadlessBrowser() ? DEFAULT : Objects.requireNonNullElse(UI_BROWSER_RESOLUTION.get(), DEFAULT);
     }
 
     /**

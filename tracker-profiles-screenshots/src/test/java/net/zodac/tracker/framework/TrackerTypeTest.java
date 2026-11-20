@@ -29,11 +29,11 @@ class TrackerTypeTest {
 
     @ParameterizedTest
     @CsvSource({
-        "HEADLESS,Headless",
-        "MANUAL,Manual"
+        "HEADLESS,true",
+        "MANUAL,false"
     })
-    void givenTrackerType_whenFormattedName_thenCapitalisedNameReturned(final TrackerType type, final String expected) {
-        assertThat(type.formattedName())
+    void givenTrackerType_whenUsesHeadlessBrowser_thenOnlyHeadlessTypeUsesHeadlessBrowser(final TrackerType type, final boolean expected) {
+        assertThat(type.usesHeadlessBrowser())
             .isEqualTo(expected);
     }
 }

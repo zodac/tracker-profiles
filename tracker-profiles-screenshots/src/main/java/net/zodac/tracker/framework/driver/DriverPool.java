@@ -204,7 +204,7 @@ public final class DriverPool {
         try {
             final Deque<RemoteWebDriver> idle = instance.idleDrivers.get(trackerType);
             if (pooled && idle != null && !idle.isEmpty()) {
-                LOGGER.trace("Acquiring idle pooled {} driver", trackerType.formattedName());
+                LOGGER.trace("Acquiring idle pooled {} driver", trackerType);
                 return idle.removeFirst();
             }
 
@@ -215,7 +215,7 @@ public final class DriverPool {
         }
 
         if (evicted != null) {
-            LOGGER.trace("Closing an idle pooled driver to make room for a {} driver", trackerType.formattedName());
+            LOGGER.trace("Closing an idle pooled driver to make room for a {} driver", trackerType);
             quitAndCleanup(evicted);
         }
 
@@ -246,7 +246,7 @@ public final class DriverPool {
     }
 
     private static RemoteWebDriver startDriver(final TrackerType trackerType, final List<Extension> extensions) {
-        LOGGER.trace("Starting {} driver{}", trackerType.formattedName(), extensions.isEmpty() ? "" : " with extensions");
+        LOGGER.trace("Starting {} driver{}", trackerType, extensions.isEmpty() ? "" : " with extensions");
         final RemoteWebDriver driver = JavaWebDriverFactory.createDriver(trackerType, extensions);
         try {
             for (final Extension extension : extensions) {

@@ -207,12 +207,12 @@ public enum ConfigurationOption {
     }
 
     /**
-     * A user-facing description of the option, including the {@link #range()} of an {@link OptionType#INTEGER} option with a maximum.
+     * A user-facing description of the option, including the {@link #range()} of an {@link OptionType#INTEGER} option.
      *
      * @return the description
      */
     public String description() {
-        if (range == null || range.maximum() == Integer.MAX_VALUE) {
+        if (range == null) {
             return description;
         }
         return "%s [min: %d, max: %d]".formatted(description, range.minimum(), range.maximum());

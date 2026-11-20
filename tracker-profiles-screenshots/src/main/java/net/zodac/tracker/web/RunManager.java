@@ -34,7 +34,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 import net.zodac.tracker.app.ExecutionListener;
 import net.zodac.tracker.app.ScheduledTracker;
 import net.zodac.tracker.app.ScreenshotOrchestrator;
@@ -46,7 +45,6 @@ import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
-import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
@@ -164,21 +162,9 @@ public final class RunManager implements ExecutionListener {
      * @throws SQLException             thrown if the settings cannot be read from the database
      */
     public static ApplicationConfiguration reloadConfiguration(final ApplicationDatabase applicationDatabase) throws SQLException {
-        final ApplicationConfiguration applicationConfiguration = Configuration.reload(editableOverrides(applicationDatabase.settings().findAll()));
+        final ApplicationConfiguration applicationConfiguration = Configuration.reload(applicationDatabase.settings().findAll());
         applyLogLevel(applicationConfiguration);
         return applicationConfiguration;
-    }
-
-    // Only apply settings that can be changed at runtime, ignoring any saved for an option that has since become environment-only (or removed)
-    private static Map<String, String> editableOverrides(final Map<String, String> savedSettings) {
-        return savedSettings
-            .entrySet()
-            .stream()
-            .filter(setting -> {
-                final ConfigurationOption option = ConfigurationOption.find(setting.getKey());
-                return option != null && option.editableAtRuntime();
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static void applyLogLevel(final ApplicationConfiguration applicationConfiguration) {
@@ -198,7 +184,7 @@ public final class RunManager implements ExecutionListener {
             return;
         }
 
-        applyLogLevel(Configuration.reload(editableOverrides(savedSettings)));
+        applyLogLevel(Configuration.reload(savedSettings));
         LOGGER.debug("Applied saved settings");
     }
 
@@ -229,7 +215,7 @@ public final class RunManager implements ExecutionListener {
                 return false;
             }
 
-            startExecution(Set.of(), false, uiBrowserResolution);
+            startExecution(Set.of(), uiBrowserResolution);
         } finally {
             lock.unlock();
         }
@@ -254,7 +240,7 @@ public final class RunManager implements ExecutionListener {
             if (failedTrackerNames.isEmpty()) {
                 return false;
             }
-            startExecution(failedTrackerNames, true, uiBrowserResolution);
+            startExecution(failedTrackerNames, uiBrowserResolution);
         } finally {
             lock.unlock();
         }
@@ -262,7 +248,8 @@ public final class RunManager implements ExecutionListener {
     }
 
     // Must be called while holding the lock
-    private void startExecution(final Set<String> failedTrackerNames, final boolean failedTrackersOnly, final BrowserResolution uiBrowserResolution) {
+    // Executes only the given trackers (the trackers that failed in the previous execution), or every enabled tracker if none are given
+    private void startExecution(final Set<String> failedTrackerNames, final BrowserResolution uiBrowserResolution) {
         state = RunStatus.State.RUNNING;
         startedAt = System.currentTimeMillis();
         finishedAt = 0L;
@@ -272,7 +259,7 @@ public final class RunManager implements ExecutionListener {
         BrowserResolution.useForUiBrowsers(uiBrowserResolution);
         executionThread = Thread.ofPlatform()
             .name("web-execution")
-            .start(() -> execute(failedTrackerNames, failedTrackersOnly));
+            .start(() -> execute(failedTrackerNames));
     }
 
     // The trackers that failed in the current (or most recent) execution, only while no execution is in progress
@@ -346,10 +333,10 @@ public final class RunManager implements ExecutionListener {
             .anyMatch(input -> input.trackerName().equalsIgnoreCase(trackerName));
     }
 
-    private void execute(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) {
+    private void execute(final Set<String> failedTrackerNames) {
         ExitState exitState = ExitState.FAILURE;
         try {
-            exitState = executeTrackers(failedTrackerNames, failedTrackersOnly);
+            exitState = executeTrackers(failedTrackerNames);
         } catch (final Exception e) {
             if (ExecutionCancellation.isCancelled()) {
                 LOGGER.debug("Execution ended by cancellation", e);
@@ -362,7 +349,8 @@ public final class RunManager implements ExecutionListener {
         }
     }
 
-    private ExitState executeTrackers(final Set<String> failedTrackerNames, final boolean failedTrackersOnly) throws IOException, SQLException {
+    private ExitState executeTrackers(final Set<String> failedTrackerNames) throws IOException, SQLException {
+        final boolean failedTrackersOnly = !failedTrackerNames.isEmpty();
         if (failedTrackersOnly) {
             LOGGER.info("Starting execution of the {} tracker(s) that failed in the previous execution", failedTrackerNames.size());
         } else {
@@ -593,12 +581,14 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void trackerStarted(final TrackerType trackerType, final String trackerName) {
+    public void trackerStarted(final String trackerName) {
         lock.lock();
         try {
-            final TrackerProgressState tracker = trackers.computeIfAbsent(trackerName, _ -> new TrackerProgressState(trackerName, trackerType));
-            tracker.state = RunStatus.TrackerState.RUNNING;
-            tracker.startedAt = System.currentTimeMillis();
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker != null) {
+                tracker.state = RunStatus.TrackerState.RUNNING;
+                tracker.startedAt = System.currentTimeMillis();
+            }
         } finally {
             lock.unlock();
         }
@@ -663,12 +653,16 @@ public final class RunManager implements ExecutionListener {
     }
 
     @Override
-    public void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
+    public void trackerCompleted(final String trackerName, final boolean wasSuccessful) {
         final long completedAt = System.currentTimeMillis();
         final List<ScreenshotFile> trackerLatestScreenshots;
         lock.lock();
         try {
-            final TrackerProgressState tracker = trackers.computeIfAbsent(trackerName, _ -> new TrackerProgressState(trackerName, trackerType));
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (tracker == null) {
+                LOGGER.debug("Ignoring the result of tracker '{}', which is not part of the execution", trackerName);
+                return;
+            }
             tracker.state = wasSuccessful ? RunStatus.TrackerState.SUCCEEDED : RunStatus.TrackerState.FAILED;
             tracker.finishedAt = completedAt;
             if (wasSuccessful) {

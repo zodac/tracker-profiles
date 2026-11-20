@@ -30,12 +30,6 @@ import net.zodac.tracker.framework.redactor.RedactionType;
 public interface ExecutionListener {
 
     /**
-     * An {@link ExecutionListener} that ignores all updates.
-     */
-    ExecutionListener NONE = new ExecutionListener() {
-    };
-
-    /**
      * Called once the trackers to be executed are known, before any are executed.
      *
      * @param trackerTypesByName the {@link TrackerType} of each tracker, by tracker name, in the order they are executed
@@ -47,10 +41,9 @@ public interface ExecutionListener {
     /**
      * Called when a tracker starts executing.
      *
-     * @param trackerType the {@link TrackerType} of the tracker
      * @param trackerName the name of the tracker
      */
-    default void trackerStarted(final TrackerType trackerType, final String trackerName) {
+    default void trackerStarted(final String trackerName) {
         // Do nothing by default
     }
 
@@ -100,11 +93,10 @@ public interface ExecutionListener {
     /**
      * Called each time a tracker has finished executing.
      *
-     * @param trackerType   the {@link TrackerType} of the tracker
      * @param trackerName   the name of the tracker
      * @param wasSuccessful whether the screenshot was successful
      */
-    default void trackerCompleted(final TrackerType trackerType, final String trackerName, final boolean wasSuccessful) {
+    default void trackerCompleted(final String trackerName, final boolean wasSuccessful) {
         // Do nothing by default
     }
 }

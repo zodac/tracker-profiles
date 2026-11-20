@@ -25,7 +25,6 @@ import net.zodac.tracker.util.StringUtils;
 import net.zodac.tracker.util.TimingUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Collects and reports on the results of screenshot attempts.
@@ -76,7 +75,8 @@ final class ResultCollector {
     /**
      * Generates a summary of all results and returns the appropriate {@link ExitState}.
      *
-     * @return the {@link ExitState} based on success/failure counts
+     * @return {@link ExitState#SUCCESS} if every tracker succeeded, {@link ExitState#PARTIAL_FAILURE} if some failed, otherwise
+     *     {@link ExitState#FAILURE}
      */
     ExitState generateSummary() {
         final int totalSuccessful = successfulTrackers.size();
@@ -87,40 +87,19 @@ final class ResultCollector {
             return ExitState.FAILURE;
         }
 
-        final ExitState failure = handleFailure(totalSuccessful, totalUnsuccessful);
-        if (failure != null) {
-            return failure;
+        if (totalUnsuccessful == 0) {
+            LOGGER.info("{} selected tracker{} successfully screenshot in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful),
+                executionTime());
+            LOGGER.debug("Succeeded: {}", String.join(", ", successfulTrackers));
+            return ExitState.SUCCESS;
         }
 
-        final ExitState success = handleSuccess(totalUnsuccessful, totalSuccessful);
-        if (success != null) {
-            return success;
+        if (totalSuccessful == 0) {
+            LOGGER.error("{} selected tracker{} failed in {}:", totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
+            LOGGER.error("Failed: {}", String.join(", ", unsuccessfulTrackers));
+            return ExitState.FAILURE;
         }
 
-        return handlePartialFailure(totalSuccessful, totalUnsuccessful);
-    }
-
-    private @Nullable ExitState handleFailure(final int totalSuccessful, final int totalUnsuccessful) {
-        if (totalSuccessful != 0) {
-            return null;
-        }
-
-        LOGGER.error("{} selected tracker{} failed in {}:", totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
-        LOGGER.error("Failed: {}", String.join(", ", unsuccessfulTrackers));
-        return ExitState.FAILURE;
-    }
-
-    private @Nullable ExitState handleSuccess(final int totalUnsuccessful, final int totalSuccessful) {
-        if (totalUnsuccessful != 0) {
-            return null;
-        }
-
-        LOGGER.info("{} selected tracker{} successfully screenshot in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful), executionTime());
-        LOGGER.debug("Succeeded: {}", String.join(", ", successfulTrackers));
-        return ExitState.SUCCESS;
-    }
-
-    private ExitState handlePartialFailure(final int totalSuccessful, final int totalUnsuccessful) {
         LOGGER.warn("{} tracker{} successfully screenshot, {} tracker{} failed in {}", totalSuccessful, StringUtils.pluralise(totalSuccessful),
             totalUnsuccessful, StringUtils.pluralise(totalUnsuccessful), executionTime());
         LOGGER.warn("Failed: {}", String.join(", ", unsuccessfulTrackers));

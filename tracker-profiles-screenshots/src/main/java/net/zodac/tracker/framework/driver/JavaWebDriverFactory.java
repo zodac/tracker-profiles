@@ -79,7 +79,7 @@ public final class JavaWebDriverFactory {
         final BrowserResolution resolution = BrowserResolution.forTrackerType(trackerType);
         LOGGER.trace("Using browser resolution {}", resolution);
         chromeOptions.addArguments("--window-size=%d,%d".formatted(resolution.width(), resolution.height()));
-        if (usesHeadlessBrowser(trackerType)) {
+        if (trackerType.usesHeadlessBrowser()) {
             LOGGER.trace("Using headless browser");
             chromeOptions.addArguments("--headless=new");
 
@@ -132,22 +132,11 @@ public final class JavaWebDriverFactory {
         }
         LOGGER.trace("Creating driver with following options: {}", chromeOptions);
 
-        final ChromeDriver driver = usesHeadlessBrowser(trackerType) ? startDriver(chromeOptions) : startUiDriver(chromeOptions);
+        final ChromeDriver driver = trackerType.usesHeadlessBrowser() ? startDriver(chromeOptions) : startUiDriver(chromeOptions);
         applySize(driver, resolution);
         LOGGER.trace("Returning created driver");
         USER_DATA_DIRS.put(driver, userDataDir);
         return driver;
-    }
-
-    /**
-     * Whether a tracker of the given {@link TrackerType} is executed in a headless browser, or in a browser with a UI. A headless browser is used
-     * for every {@link TrackerType} except {@link TrackerType#MANUAL}.
-     *
-     * @param trackerType the {@link TrackerType} of the tracker
-     * @return {@code true} if the tracker is executed in a headless browser
-     */
-    public static boolean usesHeadlessBrowser(final TrackerType trackerType) {
-        return trackerType != TrackerType.MANUAL;
     }
 
     // A new window takes the focus of the virtual display, so it is not created while an action depends on the focus. Manual trackers run in

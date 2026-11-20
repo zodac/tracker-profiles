@@ -17,10 +17,8 @@
 
 package net.zodac.tracker.framework;
 
-import java.util.Locale;
-
 /**
- * Enum defining the different types of trackers. This can be used to perform different executions for different trackers.
+ * Enum defining the different types of trackers, which decides whether a tracker is executed in a headless browser or a browser with a UI.
  */
 public enum TrackerType {
 
@@ -35,23 +33,11 @@ public enum TrackerType {
     MANUAL;
 
     /**
-     * Formats the name of the {@link TrackerType}. Also capitalises the name and replaces any {@code _} characters with a {@code -}. Note that the
-     * first letter after any {@code -} will also be capitalised.
+     * Whether a tracker of this type is executed in a headless browser, rather than a browser with a UI (shown in the web UI for the user's input).
      *
-     * @return the formatted name of the {@link TrackerType}
+     * @return {@code true} if the tracker is executed in a headless browser
      */
-    public String formattedName() {
-        final String[] parts = name().toLowerCase(Locale.ROOT).split("_", -1);
-        final StringBuilder result = new StringBuilder(name().length());
-
-        for (int i = 0; i < parts.length; i++) {
-            if (i > 0) {
-                result.append('-');
-            }
-            result.append(Character.toUpperCase(parts[i].charAt(0)))
-                .append(parts[i].substring(1));
-        }
-
-        return result.toString();
+    public boolean usesHeadlessBrowser() {
+        return this == HEADLESS;
     }
 }

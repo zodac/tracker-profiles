@@ -122,8 +122,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.
 - **`SettingsService`** — resolves each setting as saved value → environment variable → default, and validates all values together by calling
   `ApplicationConfiguration.load(overrides)` before saving. A saved value is kept (across restarts) even if it equals the environment variable or
-  default (the API can reset it, but the web UI has no reset). `RunManager.reloadConfiguration` only applies saved values for options that are
-  `editableAtRuntime` (not `Scope.STARTUP`).
+  default (the API can reset it, but the web UI has no reset). A `Scope.STARTUP` option is never saved (`SettingsService` rejects it, and
+  `WebServer` removes any saved value on startup), so `RunManager.reloadConfiguration` applies every saved value as it is.
 - **User input** — manual trackers call `awaitUserInput(elementToHighlight, instruction)` (in `AbstractTrackerHandler`), which highlights the element
   and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until the user responds in the web UI
   (`POST /api/run/input/{id}/continue|skip`) or the page in the browser changes; it never times out (only a cancellation ends it otherwise). The
@@ -379,8 +379,8 @@ New env vars must be:
 1. Added to `ConfigurationOption` (alphabetical order). Use `Group.RUN_OPTIONS` for options likely to be changed for an execution, otherwise
    `Group.OUTPUT` or `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect),
    otherwise `Scope.EXECUTION`.
-   An `OptionType.INTEGER` option is declared with its `Range.of(min, max)` (use `Integer.MAX_VALUE` for unbounded), which validates it
-   (`parseInteger`), is appended to its description when bounded, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
+   An `OptionType.INTEGER` option is declared with its `Range.of(min, max)`, which validates it (`parseInteger`), is appended to its
+   description, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
    against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
    `ApplicationConfiguration.printableValue()`
 2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically

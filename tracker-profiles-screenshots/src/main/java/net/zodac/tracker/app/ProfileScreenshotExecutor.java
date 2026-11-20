@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import net.zodac.tracker.framework.ExecutionCancellation;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
@@ -216,17 +214,12 @@ final class ProfileScreenshotExecutor {
 
         try {
             LOGGER.trace("Taking failure screenshot");
-            final File screenshot =
-                ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.errors(), trackerRun.name(), false).get();
+            final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.errors(), trackerRun.name(), false);
             LOGGER.warn("Failure screenshot saved at: [{}]", screenshot.getAbsolutePath());
             trackerRun.failureScreenshotSaved(screenshot.toPath());
-        } catch (final ExecutionException e) {
+        } catch (final ScreenshotWriteError e) {
             LOGGER.debug("Unable to take failure screenshot", e);
             LOGGER.warn("Unable to take failure screenshot: {}", e.getMessage());
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.debug("Interrupted while taking failure screenshot", e);
-            LOGGER.warn("Interrupted while taking failure screenshot: {}", e.getMessage());
         }
     }
 
@@ -305,20 +298,11 @@ final class ProfileScreenshotExecutor {
         }
 
         trackerHandler.actionBeforeScreenshot();
-        final Future<File> pendingWrite = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), Configuration.get().outputDirectory(), baseName,
+        final File screenshot = ScreenshotTaker.takeScreenshot(trackerHandler.driver(), ScreenshotDirectories.output(), baseName,
             scrollDuringScreenshot);
         trackerHandler.actionAfterScreenshot();
-
-        try {
-            final File screenshot = pendingWrite.get();
-            LOGGER.info("Screenshot saved at: [{}]", screenshot.getAbsolutePath());
-            trackerRun.screenshotSaved(redactionType, screenshot.toPath());
-        } catch (final ExecutionException e) {
-            throw new ScreenshotWriteError(baseName, e);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ScreenshotWriteError(baseName, e);
-        }
+        LOGGER.info("Screenshot saved at: [{}]", screenshot.getAbsolutePath());
+        trackerRun.screenshotSaved(redactionType, screenshot.toPath());
 
         if (redactor != null) {
             LOGGER.debug("Undoing redaction");
@@ -363,13 +347,9 @@ final class ProfileScreenshotExecutor {
 
     @Nullable
     private static Redactor performRedaction(final AbstractTrackerHandler trackerHandler, final RedactionType redactionType) {
+        // NONE is also used for a tracker with nothing to redact
         if (redactionType == RedactionType.NONE) {
             LOGGER.debug("Not redacting content");
-            return null;
-        }
-
-        if (!RedactionRegistry.hasAnyRedaction(trackerHandler)) {
-            LOGGER.debug("Nothing to redact");
             return null;
         }
 

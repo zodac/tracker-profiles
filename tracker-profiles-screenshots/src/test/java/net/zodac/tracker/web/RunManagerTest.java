@@ -91,7 +91,7 @@ class RunManagerTest {
     void givenScreenshotsSaved_whenTrackerSucceeds_thenProfileScreenshotsAreShownWithoutFailureScreenshot() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
         runManager.executionStarted(headless("Tracker", "Other"));
-        runManager.trackerStarted(TrackerType.HEADLESS, "Tracker");
+        runManager.trackerStarted("Tracker");
 
         // First attempt fails, second attempt succeeds (replacing the first BOX screenshot)
         runManager.trackerScreenshotSaved("Tracker", RedactionType.BOX, tempDirectory.resolve("Tracker_Box.png"));
@@ -101,7 +101,7 @@ class RunManagerTest {
 
         runManager.trackerScreenshotSaved("Tracker", RedactionType.BOX, tempDirectory.resolve("Tracker_Box_1.png"));
         runManager.trackerScreenshotSaved("Tracker", RedactionType.BLUR, tempDirectory.resolve("Tracker_Blur.png"));
-        runManager.trackerCompleted(TrackerType.HEADLESS, "Tracker", true);
+        runManager.trackerCompleted("Tracker", true);
 
         assertThat(runManager.trackerScreenshots("Tracker"))
             .extracting(ScreenshotFile::fileName)
@@ -119,10 +119,10 @@ class RunManagerTest {
     void givenTrackerFails_whenScreenshotsRetrieved_thenOnlyFailureScreenshotIsShown() throws IOException, SQLException {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
         runManager.executionStarted(headless("Tracker"));
-        runManager.trackerStarted(TrackerType.HEADLESS, "Tracker");
+        runManager.trackerStarted("Tracker");
         runManager.trackerScreenshotSaved("Tracker", RedactionType.NONE, tempDirectory.resolve("Tracker.png"));
         runManager.trackerFailureScreenshotSaved("Tracker", tempDirectory.resolve("errors").resolve("Tracker.png"));
-        runManager.trackerCompleted(TrackerType.HEADLESS, "Tracker", false);
+        runManager.trackerCompleted("Tracker", false);
 
         assertThat(screenshotIds(runManager, "Tracker"))
             .containsExactly("failure");
@@ -136,9 +136,9 @@ class RunManagerTest {
         final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
         runManager.executionStarted(headless("Zeta", "Alpha", "Failed"));
         for (final String trackerName : List.of("Zeta", "Alpha", "Failed")) {
-            runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
+            runManager.trackerStarted(trackerName);
             runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, createScreenshot(trackerName + ".png"));
-            runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, !"Failed".equals(trackerName));
+            runManager.trackerCompleted(trackerName, !"Failed".equals(trackerName));
         }
 
         assertThat(runManager.latestSuccessfulScreenshots())
@@ -233,12 +233,12 @@ class RunManagerTest {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
             runManager.executionStarted(headless("Alpha", "Beta"));
-            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerStarted("Alpha");
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
             // A retry replaces the first screenshot, which keeps its position
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box_retry.png"));
-            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", true);
+            runManager.trackerCompleted("Alpha", true);
             completeTracker(runManager, "Beta", "Beta.png", false);
         }
 
@@ -261,10 +261,10 @@ class RunManagerTest {
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
             runManager.executionStarted(headless("Alpha"));
-            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerStarted("Alpha");
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
             runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
-            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", true);
+            runManager.trackerCompleted("Alpha", true);
 
             runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha_2.png", true);
@@ -286,9 +286,9 @@ class RunManagerTest {
             completeTracker(runManager, "Alpha", "Alpha.png", true);
 
             runManager.executionStarted(headless("Alpha"));
-            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
+            runManager.trackerStarted("Alpha");
             runManager.trackerFailureScreenshotSaved("Alpha", createScreenshot("Alpha_failure.png"));
-            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", false);
+            runManager.trackerCompleted("Alpha", false);
         }
 
         try (final ApplicationDatabase applicationDatabase = openDatabase()) {
@@ -319,8 +319,8 @@ class RunManagerTest {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
             runManager.executionStarted(headless("Alpha"));
             completeTracker(runManager, "Alpha", "Alpha.png", true);
-            runManager.trackerStarted(TrackerType.HEADLESS, "Alpha");
-            runManager.trackerCompleted(TrackerType.HEADLESS, "Alpha", false);
+            runManager.trackerStarted("Alpha");
+            runManager.trackerCompleted("Alpha", false);
 
             assertThat(runManager.latestScreenshots("Alpha"))
                 .isEmpty();
@@ -338,9 +338,9 @@ class RunManagerTest {
 
     private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful)
         throws IOException {
-        runManager.trackerStarted(TrackerType.HEADLESS, trackerName);
+        runManager.trackerStarted(trackerName);
         runManager.trackerScreenshotSaved(trackerName, RedactionType.NONE, createScreenshot(fileName));
-        runManager.trackerCompleted(TrackerType.HEADLESS, trackerName, wasSuccessful);
+        runManager.trackerCompleted(trackerName, wasSuccessful);
     }
 
     // Only screenshots that exist can be downloaded

@@ -24,7 +24,6 @@ import static net.zodac.tracker.framework.xpath.XpathAttributePredicate.withClas
 import java.time.Duration;
 import net.zodac.tracker.framework.TrackerDefinition;
 import net.zodac.tracker.framework.cloudflare.CloudflareSolver;
-import net.zodac.tracker.framework.driver.JavaWebDriverFactory;
 import net.zodac.tracker.framework.exception.CloudflareVerificationException;
 import net.zodac.tracker.framework.gui.DisplayUtils;
 import net.zodac.tracker.framework.xpath.XpathBuilder;
@@ -71,7 +70,7 @@ public interface HasCloudflareCheck {
         }
 
         final String trackerName = trackerDefinition.name();
-        if (JavaWebDriverFactory.usesHeadlessBrowser(trackerDefinition.type())) {
+        if (trackerDefinition.type().usesHeadlessBrowser()) {
             throw new CloudflareVerificationException(trackerName);
         }
 
