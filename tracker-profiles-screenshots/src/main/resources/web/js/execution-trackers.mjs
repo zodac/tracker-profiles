@@ -172,7 +172,7 @@ function cancelTrackerButton(row, tracker) {
         return null
     }
     const button = el('button', {
-        className: 'button small danger', type: 'button', text: row.cancelling ? 'Cancelling…' : 'Cancel', disabled: Boolean(row.cancelling),
+        className: 'button small danger-solid', type: 'button', text: row.cancelling ? 'Cancelling…' : 'Cancel', disabled: Boolean(row.cancelling),
         title: `Stop ${tracker.name} now, closing its browser (it fails, so Failures only executes it again)`,
     })
     button.addEventListener('click', function (event) {
