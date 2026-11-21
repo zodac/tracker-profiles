@@ -36,7 +36,7 @@
 <main>
     <!-- Main -->
     <section id="tab-main" class="tab-panel" role="tabpanel">
-        <div class="card run-card">
+        <div id="run-card" class="card run-card">
             <div class="run-summary">
                 <div>
                     <h2>Screenshot trackers</h2>
@@ -44,7 +44,7 @@
                 </div>
                 <div class="run-actions">
                     <button id="cancel-button" class="button danger-solid large" type="button" hidden>Cancel</button>
-                    <button id="start-failed-button" class="button large" type="button" hidden>Failures only</button>
+                    <button id="start-failed-button" class="button warning-solid large" type="button" hidden>Failures only</button>
                     <button id="start-button" class="button primary large" type="button">Start</button>
                 </div>
             </div>
@@ -68,14 +68,6 @@
         </details>
 
         <div id="execution-trackers" class="execution-trackers"></div>
-
-        <details id="execution-log" class="card log-details" hidden>
-            <summary>
-                <h2>Execution log</h2>
-                <span class="muted">Messages not logged by a tracker, such as the summary of the execution</span>
-            </summary>
-            <div class="log-output" data-tracker="" role="log"></div>
-        </details>
     </section>
 
     <!-- Trackers -->

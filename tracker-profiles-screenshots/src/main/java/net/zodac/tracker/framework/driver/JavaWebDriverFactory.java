@@ -243,6 +243,17 @@ public final class JavaWebDriverFactory {
     }
 
     /**
+     * The user-data directory of a {@link RemoteWebDriver} (unique to its browser), which identifies the processes of its browser.
+     *
+     * @param driver the {@link RemoteWebDriver}
+     * @return the path of the user-data directory, or {@code null} if none is registered for the driver
+     */
+    static @Nullable String userDataDir(final RemoteWebDriver driver) {
+        final Path dir = USER_DATA_DIRS.get(driver);
+        return dir == null ? null : dir.toString();
+    }
+
+    /**
      * Removes the user-data directory associated with the given {@link RemoteWebDriver} and deletes it from disk.
      *
      * <p>

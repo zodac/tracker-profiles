@@ -92,12 +92,18 @@ final class ProfileScreenshotExecutor {
         final int numberOfAttempts = Configuration.get().numberOfScreenshotAttempts();
         for (int attempt = FIRST_ATTEMPT; attempt <= numberOfAttempts; attempt++) {
             ExecutionCancellation.throwIfCancelled();
+            if (ExecutionCancellation.isTrackerCancelled(trackerRun.name())) {
+                break;
+            }
             trackerRun.startAttempt(attempt);
             screenshotTracker(trackerRun);
             TrackerLogContext.endAttempt();
 
             // A failure caused by cancelling (such as the browser being quit) must not be retried
             ExecutionCancellation.throwIfCancelled();
+            if (ExecutionCancellation.isTrackerCancelled(trackerRun.name()) && !trackerRun.allStepsCompleted()) {
+                break;
+            }
             if (trackerRun.allStepsCompleted()) {
                 LOGGER.trace("Successfully screenshot '{}' on attempt #{}", trackerRun.name(), attempt);
                 clearErrorScreenshots(trackerRun.name());
@@ -105,6 +111,11 @@ final class ProfileScreenshotExecutor {
             }
         }
 
+        // Cancelled by the user from the web UI (its browser was quit), so it fails without any further attempt
+        if (ExecutionCancellation.isTrackerCancelled(trackerRun.name())) {
+            LOGGER.warn("Cancelled by the user");
+            return false;
+        }
         LOGGER.debug("All {} attempts exhausted", numberOfAttempts);
         return false;
     }
@@ -114,6 +125,8 @@ final class ProfileScreenshotExecutor {
         AbstractTrackerHandler trackerHandler = null;
         try { // NOPMD: UseTryWithResources - need access to the trackerHandler to take a screenshot on error
             trackerHandler = TrackerHandlerFactory.getHandler(trackerRun.name());
+            // A tracker cancelled while its browser was starting had no browser to terminate yet, so stops here (the browser is released below)
+            ExecutionCancellation.throwIfCancelled(trackerRun.name());
             screenshotProfile(trackerHandler, trackerRun);
         } catch (final CancelledInputException e) {
             LOGGER.debug("User skipped the manual input", e);
@@ -141,7 +154,7 @@ final class ProfileScreenshotExecutor {
             LOGGER.debug("Page element became stale during interaction", e);
             LOGGER.warn("Page element became stale during interaction");
         } catch (final NoSuchSessionException | NoSuchWindowException | UnreachableBrowserException e) {
-            logBrowserUnavailable(e);
+            logBrowserUnavailable(trackerRun, e);
         } catch (final Exception e) {
             handleUnexpectedError(trackerHandler, trackerRun, e);
         } finally {
@@ -180,17 +193,17 @@ final class ProfileScreenshotExecutor {
         }
     }
 
-    private static void logBrowserUnavailable(final Exception e) {
+    private static void logBrowserUnavailable(final TrackerRun trackerRun, final Exception e) {
         LOGGER.debug("Browser became unavailable (cancelled by user, or browser crash)", e);
-        if (!ExecutionCancellation.isCancelled()) {
+        if (!ExecutionCancellation.isCancelled(trackerRun.name())) {
             LOGGER.warn("Browser became unavailable (cancelled by user, or browser crash)");
         }
     }
 
     private static void handleUnexpectedError(final @Nullable AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun,
         final Exception e) {
-        if (ExecutionCancellation.isCancelled()) {
-            // Expected while cancelling (the browser is quit, or no new browser is available), so not reported as an error
+        if (ExecutionCancellation.isCancelled(trackerRun.name())) {
+            // Expected while cancelling the execution or the tracker (the browser is quit, or no new browser is available), so not an error
             LOGGER.debug("Execution cancelled while taking screenshot", e);
             return;
         }
@@ -207,6 +220,10 @@ final class ProfileScreenshotExecutor {
     }
 
     private static void screenshotOnError(final @Nullable AbstractTrackerHandler trackerHandler, final TrackerRun trackerRun) {
+        // The browser of a cancelled tracker has been quit, so there is nothing to screenshot
+        if (ExecutionCancellation.isCancelled(trackerRun.name())) {
+            return;
+        }
         if (trackerHandler == null) {
             LOGGER.warn("Unable to take failure screenshot, trackerHandler is unexpectedly null");
             return;

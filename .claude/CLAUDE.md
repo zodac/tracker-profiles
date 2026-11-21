@@ -116,7 +116,14 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   UI along with any pending user inputs.
 - **Failures only** — `POST /api/run/failed` calls `RunManager.startFailedTrackers(BrowserResolution)`, which executes only the trackers that
   are `FAILED` in the current (or most recent) execution (`RunStatus.failedTrackers`, empty while one is in progress) and are still enabled. The UI
-  shows the button next to Start only when that list is not empty.
+  shows the button next to Start only when that list is not empty. The trackers that succeeded are kept in the status (with their screenshots and
+  logs, `WebLogAppender.clear(keptTrackers)`), and the failed ones are reset to waiting in place, so the Main tab lists every success since the last
+  full execution (in memory, until a restart); a full execution clears them all.
+- **Cancelling one tracker** — `POST /api/run/cancel/{tracker}` calls `RunManager.cancelTracker`, only for a `RUNNING` tracker:
+  `ExecutionCancellation.requestTrackerCancellation` stops its retries (`ProfileScreenshotExecutor`) and its wait for an input, and
+  `DriverPool.terminate` kills its browser processes (found by the `--user-data-dir` of the driver the tracker was `assign`ed), so its current
+  Selenium call fails. Failures of a cancelled tracker are logged at `DEBUG` (`ExecutionCancellation.isCancelled(trackerName)`), and it fails
+  ("Cancelled by the user"), so Failures only executes it again.
 - **No setting changes during an execution** — `SettingsService` rejects every save or reset with `IllegalStateException` (HTTP 409) while
   `RunManager.isExecutionInProgress()`, and the web UI locks every setting, so an execution always uses the configuration loaded when it started.
   After a save, `SettingsService` notifies its `SavedSettingsListener` (`RunManager.applySavedSettings`), which reloads the configuration.
@@ -130,9 +137,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   prompt in the web UI shows the tracker's browser, in which the user provides the input (see
   [Live Browser View](#live-browser-view)). There is no dialog on the display: the virtual display is never seen by the user.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
-  each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel), plus an execution log for messages not logged by a
-  tracker, and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each
-  `LogEntry` also carries the attempt, `TrackerStep` and section it was logged in (see [Logging](#logging)). It is cleared when an execution starts.
+  each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel; messages not logged by a tracker are only written to
+  the console), and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each
+  `LogEntry` also carries the attempt, `TrackerStep` and section it was logged in (see [Logging](#logging)). It is cleared when an execution starts
+  (except the trackers kept by Failures only).
   The UI fetches a tracker's logs only while it is expanded, polling with the ID of the last message it has, and groups them by step (a phase),
   with a divider per attempt once a tracker is retried and a heading per section. `RunStatus` gives each completed step's time for the phase
   durations.
@@ -227,13 +235,16 @@ The status is polled every 2s during an execution (1s while an input is pending)
 polled, except the status every 10s during an execution (no logs), so the page title still shows when an input is needed.
 
 - The Main tab lists the trackers of the execution grouped by state (rows are kept between status updates and moved between groups, so an expanded
-  tracker stays expanded). It has no options. Before the first execution (`IDLE`), the enabled trackers are listed as waiting, as they would be once
-  it starts, and Start is disabled while none are (`renderRunSummary`, also called by `renderTrackers`). The execution log is hidden until an
-  execution has started. The tab is wider than the others (90% of the window), for the browsers of the inputs. The Settings tab shows every option
-  under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run options come first,
-  with `Scope.STARTUP` options read-only, and a value saved in the UI that differs from its environment variable (or default, if not set)
-  marked with a bar (`SettingView.changedInWebUi`; a saved value has no badge). While an execution is running, every option is locked.
-  `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
+  tracker stays expanded). It has no options. Before the first execution (`IDLE`), the enabled trackers are listed as waiting, as they would be
+  once it starts, and Start is disabled while none are (`renderRunSummary`, also called by `renderTrackers`). Rows are also kept when an execution
+  starts (a row whose tracker is waiting again is collapsed and its logs reset), and kept while the execution prepares its trackers, so nothing is
+  re-rendered. A running tracker's row has a Cancel button, each group has previous/next buttons (`scrollToGroup`), the run card is pinned under
+  the header (`position: sticky`, except on small screens), and the header status has a tooltip with the count of each state. The tab is wider
+  than the others (90% of the window), for the browsers of the inputs. The Settings tab shows every option under its `ConfigurationOption.Group`,
+  in the order of the constants (`SettingsService.listSettings` sorts by group), so the run options come first, with `Scope.STARTUP` options
+  read-only, and a value saved in the UI that differs from its environment variable (or default, if not set) marked with a bar
+  (`SettingView.changedInWebUi`; a saved value has no badge). While an execution is running, every option is locked. `MULTI_SELECT` options are a
+  list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab has a **Download** menu (`#download-menu`, a `<details>` closed by a click outside it or Escape), listing
   `RunStatus.downloads` with their counts (`updateTrackerDownloads`, re-rendered only when they change), an option with none disabled.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and

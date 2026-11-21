@@ -1,6 +1,6 @@
 import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
-import {MAXIMUM_LOG_LINES, TRACKER_GROUPS, TRACKER_STEPS} from './constants.mjs'
-import {enabledTrackers, formatDuration, isActive, latestStatus} from './run.mjs'
+import {REDUCED_MOTION_QUERY, TRACKER_GROUPS, TRACKER_STEPS} from './constants.mjs'
+import {enabledTrackers, formatDuration, isActive, latestStatus, refreshStatus} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {currentSettingValue} from './settings.mjs'
 import {trackersLoaded} from './trackers.mjs'
@@ -10,8 +10,8 @@ import {byId, el, formatTime, pluralise, request, showToast} from './util.mjs'
 // Main: trackers in the execution, grouped by state, each with its own logs
 // ---------------------------------------------------------------------------------------------------------------
 
-// Rows are kept between renders (and moved between groups), so an expanded tracker stays expanded, keyed by tracker name
-let executionStartedAt = null
+// Rows are kept between renders (and moved between groups), so an expanded tracker stays expanded, keyed by tracker name. They are also kept when
+// an execution starts, so the trackers waiting before it are the same rows once it has started (a row executed again is reset)
 const trackerRows = new Map()
 const groupElements = {}
 
@@ -125,8 +125,7 @@ function createExecutionRow(tracker) {
     const summary = el('summary', {className: 'execution-row'})
     const browser = createBrowserPanel(tracker)
     const screenshots = el('div', {className: 'tracker-screenshots', hidden: true})
-    const logOutput = createPhaseLog(tracker)
-    const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, browser, screenshots, logOutput])
+    const row = el('details', {className: 'execution-tracker', dataset: {name: tracker.name}}, [summary, browser, screenshots, createPhaseLog(tracker)])
     // A waiting tracker has no logs yet, so cannot be expanded
     summary.addEventListener('click', function (event) {
         if (row.dataset.state === 'WAITING') {
@@ -135,14 +134,60 @@ function createExecutionRow(tracker) {
     })
     row.addEventListener('toggle', function () {
         if (row.open) {
-            fetchLogs(logOutput)
+            fetchLogs(row.querySelector('.tracker-log'))
         }
         updateBrowserPanel(browser, tracker.name)
     })
     return row
 }
 
+// A tracker executed again (waiting once more, after it had started) starts with no logs, collapsed
+function resetRowIfExecutedAgain(row, tracker) {
+    if (tracker.startedAt === null && row.trackerStartedAt) {
+        row.open = false
+        row.querySelector('.tracker-log').replaceWith(createPhaseLog(tracker))
+        delete logCursors[tracker.name]
+        row.cancelling = false
+    }
+    row.trackerStartedAt = tracker.startedAt
+}
+
+// Stops a single running tracker (its browser is closed and it fails), while the rest of the execution continues
+function cancelTracker(row, trackerName) {
+    row.cancelling = true
+    request('POST', `/api/run/cancel/${encodeURIComponent(trackerName)}`, {})
+        .then(function () {
+            showToast(`Cancelling ${trackerName}`)
+            refreshStatus()
+        })
+        .catch(function (error) {
+            row.cancelling = false
+            showToast(error.message, 'error')
+            refreshStatus()
+        })
+}
+
+function cancelTrackerButton(row, tracker) {
+    if (tracker.state !== 'RUNNING') {
+        return null
+    }
+    const button = el('button', {
+        className: 'button small danger', type: 'button', text: row.cancelling ? 'Cancelling…' : 'Cancel', disabled: Boolean(row.cancelling),
+        title: `Stop ${tracker.name} now, closing its browser (it fails, so Failures only executes it again)`,
+    })
+    button.addEventListener('click', function (event) {
+        // In the row's summary, so the row is not expanded or collapsed
+        event.preventDefault()
+        event.stopPropagation()
+        button.disabled = true
+        button.textContent = 'Cancelling…'
+        cancelTracker(row, tracker.name)
+    })
+    return button
+}
+
 function updateExecutionRow(row, tracker) {
+    resetRowIfExecutedAgain(row, tracker)
     const summary = row.querySelector('summary')
     const needsInput = latestStatus && latestStatus.pendingInputs.some(function (input) {
         return input.trackerName === tracker.name
@@ -155,7 +200,10 @@ function updateExecutionRow(row, tracker) {
         ]),
         stepBar(tracker),
         el('span', {className: 'execution-detail muted', text: trackerDetail(tracker), title: tracker.latestMessage}),
-        el('span', {className: 'execution-time muted', text: trackerTiming(tracker)})
+        el('span', {className: 'execution-end'}, [
+            cancelTrackerButton(row, tracker),
+            el('span', {className: 'execution-time muted', text: trackerTiming(tracker)}),
+        ])
     )
     row.dataset.state = tracker.state
     const browser = row.querySelector('.tracker-browser')
@@ -295,13 +343,35 @@ function groupFor(state) {
         })
         const title = el('h2')
         const list = el('div', {className: 'execution-list'})
+        const previous = el('button', {className: 'button small', type: 'button', text: '▲', title: 'Previous section', 'aria-label': 'Previous section'})
+        const next = el('button', {className: 'button small', type: 'button', text: '▼', title: 'Next section', 'aria-label': 'Next section'})
         const card = el('section', {className: `card execution-group group-${state.toLowerCase()}`}, [
-            el('div', {className: 'card-header'}, [title]),
+            el('div', {className: 'card-header'}, [title, el('div', {className: 'group-nav'}, [previous, next])]),
             list,
         ])
-        groupElements[state] = {card: card, title: title, list: list, definition: definition}
+        previous.addEventListener('click', function () {
+            scrollToGroup(card.previousElementSibling)
+        })
+        next.addEventListener('click', function () {
+            scrollToGroup(card.nextElementSibling)
+        })
+        groupElements[state] = {card: card, title: title, list: list, definition: definition, previous: previous, next: next}
     }
     return groupElements[state]
+}
+
+// Scrolls a group to just under the run card, which is pinned to the top of the page
+function scrollToGroup(card) {
+    if (!card) {
+        return
+    }
+    const runCard = byId('run-card')
+    const pinned = getComputedStyle(runCard).position === 'sticky'
+    const offset = pinned ? parseFloat(getComputedStyle(runCard).top) + runCard.offsetHeight + 12 : 72
+    window.scrollTo({
+        top: window.scrollY + card.getBoundingClientRect().top - offset,
+        behavior: REDUCED_MOTION_QUERY.matches ? 'auto' : 'smooth',
+    })
 }
 
 // Waiting trackers stay in execution order (the order of the status), running ones are in the order they started, and others by name
@@ -319,19 +389,6 @@ function sortForGroup(state, list) {
 
 export function renderExecutionTrackers(status) {
     const container = byId('execution-trackers')
-    if (status.startedAt !== executionStartedAt) {
-        executionStartedAt = status.startedAt
-        trackerRows.clear()
-        Object.keys(groupElements).forEach(function (state) {
-            delete groupElements[state]
-        })
-        container.replaceChildren()
-        byId('execution-log').querySelector('.log-output').replaceChildren()
-        Object.keys(logCursors).forEach(function (tracker) {
-            delete logCursors[tracker]
-        })
-    }
-
     if (status.state === 'IDLE' && !trackersLoaded) {
         container.replaceChildren()
         return
@@ -342,6 +399,10 @@ export function renderExecutionTrackers(status) {
         group.title.textContent = 'Waiting (0)'
         group.list.replaceChildren(el('div', {className: 'empty-group', text: 'No trackers enabled'}))
         container.replaceChildren(group.card)
+        return
+    }
+    // While an execution is preparing its trackers, the rows already shown (such as the trackers waiting before it started) are kept
+    if (executionTrackers.length === 0 && isActive(status) && trackerRows.size > 0) {
         return
     }
     if (executionTrackers.length === 0) {
@@ -382,16 +443,22 @@ export function renderExecutionTrackers(status) {
                 child.remove()
             }
         })
-        groups.push(group.card)
+        groups.push(group)
     })
-    container.replaceChildren.apply(container, groups)
+    container.replaceChildren.apply(container, groups.map(function (group) {
+        return group.card
+    }))
+    groups.forEach(function (group, index) {
+        group.previous.disabled = index === 0
+        group.next.disabled = index === groups.length - 1
+    })
 }
 
 // ---------------------------------------------------------------------------------------------------------------
 // Main: logs (fetched only for expanded trackers)
 // ---------------------------------------------------------------------------------------------------------------
 
-// The ID of the last log message shown, and whether a request is in progress, per tracker ('' for the execution log)
+// The ID of the last log message shown, and whether a request is in progress, per tracker
 const logCursors = {}
 
 function logLine(entry) {
@@ -402,7 +469,7 @@ function logLine(entry) {
     ])
 }
 
-export function fetchLogs(output) {
+function fetchLogs(output) {
     const tracker = output.dataset.tracker
     const cursor = logCursors[tracker] || {lastId: 0, loading: false}
     logCursors[tracker] = cursor
@@ -411,15 +478,12 @@ export function fetchLogs(output) {
     }
 
     cursor.loading = true
-    const query = tracker ? `tracker=${encodeURIComponent(tracker)}&after=${cursor.lastId}` : `after=${cursor.lastId}`
-    request('GET', `/api/logs?${query}`)
+    request('GET', `/api/logs?tracker=${encodeURIComponent(tracker)}&after=${cursor.lastId}`)
         .then(function (entries) {
             const placeholder = output.querySelector('.log-empty')
             if (entries.length === 0) {
                 if (placeholder) {
                     placeholder.textContent = 'No log messages yet'
-                } else if (!output.dataset.tracker && output.childElementCount === 0) {
-                    output.append(el('div', {className: 'log-empty', text: 'No log messages yet'}))
                 }
                 return
             }
@@ -429,18 +493,7 @@ export function fetchLogs(output) {
 
             // Only follow new messages if already scrolled to the bottom, so reading earlier messages is not interrupted
             const atBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 24
-            if (output.dataset.tracker) {
-                appendPhaseEntries(output, entries)
-            } else {
-                const fragment = document.createDocumentFragment()
-                entries.forEach(function (entry) {
-                    fragment.append(logLine(entry))
-                })
-                output.append(fragment)
-                while (output.childElementCount > MAXIMUM_LOG_LINES) {
-                    output.firstElementChild.remove()
-                }
-            }
+            appendPhaseEntries(output, entries)
             cursor.lastId = entries[entries.length - 1].id
             if (atBottom) {
                 output.scrollTop = output.scrollHeight

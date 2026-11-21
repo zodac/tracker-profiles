@@ -20,6 +20,7 @@ package net.zodac.tracker.web.log;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -42,17 +43,16 @@ import org.jspecify.annotations.Nullable;
 /**
  * A Log4j2 appender that keeps the log messages of the current execution in memory, separately for each tracker, so the web UI can show the logs of
  * a single tracker (trackers are executed in parallel, so their messages are interleaved). Messages logged outside a tracker (such as the start and
- * summary of an execution) are kept as the execution log.
+ * summary of an execution) are not kept, as they are only written to the console.
  *
  * <p>
  * The tracker of a message (and its attempt, {@link net.zodac.tracker.framework.progress.TrackerStep} and section) is read from the Log4j
- * {@link org.apache.logging.log4j.ThreadContext}, which is set by {@link TrackerLogContext} for the thread executing each tracker. All messages are
- * cleared with {@link #clear()} when a new execution starts.
+ * {@link org.apache.logging.log4j.ThreadContext}, which is set by {@link TrackerLogContext} for the thread executing each tracker. The messages are
+ * cleared with {@link #clear(Collection)} when a new execution starts.
  */
 public final class WebLogAppender extends AbstractAppender {
 
     private static final String APPENDER_NAME = "WEB_UI";
-    private static final String EXECUTION_LOG = "";
     private static final int MAXIMUM_ENTRIES_PER_LOG = 2_000;
     private static final Pattern ANSI_ESCAPE_CODE = Pattern.compile("\u001B\\[[0-9;]*[A-Za-z]");
 
@@ -95,7 +95,10 @@ public final class WebLogAppender extends AbstractAppender {
     public void append(final LogEvent event) {
         final ReadOnlyStringMap contextData = event.getContextData();
         final String trackerValue = contextData.getValue(TrackerLogContext.TRACKER_KEY);
-        final String tracker = trackerValue == null ? EXECUTION_LOG : stripAnsiCodes(trackerValue).trim();
+        if (trackerValue == null) {
+            return;
+        }
+        final String tracker = stripAnsiCodes(trackerValue).trim();
         final int attempt = parseAttempt(contextData.getValue(TrackerLogContext.ATTEMPT_KEY));
         final String step = Objects.requireNonNullElse(contextData.getValue(TrackerLogContext.STEP_KEY), "");
         final String section = Objects.requireNonNullElse(contextData.getValue(TrackerLogContext.SECTION_KEY), "");
@@ -112,7 +115,7 @@ public final class WebLogAppender extends AbstractAppender {
             }
 
             final String summary = summarise(message);
-            if (!tracker.isEmpty() && event.getLevel().isMoreSpecificThan(Level.INFO) && !summary.isEmpty()) {
+            if (event.getLevel().isMoreSpecificThan(Level.INFO) && !summary.isEmpty()) {
                 latestMessageByTracker.put(tracker, summary);
             }
         } finally {
@@ -121,16 +124,16 @@ public final class WebLogAppender extends AbstractAppender {
     }
 
     /**
-     * Retrieves the retained log messages of a tracker, or of the execution itself, written after the given ID.
+     * Retrieves the retained log messages of a tracker, written after the given ID.
      *
-     * @param tracker the name of the tracker, or {@code null}/empty for the messages not logged by a tracker
+     * @param tracker the name of the tracker
      * @param afterId only messages with a greater {@link LogEntry#id()} are returned (0 for all messages)
      * @return the {@link LogEntry}s, oldest first
      */
-    public List<LogEntry> entries(final @Nullable String tracker, final long afterId) {
+    public List<LogEntry> entries(final String tracker, final long afterId) {
         lock.lock();
         try {
-            final Deque<LogEntry> entries = entriesByTracker.get(tracker == null ? EXECUTION_LOG : tracker);
+            final Deque<LogEntry> entries = entriesByTracker.get(tracker);
             if (entries == null) {
                 return List.of();
             }
@@ -172,13 +175,15 @@ public final class WebLogAppender extends AbstractAppender {
     }
 
     /**
-     * Removes every retained log message, when a new execution starts.
+     * Removes the retained log messages of every tracker except those given, when a new execution starts.
+     *
+     * @param keptTrackers the names of the trackers whose messages are kept (those not executed again, which are still shown)
      */
-    public void clear() {
+    public void clear(final Collection<String> keptTrackers) {
         lock.lock();
         try {
-            entriesByTracker.clear();
-            latestMessageByTracker.clear();
+            entriesByTracker.keySet().retainAll(keptTrackers);
+            latestMessageByTracker.keySet().retainAll(keptTrackers);
         } finally {
             lock.unlock();
         }

@@ -315,6 +315,18 @@ main:has(> #tab-main:not([hidden])) {
     filter: brightness(0.92);
 }
 
+/* Yellow in both themes, with dark text for contrast */
+.button.warning-solid {
+    background: #f5b800;
+    border-color: #f5b800;
+    color: #1d2330;
+}
+
+.button.warning-solid:hover:not(:disabled) {
+    background: #f5b800;
+    filter: brightness(0.92);
+}
+
 .button.large {
     padding: 10px 28px;
     font-size: 15px;
@@ -761,6 +773,20 @@ select:disabled {
     font-size: 15px;
 }
 
+/* Moves to the previous or next group of trackers */
+.group-nav {
+    display: flex;
+    gap: 4px;
+}
+
+.group-nav .button {
+    min-width: 28px;
+    padding: 2px 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 .group-failed .card-header h2 {
     color: var(--danger);
 }
@@ -783,7 +809,7 @@ select:disabled {
 
 .execution-row {
     display: grid;
-    grid-template-columns: 16px minmax(140px, 220px) minmax(110px, 160px) minmax(0, 1fr) 64px;
+    grid-template-columns: 16px minmax(140px, 220px) minmax(110px, 160px) minmax(0, 1fr) 140px;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
@@ -829,6 +855,14 @@ select:disabled {
     font-size: 13px;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* The time of the tracker, after the Cancel button of a running tracker */
+.execution-end {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .execution-time {
@@ -1300,47 +1334,6 @@ a.icon-button {
     margin: 4px 0 0;
 }
 
-/* Collapsible execution log */
-
-.log-details > summary {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 6px 12px;
-    padding: 14px 16px;
-    cursor: pointer;
-    list-style: none;
-}
-
-.log-details > summary::-webkit-details-marker {
-    display: none;
-}
-
-.log-details > summary::before {
-    content: "\25B8";
-    color: var(--text-muted);
-    transition: transform 0.15s;
-}
-
-.log-details[open] > summary::before {
-    transform: rotate(90deg);
-}
-
-.log-details > summary:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-}
-
-.log-details > summary .muted {
-    font-size: 13px;
-}
-
-.log-details .log-output {
-    height: 40vh;
-    min-height: 200px;
-    border-radius: 0 0 var(--radius) var(--radius);
-}
-
 .steps {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -1365,8 +1358,14 @@ a.icon-button {
     background: var(--danger);
 }
 
+/* Pinned under the header, so the execution can be followed (or cancelled) while scrolling through the trackers */
 .run-card {
+    position: sticky;
+    top: 68px;
+    z-index: 5;
     padding: 32px 28px;
+    /* The page background above the card hides the trackers scrolling under it, in the gap below the header */
+    box-shadow: 0 -16px 0 4px var(--bg), 0 6px 16px rgb(0 0 0 / 8%);
 }
 
 .run-card h2 {
@@ -2025,6 +2024,20 @@ kbd {
 
     .execution-time {
         display: none;
+    }
+
+    .execution-end {
+        grid-column: 2 / -1;
+        justify-content: flex-start;
+    }
+
+    .execution-end:not(:has(.button)) {
+        display: none;
+    }
+
+    /* The header wraps on small screens, so the run card is not pinned under it */
+    .run-card {
+        position: static;
     }
 
     .app-header {

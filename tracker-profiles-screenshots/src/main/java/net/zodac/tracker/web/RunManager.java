@@ -251,13 +251,20 @@ public final class RunManager implements ExecutionListener {
     }
 
     // Must be called while holding the lock
-    // Executes only the given trackers (the trackers that failed in the previous execution), or every enabled tracker if none are given
+    // Executes only the given trackers (the trackers that failed in the previous execution), or every enabled tracker if none are given. When only
+    // the failed trackers are executed, the trackers that succeeded are kept (with their logs and screenshots), so the status still lists every
+    // success since the last full execution, and the failed trackers are waiting again straight away (in the same place)
     private void startExecution(final Set<String> failedTrackerNames, final BrowserResolution uiBrowserResolution) {
         state = RunStatus.State.RUNNING;
         startedAt = System.currentTimeMillis();
         finishedAt = 0L;
-        trackers.clear();
-        webLogAppender.clear();
+        if (failedTrackerNames.isEmpty()) {
+            trackers.clear();
+        } else {
+            trackers.values().removeIf(tracker -> tracker.state != RunStatus.TrackerState.SUCCEEDED && !failedTrackerNames.contains(tracker.name));
+            trackers.replaceAll((name, tracker) -> failedTrackerNames.contains(name) ? new TrackerProgressState(name, tracker.trackerType) : tracker);
+        }
+        webLogAppender.clear(trackers.keySet());
         ExecutionCancellation.reset();
         BrowserResolution.useForUiBrowsers(uiBrowserResolution);
         executionThread = Thread.ofPlatform()
@@ -310,6 +317,33 @@ public final class RunManager implements ExecutionListener {
                     threadToInterrupt.interrupt();
                 }
             });
+        return true;
+    }
+
+    /**
+     * Cancels a single running tracker, while the rest of the execution continues: it starts no new attempt, and its browser is terminated so that
+     * its current attempt fails quickly. The tracker then fails (so it is executed again by {@link #startFailedTrackers(BrowserResolution)}).
+     *
+     * @param trackerName the name of the tracker
+     * @return {@code true} if cancellation of the tracker was started, {@code false} if no execution is running or the tracker is not running
+     */
+    public boolean cancelTracker(final String trackerName) {
+        lock.lock();
+        try {
+            final TrackerProgressState tracker = trackers.get(trackerName);
+            if (state != RunStatus.State.RUNNING || tracker == null || tracker.state != RunStatus.TrackerState.RUNNING) {
+                return false;
+            }
+        } finally {
+            lock.unlock();
+        }
+
+        LOGGER.debug("Cancelling tracker '{}'", trackerName);
+        ExecutionCancellation.requestTrackerCancellation(trackerName);
+        // Stopping a browser can take a few seconds, so is not done on the calling (request) thread
+        Thread.ofVirtual()
+            .name("web-tracker-cancellation")
+            .start(() -> DriverPool.terminate(trackerName));
         return true;
     }
 

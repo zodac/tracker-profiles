@@ -1,6 +1,6 @@
 import {resumeBrowserViews} from './js/browser-view.mjs'
 import {DARK_SCHEME_QUERY, HIDDEN_POLL_INTERVAL_MS} from './js/constants.mjs'
-import {fetchLogs, trackerTiming} from './js/execution-trackers.mjs'
+import {trackerTiming} from './js/execution-trackers.mjs'
 import {
     cancelRun,
     isActive,
@@ -46,12 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
     byId('cancel-button').addEventListener('click', cancelRun)
     byId('pending-inputs').addEventListener('toggle', togglePendingInputs)
     setUpGallery()
-    const executionLog = byId('execution-log')
-    executionLog.addEventListener('toggle', function () {
-        if (executionLog.open) {
-            fetchLogs(executionLog.querySelector('.log-output'))
-        }
-    })
     byId('tracker-search').addEventListener('input', renderTrackers)
     byId('selection-enable').addEventListener('click', function () {
         changeSelectedTrackers('enable')

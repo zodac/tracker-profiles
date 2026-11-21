@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -47,10 +49,18 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class RunManagerTest {
 
+    private static final Duration EXECUTION_TIMEOUT = Duration.ofSeconds(10L);
+
     private static final String SECRET_KEY = "test-secret-key-value";
 
     @TempDir
     private Path tempDirectory;
+
+    // The status includes the execution order of the configuration, so it must be loaded whichever test runs first
+    @BeforeEach
+    void setUp() {
+        Configuration.reload(Map.of());
+    }
 
     @AfterEach
     void tearDown() {
@@ -65,6 +75,17 @@ class RunManagerTest {
             .isFalse();
         assertThat(runManager.status().state())
             .isEqualTo(RunStatus.State.IDLE);
+    }
+
+    @Test
+    void givenTrackerNotRunning_whenTrackerCancelled_thenNothingIsCancelled() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(headless("Alpha"));
+
+        assertThat(runManager.cancelTracker("Alpha"))
+            .isFalse();
+        assertThat(runManager.cancelTracker("Unknown"))
+            .isFalse();
     }
 
     @Test
@@ -201,6 +222,29 @@ class RunManagerTest {
 
         assertThat(runManager.status().failedTrackers())
             .containsExactly("Alpha", "Gamma");
+    }
+
+    @Test
+    void givenTrackersFailed_whenFailedTrackersStarted_thenSuccessfulTrackersAreKept() throws InterruptedException, IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(headless("Alpha", "Beta"));
+        completeTracker(runManager, "Alpha", "Alpha.png", false);
+        completeTracker(runManager, "Beta", "Beta.png", true);
+
+        assertThat(runManager.startFailedTrackers(BrowserResolution.DEFAULT))
+            .isTrue();
+        assertThat(runManager.status().trackers())
+            .extracting(RunStatus.TrackerProgress::name, RunStatus.TrackerProgress::state)
+            .containsExactly(tuple("Alpha", RunStatus.TrackerState.WAITING), tuple("Beta", RunStatus.TrackerState.SUCCEEDED));
+
+        // The failed tracker has no saved credentials, so the execution ends straight away, without executing it
+        final long deadline = System.nanoTime() + EXECUTION_TIMEOUT.toNanos();
+        while (runManager.isExecutionInProgress() && System.nanoTime() < deadline) {
+            Thread.sleep(50L);
+        }
+        assertThat(runManager.status().trackers())
+            .extracting(RunStatus.TrackerProgress::name, RunStatus.TrackerProgress::state)
+            .containsExactly(tuple("Alpha", RunStatus.TrackerState.WAITING), tuple("Beta", RunStatus.TrackerState.SUCCEEDED));
     }
 
     @Test

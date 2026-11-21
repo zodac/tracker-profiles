@@ -92,6 +92,7 @@ function renderStatus(status) {
     const headerStatus = byId('header-status')
     headerStatus.dataset.state = headerState
     headerStatus.textContent = STATE_LABELS[headerState] || headerState
+    headerStatus.title = statusSummary(status)
     document.title = waiting ? `(Input needed) ${PAGE_TITLE}` : PAGE_TITLE
 
     renderRunSummary()
@@ -133,7 +134,6 @@ function renderStatus(status) {
     updateExecutionDownload(status)
     updateTrackerDownloads(status)
     applyRunStateToSettings(status)
-    byId('execution-log').hidden = status.state === 'IDLE'
     refreshOpenLogs(active || wasActive)
 
     // The results of the trackers are shown on the Trackers tab, so are reloaded once an execution ends
@@ -149,6 +149,25 @@ function renderStatus(status) {
     } else {
         scheduleStatusRefresh(IDLE_POLL_INTERVAL_MS)
     }
+}
+
+// The number of trackers in each state, shown when hovering over the status in the header
+function statusSummary(status) {
+    if (status.state === 'IDLE') {
+        return ''
+    }
+    const parts = [
+        `${countTrackers(status, 'SUCCEEDED')} succeeded`,
+        `${countTrackers(status, 'FAILED')} failed`,
+    ]
+    const others = [['RUNNING', 'in progress'], ['WAITING', isActive(status) ? 'waiting' : 'not run'], ['CANCELLED', 'cancelled']]
+    others.forEach(function (other) {
+        const count = countTrackers(status, other[0])
+        if (count > 0) {
+            parts.push(`${count} ${other[1]}`)
+        }
+    })
+    return parts.join(', ')
 }
 
 function countTrackers(status, state) {

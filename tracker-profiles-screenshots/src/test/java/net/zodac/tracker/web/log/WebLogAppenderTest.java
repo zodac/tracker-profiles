@@ -20,6 +20,7 @@ package net.zodac.tracker.web.log;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import java.util.List;
 import java.util.Map;
 import net.zodac.tracker.framework.progress.TrackerLogContext;
 import net.zodac.tracker.framework.progress.TrackerStep;
@@ -44,7 +45,7 @@ class WebLogAppenderTest {
     @Test
     void givenMessagesFromTrackers_whenRetrieved_thenEachTrackerHasItsOwnMessages() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.clear();
+        webLogAppender.clear(List.of());
         webLogAppender.append(logEvent(Level.INFO, "\u001B[32mStarting execution\u001B[0m", null));
         webLogAppender.append(logEvent(Level.INFO, "Opening 'https://first.tracker'", "First"));
         webLogAppender.append(logEvent(Level.DEBUG, "Debug detail", "Second"));
@@ -57,16 +58,24 @@ class WebLogAppenderTest {
             .singleElement()
             .returns("DEBUG", LogEntry::level)
             .returns("Second", LogEntry::tracker);
-        assertThat(webLogAppender.entries(null, 0L))
-            .singleElement()
-            .returns("", LogEntry::tracker)
-            .returns("Starting execution", LogEntry::message);
+    }
+
+    @Test
+    void givenMessageNotLoggedByAnyTracker_whenAppended_thenItIsNotRetained() {
+        final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear(List.of());
+        webLogAppender.append(logEvent(Level.WARN, "Execution finished", null));
+
+        assertThat(webLogAppender.entries("", 0L))
+            .isEmpty();
+        assertThat(webLogAppender.latestMessages())
+            .isEmpty();
     }
 
     @Test
     void givenMessagesDuringAnAttempt_whenRetrieved_thenAttemptStepAndSectionAreIncluded() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.clear();
+        webLogAppender.clear(List.of());
         final SortedArrayStringMap contextData = new SortedArrayStringMap();
         contextData.putValue(TrackerLogContext.TRACKER_KEY, "Tracker");
         contextData.putValue(TrackerLogContext.ATTEMPT_KEY, "2");
@@ -83,7 +92,7 @@ class WebLogAppenderTest {
     @Test
     void givenMessages_whenRetrievedAfterAnId_thenOnlyLaterMessagesAreReturned() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.clear();
+        webLogAppender.clear(List.of());
         webLogAppender.append(logEvent(Level.INFO, "first", "Tracker"));
         final long firstId = webLogAppender.entries("Tracker", 0L).getFirst().id();
         webLogAppender.append(logEvent(Level.WARN, "second", "Tracker"));
@@ -96,7 +105,7 @@ class WebLogAppenderTest {
     @Test
     void givenMessages_whenLatestMessagesRetrieved_thenLatestInfoMessageOfEachTrackerIsSummarised() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.clear();
+        webLogAppender.clear(List.of());
         webLogAppender.append(logEvent(Level.INFO, "Logging in as 'user'", "Tracker"));
         webLogAppender.append(logEvent(Level.DEBUG, "Ignored, since below INFO", "Tracker"));
 
@@ -107,7 +116,7 @@ class WebLogAppenderTest {
     @Test
     void givenLatestMessage_whenClearedForTracker_thenOnlyThatTrackerHasNoLatestMessage() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
-        webLogAppender.clear();
+        webLogAppender.clear(List.of());
         webLogAppender.append(logEvent(Level.INFO, "Logged out", "First"));
         webLogAppender.append(logEvent(Level.INFO, "Logging in as 'user'", "Second"));
 
@@ -118,16 +127,21 @@ class WebLogAppenderTest {
     }
 
     @Test
-    void givenMessages_whenCleared_thenNoMessagesAreRetained() {
+    void givenMessages_whenCleared_thenOnlyMessagesOfKeptTrackersAreRetained() {
         final WebLogAppender webLogAppender = WebLogAppender.install();
+        webLogAppender.clear(List.of());
         webLogAppender.append(logEvent(Level.INFO, "message", "Tracker"));
+        webLogAppender.append(logEvent(Level.INFO, "kept message", "Kept"));
 
-        webLogAppender.clear();
+        webLogAppender.clear(List.of("Kept"));
 
         assertThat(webLogAppender.entries("Tracker", 0L))
             .isEmpty();
+        assertThat(webLogAppender.entries("Kept", 0L))
+            .extracting(LogEntry::message)
+            .containsExactly("kept message");
         assertThat(webLogAppender.latestMessages())
-            .isEmpty();
+            .containsExactly(Map.entry("Kept", "kept message"));
     }
 
     private static Log4jLogEvent logEvent(final Level level, final String message, final @Nullable String tracker) {

@@ -1,4 +1,3 @@
-export const MAXIMUM_LOG_LINES = 5000
 export const MAXIMUM_TOASTS = 4
 export const STATUS_POLL_INTERVAL_MS = 2000
 export const IDLE_POLL_INTERVAL_MS = 10000

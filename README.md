@@ -347,11 +347,14 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
 
 - **Main**: start an execution and follow its progress
     - **Start** executes every enabled tracker (it is disabled until at least one tracker is enabled). Once an execution has ended with failed
-      trackers, **Failures only** executes just those trackers again (any that have since been disabled are left out). The run options and
-      settings can be changed between executions
+      trackers, **Failures only** executes just those trackers again (any that have since been disabled are left out), while the trackers that
+      succeeded stay listed (with their logs and screenshots) until the next **Start** or a restart. The run options and settings can be changed
+      between executions. The card with these buttons stays at the top of the page as you scroll, and hovering over the status in the header shows
+      how many trackers succeeded and failed
     - Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. Before the first execution, the enabled
-      trackers are listed as waiting. A tracker moves between groups as the execution continues, so once it finishes the trackers are grouped by
-      whether they succeeded or failed
+      trackers are listed as waiting, in the order they will be executed, and stay in place once it starts. A tracker moves between groups as the
+      execution continues, so once it finishes the trackers are grouped by whether they succeeded or failed. The arrows on each group move to the
+      previous or next group
     - Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its
       latest message (for a failed tracker, why it failed) and how long it took. Expand a tracker to see its own logs, which update while it runs.
       The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
@@ -366,9 +369,10 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the latest execution started
       (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
       application restarts (the screenshots are still saved to the output directory as before)
-    - Messages not logged by a tracker, such as the summary of the execution, are under **Execution log**
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
-      the container
+      the container. A single running tracker can also be stopped with the **Cancel** button on its row (such as a tracker that is clearly
+      failing): its browser is closed and it fails without another attempt, while the other trackers continue
+    - Messages not logged by a tracker (such as the summary of the execution) are only written to the container logs
 - **Trackers**: every supported tracker, grouped by enabled/disabled (manual trackers are tagged as *Manual input*), with trackers
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10

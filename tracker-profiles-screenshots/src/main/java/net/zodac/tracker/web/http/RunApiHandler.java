@@ -27,9 +27,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * Handles requests to start an execution ({@code POST /api/run}), start an execution of only the trackers that failed in the previous execution
  * ({@code POST /api/run/failed}), both with the optional body {@code {"screenWidth": 1920, "screenHeight": 1080}} for the resolution of the browsers
- * with a UI, cancel the running execution ({@code POST /api/run/cancel}), respond to a
- * request for a user input ({@code POST /api/run/input/{id}/continue} or {@code .../skip}), and retrieve the status of the
- * execution ({@code GET /api/run}).
+ * with a UI, cancel the running execution ({@code POST /api/run/cancel}) or a single running tracker
+ * ({@code POST /api/run/cancel/{tracker}}), respond to a request for a user input ({@code POST /api/run/input/{id}/continue} or
+ * {@code .../skip}), and retrieve the status of the execution ({@code GET /api/run}).
  */
 public final class RunApiHandler extends ApiHandler {
 
@@ -39,6 +39,7 @@ public final class RunApiHandler extends ApiHandler {
     public static final String CONTEXT_PATH = "/api/run";
 
     private static final String CANCEL_PATH = "cancel";
+    private static final String CANCEL_TRACKER_PATH_PREFIX = "cancel/";
     private static final String FAILED_PATH = "failed";
     private static final String INPUT_PATH_PREFIX = "input/";
     private static final int INPUT_PATH_PARTS = 2;
@@ -70,6 +71,15 @@ public final class RunApiHandler extends ApiHandler {
         if (CANCEL_PATH.equals(pathParameter)) {
             if (!runManager.cancel()) {
                 throw new HttpRequestException(HttpStatus.CONFLICT, "No execution is in progress");
+            }
+            sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
+            return;
+        }
+
+        if (pathParameter != null && pathParameter.startsWith(CANCEL_TRACKER_PATH_PREFIX)) {
+            final String trackerName = pathParameter.substring(CANCEL_TRACKER_PATH_PREFIX.length());
+            if (!runManager.cancelTracker(trackerName)) {
+                throw new HttpRequestException(HttpStatus.CONFLICT, "Tracker '%s' is not running".formatted(trackerName));
             }
             sendJson(exchange, HttpStatus.ACCEPTED, runManager.status());
             return;

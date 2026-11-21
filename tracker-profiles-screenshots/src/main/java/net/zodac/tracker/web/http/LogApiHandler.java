@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Handles requests for the log messages of the current execution: {@code GET /api/logs?tracker={name}&after={id}} returns the messages logged by a
- * tracker (or, without {@code tracker}, the messages not logged by any tracker) with an ID greater than {@code after}, oldest first. The web UI polls
+ * tracker (required) with an ID greater than {@code after}, oldest first. The web UI polls
  * this with the ID of the last message it has, so only new messages are returned.
  */
 public final class LogApiHandler extends ApiHandler {
@@ -55,7 +55,11 @@ public final class LogApiHandler extends ApiHandler {
     @Override
     protected void handleGet(final HttpExchange exchange, final @Nullable String pathParameter) throws IOException {
         final Map<String, String> query = queryParameters(exchange);
-        sendJson(exchange, HttpStatus.OK, webLogAppender.entries(query.get("tracker"), parseAfter(query.get("after"))));
+        final String tracker = query.get("tracker");
+        if (tracker == null || tracker.isBlank()) {
+            throw new HttpRequestException(HttpStatus.BAD_REQUEST, "The 'tracker' parameter is required");
+        }
+        sendJson(exchange, HttpStatus.OK, webLogAppender.entries(tracker, parseAfter(query.get("after"))));
     }
 
     private static long parseAfter(final @Nullable String after) {

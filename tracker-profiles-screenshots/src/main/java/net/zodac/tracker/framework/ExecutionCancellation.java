@@ -17,6 +17,9 @@
 
 package net.zodac.tracker.framework;
 
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.zodac.tracker.framework.exception.ExecutionCancelledException;
 
@@ -27,10 +30,16 @@ import net.zodac.tracker.framework.exception.ExecutionCancelledException;
  * <p>
  * Cancelling only sets a flag; the caller is responsible for also stopping work that is already in progress (by quitting the browsers and
  * interrupting the execution thread).
+ *
+ * <p>
+ * A single tracker can also be cancelled (see {@link #requestTrackerCancellation(String)}), which stops only that tracker: it starts no new
+ * attempt or browser, and the caller quits its browser. The tracker then fails, while the rest of the execution continues.
  */
 public final class ExecutionCancellation {
 
     private static final AtomicBoolean CANCELLED = new AtomicBoolean(false);
+    // Lower-case names, since tracker names are case-insensitive
+    private static final Set<String> CANCELLED_TRACKERS = ConcurrentHashMap.newKeySet();
 
     private ExecutionCancellation() {
 
@@ -48,6 +57,36 @@ public final class ExecutionCancellation {
      */
     public static void reset() {
         CANCELLED.set(false);
+        CANCELLED_TRACKERS.clear();
+    }
+
+    /**
+     * Requests that a single tracker of the current execution is cancelled, leaving the other trackers running.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     */
+    public static void requestTrackerCancellation(final String trackerName) {
+        CANCELLED_TRACKERS.add(trackerName.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Whether a single tracker has been cancelled (see {@link #requestTrackerCancellation(String)}), rather than the whole execution.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     * @return {@code true} if cancellation of the tracker has been requested
+     */
+    public static boolean isTrackerCancelled(final String trackerName) {
+        return CANCELLED_TRACKERS.contains(trackerName.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Whether the work of a tracker is expected to fail, because the execution or the tracker itself has been cancelled.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     * @return {@code true} if the execution or the tracker has been cancelled
+     */
+    public static boolean isCancelled(final String trackerName) {
+        return isCancelled() || isTrackerCancelled(trackerName);
     }
 
     /**
@@ -66,6 +105,18 @@ public final class ExecutionCancellation {
      */
     public static void throwIfCancelled() {
         if (isCancelled()) {
+            throw new ExecutionCancelledException();
+        }
+    }
+
+    /**
+     * Checkpoint to stop the work of a tracker once the execution or the tracker has been cancelled.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     * @throws ExecutionCancelledException thrown if cancellation of the execution or the tracker has been requested
+     */
+    public static void throwIfCancelled(final String trackerName) {
+        if (isCancelled(trackerName)) {
             throw new ExecutionCancelledException();
         }
     }

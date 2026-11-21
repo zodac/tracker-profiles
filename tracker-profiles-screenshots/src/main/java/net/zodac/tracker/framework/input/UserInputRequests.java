@@ -63,14 +63,14 @@ public final class UserInputRequests {
      * @param message     what the user needs to do
      * @param pageChanged returns {@code true} once the page in the browser has changed, checked periodically while waiting
      * @throws CancelledInputException thrown if the user selects {@link UserInputResponse#SKIP}
-     * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution is cancelled while waiting
+     * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution or the tracker is cancelled while waiting
      */
     public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
         final long id = register(trackerName, message);
         LOGGER.info("Waiting for user input: {}", message);
 
         try {
-            waitForResponse(id, pageChanged);
+            waitForResponse(id, trackerName, pageChanged);
         } catch (final InterruptedException e) {
             // The waiting thread is only interrupted when the execution is cancelled
             Thread.currentThread().interrupt();
@@ -99,9 +99,10 @@ public final class UserInputRequests {
         }
     }
 
-    private static void waitForResponse(final long id, final BooleanSupplier pageChanged) throws InterruptedException {
+    private static void waitForResponse(final long id, final String trackerName, final BooleanSupplier pageChanged) throws InterruptedException {
         while (true) {
-            ExecutionCancellation.throwIfCancelled();
+            // Also stops waiting once the tracker itself is cancelled
+            ExecutionCancellation.throwIfCancelled(trackerName);
 
             LOCK.lock();
             try {

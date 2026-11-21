@@ -26,7 +26,9 @@ import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -77,6 +79,10 @@ public final class DriverPool {
     private final IdentityHashMap<RemoteWebDriver, TrackerType> pooledDrivers = new IdentityHashMap<>(); //NOPMD: LooseCoupling - Identity Map usage
     // Extension-equipped drivers currently in use, which are not pooled but must still be quit if the execution is cancelled
     private final Set<RemoteWebDriver> freshDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
+    // The driver in use by each tracker (case-insensitive), so a single tracker can be cancelled by terminating its browser
+    private final Map<String, RemoteWebDriver> driversByTracker = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    // Drivers whose browser was terminated to cancel their tracker, so their failure on release is expected
+    private final Set<RemoteWebDriver> terminatedDrivers = Collections.newSetFromMap(new IdentityHashMap<>());
     private int capacity = Integer.MAX_VALUE;
     private int driversStarting;
 
@@ -312,10 +318,13 @@ public final class DriverPool {
     public static void release(final RemoteWebDriver driver) {
         final DriverPool instance = get();
         final TrackerType trackerType;
+        final boolean terminated;
         instance.lock.lock();
         try {
             trackerType = instance.pooledDrivers.get(driver);
             instance.freshDrivers.remove(driver);
+            instance.driversByTracker.values().removeIf(assigned -> assigned == driver);
+            terminated = instance.terminatedDrivers.remove(driver);
         } finally {
             instance.lock.unlock();
         }
@@ -333,8 +342,8 @@ public final class DriverPool {
             LOGGER.trace("Unable to navigate pooled driver to blank page", e);
             removeFromTracking(instance, driver);
             quitAndCleanup(driver);
-            // Every browser is closed when an execution is cancelled, so a dead driver is expected
-            if (!ExecutionCancellation.isCancelled()) {
+            // Every browser is closed when an execution is cancelled (or a tracker's browser when it is cancelled), so a dead driver is expected
+            if (!ExecutionCancellation.isCancelled() && !terminated) {
                 LOGGER.warn("Pooled driver is dead, closing it (a new one is started when needed)");
             }
             return;
@@ -351,6 +360,59 @@ public final class DriverPool {
             instance.lock.unlock();
         }
         quitAndCleanup(driver);
+    }
+
+    /**
+     * Records the {@link RemoteWebDriver} acquired by a tracker, until it is {@link #release(RemoteWebDriver) released}, so that the tracker can be
+     * cancelled with {@link #terminate(String)}.
+     *
+     * @param trackerName the name of the tracker
+     * @param driver      the {@link RemoteWebDriver} acquired by the tracker
+     */
+    public static void assign(final String trackerName, final RemoteWebDriver driver) {
+        final DriverPool instance = get();
+        instance.lock.lock();
+        try {
+            instance.driversByTracker.put(trackerName, driver);
+        } finally {
+            instance.lock.unlock();
+        }
+    }
+
+    /**
+     * Immediately stops the browser of a single tracker, to cancel it while the rest of the execution continues. Its browser processes (found by
+     * the user-data directory of the browser) are terminated, so in-progress Selenium calls of the tracker fail quickly, and the driver is quit
+     * when the tracker {@link #release(RemoteWebDriver) releases} it. Does nothing if the tracker has no browser.
+     *
+     * @param trackerName the name of the tracker
+     */
+    public static void terminate(final String trackerName) {
+        final DriverPool instance = get();
+        final RemoteWebDriver driver;
+        instance.lock.lock();
+        try {
+            driver = instance.driversByTracker.get(trackerName);
+            if (driver != null) {
+                instance.terminatedDrivers.add(driver);
+            }
+        } finally {
+            instance.lock.unlock();
+        }
+
+        final String userDataDirectory = driver == null ? null : JavaWebDriverFactory.userDataDir(driver);
+        if (userDataDirectory == null) {
+            LOGGER.debug("No browser to terminate for tracker '{}'", trackerName);
+            return;
+        }
+
+        final String argument = "--user-data-dir=" + userDataDirectory;
+        final List<ProcessHandle> browserProcesses = ProcessHandle.current()
+            .descendants()
+            .filter(processHandle -> processHandle.info().arguments().map(arguments -> List.of(arguments).contains(argument)).orElse(false))
+            .toList();
+        LOGGER.debug("Terminating {} browser process{} of tracker '{}'", browserProcesses.size(), browserProcesses.size() == 1 ? "" : "es",
+            trackerName);
+        destroyProcesses(browserProcesses);
     }
 
     private static void removeFromTracking(final DriverPool instance, final RemoteWebDriver driver) {
@@ -388,6 +450,12 @@ public final class DriverPool {
             .filter(DriverPool::isBrowserProcess)
             .toList();
         LOGGER.debug("Terminating {} browser process{}", browserProcesses.size(), browserProcesses.size() == 1 ? "" : "es");
+        destroyProcesses(browserProcesses);
+        shutdown();
+    }
+
+    // Terminates the processes, then kills any still running after TERMINATION_TIMEOUT
+    private static void destroyProcesses(final List<ProcessHandle> browserProcesses) {
         browserProcesses.forEach(ProcessHandle::destroy);
 
         try {
@@ -402,8 +470,6 @@ public final class DriverPool {
         browserProcesses.stream()
             .filter(ProcessHandle::isAlive)
             .forEach(ProcessHandle::destroyForcibly);
-
-        shutdown();
     }
 
     private static boolean isBrowserProcess(final ProcessHandle processHandle) {
@@ -431,6 +497,8 @@ public final class DriverPool {
             instance.idleDrivers.clear();
             instance.pooledDrivers.clear();
             instance.freshDrivers.clear();
+            instance.driversByTracker.clear();
+            instance.terminatedDrivers.clear();
             instance.capacity = Integer.MAX_VALUE;
         } finally {
             instance.lock.unlock();

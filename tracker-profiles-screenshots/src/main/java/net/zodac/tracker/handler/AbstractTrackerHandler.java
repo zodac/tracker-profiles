@@ -100,6 +100,7 @@ public abstract class AbstractTrackerHandler implements AutoCloseable, TrackerTi
         }
         final RemoteWebDriver acquiredDriver = DriverPool.acquire(trackerDefinition.type(), extensions);
         context = TrackerHandlerContext.of(trackerDefinition, acquiredDriver);
+        DriverPool.assign(trackerDefinition.name(), acquiredDriver);
         BrowserViews.register(trackerDefinition.name(), acquiredDriver);
     }
 
