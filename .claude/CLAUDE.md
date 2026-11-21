@@ -145,8 +145,11 @@ screenshot (dropped when the tracker succeeds, as the file is deleted), and list
 shows its profile screenshots, a failed or cancelled one only its failure screenshot, and a running one both. Only the current (or most recent)
 execution is kept, in memory, except that `RunManager` keeps each tracker's latest screenshots across all executions: the profile screenshots of
 its latest success (replaced when it succeeds again, kept when it fails) and the failure screenshot of its latest execution if it failed (replaced
-when it fails again, dropped when it succeeds). `latestSuccessfulScreenshots()` (profile screenshots only) is used for the "Download all" button,
-and `latestScreenshots(tracker)` (the latest execution only: profile screenshots if it succeeded, the failure screenshot if it failed, never both,
+when it fails again, dropped when it succeeds). `executionScreenshots()` (the profile screenshots of the trackers that
+succeeded in the current execution only, never an earlier one or one before a restart) is used for the "Download all" button of the Main tab,
+`latestScreenshots(ScreenshotDownload)` (every tracker's latest screenshots across executions, filtered by `web.screenshot.ScreenshotDownload`:
+all, successful, one redaction type, or errors, counted in `RunStatus.downloads`) for the Download menu of the Trackers tab, and
+`latestScreenshots(tracker)` (the latest execution only: profile screenshots if it succeeded, the failure screenshot if it failed, never both,
 using the saved results) for the screenshots button of each row on the Trackers tab (`TrackerView.screenshots`), which expands the row with the
 same thumbnails as the Main tab (`updateTrackerScreenshots`). They are saved in the database (`tracker_screenshots`, by
 `ScreenshotFile.id`, in the order shown) when a tracker completes and loaded by `RunManager.create`, so they are kept across restarts. Only
@@ -159,7 +162,8 @@ latest execution instead of the current execution. `&thumbnail=true` is a JPEG t
 from `web.screenshot.ScreenshotPreviews`, which never decodes a whole screenshot (an 8K full-page PNG needs over 600MB, more than the default
 512MB heap): it decodes every `n`th pixel (keeping twice the target width, then scaling smoothly) in strips of at most 64MB, one image at a time,
 and caches up to 64MB of images by path, last-modified time and kind. `?tracker=X` downloads all of a
-tracker's screenshots, and no parameters downloads `latestSuccessfulScreenshots()`. A download of one screenshot is the PNG
+tracker's screenshots, `?execution=true` downloads `executionScreenshots()`, and `?type=<download>` (required otherwise) downloads
+`latestScreenshots(ScreenshotDownload)`. A download of one screenshot is the PNG
 itself, and several are a zip (`ScreenshotArchive`, failure screenshots under `errors/`) named `tracker-profiles_v<version>_<yyyy-MM-dd_HH:mm:ss>`
 from the execution start in `TIMEZONE`. The version is the `Implementation-Version` of the JAR manifest (set by the shade plugin), read by
 `ApplicationVersion`, and `unknown` outside the JAR. The UI adds each screenshot's `savedAt` to its image URLs, so images can be cached by the
@@ -227,8 +231,11 @@ polled, except the status every 10s during an execution (no logs), so the page t
   it starts, and Start is disabled while none are (`renderRunSummary`, also called by `renderTrackers`). The execution log is hidden until an
   execution has started. The tab is wider than the others (90% of the window), for the browsers of the inputs. The Settings tab shows every option
   under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run options come first,
-  with `Scope.STARTUP` options read-only. While an execution is running, every option is locked. `MULTI_SELECT` options are a list dragged into order
+  with `Scope.STARTUP` options read-only, and a value that differs from its default marked with a bar (a saved value has no badge). While an
+  execution is running, every option is locked. `MULTI_SELECT` options are a list dragged into order
   (or moved with the arrow keys on the handle), each with a switch to include it.
+- The Trackers tab has a **Download** menu (`#download-menu`, a `<details>` closed by a click outside it or Escape), listing
+  `RunStatus.downloads` with their counts (`updateTrackerDownloads`, re-rendered only when they change), an option with none disabled.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
@@ -381,9 +388,9 @@ UI) → environment variable → `ConfigurationOption.defaultValue()`, via the p
 
 New env vars must be:
 
-1. Added to `ConfigurationOption` (alphabetical order). Use `Group.RUN_OPTIONS` for options likely to be changed for an execution, otherwise
-   `Group.OUTPUT` or `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only read at startup (a web UI change would have no effect),
-   otherwise `Scope.EXECUTION`.
+1. Added to `ConfigurationOption`, among the constants of its group, in the order shown on the Settings tab (most commonly changed first). Use
+   `Group.RUN` for options likely to be changed for an execution, otherwise `Group.OUTPUT` or `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only
+   read at startup (a web UI change would have no effect), otherwise `Scope.EXECUTION`.
    An `OptionType.INTEGER` option is declared with its `Range.of(min, max)`, which validates it (`parseInteger`), is appended to its
    description, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
    against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
@@ -391,9 +398,10 @@ New env vars must be:
 2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically
 3. Loaded in the `load()` constructor call with the `Source` parser for its type (`source.bool(...)`, `integer(...)`, `select(...)`,
    `multiSelect(...)`, or `get(...)` for a string), or a private static `getXxx(source)` method for anything else
-4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Group.RUN_OPTIONS`, the `Settings` table for
+4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Group.RUN`, the `Settings` table for
    other editable options, otherwise the `Startup-Only Options` table, in the `environment` of `docs/docker-compose.example.yml` (and the local,
-   git-ignored `docker-compose.yml` if it exists), and in the README performance analysis block, all in alphabetical order
+   git-ignored `docker-compose.yml` if it exists), and in the README performance analysis block, in alphabetical order (except the run options
+   in the `Run Options` table and the compose files, which are in the order of the Settings tab)
 
 ### Redaction
 

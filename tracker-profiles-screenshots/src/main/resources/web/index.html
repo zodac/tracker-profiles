@@ -54,7 +54,7 @@
                     <span id="progress-text"></span>
                     <span><span class="count success" id="success-count">0</span> succeeded</span>
                     <span><span class="count failure" id="failure-count">0</span> failed</span>
-                    <a id="download-screenshots" class="button small download-link" href="/api/screenshots" download hidden>
+                    <a id="download-screenshots" class="button small download-link" href="/api/screenshots?execution=true" download hidden>
                         <span class="download-icon" aria-hidden="true"></span><span class="download-text">Download all</span>
                     </a>
                 </div>
@@ -83,6 +83,12 @@
         <div class="toolbar">
             <input type="search" id="tracker-search" class="search" placeholder="Search trackers" aria-label="Search trackers">
             <span id="tracker-summary" class="muted"></span>
+            <details id="download-menu" class="menu">
+                <summary class="button primary" title="Download the latest screenshots of the trackers">
+                    <span class="download-icon" aria-hidden="true"></span>Download
+                </summary>
+                <div id="download-menu-items" class="menu-items" role="menu" aria-label="Screenshots to download"></div>
+            </details>
             <a id="export-button" class="button primary" href="/api/trackers/export" download
                title="Download the trackers with a username and password (including the passwords), or a sample file if there are none">Export CSV</a>
             <button id="import-button" class="button primary" type="button">Import CSV</button>

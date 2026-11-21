@@ -450,21 +450,6 @@ select:disabled {
     color: var(--warning);
 }
 
-.badge.changed {
-    background: var(--changed-soft);
-    color: var(--changed);
-}
-
-.badge.source-environment {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-.badge.source-web_ui {
-    background: var(--success-soft);
-    color: var(--success);
-}
-
 /* Main tab */
 
 .visually-hidden {
@@ -1537,8 +1522,67 @@ a.icon-button {
     max-width: 360px;
 }
 
-.toolbar #export-button {
+.toolbar #download-menu {
     margin-left: auto;
+}
+
+/* A button that opens a list of links below it */
+.menu {
+    position: relative;
+}
+
+.menu > summary {
+    list-style: none;
+}
+
+.menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+.menu > summary::after {
+    content: "\25BE";
+    font-size: 11px;
+}
+
+.menu-items {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+a.menu-item:hover,
+a.menu-item:focus-visible {
+    background: var(--surface-muted);
+}
+
+.menu-item[aria-disabled="true"] {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.menu-count {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .notice#import-result {
@@ -2023,8 +2067,12 @@ kbd {
         align-items: stretch;
     }
 
-    .toolbar #export-button {
+    .toolbar #download-menu {
         margin-left: 0;
+    }
+
+    .menu-items {
+        left: 0;
     }
 
 }

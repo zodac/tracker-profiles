@@ -12,7 +12,7 @@ import {
     statusTimer,
     togglePendingInputs,
 } from './js/run.mjs'
-import {setUpGallery} from './js/screenshots.mjs'
+import {closeDownloadMenu, setUpGallery} from './js/screenshots.mjs'
 import {unsavedSettings} from './js/settings.mjs'
 import {showTab} from './js/tabs.mjs'
 import {toggleTheme, updateThemeToggle} from './js/theme-toggle.mjs'
@@ -63,12 +63,17 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     byId('selection-clear').addEventListener('click', clearSelection)
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && selectedTrackers.size > 0) {
+        if (event.key === 'Escape' && byId('download-menu').open) {
+            closeDownloadMenu()
+        } else if (event.key === 'Escape' && selectedTrackers.size > 0) {
             clearSelection()
         }
     })
     document.addEventListener('pointerdown', function (event) {
         releasePinnedTrackersOutside(event.target)
+        if (!byId('download-menu').contains(event.target)) {
+            closeDownloadMenu()
+        }
     }, true)
     byId('import-button').addEventListener('click', function () {
         byId('import-file').click()

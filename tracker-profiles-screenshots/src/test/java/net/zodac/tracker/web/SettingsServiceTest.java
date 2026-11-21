@@ -67,7 +67,7 @@ class SettingsServiceTest {
             .containsExactlyElementsOf(namesInGroupOrder());
         assertThat(settings)
             .extracting(SettingsService.SettingView::group)
-            .startsWith(ConfigurationOption.Group.RUN_OPTIONS.label())
+            .startsWith(ConfigurationOption.Group.RUN.label())
             .endsWith(ConfigurationOption.Group.SYSTEM.label());
         assertThat(find(settings, OPTION))
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value)

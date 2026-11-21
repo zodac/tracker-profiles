@@ -34,6 +34,7 @@ import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import net.zodac.tracker.web.log.WebLogAppender;
+import net.zodac.tracker.web.screenshot.ScreenshotDownload;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -128,7 +129,7 @@ class RunManagerTest {
 
         assertThat(screenshotIds(runManager, "Tracker"))
             .containsExactly("failure");
-        assertThat(runManager.latestSuccessfulScreenshots())
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
             .isEmpty();
     }
 
@@ -143,7 +144,7 @@ class RunManagerTest {
             runManager.trackerCompleted(trackerName, !"Failed".equals(trackerName));
         }
 
-        assertThat(runManager.latestSuccessfulScreenshots())
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
             .extracting(ScreenshotFile::fileName)
             .containsExactly("Alpha.png", "Zeta.png");
         assertThat(runManager.trackerScreenshots("Unknown"))
@@ -164,12 +165,14 @@ class RunManagerTest {
         completeTracker(runManager, "Alpha", "Alpha_2.png", true);
         completeTracker(runManager, "Gamma", "Gamma_2.png", false);
 
-        assertThat(runManager.latestSuccessfulScreenshots())
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
             .extracting(ScreenshotFile::fileName)
             .containsExactly("Alpha_2.png", "Beta_2.png", "Gamma_1.png");
-        assertThat(runManager.status())
-            .returns(3, RunStatus::downloadableTrackers)
-            .returns(3, RunStatus::downloadableScreenshots);
+        assertThat(downloadCount(runManager, ScreenshotDownload.SUCCESSFUL))
+            .isEqualTo(3);
+        // All are part of the same execution, in which Gamma failed (only its latest screenshots are counted)
+        assertThat(runManager.status().executionScreenshots())
+            .isEqualTo(2);
     }
 
     @Test
@@ -181,7 +184,7 @@ class RunManagerTest {
 
         runManager.forgetTrackers(List.of("alpha"));
 
-        assertThat(runManager.latestSuccessfulScreenshots())
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
             .extracting(ScreenshotFile::fileName)
             .containsExactly("Beta.png");
         assertThat(runManager.latestScreenshots("Alpha"))
@@ -222,12 +225,14 @@ class RunManagerTest {
 
         Files.delete(tempDirectory.resolve("Beta.png"));
 
-        assertThat(runManager.latestSuccessfulScreenshots())
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
             .extracting(ScreenshotFile::fileName)
             .containsExactly("Alpha.png");
-        assertThat(runManager.status())
-            .returns(1, RunStatus::downloadableTrackers)
-            .returns(1, RunStatus::downloadableScreenshots);
+        assertThat(downloadCount(runManager, ScreenshotDownload.SUCCESSFUL))
+            .isEqualTo(1);
+        assertThat(runManager.executionScreenshots())
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha.png");
     }
 
     @Test
@@ -252,9 +257,11 @@ class RunManagerTest {
                 .containsExactly(tuple("box", "Alpha_box_retry.png"), tuple("blur", "Alpha_blur.png"));
             assertThat(runManager.latestScreenshots("Beta"))
                 .isEmpty();
-            assertThat(runManager.status())
-                .returns(1, RunStatus::downloadableTrackers)
-                .returns(2, RunStatus::downloadableScreenshots);
+            assertThat(downloadCount(runManager, ScreenshotDownload.SUCCESSFUL))
+                .isEqualTo(2);
+            // A new session has no execution, so none of its screenshots are from the earlier session
+            assertThat(runManager.executionScreenshots())
+                .isEmpty();
         }
     }
 
@@ -300,7 +307,7 @@ class RunManagerTest {
                 .extracting(ScreenshotFile::id, ScreenshotFile::fileName)
                 .containsExactly(tuple("failure", "Alpha_failure.png"));
             // The profile screenshots of the latest success are still downloaded together
-            assertThat(runManager.latestSuccessfulScreenshots())
+            assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
                 .extracting(ScreenshotFile::fileName)
                 .containsExactly("Alpha.png");
 
@@ -332,10 +339,49 @@ class RunManagerTest {
             final RunManager runManager = RunManager.create(applicationDatabase, WebLogAppender.install());
             assertThat(runManager.latestScreenshots("Alpha"))
                 .isEmpty();
-            assertThat(runManager.latestSuccessfulScreenshots())
+            assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
                 .extracting(ScreenshotFile::fileName)
                 .containsExactly("Alpha.png");
         }
+    }
+
+    @Test
+    void givenSuccessesAndFailures_whenDownloadsRetrieved_thenEachDownloadOnlyHasItsScreenshots() throws IOException, SQLException {
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        runManager.executionStarted(headless("Alpha", "Beta"));
+        runManager.trackerStarted("Alpha");
+        runManager.trackerScreenshotSaved("Alpha", RedactionType.BOX, createScreenshot("Alpha_box.png"));
+        runManager.trackerScreenshotSaved("Alpha", RedactionType.BLUR, createScreenshot("Alpha_blur.png"));
+        runManager.trackerCompleted("Alpha", true);
+        runManager.trackerStarted("Beta");
+        runManager.trackerFailureScreenshotSaved("Beta", createScreenshot("Beta_error.png"));
+        runManager.trackerCompleted("Beta", false);
+
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.ALL))
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha_box.png", "Alpha_blur.png", "Beta_error.png");
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.SUCCESSFUL))
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha_box.png", "Alpha_blur.png");
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.BLUR))
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha_blur.png");
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.NONE))
+            .isEmpty();
+        assertThat(runManager.latestScreenshots(ScreenshotDownload.ERRORS))
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Beta_error.png");
+        assertThat(runManager.status().downloads())
+            .extracting(RunStatus.Download::type, RunStatus.Download::count)
+            .containsExactly(tuple("all", 3), tuple("successful", 2), tuple("blur", 1), tuple("box", 1), tuple("none", 0), tuple("errors", 1));
+    }
+
+    private static int downloadCount(final RunManager runManager, final ScreenshotDownload screenshotDownload) {
+        return runManager.status().downloads()
+            .stream()
+            .filter(download -> download.type().equals(screenshotDownload.parameter()))
+            .mapToInt(RunStatus.Download::count)
+            .sum();
     }
 
     private void completeTracker(final RunManager runManager, final String trackerName, final String fileName, final boolean wasSuccessful)

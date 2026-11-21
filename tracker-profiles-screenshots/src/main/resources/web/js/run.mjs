@@ -8,7 +8,7 @@ import {
 } from './constants.mjs'
 import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
 import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs'
-import {updateExecutionDownload} from './screenshots.mjs'
+import {updateExecutionDownload, updateTrackerDownloads} from './screenshots.mjs'
 import {applyRunStateToSettings} from './settings.mjs'
 import {loadTrackers, trackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
@@ -131,6 +131,7 @@ function renderStatus(status) {
     renderPendingInputs(running ? status.pendingInputs : [])
     renderExecutionTrackers(status)
     updateExecutionDownload(status)
+    updateTrackerDownloads(status)
     applyRunStateToSettings(status)
     byId('execution-log').hidden = status.state === 'IDLE'
     refreshOpenLogs(active || wasActive)

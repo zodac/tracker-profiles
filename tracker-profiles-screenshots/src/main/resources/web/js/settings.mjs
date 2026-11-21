@@ -336,11 +336,7 @@ function renderSettingRow(setting) {
         row.classList.toggle('changed', current.editable && current.changedFromDefault)
         row.classList.toggle('editing', hasKey(unsavedSettings, name))
 
-        const badges = [el('strong', {className: 'setting-label', text: current.label}), el('code', {text: name})]
-        if (current.source === 'WEB_UI') {
-            badges.push(el('span', {className: 'badge source-web_ui', text: 'Saved'}))
-        }
-        nameLine.replaceChildren.apply(nameLine, badges)
+        nameLine.replaceChildren(el('strong', {className: 'setting-label', text: current.label}), el('code', {text: name}))
 
         const overridesEnvironment = current.source === 'WEB_UI' && current.environmentValue !== null
         meta.hidden = !overridesEnvironment

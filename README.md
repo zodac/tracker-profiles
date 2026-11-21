@@ -360,10 +360,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
     - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed.
       Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
       and move between the redaction types with the arrows (or the arrow keys)
-    - Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the latest screenshots of
-      every tracker that has succeeded in any execution (also before a restart): a tracker executed again only has the screenshots of its
-      latest success, so after **Failures only** the trackers that succeeded in either execution are downloaded together. Screenshots deleted or
-      moved since are left out, and the button is hidden when none are left. Several screenshots are
+    - Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the screenshots of the
+      trackers that succeeded in the current (or most recent) execution only; screenshots from earlier executions are downloaded from the
+      **Trackers** tab. Screenshots deleted or moved since are left out, and the button is hidden when there are none. Several screenshots are
       downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the latest execution started
       (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
       application restarts (the screenshots are still saved to the output directory as before)
@@ -378,15 +377,18 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   its profile screenshots if it succeeded, or its failure screenshot if it failed (from any execution, also before a restart, as long as they are
   still on disk). Click a tracker to select it, `Ctrl`+click to add or
   remove one, or `Shift`+click to select a range, to enable, disable or remove them together (`Alt`+click selects the text of a row instead).
-  Trackers can also be [imported from a CSV file](#importing-trackers).
+  Trackers can also be [imported from a CSV file](#importing-trackers). **Download** downloads the latest screenshots of every tracker, from any
+  execution (also before a restart): **All**, **Successful** (the profile screenshots of each tracker's latest success), one redaction type
+  (**Blur redaction**, **Box redaction** or **No redaction**), or **Errors** (the failure screenshot of each tracker whose latest execution
+  failed). Each option shows how many screenshots it has
   A tracker that is no longer supported (removed from the application) is listed as legacy, and never executed. It is never removed
   automatically, so the screenshots of its most recent execution can still be retrieved; removing it clears its credentials, result and
   screenshots from the database (the screenshot files are kept on disk). Trackers are identified only by name (ignoring case), so a tracker that
   is renamed in the application is treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and
   the new name as a separate tracker without credentials, which must be entered again (or imported) before it is executed
-- **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run options** (those
-  you are most likely to change for an execution), **Output** and **System**. Any value that differs from its default is marked with a bar, and a
-  value saved in the web UI is marked as *Saved*. Settings are locked while an execution is in progress
+- **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run** (those
+  you are most likely to change for an execution), **Output** and **System**. Any value that differs from its default is marked with a bar.
+  Settings are locked while an execution is in progress
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
@@ -484,7 +486,8 @@ display, X server or `DISPLAY` variable, on Linux or Windows.
 All options are set with environment variables on the docker image, and most can also be changed in the [web UI](#web-ui). They fall into three
 groups:
 
-- [Run Options](#run-options) are shown first on the **Settings** tab, as they are the most likely to be changed for an execution
+- [Run Options](#run-options) are shown first on the **Settings** tab (under **Run**), as they are the most likely to be changed for an
+  execution
 - [Settings](#settings) are shown below them on the **Settings** tab, under **Output** and **System**
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
 
@@ -500,11 +503,11 @@ These options apply from the next execution.
 
 | Environment Variable            | Description                                                                                                                                                                                                                                     | Default Value |
 |---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                   | INFO          |
-| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers to execute in parallel, each in its own browser [min: 1, max: 32]                                                                                                                                                        | 5             |
-| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
 | *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX           |
+| *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers to execute at the same time [min: 1, max: 32]                                                                                                                                                                            | 5             |
+| *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
+| *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
 
 #### Settings
 

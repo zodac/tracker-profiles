@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -54,6 +55,7 @@ import net.zodac.tracker.framework.progress.TrackerStep;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import net.zodac.tracker.framework.view.BrowserViews;
 import net.zodac.tracker.web.log.WebLogAppender;
+import net.zodac.tracker.web.screenshot.ScreenshotDownload;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
@@ -81,7 +83,8 @@ import org.jspecify.annotations.Nullable;
  * execution ({@link #startFailedTrackers(BrowserResolution)}). The profile screenshots of each tracker's latest successful execution, and the
  * failure screenshot of its latest execution if it failed, are kept across executions, and saved in the {@link ApplicationDatabase} so they are
  * kept across restarts. The Trackers tab only shows the screenshots of each tracker's latest execution (see {@link #latestScreenshots(String)}),
- * while the profile screenshots of the latest success of every tracker can be downloaded together (see {@link #latestSuccessfulScreenshots()}).
+ * while the latest screenshots of every tracker can be downloaded together (see {@link #latestScreenshots(ScreenshotDownload)}). The Main tab only
+ * downloads the screenshots of the current (or most recent) execution (see {@link #executionScreenshots()}).
  */
 public final class RunManager implements ExecutionListener {
 
@@ -434,7 +437,18 @@ public final class RunManager implements ExecutionListener {
      */
     public RunStatus status() {
         final Map<String, String> latestMessages = webLogAppender.latestMessages();
-        final Map<String, List<ScreenshotFile>> downloadableScreenshots = existingLatestScreenshots(false);
+        final int executionScreenshots = executionScreenshots().size();
+        final List<ScreenshotFile> latestScreenshots = existingLatestScreenshots(false)
+            .values()
+            .stream()
+            .flatMap(List::stream)
+            .toList();
+        final List<RunStatus.Download> downloads = Arrays.stream(ScreenshotDownload.values())
+            .map(download -> {
+                final int count = (int) latestScreenshots.stream().filter(download::includes).count();
+                return new RunStatus.Download(download.parameter(), download.label(), count);
+            })
+            .toList();
         lock.lock();
         try {
             final List<RunStatus.TrackerProgress> shownTrackers = trackers.values()
@@ -449,8 +463,8 @@ public final class RunManager implements ExecutionListener {
                 shownTrackers.size(),
                 shownTrackers,
                 failedTrackerNames(),
-                downloadableScreenshots.size(),
-                downloadableScreenshots.values().stream().mapToInt(List::size).sum(),
+                executionScreenshots,
+                downloads,
                 UserInputRequests.pending()
             );
         } finally {
@@ -489,15 +503,43 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Retrieves the profile screenshots of the latest successful execution of every tracker, across all executions since the application started,
-     * ordered by tracker name. A tracker that succeeds again replaces its earlier screenshots, while one that fails keeps those of its last success.
+     * Retrieves the profile screenshots of the trackers that succeeded in the current (or most recent) execution, in execution order. Screenshots
+     * from earlier executions are never included.
      *
-     * @return the latest {@link ScreenshotFile}s of each successful tracker that still exist
+     * @return the {@link ScreenshotFile}s of the successful trackers of the execution that still exist
      */
-    public List<ScreenshotFile> latestSuccessfulScreenshots() {
+    public List<ScreenshotFile> executionScreenshots() {
         final List<ScreenshotFile> screenshots = new ArrayList<>();
-        existingLatestScreenshots(false).values().forEach(screenshots::addAll);
-        return screenshots;
+        lock.lock();
+        try {
+            trackers.values()
+                .stream()
+                .filter(tracker -> tracker.state == RunStatus.TrackerState.SUCCEEDED)
+                .forEach(tracker -> screenshots.addAll(tracker.shownScreenshots()));
+        } finally {
+            lock.unlock();
+        }
+        return screenshots
+            .stream()
+            .filter(screenshot -> Files.isRegularFile(screenshot.path()))
+            .toList();
+    }
+
+    /**
+     * Retrieves the latest screenshots of every tracker included in a {@link ScreenshotDownload}, across all executions (including before a
+     * restart), ordered by tracker name: the profile screenshots of each tracker's latest success (a tracker that fails keeps those of its last
+     * success), and the failure screenshot of each tracker whose latest execution failed.
+     *
+     * @param screenshotDownload the {@link ScreenshotDownload}
+     * @return the {@link ScreenshotFile}s in the download that still exist
+     */
+    public List<ScreenshotFile> latestScreenshots(final ScreenshotDownload screenshotDownload) {
+        return existingLatestScreenshots(false)
+            .values()
+            .stream()
+            .flatMap(List::stream)
+            .filter(screenshotDownload::includes)
+            .toList();
     }
 
     /**
@@ -539,7 +581,8 @@ public final class RunManager implements ExecutionListener {
     }
 
     // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name (case-insensitive): those of each
-    // tracker's latest execution, or otherwise the profile screenshots of its latest success. The files are checked without holding the lock
+    // tracker's latest execution, or otherwise every latest screenshot (the profile screenshots of its latest success, and the failure screenshot
+    // of its latest execution if it failed). The files are checked without holding the lock
     private Map<String, List<ScreenshotFile>> existingLatestScreenshots(final boolean latestExecutionOnly) {
         final Map<String, List<ScreenshotFile>> latest;
         final Set<String> failed;
@@ -556,7 +599,7 @@ public final class RunManager implements ExecutionListener {
         latest.forEach((trackerName, screenshots) -> {
             final List<ScreenshotFile> existingScreenshots = screenshots
                 .stream()
-                .filter(screenshot -> latestExecutionOnly ? screenshot.failure() == failed.contains(trackerName) : !screenshot.failure())
+                .filter(screenshot -> !latestExecutionOnly || screenshot.failure() == failed.contains(trackerName))
                 .filter(screenshot -> Files.isRegularFile(screenshot.path()))
                 .toList();
             if (!existingScreenshots.isEmpty()) {

@@ -5,12 +5,14 @@ exiting. The container keeps running, and each execution is started from the bro
 
 - **Main**: start or cancel an execution and follow its progress. Each tracker is listed with its current step, attempt and duration, and can be
   expanded to see its own logs, grouped by step. An expanded tracker shows thumbnails of its screenshots (or its failure screenshot), which
-  open in a gallery to move between the redaction types. Each screenshot can be downloaded, as can all screenshots of a tracker, or the latest
-  screenshots of every tracker that has succeeded in any execution (as a `.zip` file, while they are still on disk). After an execution in which some
+  open in a gallery to move between the redaction types. Each screenshot can be downloaded, as can all screenshots of a tracker, or all screenshots of
+  the trackers that succeeded in the execution (as a `.zip` file, while they are still on disk). After an execution in which some
   trackers failed, **Failures only** executes just those trackers again
 - **Trackers**: the credentials of every supported tracker, grouped as enabled, disabled or unset, with the result of its most recent execution and
   the screenshots of its most recent execution (kept across restarts, shown by expanding its row). Credentials can be imported from a CSV file, and
-  several trackers can be selected (`Ctrl`+click, or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together
+  several trackers can be selected (`Ctrl`+click, or `Ctrl`+`Shift`+click for a range) to enable, disable or remove them together. The
+  latest screenshots of every tracker, from any execution, can be downloaded together: all of them, the successful ones (or only one redaction
+  type), or the failure screenshots
 - **Settings**: every option, preloaded from the environment variables, with the run options you are most likely to change for an execution
   (attempts, log level, redaction, etc.) first. A value saved in the web UI overrides the environment variable, including after a restart, and
   settings are locked while an execution is in progress

@@ -33,10 +33,9 @@ import org.jspecify.annotations.Nullable;
  * @param trackers                every tracker in the execution
  * @param failedTrackers          the names of the trackers that failed in the execution, which can be executed again on their own (empty while an
  *                                execution is in progress)
- * @param downloadableTrackers    the number of trackers with screenshots from their latest successful execution, across all executions, that
- *                                still exist
- * @param downloadableScreenshots the number of screenshots from the latest successful execution of each tracker, across all executions, that
- *                                still exist
+ * @param executionScreenshots    the number of profile screenshots of the trackers that succeeded in the execution, that still exist
+ * @param downloads               the screenshots that can be downloaded from the Trackers tab, from the latest screenshots of every tracker across
+ *                                all executions, in the order shown
  * @param pendingInputs           the requests waiting for the user to provide an input
  */
 public record RunStatus(
@@ -46,8 +45,8 @@ public record RunStatus(
     int totalTrackers,
     List<TrackerProgress> trackers,
     List<String> failedTrackers,
-    int downloadableTrackers,
-    int downloadableScreenshots,
+    int executionScreenshots,
+    List<Download> downloads,
     List<PendingUserInput> pendingInputs
 ) {
 
@@ -76,6 +75,22 @@ public record RunStatus(
         Map<String, Long> stepCompletedAt,
         String latestMessage,
         List<Screenshot> screenshots
+    ) {
+
+    }
+
+    /**
+     * A set of screenshots that can be downloaded together from the Trackers tab, with
+     * {@code /api/screenshots?type={type}} (see {@link net.zodac.tracker.web.screenshot.ScreenshotDownload}).
+     *
+     * @param type  the value of the {@code type} query parameter
+     * @param label the label shown for the download
+     * @param count the number of screenshots in the download that still exist
+     */
+    public record Download(
+        String type,
+        String label,
+        int count
     ) {
 
     }

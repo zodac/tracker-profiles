@@ -29,40 +29,39 @@ import org.jspecify.annotations.Nullable;
 /**
  * Definition of every environment variable that configures the application, used as the single source of truth for each variable's name, default
  * value and description. Used both by {@link ApplicationConfiguration} when loading values, and by the web UI to render each option on the
- * Settings tab, under its {@link Group}.
+ * Settings tab, under its {@link Group}. The constants are in the order shown in the web UI: by group, then the most commonly changed first.
  */
 public enum ConfigurationOption {
 
     /**
-     * The path to the SQLite database used by the web UI.
-     */
-    DATABASE_PATH(Group.SYSTEM, "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
-        "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)",
-        Scope.STARTUP),
-
-    /**
-     * Whether to translate non-English trackers.
-     */
-    ENABLE_TRANSLATION_TO_ENGLISH(Group.RUN_OPTIONS, "Translate to English", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to translate non-English trackers to English", Scope.EXECUTION),
-
-    /**
      * The application log level.
      */
-    LOG_LEVEL(Group.RUN_OPTIONS, "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
+    LOG_LEVEL(Group.RUN, "Log level", "INFO", OptionType.SELECT, List.of("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"),
         "The logging level for application output", Scope.EXECUTION),
+
+    /**
+     * The redaction types to apply.
+     */
+    REDACTION_TYPE(Group.RUN, "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
+        "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
 
     /**
      * The number of trackers executed in parallel.
      */
-    NUMBER_OF_PARALLEL_THREADS(Group.RUN_OPTIONS, "Parallel browsers", "5", Range.of(1, 32),
-        "The number of trackers to execute in parallel, each in its own browser", Scope.EXECUTION),
+    NUMBER_OF_PARALLEL_THREADS(Group.RUN, "Parallel execution", "5", Range.of(1, 32),
+        "The number of trackers to execute at the same time", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.
      */
-    NUMBER_OF_SCREENSHOT_ATTEMPTS(Group.RUN_OPTIONS, "Attempts per tracker", "1", Range.of(1, 5),
+    NUMBER_OF_SCREENSHOT_ATTEMPTS(Group.RUN, "Attempts per tracker", "1", Range.of(1, 5),
         "The number of times to attempt to screenshot a tracker before marking it as a fail", Scope.EXECUTION),
+
+    /**
+     * Whether to translate non-English trackers.
+     */
+    ENABLE_TRANSLATION_TO_ENGLISH(Group.RUN, "Translate to English", "true", OptionType.BOOLEAN, List.of(),
+        "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
      * The date format used to name the output directory.
@@ -77,10 +76,11 @@ public enum ConfigurationOption {
         "The location in which the dated output directory for the screenshots is created", Scope.EXECUTION),
 
     /**
-     * The redaction types to apply.
+     * The path to the SQLite database used by the web UI.
      */
-    REDACTION_TYPE(Group.RUN_OPTIONS, "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
-        "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
+    DATABASE_PATH(Group.SYSTEM, "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
+        "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)",
+        Scope.STARTUP),
 
     /**
      * The secret used to encrypt the passwords stored in the database.
@@ -355,7 +355,7 @@ public enum ConfigurationOption {
         /**
          * Options likely to be changed for an execution.
          */
-        RUN_OPTIONS("Run options"),
+        RUN("Run"),
 
         /**
          * Where and how the screenshots are saved.

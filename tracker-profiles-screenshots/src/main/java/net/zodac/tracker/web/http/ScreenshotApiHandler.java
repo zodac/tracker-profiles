@@ -29,6 +29,7 @@ import java.util.Optional;
 import net.zodac.tracker.framework.config.Configuration;
 import net.zodac.tracker.web.RunManager;
 import net.zodac.tracker.web.screenshot.ScreenshotArchive;
+import net.zodac.tracker.web.screenshot.ScreenshotDownload;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.screenshot.ScreenshotPreviews;
 import org.jspecify.annotations.Nullable;
@@ -39,8 +40,10 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * Handles {@code GET} requests to:
  * <ul>
- *     <li>{@code /api/screenshots}: downloads the profile screenshots of the latest successful execution of every tracker, across all
- *     executions (so a tracker that failed and then succeeded is included, and a tracker executed again only has its latest screenshots)</li>
+ *     <li>{@code /api/screenshots?execution=true}: downloads the profile screenshots of the trackers that succeeded in the current (or most
+ *     recent) execution (the Main tab)</li>
+ *     <li>{@code /api/screenshots?type={type}}: downloads the latest screenshots of every tracker across all executions in a
+ *     {@link ScreenshotDownload} (the Trackers tab), such as {@code successful} or {@code errors}</li>
  *     <li>{@code /api/screenshots?tracker={name}}: downloads every screenshot of the tracker</li>
  *     <li>{@code /api/screenshots?tracker={name}&id={id}}: a single screenshot, shown in the browser, or downloaded with {@code &download=true}.
  *     Its thumbnail is retrieved with {@code &thumbnail=true}, and its preview (scaled to 1080p, or the screenshot itself if it is not wider)
@@ -96,7 +99,9 @@ public final class ScreenshotApiHandler extends ApiHandler {
         final String trackerName = query.get("tracker");
         if (trackerName == null) {
             // Only lists the screenshots that still exist
-            sendDownload(exchange, runManager.latestSuccessfulScreenshots());
+            sendDownload(exchange, Boolean.parseBoolean(query.get("execution"))
+                ? runManager.executionScreenshots()
+                : runManager.latestScreenshots(downloadType(query.get("type"))));
             return;
         }
 
@@ -133,6 +138,11 @@ public final class ScreenshotApiHandler extends ApiHandler {
         }
 
         sendScreenshot(exchange, screenshot, Boolean.parseBoolean(query.get("download")));
+    }
+
+    private static ScreenshotDownload downloadType(final @Nullable String type) {
+        return ScreenshotDownload.fromParameter(type)
+            .orElseThrow(() -> new HttpRequestException(HttpStatus.BAD_REQUEST, "Unknown screenshot download: '%s'".formatted(type)));
     }
 
     private static void sendJpeg(final HttpExchange exchange, final byte[] image) throws IOException {

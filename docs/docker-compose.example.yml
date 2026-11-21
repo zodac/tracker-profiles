@@ -18,12 +18,12 @@ services:
           pids: "8192"    # ~200 per parallel browser (~2k with 10 browsers), with headroom: raise it if NUMBER_OF_PARALLEL_THREADS is above 20
     memswap_limit: "10G"
     environment:
-      # Run options (can also be changed on the 'Settings' tab of the web UI)
-      ENABLE_TRANSLATION_TO_ENGLISH: "true"
+      # Run options (can also be changed on the 'Settings' tab of the web UI, under 'Run')
       LOG_LEVEL: "INFO"
+      REDACTION_TYPE: "BOX"
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"
-      REDACTION_TYPE: "BOX"
+      ENABLE_TRANSLATION_TO_ENGLISH: "true"
       # Output configuration (can also be changed on the 'Settings' tab of the web UI)
       OUTPUT_DIRECTORY_NAME_FORMAT: "yyyy-MM-dd"
       OUTPUT_DIRECTORY_PARENT_PATH: "/app/screenshots"

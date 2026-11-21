@@ -1,4 +1,4 @@
-import {byId, el, pluralise} from './util.mjs'
+import {byId, el} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Screenshots of each tracker (thumbnails of the current execution on the Main tab, and of the latest successful execution on the Trackers tab,
@@ -88,15 +88,47 @@ export function updateTrackerScreenshots(container, tracker, latest) {
 }
 
 // The latest profile screenshots of every tracker that has succeeded (in any execution) can be downloaded together
+// Only the screenshots of this execution (earlier screenshots are downloaded from the Trackers tab)
 export function updateExecutionDownload(status) {
-    const count = status.downloadableScreenshots
+    const count = status.executionScreenshots
     const link = byId('download-screenshots')
     link.hidden = count === 0
     link.querySelector('.download-text').textContent = count > 1 ? `Download all (${count})` : 'Download screenshot'
     link.title = count > 1
-        ? `Download the latest ${count} screenshots of the ${pluralise(status.downloadableTrackers, 'successful tracker')}`
-            + ' (from any execution) as a .zip file'
-        : 'Download the latest screenshot of the successful tracker'
+        ? `Download the ${count} screenshots of the successful trackers of this execution as a .zip file`
+        : 'Download the screenshot of the successful tracker of this execution'
+}
+
+// The latest screenshots of every tracker, from any execution, on the Trackers tab. Only re-rendered when they change, so a focused item is kept
+let renderedDownloads = null
+
+export function updateTrackerDownloads(status) {
+    const rendered = JSON.stringify(status.downloads)
+    if (rendered === renderedDownloads) {
+        return
+    }
+    renderedDownloads = rendered
+    const items = byId('download-menu-items')
+    items.replaceChildren.apply(items, status.downloads.map(downloadMenuItem))
+}
+
+function downloadMenuItem(download) {
+    const children = [el('span', {text: download.label}), el('span', {className: 'menu-count', text: String(download.count)})]
+    if (download.count === 0) {
+        return el('span', {className: 'menu-item', role: 'menuitem', 'aria-disabled': 'true'}, children)
+    }
+    return el('a', {
+        className: 'menu-item',
+        role: 'menuitem',
+        href: `/api/screenshots?type=${encodeURIComponent(download.type)}`,
+        download: true,
+        title: download.count > 1 ? `Download ${download.count} screenshots as a .zip file` : 'Download the screenshot',
+        onclick: closeDownloadMenu,
+    }, children)
+}
+
+export function closeDownloadMenu() {
+    byId('download-menu').open = false
 }
 
 function openGallery(trackerName, screenshots, index, latest) {
