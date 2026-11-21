@@ -325,7 +325,6 @@ function renderSettingRow(setting) {
     const name = setting.name
     const row = el('div', {className: 'setting-row'})
     const nameLine = el('div', {className: 'setting-name'})
-    const meta = el('p', {className: 'setting-meta'})
     const errorMessage = el('p', {className: 'setting-error', hidden: true})
     const control = createControl(setting)
 
@@ -337,10 +336,6 @@ function renderSettingRow(setting) {
         row.classList.toggle('editing', hasKey(unsavedSettings, name))
 
         nameLine.replaceChildren(el('strong', {className: 'setting-label', text: current.label}), el('code', {text: name}))
-
-        const overridesEnvironment = current.source === 'WEB_UI' && current.environmentValue !== null
-        meta.hidden = !overridesEnvironment
-        meta.textContent = overridesEnvironment ? `Environment: ${current.environmentValue}` : ''
     }
 
     settingRows[name] = {
@@ -357,7 +352,7 @@ function renderSettingRow(setting) {
     refresh()
 
     row.append(
-        el('div', {}, [nameLine, el('p', {className: 'setting-description', text: setting.description}), meta]),
+        el('div', {}, [nameLine, el('p', {className: 'setting-description', text: setting.description})]),
         el('div', {className: 'setting-input'}, [control.element, errorMessage])
     )
     return row

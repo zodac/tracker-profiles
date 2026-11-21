@@ -1936,12 +1936,6 @@ kbd {
     font-size: 13px;
 }
 
-.setting-meta {
-    margin: 4px 0 0;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
 .setting-input {
     display: flex;
     flex-direction: column;
