@@ -165,7 +165,8 @@ public final class SettingsService {
      * @param savedValue         the value saved in the web UI, or {@code null} if not set
      * @param value              the value currently in effect
      * @param source             where {@code value} comes from
-     * @param changedFromDefault whether {@code value} differs from {@code defaultValue}
+     * @param changedInWebUi     whether {@code value} was saved in the web UI and differs from the value of the deployment (the environment
+     *                           variable, or the default if it is not set)
      * @param editable           whether the setting can be changed in the web UI
      */
     public record SettingView(
@@ -182,7 +183,7 @@ public final class SettingsService {
         @Nullable String savedValue,
         String value,
         Source source,
-        boolean changedFromDefault,
+        boolean changedInWebUi,
         boolean editable
     ) {
 
@@ -227,9 +228,29 @@ public final class SettingsService {
                 savedValue,
                 value,
                 source,
-                !value.equals(option.defaultValue()),
+                isChangedInWebUi(option, savedValue, environmentValue),
                 option.editableAtRuntime()
             );
+        }
+
+        /**
+         * Whether a value saved in the web UI differs from the value of the deployment: the environment variable, or the default if it is not set.
+         * Values other than strings are compared ignoring case, as environment variables may not use the same case as the allowed values.
+         *
+         * @param option           the {@link ConfigurationOption}
+         * @param savedValue       the value saved in the web UI, or {@code null} if not set
+         * @param environmentValue the value set by the environment variable, or {@code null} if not set
+         * @return {@code true} if the saved value changes the value of the deployment
+         */
+        static boolean isChangedInWebUi(final ConfigurationOption option, final @Nullable String savedValue,
+            final @Nullable String environmentValue) {
+            if (savedValue == null) {
+                return false;
+            }
+            final String deploymentValue = environmentValue == null ? option.defaultValue() : environmentValue;
+            return option.type() == ConfigurationOption.OptionType.STRING
+                ? !savedValue.equals(deploymentValue)
+                : !savedValue.equalsIgnoreCase(deploymentValue);
         }
 
         private static @Nullable Integer minimum(final ConfigurationOption option) {
@@ -245,8 +266,8 @@ public final class SettingsService {
             final boolean set = option.environmentValue().filter(value -> !value.isEmpty()).isPresent();
             final String maskedValue = set ? MASKED_VALUE : "";
             return new SettingView(option.name(), option.group().label(), option.label(), option.type(), option.description(),
-                option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT, set,
-                option.editableAtRuntime());
+                option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT,
+                false, option.editableAtRuntime());
         }
     }
 

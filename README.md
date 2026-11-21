@@ -388,7 +388,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   is renamed in the application is treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and
   the new name as a separate tracker without credentials, which must be entered again (or imported) before it is executed
 - **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run** (those
-  you are most likely to change for an execution), **Output** and **System**. Any value that differs from its default is marked with a bar.
+  you are most likely to change for an execution), **Output** and **System**. A value changed here from the one set by its environment
+  variable (or its default, if not set) is marked with a bar.
   Settings are locked while an execution is in progress
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's

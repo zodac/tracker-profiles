@@ -231,9 +231,9 @@ polled, except the status every 10s during an execution (no logs), so the page t
   it starts, and Start is disabled while none are (`renderRunSummary`, also called by `renderTrackers`). The execution log is hidden until an
   execution has started. The tab is wider than the others (90% of the window), for the browsers of the inputs. The Settings tab shows every option
   under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by group), so the run options come first,
-  with `Scope.STARTUP` options read-only, and a value that differs from its default marked with a bar (a saved value has no badge). While an
-  execution is running, every option is locked. `MULTI_SELECT` options are a list dragged into order
-  (or moved with the arrow keys on the handle), each with a switch to include it.
+  with `Scope.STARTUP` options read-only, and a value saved in the UI that differs from its environment variable (or default, if not set)
+  marked with a bar (`SettingView.changedInWebUi`; a saved value has no badge). While an execution is running, every option is locked.
+  `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to include it.
 - The Trackers tab has a **Download** menu (`#download-menu`, a `<details>` closed by a click outside it or Escape), listing
   `RunStatus.downloads` with their counts (`updateTrackerDownloads`, re-rendered only when they change), an option with none disabled.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and

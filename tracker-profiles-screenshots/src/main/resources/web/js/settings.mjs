@@ -332,8 +332,8 @@ function renderSettingRow(setting) {
     // Updates the badges, without replacing the input (which may have focus)
     function refresh() {
         const current = findSetting(name)
-        // Environment-only settings are never changed in the UI, so they are not marked when they differ from the default
-        row.classList.toggle('changed', current.editable && current.changedFromDefault)
+        // Marked only when a value saved in the UI changes the value of the deployment (its environment variable, or the default if not set)
+        row.classList.toggle('changed', current.changedInWebUi)
         row.classList.toggle('editing', hasKey(unsavedSettings, name))
 
         nameLine.replaceChildren(el('strong', {className: 'setting-label', text: current.label}), el('code', {text: name}))

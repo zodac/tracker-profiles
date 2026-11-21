@@ -72,30 +72,30 @@ class SettingsServiceTest {
         assertThat(find(settings, OPTION))
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value)
             .returns(SettingsService.Source.DEFAULT, SettingsService.SettingView::source)
-            .returns(false, SettingsService.SettingView::changedFromDefault);
+            .returns(false, SettingsService.SettingView::changedInWebUi);
     }
 
     @Test
-    void givenChangedValue_whenUpdated_thenValueIsSavedAndMarkedAsChanged() throws SQLException {
+    void givenChangedValue_whenUpdated_thenValueIsSavedAndMarkedAsChangedInWebUi() throws SQLException {
         final List<SettingsService.SettingView> settings = settingsService.updateSettings(Map.of(OPTION.name(), "3"));
 
         assertThat(find(settings, OPTION))
             .returns("3", SettingsService.SettingView::value)
             .returns(SettingsService.Source.WEB_UI, SettingsService.SettingView::source)
-            .returns(true, SettingsService.SettingView::changedFromDefault);
+            .returns(true, SettingsService.SettingView::changedInWebUi);
         assertThat(applicationDatabase.settings().findAll())
             .containsEntry(OPTION.name(), "3");
     }
 
     @Test
-    void givenSavedValue_whenUpdatedToDefaultValue_thenValueIsStillSaved() throws SQLException {
+    void givenSavedValue_whenUpdatedToDefaultValue_thenValueIsStillSavedButNotMarkedAsChanged() throws SQLException {
         settingsService.updateSettings(Map.of(OPTION.name(), "3"));
         final List<SettingsService.SettingView> settings = settingsService.updateSettings(Map.of(OPTION.name(), OPTION.defaultValue()));
 
         assertThat(find(settings, OPTION))
             .returns(OPTION.defaultValue(), SettingsService.SettingView::value)
             .returns(SettingsService.Source.WEB_UI, SettingsService.SettingView::source)
-            .returns(false, SettingsService.SettingView::changedFromDefault);
+            .returns(false, SettingsService.SettingView::changedInWebUi);
         assertThat(applicationDatabase.settings().findAll())
             .containsEntry(OPTION.name(), OPTION.defaultValue());
     }
@@ -220,6 +220,26 @@ class SettingsServiceTest {
         assertThatThrownBy(() -> settingsService.updateSettings(values))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Unknown setting");
+    }
+
+    @Test
+    void givenEnvironmentValue_whenSavedValueMatchesIt_thenNotChangedInWebUi() {
+        assertThat(SettingsService.SettingView.isChangedInWebUi(OPTION, "3", "3"))
+            .isFalse();
+        assertThat(SettingsService.SettingView.isChangedInWebUi(ConfigurationOption.LOG_LEVEL, "DEBUG", "debug"))
+            .isFalse();
+    }
+
+    @Test
+    void givenEnvironmentValue_whenSavedValueDiffers_thenChangedInWebUiEvenIfItIsTheDefault() {
+        assertThat(SettingsService.SettingView.isChangedInWebUi(OPTION, OPTION.defaultValue(), "5"))
+            .isTrue();
+    }
+
+    @Test
+    void givenNoSavedValue_whenEnvironmentValueDiffersFromDefault_thenNotChangedInWebUi() {
+        assertThat(SettingsService.SettingView.isChangedInWebUi(OPTION, null, "5"))
+            .isFalse();
     }
 
     private static SettingsService.SettingView find(final List<SettingsService.SettingView> settings, final ConfigurationOption option) {
