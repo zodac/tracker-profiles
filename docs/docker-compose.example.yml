@@ -15,7 +15,7 @@ services:
       resources:
         limits:
           memory: "10G"   # ~400M per parallel browser and ~512M for the JVM (~4.5G with 10 browsers), with 2x headroom: raise it for more browsers
-          pids: "8192"    # ~200 per parallel browser (~2k with 10 browsers), with headroom: raise it if NUMBER_OF_PARALLEL_THREADS is above 20
+          pids: 8192    # ~200 per parallel browser (~2k with 10 browsers), with headroom: raise it if NUMBER_OF_PARALLEL_THREADS is above 20
     memswap_limit: "10G"
     environment:
       # Run options (can also be changed on the 'Settings' tab of the web UI, under 'Run')
