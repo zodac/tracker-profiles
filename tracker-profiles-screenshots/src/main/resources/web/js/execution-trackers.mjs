@@ -457,8 +457,8 @@ export function renderExecutionTrackers(status) {
         return group.card
     }))
     groups.forEach(function (group, index) {
-        group.previous.disabled = index === 0
-        group.next.disabled = index === groups.length - 1
+        group.previous.hidden = index === 0
+        group.next.hidden = index === groups.length - 1
     })
 }
 
