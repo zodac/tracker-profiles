@@ -11,7 +11,7 @@ import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs
 import {updateExecutionDownload, updateTrackerDownloads} from './screenshots.mjs'
 import {applyRunStateToSettings} from './settings.mjs'
 import {loadTrackers, trackers, trackersLoaded} from './trackers.mjs'
-import {byId, el, pluralise, request, showToast} from './util.mjs'
+import {applyConfirmation, byId, confirmThenRun, el, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Main: execution status
@@ -109,7 +109,12 @@ function renderStatus(status) {
     const cancelButton = byId('cancel-button')
     cancelButton.hidden = !active
     cancelButton.disabled = cancelling
-    cancelButton.textContent = cancelling ? 'Cancelling…' : 'Cancel'
+    if (cancelling) {
+        cancelButton.classList.remove('confirming')
+        cancelButton.textContent = 'Cancelling…'
+    } else {
+        applyConfirmation(cancelButton)
+    }
 
 
     const succeeded = countTrackers(status, 'SUCCEEDED')
@@ -220,11 +225,12 @@ export function startRun(failedTrackersOnly) {
         })
 }
 
+// The first click only asks for confirmation (see confirmThenRun)
 export function cancelRun() {
-    if (!window.confirm('Cancel the current execution? All browsers will be closed, and trackers in progress will not be screenshot')) {
-        return
-    }
+    confirmThenRun('execution', cancelExecution)
+}
 
+function cancelExecution() {
     byId('cancel-button').disabled = true
     request('POST', '/api/run/cancel', {})
         .then(function (status) {

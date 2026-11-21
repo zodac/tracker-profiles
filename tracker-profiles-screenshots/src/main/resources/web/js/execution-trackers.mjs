@@ -4,7 +4,7 @@ import {enabledTrackers, formatDuration, isActive, latestStatus, refreshStatus} 
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {currentSettingValue} from './settings.mjs'
 import {trackersLoaded} from './trackers.mjs'
-import {byId, el, formatTime, pluralise, request, showToast} from './util.mjs'
+import {applyConfirmation, byId, confirmThenRun, el, formatTime, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Main: trackers in the execution, grouped by state, each with its own logs
@@ -171,17 +171,25 @@ function cancelTrackerButton(row, tracker) {
     if (tracker.state !== 'RUNNING') {
         return null
     }
+    if (row.cancelling) {
+        return el('button', {className: 'button small danger-solid', type: 'button', text: 'Cancelling…', disabled: true})
+    }
+    // Asks for confirmation first (see confirmThenRun), and stays armed when the row is re-rendered
+    const key = `tracker:${tracker.name}`
     const button = el('button', {
-        className: 'button small danger-solid', type: 'button', text: row.cancelling ? 'Cancelling…' : 'Cancel', disabled: Boolean(row.cancelling),
+        className: 'button small danger-solid', type: 'button', dataset: {confirmKey: key, confirmLabel: 'Cancel'},
         title: `Stop ${tracker.name} now, closing its browser (it fails, so Failures only executes it again)`,
     })
+    applyConfirmation(button)
     button.addEventListener('click', function (event) {
         // In the row's summary, so the row is not expanded or collapsed
         event.preventDefault()
         event.stopPropagation()
-        button.disabled = true
-        button.textContent = 'Cancelling…'
-        cancelTracker(row, tracker.name)
+        confirmThenRun(key, function () {
+            button.disabled = true
+            button.textContent = 'Cancelling…'
+            cancelTracker(row, tracker.name)
+        })
     })
     return button
 }

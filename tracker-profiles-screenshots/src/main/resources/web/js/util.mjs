@@ -90,3 +90,55 @@ export function formatTime(epochMillis) {
     }
     return `${pad(date.getHours(), 2)}:${pad(date.getMinutes(), 2)}:${pad(date.getSeconds(), 2)}.${pad(date.getMilliseconds(), 3)}`
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Two-step confirmation: the first click of a button arms it (highlighted, reading 'Confirm?'), and only a second click runs its action. Clicking
+// anywhere else (or Escape) disarms it. Buttons are found by their key (data-confirm-key), so a button re-rendered while armed stays armed
+// ---------------------------------------------------------------------------------------------------------------
+
+let confirmingKey = null
+
+export function hasConfirmation() {
+    return confirmingKey !== null
+}
+
+export function isConfirming(key) {
+    return confirmingKey === key
+}
+
+// Shows a button as armed or not, with its usual label (data-confirm-label) when not armed
+export function applyConfirmation(button) {
+    const confirming = isConfirming(button.dataset.confirmKey)
+    button.classList.toggle('confirming', confirming)
+    button.textContent = confirming ? 'Confirm?' : button.dataset.confirmLabel
+}
+
+function updateConfirmButtons() {
+    document.querySelectorAll('[data-confirm-key]').forEach(applyConfirmation)
+}
+
+// Called on each click of the button: arms it, or runs the action if it is already armed
+export function confirmThenRun(key, action) {
+    if (isConfirming(key)) {
+        clearConfirmation()
+        action()
+        return
+    }
+    confirmingKey = key
+    updateConfirmButtons()
+}
+
+export function clearConfirmation() {
+    if (confirmingKey !== null) {
+        confirmingKey = null
+        updateConfirmButtons()
+    }
+}
+
+// Disarms the armed button when anything else is clicked
+export function clearConfirmationOutside(target) {
+    const button = target.closest ? target.closest('[data-confirm-key]') : null
+    if (!button || !isConfirming(button.dataset.confirmKey)) {
+        clearConfirmation()
+    }
+}

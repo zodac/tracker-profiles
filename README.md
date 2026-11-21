@@ -371,7 +371,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       application restarts (the screenshots are still saved to the output directory as before)
     - A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
       the container. A single running tracker can also be stopped with the **Cancel** button on its row (such as a tracker that is clearly
-      failing): its browser is closed and it fails without another attempt, while the other trackers continue
+      failing): its browser is closed and it fails without another attempt, while the other trackers continue. Both buttons ask you to confirm:
+      the first click changes the button to **Confirm?**, and a second click cancels, while clicking anywhere else (or `Escape`) leaves it running
     - Messages not logged by a tracker (such as the summary of the execution) are only written to the container logs
 - **Trackers**: every supported tracker, grouped by enabled/disabled (manual trackers are tagged as *Manual input*), with trackers
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent

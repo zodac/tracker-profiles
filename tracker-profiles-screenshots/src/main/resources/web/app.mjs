@@ -27,7 +27,7 @@ import {
     selectedTrackers,
     trackerDrafts,
 } from './js/trackers.mjs'
-import {byId, showToast} from './js/util.mjs'
+import {byId, clearConfirmation, clearConfirmationOutside, hasConfirmation, showToast} from './js/util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Start up
@@ -58,7 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     byId('selection-clear').addEventListener('click', clearSelection)
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && byId('download-menu').open) {
+        if (event.key === 'Escape' && hasConfirmation()) {
+            clearConfirmation()
+        } else if (event.key === 'Escape' && byId('download-menu').open) {
             closeDownloadMenu()
         } else if (event.key === 'Escape' && selectedTrackers.size > 0) {
             clearSelection()
@@ -68,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     })
     document.addEventListener('pointerdown', function (event) {
+        clearConfirmationOutside(event.target)
         releasePinnedTrackersOutside(event.target)
         if (!byId('download-menu').contains(event.target)) {
             closeDownloadMenu()
