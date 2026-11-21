@@ -37,7 +37,7 @@ function hasCredentials(tracker) {
 
 // Whether anything is saved for a tracker that can be removed: its credentials, or anything at all for a legacy tracker
 function isRemovable(tracker) {
-    return tracker.legacy || Boolean(tracker.username) || tracker.hasPassword
+    return Boolean(tracker.username) || tracker.hasPassword
 }
 
 // The group a tracker belongs in: 'enabled', 'disabled', 'unset' (no username or password), or 'legacy' (no longer supported, but kept until
@@ -173,6 +173,12 @@ export function renderTrackers() {
     trackerRowsByName.forEach(function (row, name) {
         if (!findTracker(name)) {
             trackerRowsByName.delete(name)
+            selectedTrackers.delete(name)
+        }
+    })
+    // A selected tracker that moves to the unset group (its credentials were removed) is no longer selected
+    selectedTrackers.forEach(function (name) {
+        if (!isSelectable(name)) {
             selectedTrackers.delete(name)
         }
     })
@@ -399,11 +405,53 @@ function renderTrackersWithMove(moved) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------
-// Trackers: selecting trackers to change them together (click selects one, Ctrl/Cmd+click adds or removes one, Shift+click a range)
+// Trackers: selecting trackers to change them together (click selects one, Ctrl/Cmd+click adds or removes one, Shift+click a range,
+// Ctrl/Cmd+A all of them). Only enabled and disabled trackers can be selected, never unset or legacy ones
 // ---------------------------------------------------------------------------------------------------------------------------
 
+const SELECTABLE_GROUPS = ['enabled', 'disabled']
 export const selectedTrackers = new Set()
 let selectionAnchor = null
+
+function isSelectable(name) {
+    const tracker = findTracker(name)
+    return Boolean(tracker) && SELECTABLE_GROUPS.includes(displayedGroupOf(tracker))
+}
+
+// The trackers listed in a group, if it is open (a tracker that cannot be seen is never selected)
+function shownTrackersOf(group) {
+    const list = trackerGroups.groups[group].list
+    if (!list.closest('details').open) {
+        return []
+    }
+    return Array.from(list.children).map(function (element) {
+        return element.dataset.name
+    })
+}
+
+// Selects the rest of a group when only trackers of that group are selected, otherwise every enabled and disabled tracker (so a second
+// Ctrl/Cmd+A extends a group to both)
+export function selectAllTrackers() {
+    if (!trackerGroups) {
+        return
+    }
+    const shown = SELECTABLE_GROUPS.map(shownTrackersOf)
+    const partlySelected = shown.filter(function (names) {
+        return names.some(function (name) {
+            return selectedTrackers.has(name)
+        })
+    })
+    let names = shown.flat()
+    if (partlySelected.length === 1 && partlySelected[0].some(function (name) {
+        return !selectedTrackers.has(name)
+    })) {
+        names = partlySelected[0]
+    }
+    names.forEach(function (name) {
+        selectedTrackers.add(name)
+    })
+    renderSelection()
+}
 
 // Clicks on the inputs, switch, buttons, links and screenshots of a row keep their usual behaviour
 function isRowControl(target) {
@@ -414,7 +462,7 @@ function isRowControl(target) {
 function trackersInRange(name) {
     const names = Array.from(document.querySelectorAll('#tracker-groups .tracker-row')).map(function (element) {
         return element.dataset.name
-    })
+    }).filter(isSelectable)
     const from = names.indexOf(selectionAnchor)
     const to = names.indexOf(name)
     if (from === -1 || to === -1) {
@@ -425,7 +473,7 @@ function trackersInRange(name) {
 
 function onTrackerRowClick(event, name) {
     // Alt+click is left to the browser, so the text of a row can still be selected
-    if (event.altKey || isRowControl(event.target)) {
+    if (event.altKey || isRowControl(event.target) || !isSelectable(name)) {
         return
     }
     event.preventDefault()
@@ -488,9 +536,8 @@ function renderSelection() {
     byId('selection-remove').disabled = !selected.some(isRemovable)
 }
 
-// A legacy tracker cannot be enabled or disabled, only removed
 function canChangeEnabled(tracker, enable) {
-    return !tracker.legacy && tracker.enabled !== enable && (!enable || hasCredentials(tracker))
+    return tracker.enabled !== enable && (!enable || hasCredentials(tracker))
 }
 
 // Applies a change to every selected tracker in a single request, then moves them all together
@@ -500,15 +547,7 @@ export function changeSelectedTrackers(action) {
     let describe
     if (action === 'remove') {
         targets = selected.filter(isRemovable)
-        const legacyCount = targets.filter(function (tracker) {
-            return tracker.legacy
-        }).length
-        let question = `Remove the saved credentials for ${pluralise(targets.length, 'tracker')}?`
-        if (legacyCount > 0) {
-            question += ` ${pluralise(legacyCount, 'legacy tracker')} will be removed from the list with ${legacyCount === 1 ? 'its' : 'their'} last`
-                + ' run and screenshots (the screenshot files are kept)'
-        }
-        if (!window.confirm(question)) {
+        if (!window.confirm(`Remove the saved credentials for ${pluralise(targets.length, 'tracker')}?`)) {
             return
         }
         describe = 'Removed the credentials for'
@@ -778,9 +817,9 @@ function createTrackerRow(tracker) {
     row.addEventListener('click', function (event) {
         onTrackerRowClick(event, current.name)
     })
-    // Clicks select the row rather than its text, unless Alt is held
+    // Clicks select the row rather than its text, unless Alt is held (or the row cannot be selected)
     row.addEventListener('mousedown', function (event) {
-        if (!event.altKey && !isRowControl(event.target)) {
+        if (!event.altKey && !isRowControl(event.target) && isSelectable(current.name)) {
             event.preventDefault()
             // Preventing the default also keeps any text already selected, which a click would usually clear
             window.getSelection().removeAllRanges()

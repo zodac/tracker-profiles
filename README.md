@@ -375,8 +375,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
   The image button next to a tracker's last result expands its row to show the screenshots of its most recent execution, as on the **Main** tab:
   its profile screenshots if it succeeded, or its failure screenshot if it failed (from any execution, also before a restart, as long as they are
-  still on disk). Click a tracker to select it, `Ctrl`+click to add or
-  remove one, or `Shift`+click to select a range, to enable, disable or remove them together (`Alt`+click selects the text of a row instead).
+  still on disk). Click an enabled or disabled tracker to select it, `Ctrl`+click to add or remove one, `Shift`+click to select a range, or
+  `Ctrl`+`A` to select them all (only the rest of a group if all selected trackers are in it, then both groups if pressed again), to enable,
+  disable or remove them together (`Alt`+click selects the text of a row instead). Unset and legacy trackers cannot be selected.
   Trackers can also be [imported from a CSV file](#importing-trackers). **Download** downloads the latest screenshots of every tracker, from any
   execution (also before a restart): **All**, **Successful** (the profile screenshots of each tracker's latest success), one redaction type
   (**Blur redaction**, **Box redaction** or **No redaction**), or **Errors** (the failure screenshot of each tracker whose latest execution

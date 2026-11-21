@@ -240,8 +240,11 @@ polled, except the status every 10s during an execution (no logs), so the page t
   remove columns hidden). Rows are kept between renders and only moved rows change place, and when a tracker moves the page is scrolled to keep the
   rows around it still (the page never follows the moved row). A click selects a tracker (Ctrl/Cmd+click adds or removes one, Shift+click
   selects a range from the last tracker clicked without Shift, Ctrl/Cmd+Shift+click adds it), and Alt+click is left to the browser to select text
-  (the rows' text is not otherwise selectable). The selection bar enables, disables or removes the selected trackers together. A tracker whose
-  credentials change its group while it is being edited is pinned in its group until the user clicks outside its row, or makes no change for 10s.
+  (the rows' text is not otherwise selectable). Only enabled and disabled trackers can be selected (`isSelectable`, by displayed group), never
+  unset or legacy ones (a tracker that becomes unset is deselected). Ctrl/Cmd+A (`selectAllTrackers`, outside text fields and dialogs) selects
+  the rest of a group when all the selected trackers are in it, otherwise every tracker in the open enabled and disabled groups. The selection
+  bar enables, disables or removes the selected trackers together. A tracker whose credentials change its group while it is being edited is
+  pinned in its group until the user clicks outside its row, or makes no change for 10s.
 - A legacy tracker (anything stored in the database for a name with no handler, such as a removed tracker) is listed by `TrackerApiHandler`
   (`TrackerView.legacy`) in a Legacy group on the Trackers tab, with its last run and screenshots, so they can still be retrieved if the tracker
   goes down. It is never executed (`RunManager` skips it) and **never removed automatically**: only the user's remove (`DELETE`, or the bulk

@@ -23,6 +23,7 @@ import {
     loadTrackers,
     releasePinnedTrackersOutside,
     renderTrackers,
+    selectAllTrackers,
     selectedTrackers,
     trackerDrafts,
 } from './js/trackers.mjs'
@@ -67,6 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
             closeDownloadMenu()
         } else if (event.key === 'Escape' && selectedTrackers.size > 0) {
             clearSelection()
+        } else if (isSelectAllShortcut(event)) {
+            event.preventDefault()
+            selectAllTrackers()
         }
     })
     document.addEventListener('pointerdown', function (event) {
@@ -123,3 +127,12 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast(error.message, 'error')
     })
 })
+
+// Ctrl/Cmd+A on the Trackers tab selects trackers, unless typing in a field (which selects its text) or a dialog is open
+function isSelectAllShortcut(event) {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'a') {
+        return false
+    }
+    const typing = event.target.closest && event.target.closest('input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable]')
+    return !byId('tab-trackers').hidden && !typing && !document.querySelector('dialog[open]')
+}
