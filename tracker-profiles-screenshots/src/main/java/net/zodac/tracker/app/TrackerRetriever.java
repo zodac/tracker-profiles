@@ -21,9 +21,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import net.zodac.tracker.framework.ExecutionOrder;
 import net.zodac.tracker.framework.TrackerCredential;
 import net.zodac.tracker.framework.TrackerHandlerFactory;
-import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.annotation.TrackerHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,27 +35,26 @@ public final class TrackerRetriever {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    // Manual trackers are executed first, so their prompts are shown as soon as the execution starts, while headless trackers run alongside them
-    private static final Comparator<ScheduledTracker> EXECUTION_ORDER = Comparator
-        .comparing((final ScheduledTracker tracker) -> tracker.type() != TrackerType.MANUAL)
-        .thenComparing(ScheduledTracker::credential);
-
     private TrackerRetriever() {
 
     }
 
     /**
-     * Lists the provided {@link TrackerCredential}s in the order they are executed (manual trackers first, then by name), excluding any tracker that
-     * has no {@link TrackerHandler}.
+     * Lists the provided {@link TrackerCredential}s in the order they are executed (by {@link ExecutionOrder}, then by name), excluding any tracker
+     * that has no {@link TrackerHandler}.
      *
      * @param trackerCredentials the {@link TrackerCredential}s to execute
+     * @param executionOrder     the {@link ExecutionOrder}
      * @return the {@link ScheduledTracker}s, in execution order
      */
-    public static List<ScheduledTracker> schedule(final Collection<TrackerCredential> trackerCredentials) {
+    public static List<ScheduledTracker> schedule(final Collection<TrackerCredential> trackerCredentials, final ExecutionOrder executionOrder) {
+        final Comparator<ScheduledTracker> order = Comparator
+            .comparing(ScheduledTracker::type, executionOrder.typeOrder())
+            .thenComparing(ScheduledTracker::credential);
         final List<ScheduledTracker> scheduledTrackers = trackerCredentials
             .stream()
             .flatMap(credential -> findHandler(credential).map(handler -> new ScheduledTracker(credential, handler.type())).stream())
-            .sorted(EXECUTION_ORDER)
+            .sorted(order)
             .toList();
 
         LOGGER.trace("Trackers to be screenshot: {}", scheduledTrackers);

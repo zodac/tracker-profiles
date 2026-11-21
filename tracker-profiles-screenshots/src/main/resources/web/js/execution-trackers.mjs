@@ -37,8 +37,19 @@ function isFinished(status) {
 }
 
 // Before the first execution, the enabled trackers are shown waiting, as they would be once it starts
-function waitingTrackers() {
-    return enabledTrackers().map(function (tracker) {
+// The enabled trackers, in the order they will be executed (see ExecutionOrder): by name, or one type first and then each type by name
+function waitingTrackers(executionOrder) {
+    const firstType = {HEADLESS_FIRST: 'HEADLESS', MANUAL_FIRST: 'MANUAL'}[executionOrder]
+    const sorted = enabledTrackers().slice().sort(function (first, second) {
+        if (firstType && first.type !== second.type) {
+            return first.type === firstType ? -1 : 1
+        }
+        // As TrackerCredential.compareTo, so the order matches the execution
+        const firstName = first.name.toLowerCase()
+        const secondName = second.name.toLowerCase()
+        return firstName < secondName ? -1 : (firstName > secondName ? 1 : 0)
+    })
+    return sorted.map(function (tracker) {
         return {
             name: tracker.name,
             type: tracker.type,
@@ -293,7 +304,11 @@ function groupFor(state) {
     return groupElements[state]
 }
 
+// Waiting trackers stay in execution order (the order of the status), running ones are in the order they started, and others by name
 function sortForGroup(state, list) {
+    if (state === 'WAITING') {
+        return list
+    }
     return list.slice().sort(function (first, second) {
         if (state === 'RUNNING') {
             return first.startedAt - second.startedAt
@@ -321,7 +336,7 @@ export function renderExecutionTrackers(status) {
         container.replaceChildren()
         return
     }
-    const executionTrackers = status.state === 'IDLE' ? waitingTrackers() : status.trackers
+    const executionTrackers = status.state === 'IDLE' ? waitingTrackers(status.executionOrder) : status.trackers
     if (status.state === 'IDLE' && executionTrackers.length === 0) {
         const group = groupFor('WAITING')
         group.title.textContent = 'Waiting (0)'

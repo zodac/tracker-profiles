@@ -56,7 +56,7 @@ public final class ScreenshotOrchestrator {
      * @return the {@link ExitState} of the execution
      * @throws IOException thrown if the output directories cannot be created
      * @see ScreenshotDirectories#createAll()
-     * @see TrackerRetriever#schedule(java.util.Collection)
+     * @see TrackerRetriever#schedule(java.util.Collection, net.zodac.tracker.framework.ExecutionOrder)
      */
     public static ExitState start(final List<ScheduledTracker> scheduledTrackers, final ExecutionListener executionListener) throws IOException {
         final int numberOfTrackers = scheduledTrackers.size();

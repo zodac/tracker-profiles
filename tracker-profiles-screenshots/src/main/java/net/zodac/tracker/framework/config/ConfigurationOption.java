@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import net.zodac.tracker.framework.ExecutionOrder;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import org.jspecify.annotations.Nullable;
 
@@ -50,6 +51,12 @@ public enum ConfigurationOption {
      */
     NUMBER_OF_PARALLEL_THREADS(Group.RUN, "Parallel execution", "5", Range.of(1, 32),
         "The number of trackers to execute at the same time", Scope.EXECUTION),
+
+    /**
+     * The order in which trackers are executed.
+     */
+    EXECUTION_ORDER(Group.RUN, "Execution order", "ALPHABETICAL", OptionType.SELECT, names(ExecutionOrder.values()),
+        "The order in which trackers are executed: by name, or headless or manual trackers first (each by name)", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.

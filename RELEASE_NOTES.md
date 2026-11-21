@@ -48,12 +48,13 @@ between containers (the [example compose file](docs/docker-compose.example.yml) 
     - `TRACKER_INPUT_FILE_PATH`
 - `FORCE_UI_BROWSER` is removed, as the browser of any tracker in progress (headless or not) can be watched in the web UI
 - `TRACKER_EXECUTION_ORDER` is removed, as trackers are enabled or disabled on the **Trackers** tab, and headless and manual trackers now run
-  together (manual trackers are started first, so their prompts are shown straight away)
+  together. The new `EXECUTION_ORDER` sets the order they start in: `ALPHABETICAL` (the default), `HEADLESS_FIRST` or `MANUAL_FIRST` (so the
+  prompts of manual trackers are shown straight away)
 - `INPUT_TIMEOUT_ENABLED` and `INPUT_TIMEOUT_SECONDS` are removed: a prompt for a manual tracker waits until you respond (or the execution is
   cancelled)
 - `TAKE_SCREENSHOT_ON_ERROR` is removed: a screenshot is always taken when a tracker fails (in the `errors` subdirectory)
 - `SCREENSHOT_EXISTS_ACTION` is removed: an existing screenshot for the tracker on the same date is always overwritten
-- New options: `DATABASE_PATH`, `SECRET_KEY` and `WEB_UI_PORT`
+- New options: `DATABASE_PATH`, `EXECUTION_ORDER`, `SECRET_KEY` and `WEB_UI_PORT`
 
 ## Docker Compose
 

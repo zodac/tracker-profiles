@@ -321,11 +321,12 @@ Two types control how the browser is created and whether user interaction is nee
   of its own).
     - Override `preLoginClickAction()` or `postLoginClickAction()` in the handler.
 
-Trackers of both types run together, up to `NUMBER_OF_PARALLEL_THREADS` at once, in the order of `TrackerRetriever.schedule`: manual
-trackers first (so their prompts are shown as soon as the execution starts), then by name. The type is only shown as a tag (a "Manual input" badge)
-in the web UI, never as a separate group. `DriverPool` keeps idle browsers of each type, but never more than `NUMBER_OF_PARALLEL_THREADS` open in
-total: a tracker reuses an idle browser of its type, otherwise one is started (closing an idle browser of another type first if the pool is
-full), so no tracker waits for a browser.
+Trackers of both types run together, up to `NUMBER_OF_PARALLEL_THREADS` at once, in the order of `TrackerRetriever.schedule`: by the
+`EXECUTION_ORDER` option (`framework.ExecutionOrder`: alphabetical, the default, or headless or manual trackers first), then by name. The Main tab
+lists waiting trackers in this order (`RunStatus.executionOrder` sorts the enabled trackers before the first execution). The type is only shown as a
+tag (a "Manual input" badge) in the web UI, never as a separate group. `DriverPool` keeps idle browsers of each type, but never more than
+`NUMBER_OF_PARALLEL_THREADS` open in total: a tracker reuses an idle browser of its type, otherwise one is started (closing an idle browser of
+another type first if the pool is full), so no tracker waits for a browser.
 
 ### Cloudflare Verification
 

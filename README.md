@@ -425,8 +425,9 @@ which can be collapsed to put them aside. Scrolling over a browser scrolls its p
 which your clicks, scrolling and typing are sent to it until you click elsewhere. `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code).
 Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Skip tracker** fails the
 current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run together (as
-many as `NUMBER_OF_PARALLEL_THREADS` at once), with the manual trackers started first, so their prompts are shown straight away and several can be
-shown at once, each with its own browser, and answered in any order while the headless trackers continue.
+many as `NUMBER_OF_PARALLEL_THREADS` at once), started in the order set by `EXECUTION_ORDER` (by name, or headless or manual trackers first;
+choose **Manual first** to have the prompts shown straight away). Several prompts can be shown at once, each with its own browser, and answered in
+any order while the headless trackers continue.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
 selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. Each prompt starts with the
@@ -508,6 +509,7 @@ These options apply from the next execution.
 | *LOG_LEVEL*                     | The logging level for application output [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF](https://logging.apache.org/log4j/2.x/manual/customloglevels.html)                                                                                   | INFO          |
 | *REDACTION_TYPE*                | Comma-separated list of redaction types to apply (if more than one is selected then multiple screenshots will be taken) [BLUR, BOX, NONE](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/RedactionType.java) | BOX           |
 | *NUMBER_OF_PARALLEL_THREADS*    | The number of trackers to execute at the same time [min: 1, max: 32]                                                                                                                                                                            | 5             |
+| *EXECUTION_ORDER*               | The order in which trackers are executed: by name, or headless or manual trackers first (each by name) [ALPHABETICAL, HEADLESS_FIRST, MANUAL_FIRST]                                                                                             | ALPHABETICAL  |
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
 | *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
 
@@ -679,6 +681,7 @@ execution from the [web UI](#web-ui) at [http://localhost:8080](http://localhost
 ```bash
 mvn clean install && \
     ENABLE_TRANSLATION_TO_ENGLISH=true \
+    EXECUTION_ORDER=ALPHABETICAL \
     LOG_LEVEL=TRACE \
     NUMBER_OF_PARALLEL_THREADS=5 \
     NUMBER_OF_SCREENSHOT_ATTEMPTS=5 \

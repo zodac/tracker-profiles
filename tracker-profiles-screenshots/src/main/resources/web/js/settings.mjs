@@ -1,5 +1,5 @@
 import {TYPING_SAVE_DELAY_MS} from './constants.mjs'
-import {formatTypeName, isActive, latestStatus} from './run.mjs'
+import {formatTypeName, isActive, latestStatus, refreshStatus} from './run.mjs'
 import {renderTrackers, trackersLoaded} from './trackers.mjs'
 import {byId, el, hasKey, request, showToast} from './util.mjs'
 
@@ -250,7 +250,7 @@ function settingInput(setting, onChange, onFlush) {
 
     if (setting.type === 'SELECT') {
         const select = el('select', {disabled: disabled, 'aria-label': label}, setting.allowedValues.map(function (value) {
-            return el('option', {value: value, text: value})
+            return el('option', {value: value, text: formatTypeName(value)})
         }))
         select.addEventListener('change', function () {
             onChange(select.value, true)
@@ -396,6 +396,8 @@ function queueSettingSave(name) {
 
 function putSettings(values) {
     return request('PUT', '/api/settings', {values: values}).then(function (updated) {
+        // The status lists the enabled trackers in the saved execution order, so the Main tab shows a new order straight away
+        refreshStatus()
         return {values: values, updated: updated}
     })
 }

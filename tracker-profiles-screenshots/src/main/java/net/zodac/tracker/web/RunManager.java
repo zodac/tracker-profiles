@@ -359,7 +359,8 @@ public final class RunManager implements ExecutionListener {
         } else {
             LOGGER.info("Starting execution");
         }
-        reloadConfiguration(applicationDatabase).print();
+        final ApplicationConfiguration applicationConfiguration = reloadConfiguration(applicationDatabase);
+        applicationConfiguration.print();
 
         final List<TrackerCredential> enabledTrackers = applicationDatabase.credentials().findAll()
             .stream()
@@ -373,7 +374,7 @@ public final class RunManager implements ExecutionListener {
             LOGGER.warn("{} failed tracker(s) no longer enabled, not executed", failedTrackerNames.size() - enabledTrackers.size());
         }
 
-        final List<ScheduledTracker> scheduledTrackers = TrackerRetriever.schedule(enabledTrackers);
+        final List<ScheduledTracker> scheduledTrackers = TrackerRetriever.schedule(enabledTrackers, applicationConfiguration.executionOrder());
         if (!DisplayValidator.isValid(scheduledTrackers.stream().map(ScheduledTracker::type).toList())) {
             return ExitState.FAILURE;
         }
@@ -465,6 +466,7 @@ public final class RunManager implements ExecutionListener {
                 failedTrackerNames(),
                 executionScreenshots,
                 downloads,
+                Configuration.get().executionOrder(),
                 UserInputRequests.pending()
             );
         } finally {

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import net.zodac.tracker.framework.ExecutionOrder;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.redactor.RedactionType;
 import org.apache.logging.log4j.LogManager;
@@ -56,6 +57,7 @@ public record ApplicationConfiguration(
     String browserDataStoragePath,
     Path databasePath,
     boolean enableTranslationToEnglish,
+    ExecutionOrder executionOrder,
     String logLevel,
     int numberOfParallelThreads,
     int numberOfScreenshotAttempts,
@@ -101,6 +103,7 @@ public record ApplicationConfiguration(
             BROWSER_DATA_STORAGE_PATH,
             Paths.get(source.get(ConfigurationOption.DATABASE_PATH)),
             source.bool(ConfigurationOption.ENABLE_TRANSLATION_TO_ENGLISH),
+            ExecutionOrder.valueOf(source.select(ConfigurationOption.EXECUTION_ORDER)),
             source.select(ConfigurationOption.LOG_LEVEL),
             source.integer(ConfigurationOption.NUMBER_OF_PARALLEL_THREADS),
             source.integer(ConfigurationOption.NUMBER_OF_SCREENSHOT_ATTEMPTS),

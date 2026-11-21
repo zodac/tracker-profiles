@@ -19,6 +19,7 @@ package net.zodac.tracker.web;
 
 import java.util.List;
 import java.util.Map;
+import net.zodac.tracker.framework.ExecutionOrder;
 import net.zodac.tracker.framework.input.UserInputRequests.PendingUserInput;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import org.jspecify.annotations.Nullable;
@@ -30,12 +31,13 @@ import org.jspecify.annotations.Nullable;
  * @param startedAt               the start time of the execution as epoch milliseconds, or {@code null} if never started
  * @param finishedAt              the end time of the execution as epoch milliseconds, or {@code null} if not finished
  * @param totalTrackers           the number of trackers in {@code trackers}
- * @param trackers                every tracker in the execution
+ * @param trackers                every tracker in the execution, in execution order
  * @param failedTrackers          the names of the trackers that failed in the execution, which can be executed again on their own (empty while an
  *                                execution is in progress)
  * @param executionScreenshots    the number of profile screenshots of the trackers that succeeded in the execution, that still exist
  * @param downloads               the screenshots that can be downloaded from the Trackers tab, from the latest screenshots of every tracker across
  *                                all executions, in the order shown
+ * @param executionOrder          the {@link ExecutionOrder} of the next execution, in which the enabled trackers are listed before it starts
  * @param pendingInputs           the requests waiting for the user to provide an input
  */
 public record RunStatus(
@@ -47,6 +49,7 @@ public record RunStatus(
     List<String> failedTrackers,
     int executionScreenshots,
     List<Download> downloads,
+    ExecutionOrder executionOrder,
     List<PendingUserInput> pendingInputs
 ) {
 
