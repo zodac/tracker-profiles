@@ -363,7 +363,7 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
     - Once a tracker has succeeded 3 times, it is estimated to take the average of its last 5 successful executions (not counting the time spent
       waiting for your input, which is also left out while it runs). A waiting tracker shows its estimate (`~1m 20s`), and a running one the time
       it has been running against its estimate (`45s / ~1m 20s`). The card shows the estimated time left for the whole execution (from the
-      trackers' estimates, in the order they are executed on the parallel threads, with the number of trackers not estimated yet), or before the
+      trackers' estimates, in the order they are executed on the parallel threads, leaving out any tracker not estimated yet), or before the
       first execution how long it is estimated to take
     - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed.
       Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),

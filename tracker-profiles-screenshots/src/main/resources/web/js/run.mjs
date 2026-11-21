@@ -60,8 +60,7 @@ export function activeDuration(tracker) {
 
 // The estimated time until the trackers that are running or waiting have all finished, or null if none has an estimate. The trackers are
 // simulated in execution order on the parallel threads (as the execution starts the next waiting tracker as soon as one finishes), with a running
-// tracker taking the rest of its estimate. A tracker with no estimate is not counted (only reported in 'unestimated'), and the time spent waiting
-// for user inputs is not included
+// tracker taking the rest of its estimate. A tracker with no estimate is not counted, and the time spent waiting for user inputs is not included
 export function estimateRemaining(executionTrackers) {
     const active = executionTrackers.filter(function (tracker) {
         return tracker.state === 'RUNNING' || tracker.state === 'WAITING'
@@ -89,18 +88,17 @@ export function estimateRemaining(executionTrackers) {
             threadFreeAt[next] += tracker.estimatedDuration
         }
     })
-    return {remaining: Math.max.apply(null, threadFreeAt), unestimated: active.length - estimated.length}
+    return Math.max.apply(null, threadFreeAt)
 }
 
-function remainingDescription(estimate, suffix) {
-    if (!estimate) {
+function remainingDescription(remaining, suffix) {
+    if (remaining === null) {
         return ''
     }
-    const unestimated = estimate.unestimated > 0 ? ` (${pluralise(estimate.unestimated, 'tracker')} not estimated yet)` : ''
-    if (estimate.remaining < 1000) {
-        return ` · Over the estimate${unestimated}`
+    if (remaining < 1000) {
+        return ' · Over the estimate'
     }
-    return ` · ${formatEstimate(estimate.remaining)} ${suffix}${unestimated}`
+    return ` · ${formatEstimate(remaining)} ${suffix}`
 }
 
 export function formatTypeName(value) {

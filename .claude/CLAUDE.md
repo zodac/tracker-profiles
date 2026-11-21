@@ -193,7 +193,7 @@ by `RunManager.trackerStarted` with `resetWaited`), which `TrackerProgress.input
 In the UI, `activeDuration` (`js/run.mjs`) is a tracker's running time without its input wait (so it stops while an input is pending), shown
 against its estimate on its row, and `estimateRemaining` simulates the running and waiting trackers in execution order on
 `NUMBER_OF_PARALLEL_THREADS` threads for the time left in the run card (or the whole execution before the first one, from the waiting trackers
-built from the Trackers tab list). A tracker without an estimate is left out of it, and only counted.
+built from the Trackers tab list). A tracker without an estimate is left out of it.
 
 #### Live Browser View
 
