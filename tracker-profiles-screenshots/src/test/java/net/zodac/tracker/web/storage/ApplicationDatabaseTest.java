@@ -41,7 +41,7 @@ import org.junit.jupiter.api.io.TempDir;
 class ApplicationDatabaseTest {
 
     private static final String SECRET_KEY = "test-secret-key-value";
-    private static final String LATEST_SCHEMA_VERSION = "3";
+    private static final String LATEST_SCHEMA_VERSION = "4";
 
     @TempDir
     private Path tempDirectory;
@@ -63,7 +63,7 @@ class ApplicationDatabaseTest {
         assertThat(querySingleValue("SELECT MAX(CAST(version AS INTEGER)) FROM flyway_schema_history WHERE success = 1"))
             .isEqualTo(LATEST_SCHEMA_VERSION);
         assertThat(querySingleValue("SELECT COUNT(*) FROM sqlite_schema WHERE type = 'table' AND sql LIKE '%STRICT, WITHOUT ROWID'"))
-            .isEqualTo("5");
+            .isEqualTo("6");
     }
 
     @Test
@@ -268,12 +268,42 @@ class ApplicationDatabaseTest {
     }
 
     @Test
+    void givenFewerThanMinimumDurations_whenEstimatesFound_thenTrackerHasNoEstimate() throws SQLException {
+        applicationDatabase.durations().add("Tracker", 1_000L, 10_000L);
+        applicationDatabase.durations().add("tracker", 2_000L, 20_000L);
+
+        assertThat(applicationDatabase.durations().findEstimates())
+            .isEmpty();
+    }
+
+    @Test
+    void givenMoreThanKeptDurations_whenEstimatesFound_thenOnlyLatestDurationsAreAveraged() throws SQLException {
+        // The two oldest are removed, so the average is of 30, 40, 50, 60 and 71 seconds
+        for (int i = 1; i <= 6; i++) {
+            applicationDatabase.durations().add("Alpha", i * 1_000L, i * 10_000L);
+        }
+        applicationDatabase.durations().add("alpha", 7_000L, 71_000L);
+        applicationDatabase.durations().add("Beta", 1_000L, 1_000L);
+        applicationDatabase.durations().add("Beta", 2_000L, 2_000L);
+        applicationDatabase.durations().add("Beta", 3_000L, 4_000L);
+
+        assertThat(applicationDatabase.durations().findEstimates())
+            .containsExactly(
+                new TrackerDurationEstimate("Alpha", 50_200L, 5),
+                new TrackerDurationEstimate("Beta", 2_333L, 3)
+            );
+    }
+
+    @Test
     void givenStoredTrackers_whenRemoved_thenEverythingStoredForThemIsRemovedAndOnlyStoredTrackersAreReported() throws SQLException {
         applicationDatabase.credentials().save("Alpha", "user", "password", true);
         applicationDatabase.results().save(new StoredTrackerResult("Alpha", 1_000L, true));
         applicationDatabase.screenshots().replace("Alpha", List.of(
             new StoredTrackerScreenshot("Alpha", "none", 0, "/screenshots/Alpha.png", 1_000L)
         ));
+        for (int i = 1; i <= TrackerDurationRepository.MINIMUM_DURATIONS; i++) {
+            applicationDatabase.durations().add("Alpha", i * 1_000L, 10_000L);
+        }
         // Only a result and screenshots remain once a tracker's credentials have been removed
         applicationDatabase.results().save(new StoredTrackerResult("Beta", 1_000L, false));
         applicationDatabase.screenshots().replace("Beta", List.of(
@@ -291,6 +321,8 @@ class ApplicationDatabaseTest {
             .extracting(StoredTrackerResult::name)
             .containsExactly("Gamma");
         assertThat(applicationDatabase.screenshots().findAll())
+            .isEmpty();
+        assertThat(applicationDatabase.durations().findEstimates())
             .isEmpty();
     }
 

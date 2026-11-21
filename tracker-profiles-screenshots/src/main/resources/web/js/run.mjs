@@ -7,9 +7,9 @@ import {
     STATUS_POLL_INTERVAL_MS,
 } from './constants.mjs'
 import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
-import {refreshOpenLogs, renderExecutionTrackers} from './execution-trackers.mjs'
+import {refreshOpenLogs, renderExecutionTrackers, waitingTrackers} from './execution-trackers.mjs'
 import {updateExecutionDownload, updateTrackerDownloads} from './screenshots.mjs'
-import {applyRunStateToSettings} from './settings.mjs'
+import {applyRunStateToSettings, currentSettingValue} from './settings.mjs'
 import {loadTrackers, trackers, trackersLoaded} from './trackers.mjs'
 import {applyConfirmation, byId, confirmThenRun, el, pluralise, request, showToast} from './util.mjs'
 
@@ -31,6 +31,76 @@ export function formatDuration(milliseconds) {
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
     return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, '0')}s` : `${seconds}s`
+}
+
+// An estimated duration (see estimatedDuration of a tracker): the average of its last successful executions
+export function formatEstimate(milliseconds) {
+    return `~${formatDuration(milliseconds)}`
+}
+
+export const ESTIMATE_DESCRIPTION = 'the average of its last successful executions, not counting the time spent waiting for your input'
+
+// The time a tracker has been running, not counting the time spent waiting for user inputs (as its estimated duration does not), so it does not
+// advance while the tracker waits for an input
+export function activeDuration(tracker) {
+    if (tracker.startedAt === null) {
+        return 0
+    }
+    const end = tracker.finishedAt === null ? Date.now() : tracker.finishedAt
+    let inputWait = tracker.inputWait || 0
+    if (tracker.state === 'RUNNING' && latestStatus) {
+        latestStatus.pendingInputs.forEach(function (input) {
+            if (input.trackerName === tracker.name) {
+                inputWait += Math.max(0, end - input.requestedAt)
+            }
+        })
+    }
+    return Math.max(0, end - tracker.startedAt - inputWait)
+}
+
+// The estimated time until the trackers that are running or waiting have all finished, or null if none has an estimate. The trackers are
+// simulated in execution order on the parallel threads (as the execution starts the next waiting tracker as soon as one finishes), with a running
+// tracker taking the rest of its estimate. A tracker with no estimate is not counted (only reported in 'unestimated'), and the time spent waiting
+// for user inputs is not included
+export function estimateRemaining(executionTrackers) {
+    const active = executionTrackers.filter(function (tracker) {
+        return tracker.state === 'RUNNING' || tracker.state === 'WAITING'
+    })
+    const estimated = active.filter(function (tracker) {
+        return tracker.estimatedDuration !== null && tracker.estimatedDuration !== undefined
+    })
+    if (estimated.length === 0) {
+        return null
+    }
+
+    const threads = Math.max(1, Number(currentSettingValue('NUMBER_OF_PARALLEL_THREADS')) || 1)
+    const threadFreeAt = []
+    estimated.forEach(function (tracker) {
+        if (tracker.state === 'RUNNING') {
+            threadFreeAt.push(Math.max(0, tracker.estimatedDuration - activeDuration(tracker)))
+        }
+    })
+    while (threadFreeAt.length < threads) {
+        threadFreeAt.push(0)
+    }
+    estimated.forEach(function (tracker) {
+        if (tracker.state === 'WAITING') {
+            const next = threadFreeAt.indexOf(Math.min.apply(null, threadFreeAt))
+            threadFreeAt[next] += tracker.estimatedDuration
+        }
+    })
+    return {remaining: Math.max.apply(null, threadFreeAt), unestimated: active.length - estimated.length}
+}
+
+function remainingDescription(estimate, suffix) {
+    if (!estimate) {
+        return ''
+    }
+    const unestimated = estimate.unestimated > 0 ? ` (${pluralise(estimate.unestimated, 'tracker')} not estimated yet)` : ''
+    if (estimate.remaining < 1000) {
+        return ` · Over the estimate${unestimated}`
+    }
+    return ` · ${formatEstimate(estimate.remaining)} ${suffix}${unestimated}`
 }
 
 export function formatTypeName(value) {
@@ -67,7 +137,8 @@ export function runDescription(status) {
     }
     if (status.state === 'RUNNING') {
         const elapsed = formatDuration(Date.now() - status.startedAt)
-        return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed`
+        const remaining = remainingDescription(estimateRemaining(status.trackers), 'left')
+        return `Started at ${new Date(status.startedAt).toLocaleTimeString()} · ${elapsed} elapsed${remaining}`
     }
 
     if (status.state === 'CANCELLED' && status.finishedAt) {
@@ -77,7 +148,8 @@ export function runDescription(status) {
         return `Last execution ${(STATE_LABELS[status.state] || '').toLowerCase()} at `
             + `${new Date(status.finishedAt).toLocaleTimeString()} (took ${formatDuration(status.finishedAt - status.startedAt)})`
     }
-    return 'Takes a screenshot of the profile page of every enabled tracker'
+    const estimated = remainingDescription(estimateRemaining(waitingTrackers(status.executionOrder)), 'estimated')
+    return `Takes a screenshot of the profile page of every enabled tracker${estimated}`
 }
 
 function renderStatus(status) {

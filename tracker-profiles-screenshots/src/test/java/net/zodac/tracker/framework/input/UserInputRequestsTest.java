@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,11 +45,13 @@ class UserInputRequestsTest {
     @BeforeEach
     void setUp() {
         ExecutionCancellation.reset();
+        UserInputRequests.resetWaited(TRACKER_NAME);
     }
 
     @AfterEach
     void tearDown() {
         ExecutionCancellation.reset();
+        UserInputRequests.resetWaited(TRACKER_NAME);
     }
 
     @Test
@@ -65,6 +68,22 @@ class UserInputRequestsTest {
         waiting.get(WAIT_SECONDS, TimeUnit.SECONDS);
         assertThat(UserInputRequests.pending())
             .isEmpty();
+    }
+
+    @Test
+    void givenCompletedRequest_whenWaitedMillisRetrieved_thenTimeSpentWaitingIsRecordedUntilReset() throws Exception {
+        final CompletableFuture<Void> waiting = awaitInBackground(() -> false);
+        final UserInputRequests.PendingUserInput pendingInput = awaitPendingInput();
+        final long respondedAt = System.currentTimeMillis();
+        UserInputRequests.respond(pendingInput.id(), UserInputResponse.CONTINUE);
+        waiting.get(WAIT_SECONDS, TimeUnit.SECONDS);
+
+        assertThat(UserInputRequests.waitedMillis(TRACKER_NAME.toUpperCase(Locale.ROOT)))
+            .isGreaterThanOrEqualTo(respondedAt - pendingInput.requestedAt());
+
+        UserInputRequests.resetWaited(TRACKER_NAME);
+        assertThat(UserInputRequests.waitedMillis(TRACKER_NAME))
+            .isZero();
     }
 
     @Test

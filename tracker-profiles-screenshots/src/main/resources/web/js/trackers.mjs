@@ -1,5 +1,5 @@
 import {REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
-import {renderRunSummary} from './run.mjs'
+import {ESTIMATE_DESCRIPTION, formatDuration, formatEstimate, renderRunSummary} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {byId, el, pluralise, request, showToast} from './util.mjs'
 
@@ -231,19 +231,38 @@ function formatLastRun(epochMillis) {
     return date.toLocaleDateString([], options)
 }
 
+// The estimated duration of the tracker, below its last run, once it has succeeded often enough
+function estimateContent(tracker) {
+    if (tracker.estimatedDuration === null) {
+        return {title: '', element: null}
+    }
+    return {
+        title: `Takes about ${formatDuration(tracker.estimatedDuration)}: ${ESTIMATE_DESCRIPTION}`,
+        element: el('span', {className: 'last-run-estimate muted'}, [
+            el('span', {className: 'visually-hidden', text: 'Takes about '}),
+            formatEstimate(tracker.estimatedDuration),
+        ]),
+    }
+}
+
 function lastRunContent(tracker) {
+    const estimate = estimateContent(tracker)
     if (tracker.lastRunAt === null) {
-        return {className: 'last-run tracker-extra muted', title: '', children: ['Never run']}
+        return {className: 'last-run tracker-extra muted', title: estimate.title, children: [el('span', {text: 'Never run'}), estimate.element]}
     }
 
     const succeeded = tracker.lastRunOk === true
+    const lastRun = `Last run ${succeeded ? 'succeeded' : 'failed'} at ${new Date(tracker.lastRunAt).toLocaleString()}`
     return {
         className: `last-run tracker-extra ${succeeded ? 'success' : 'failure'}`,
-        title: `Last run ${succeeded ? 'succeeded' : 'failed'} at ${new Date(tracker.lastRunAt).toLocaleString()}`,
+        title: estimate.title ? `${lastRun}\n${estimate.title}` : lastRun,
         children: [
-            el('span', {'aria-hidden': 'true', text: succeeded ? '✓ ' : '✕ '}),
-            el('span', {className: 'visually-hidden', text: succeeded ? 'Succeeded ' : 'Failed '}),
-            formatLastRun(tracker.lastRunAt),
+            el('span', {}, [
+                el('span', {'aria-hidden': 'true', text: succeeded ? '✓ ' : '✕ '}),
+                el('span', {className: 'visually-hidden', text: succeeded ? 'Succeeded ' : 'Failed '}),
+                formatLastRun(tracker.lastRunAt),
+            ]),
+            estimate.element,
         ],
     }
 }
@@ -678,7 +697,7 @@ function createTrackerRow(tracker) {
         const content = lastRunContent(updated)
         lastRun.className = content.className
         lastRun.title = content.title
-        lastRun.replaceChildren.apply(lastRun, content.children)
+        lastRun.replaceChildren.apply(lastRun, content.children.filter(Boolean))
         setScreenshotsExpanded(screenshotsExpanded && (hasCredentials(updated) || updated.legacy))
         refreshRow()
     }

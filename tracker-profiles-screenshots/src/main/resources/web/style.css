@@ -817,7 +817,7 @@ select:disabled {
 
 .execution-row {
     display: grid;
-    grid-template-columns: 16px minmax(140px, 220px) minmax(110px, 160px) minmax(0, 1fr) 140px;
+    grid-template-columns: 16px minmax(140px, 220px) minmax(110px, 160px) minmax(0, 1fr) 190px;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
@@ -877,6 +877,7 @@ select:disabled {
     font-size: 12px;
     text-align: right;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .execution-tracker[data-state="WAITING"] > .execution-row {
@@ -1777,9 +1778,16 @@ kbd {
 }
 
 .last-run {
+    display: flex;
+    flex-direction: column;
     font-size: 12px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+}
+
+/* The estimated duration, below the last run */
+.last-run-estimate {
+    font-size: 11px;
 }
 
 .last-run.success {

@@ -61,6 +61,7 @@ import net.zodac.tracker.web.storage.ApplicationDatabase;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
 import net.zodac.tracker.web.storage.StoredTrackerScreenshot;
+import net.zodac.tracker.web.storage.TrackerDurationEstimate;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,6 +86,10 @@ import org.jspecify.annotations.Nullable;
  * kept across restarts. The Trackers tab only shows the screenshots of each tracker's latest execution (see {@link #latestScreenshots(String)}),
  * while the latest screenshots of every tracker can be downloaded together (see {@link #latestScreenshots(ScreenshotDownload)}). The Main tab only
  * downloads the screenshots of the current (or most recent) execution (see {@link #executionScreenshots()}).
+ *
+ * <p>
+ * The duration of each successful execution of a tracker (excluding any time spent waiting for a user input) is saved in the
+ * {@link ApplicationDatabase}, from which the duration of its next execution is estimated (see {@link #estimatedDurations()}).
  */
 public final class RunManager implements ExecutionListener {
 
@@ -100,6 +105,8 @@ public final class RunManager implements ExecutionListener {
     // The trackers whose latest execution failed (kept across executions, and loaded from the saved results), whose profile screenshots are not
     // from their latest execution
     private final Set<String> latestExecutionFailed;
+    // The estimated duration of each tracker that has succeeded often enough, in milliseconds (loaded from the saved durations)
+    private final Map<String, Long> estimatedDurations;
 
     @Nullable
     private Thread executionThread;
@@ -108,20 +115,22 @@ public final class RunManager implements ExecutionListener {
     private long finishedAt;
 
     private RunManager(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender,
-        final Map<String, List<ScreenshotFile>> latestScreenshots, final Set<String> latestExecutionFailed) {
+        final Map<String, List<ScreenshotFile>> latestScreenshots, final Set<String> latestExecutionFailed,
+        final Map<String, Long> estimatedDurations) {
         this.applicationDatabase = applicationDatabase;
         this.webLogAppender = webLogAppender;
         this.latestScreenshots = latestScreenshots;
         this.latestExecutionFailed = latestExecutionFailed;
+        this.estimatedDurations = estimatedDurations;
     }
 
     /**
-     * Creates a {@link RunManager}, with the latest screenshots of each tracker saved in the {@link ApplicationDatabase}.
+     * Creates a {@link RunManager}, with the latest screenshots and estimated duration of each tracker saved in the {@link ApplicationDatabase}.
      *
      * @param applicationDatabase the {@link ApplicationDatabase} from which trackers and settings are loaded for each execution
      * @param webLogAppender      the {@link WebLogAppender} holding the log messages of each execution, cleared when a new execution starts
      * @return the {@link RunManager}
-     * @throws SQLException thrown if the saved screenshots or results cannot be read from the database
+     * @throws SQLException thrown if the saved screenshots, results or durations cannot be read from the database
      */
     public static RunManager create(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) throws SQLException {
         final Map<String, List<ScreenshotFile>> screenshotsByTracker = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -138,7 +147,16 @@ public final class RunManager implements ExecutionListener {
             .stream()
             .filter(result -> !result.successful())
             .forEach(result -> latestExecutionFailed.add(result.name()));
-        return new RunManager(applicationDatabase, webLogAppender, screenshotsByTracker, latestExecutionFailed);
+        return new RunManager(applicationDatabase, webLogAppender, screenshotsByTracker, latestExecutionFailed,
+            loadEstimatedDurations(applicationDatabase));
+    }
+
+    private static Map<String, Long> loadEstimatedDurations(final ApplicationDatabase applicationDatabase) throws SQLException {
+        final Map<String, Long> estimates = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (final TrackerDurationEstimate estimate : applicationDatabase.durations().findEstimates()) {
+            estimates.put(estimate.name(), estimate.estimatedDuration());
+        }
+        return estimates;
     }
 
     // A screenshot saved with a redaction type that no longer exists is ignored
@@ -488,7 +506,7 @@ public final class RunManager implements ExecutionListener {
         try {
             final List<RunStatus.TrackerProgress> shownTrackers = trackers.values()
                 .stream()
-                .map(tracker -> tracker.toView(latestMessages.getOrDefault(tracker.name, "")))
+                .map(tracker -> tracker.toView(latestMessages.getOrDefault(tracker.name, ""), estimatedDurations.get(tracker.name)))
                 .toList();
 
             return new RunStatus(
@@ -599,8 +617,25 @@ public final class RunManager implements ExecutionListener {
     }
 
     /**
-     * Forgets the latest screenshots and result of trackers that have been removed (see {@link ApplicationDatabase#removeTrackers(Collection)}), so
-     * they are no longer listed or downloaded. The screenshot files themselves are kept.
+     * Retrieves the estimated duration of each tracker that has succeeded often enough: the average duration of its most recent successful
+     * executions, excluding any time spent waiting for a user input.
+     *
+     * @return the estimated durations in milliseconds, keyed by tracker name (case-insensitive)
+     */
+    public Map<String, Long> estimatedDurations() {
+        lock.lock();
+        try {
+            final Map<String, Long> estimates = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            estimates.putAll(estimatedDurations);
+            return estimates;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Forgets the latest screenshots, result and estimated duration of trackers that have been removed (see
+     * {@link ApplicationDatabase#removeTrackers(Collection)}), so they are no longer listed or downloaded. The screenshot files themselves are kept.
      *
      * @param trackerNames the names of the removed trackers
      */
@@ -610,6 +645,7 @@ public final class RunManager implements ExecutionListener {
             trackerNames.forEach(trackerName -> {
                 latestScreenshots.remove(trackerName);
                 latestExecutionFailed.remove(trackerName);
+                estimatedDurations.remove(trackerName);
             });
         } finally {
             lock.unlock();
@@ -663,6 +699,8 @@ public final class RunManager implements ExecutionListener {
 
     @Override
     public void trackerStarted(final String trackerName) {
+        // Only the time waiting for inputs in this execution of the tracker is excluded from its duration
+        UserInputRequests.resetWaited(trackerName);
         lock.lock();
         try {
             final TrackerProgressState tracker = trackers.get(trackerName);
@@ -736,7 +774,10 @@ public final class RunManager implements ExecutionListener {
     @Override
     public void trackerCompleted(final String trackerName, final boolean wasSuccessful) {
         final long completedAt = System.currentTimeMillis();
+        // Every input the tracker waited for has finished
+        final long inputWait = UserInputRequests.waitedMillis(trackerName);
         final List<ScreenshotFile> trackerLatestScreenshots;
+        final long duration;
         lock.lock();
         try {
             final TrackerProgressState tracker = trackers.get(trackerName);
@@ -746,6 +787,8 @@ public final class RunManager implements ExecutionListener {
             }
             tracker.state = wasSuccessful ? RunStatus.TrackerState.SUCCEEDED : RunStatus.TrackerState.FAILED;
             tracker.finishedAt = completedAt;
+            tracker.inputWait = inputWait;
+            duration = completedAt - tracker.startedAt - inputWait;
             if (wasSuccessful) {
                 // Deleted once the tracker succeeds
                 tracker.failureScreenshot.clear();
@@ -777,6 +820,28 @@ public final class RunManager implements ExecutionListener {
             LOGGER.debug("Unable to save the result for tracker '{}'", trackerName, e);
             LOGGER.warn("Unable to save the result for tracker '{}': {}", trackerName, e.getMessage());
         }
+
+        if (wasSuccessful) {
+            saveDuration(trackerName, completedAt, duration);
+        }
+    }
+
+    // The estimate is updated for the tracker's next execution (the estimate shown for this one is unchanged)
+    private void saveDuration(final String trackerName, final long completedAt, final long duration) {
+        try {
+            applicationDatabase.durations().add(trackerName, completedAt, duration);
+            final Map<String, Long> estimates = loadEstimatedDurations(applicationDatabase);
+            lock.lock();
+            try {
+                estimatedDurations.clear();
+                estimatedDurations.putAll(estimates);
+            } finally {
+                lock.unlock();
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug("Unable to save the duration for tracker '{}'", trackerName, e);
+            LOGGER.warn("Unable to save the duration for tracker '{}': {}", trackerName, e.getMessage());
+        }
     }
 
     private void saveLatestScreenshots(final String trackerName, final List<ScreenshotFile> screenshots) {
@@ -806,6 +871,8 @@ public final class RunManager implements ExecutionListener {
         // 0 when not set, since PMD flags assigning null to a field
         private long startedAt;
         private long finishedAt;
+        // The time spent waiting for user inputs, once the tracker has finished (read from UserInputRequests while it is running)
+        private long inputWait;
         private int attempt;
 
         private TrackerProgressState(final String name, final TrackerType trackerType) {
@@ -813,8 +880,10 @@ public final class RunManager implements ExecutionListener {
             this.trackerType = trackerType;
         }
 
-        private RunStatus.TrackerProgress toView(final String latestMessage) {
-            return new RunStatus.TrackerProgress(name, trackerType.name(), state, nullIfUnset(startedAt), nullIfUnset(finishedAt), attempt,
+        private RunStatus.TrackerProgress toView(final String latestMessage, final @Nullable Long estimatedDuration) {
+            final long currentInputWait = state == RunStatus.TrackerState.RUNNING ? UserInputRequests.waitedMillis(name) : inputWait;
+            return new RunStatus.TrackerProgress(name, trackerType.name(), state, nullIfUnset(startedAt), nullIfUnset(finishedAt), estimatedDuration,
+                currentInputWait, attempt,
                 stepCompletedAt.keySet().stream().map(Enum::name).toList(), stepCompletedAtByName(), latestMessage,
                 shownScreenshots().stream().map(RunStatus.Screenshot::of).toList());
         }

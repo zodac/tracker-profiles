@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -38,6 +39,10 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves). A
  * request never times out: it waits until the user responds, or the execution is cancelled.
+ *
+ * <p>
+ * The time each tracker has spent waiting for inputs is recorded (see {@link #waitedMillis(String)}), so it can be excluded from the tracker's
+ * duration.
  */
 public final class UserInputRequests {
 
@@ -49,6 +54,8 @@ public final class UserInputRequests {
     // Every registered request, and the response to each request the user has responded to (until its tracker sees it)
     private static final Map<Long, PendingUserInput> PENDING = new LinkedHashMap<>();
     private static final Map<Long, UserInputResponse> RESPONSES = new HashMap<>();
+    // The total time spent waiting by the requests of each tracker that have finished, since the tracker was last reset
+    private static final Map<String, Long> WAITED_MILLIS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private static long nextId = 1L;
 
     private UserInputRequests() {
@@ -66,7 +73,8 @@ public final class UserInputRequests {
      * @throws net.zodac.tracker.framework.exception.ExecutionCancelledException thrown if the execution or the tracker is cancelled while waiting
      */
     public static void await(final String trackerName, final String message, final BooleanSupplier pageChanged) {
-        final long id = register(trackerName, message);
+        final PendingUserInput request = register(trackerName, message);
+        final long id = request.id();
         LOGGER.info("Waiting for user input: {}", message);
 
         try {
@@ -81,19 +89,20 @@ public final class UserInputRequests {
             try {
                 PENDING.remove(id);
                 RESPONSES.remove(id);
+                WAITED_MILLIS.merge(trackerName, Math.max(0L, System.currentTimeMillis() - request.requestedAt()), Long::sum);
             } finally {
                 LOCK.unlock();
             }
         }
     }
 
-    private static long register(final String trackerName, final String message) {
+    private static PendingUserInput register(final String trackerName, final String message) {
         LOCK.lock();
         try {
-            final long id = nextId;
+            final PendingUserInput request = new PendingUserInput(nextId, trackerName, message, System.currentTimeMillis());
             nextId++;
-            PENDING.put(id, new PendingUserInput(id, trackerName, message));
-            return id;
+            PENDING.put(request.id(), request);
+            return request;
         } finally {
             LOCK.unlock();
         }
@@ -151,6 +160,36 @@ public final class UserInputRequests {
     }
 
     /**
+     * Retrieves the total time a tracker has spent waiting for user inputs since it was last reset (with {@link #resetWaited(String)}), counting
+     * only the requests that have finished.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     * @return the time spent waiting, in milliseconds
+     */
+    public static long waitedMillis(final String trackerName) {
+        LOCK.lock();
+        try {
+            return WAITED_MILLIS.getOrDefault(trackerName, 0L);
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
+     * Resets the time a tracker has spent waiting for user inputs, when it starts executing.
+     *
+     * @param trackerName the name of the tracker (case-insensitive)
+     */
+    public static void resetWaited(final String trackerName) {
+        LOCK.lock();
+        try {
+            WAITED_MILLIS.remove(trackerName);
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
      * Provides the user's response to a waiting request.
      *
      * @param id       the {@link PendingUserInput#id()}
@@ -177,8 +216,9 @@ public final class UserInputRequests {
      * @param id          the identifier of the request, used to respond to it
      * @param trackerName the name of the tracker waiting for the input
      * @param message     what the user needs to do
+     * @param requestedAt when the input was requested, as epoch milliseconds
      */
-    public record PendingUserInput(long id, String trackerName, String message) {
+    public record PendingUserInput(long id, String trackerName, String message, long requestedAt) {
 
     }
 }

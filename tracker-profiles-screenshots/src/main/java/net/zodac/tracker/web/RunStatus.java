@@ -56,16 +56,21 @@ public record RunStatus(
     /**
      * The progress of a single tracker in the execution.
      *
-     * @param name            the tracker name
-     * @param type            the tracker type
-     * @param state           the {@link TrackerState}
-     * @param startedAt       when the tracker started executing, as epoch milliseconds, or {@code null} if it has not started
-     * @param finishedAt      when the tracker finished executing, as epoch milliseconds, or {@code null} if it has not finished
-     * @param attempt         the current (or last) attempt, starting at 1, or 0 if it has not started
-     * @param completedSteps  the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far, in execution order
-     * @param stepCompletedAt when each of the {@code completedSteps} completed, as epoch milliseconds, keyed by step name
-     * @param latestMessage   the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
-     * @param screenshots     the screenshots of the tracker: its profile screenshots, or its failure screenshot if it failed (while running, both)
+     * @param name              the tracker name
+     * @param type              the tracker type
+     * @param state             the {@link TrackerState}
+     * @param startedAt         when the tracker started executing, as epoch milliseconds, or {@code null} if it has not started
+     * @param finishedAt        when the tracker finished executing, as epoch milliseconds, or {@code null} if it has not finished
+     * @param estimatedDuration the estimated duration of the tracker in milliseconds, excluding any time spent waiting for a user input (the
+     *                          average of its most recent successful executions), or {@code null} if it has not succeeded often enough
+     * @param inputWait         the time the tracker has spent waiting for user inputs that have finished, in milliseconds (excluded from its
+     *                          duration when it is estimated)
+     * @param attempt           the current (or last) attempt, starting at 1, or 0 if it has not started
+     * @param completedSteps    the names of the {@link net.zodac.tracker.framework.progress.TrackerStep}s completed so far, in execution order
+     * @param stepCompletedAt   when each of the {@code completedSteps} completed, as epoch milliseconds, keyed by step name
+     * @param latestMessage     the most recent message of at least {@code INFO} level logged by the tracker, or empty if none
+     * @param screenshots       the screenshots of the tracker: its profile screenshots, or its failure screenshot if it failed (while running,
+     *                          both)
      */
     public record TrackerProgress(
         String name,
@@ -73,6 +78,8 @@ public record RunStatus(
         TrackerState state,
         @Nullable Long startedAt,
         @Nullable Long finishedAt,
+        @Nullable Long estimatedDuration,
+        long inputWait,
         int attempt,
         List<String> completedSteps,
         Map<String, Long> stepCompletedAt,

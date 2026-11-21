@@ -1,6 +1,15 @@
 import {createBrowserView, startBrowserView, stopBrowserView} from './browser-view.mjs'
 import {REDUCED_MOTION_QUERY, TRACKER_GROUPS, TRACKER_STEPS} from './constants.mjs'
-import {enabledTrackers, formatDuration, isActive, latestStatus, refreshStatus} from './run.mjs'
+import {
+    activeDuration,
+    enabledTrackers,
+    ESTIMATE_DESCRIPTION,
+    formatDuration,
+    formatEstimate,
+    isActive,
+    latestStatus,
+    refreshStatus,
+} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {currentSettingValue} from './settings.mjs'
 import {trackersLoaded} from './trackers.mjs'
@@ -38,7 +47,7 @@ function isFinished(status) {
 
 // Before the first execution, the enabled trackers are shown waiting, as they would be once it starts
 // The enabled trackers, in the order they will be executed (see ExecutionOrder): by name, or one type first and then each type by name
-function waitingTrackers(executionOrder) {
+export function waitingTrackers(executionOrder) {
     const firstType = {HEADLESS_FIRST: 'HEADLESS', MANUAL_FIRST: 'MANUAL'}[executionOrder]
     const sorted = enabledTrackers().slice().sort(function (first, second) {
         if (firstType && first.type !== second.type) {
@@ -59,18 +68,39 @@ function waitingTrackers(executionOrder) {
             stepCompletedAt: {},
             startedAt: null,
             finishedAt: null,
+            estimatedDuration: tracker.estimatedDuration,
+            inputWait: 0,
             latestMessage: '',
             screenshots: [],
         }
     })
 }
 
+function hasEstimate(tracker) {
+    return tracker.estimatedDuration !== null && tracker.estimatedDuration !== undefined
+}
+
+// A tracker waiting (before a full execution, or once one has started) shows how long it is estimated to take, and a running one the time it has
+// been running (not counting the time waiting for an input) against its estimate
 export function trackerTiming(tracker) {
+    if (tracker.state === 'WAITING') {
+        return hasEstimate(tracker) ? formatEstimate(tracker.estimatedDuration) : ''
+    }
     if (tracker.startedAt === null) {
         return ''
     }
+    if (tracker.state === 'RUNNING' && hasEstimate(tracker)) {
+        return `${formatDuration(activeDuration(tracker))} / ${formatEstimate(tracker.estimatedDuration)}`
+    }
     const end = tracker.finishedAt === null ? Date.now() : tracker.finishedAt
     return formatDuration(end - tracker.startedAt)
+}
+
+function trackerTimingTitle(tracker) {
+    if ((tracker.state !== 'WAITING' && tracker.state !== 'RUNNING') || !hasEstimate(tracker)) {
+        return null
+    }
+    return `Estimated to take ${formatDuration(tracker.estimatedDuration)}: ${ESTIMATE_DESCRIPTION}`
 }
 
 function trackerDetail(tracker) {
@@ -210,7 +240,7 @@ function updateExecutionRow(row, tracker) {
         el('span', {className: 'execution-detail muted', text: trackerDetail(tracker), title: tracker.latestMessage}),
         el('span', {className: 'execution-end'}, [
             cancelTrackerButton(row, tracker),
-            el('span', {className: 'execution-time muted', text: trackerTiming(tracker)}),
+            el('span', {className: 'execution-time muted', text: trackerTiming(tracker), title: trackerTimingTitle(tracker)}),
         ])
     )
     row.dataset.state = tracker.state

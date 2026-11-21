@@ -33,8 +33,8 @@ import org.flywaydb.core.api.output.MigrateResult;
 
 /**
  * The SQLite database used by the web UI, holding the tracker credentials ({@link #credentials()}), the settings overridden in the web UI
- * ({@link #settings()}), the result of each tracker's most recent execution ({@link #results()}) and the screenshots of each tracker's latest
- * successful execution ({@link #screenshots()}).
+ * ({@link #settings()}), the result of each tracker's most recent execution ({@link #results()}), the screenshots of each tracker's latest
+ * successful execution ({@link #screenshots()}) and the durations of each tracker's most recent successful executions ({@link #durations()}).
  *
  * <p>
  * The schema is versioned by Flyway: each change is a new migration in {@code src/main/resources/db/migration}
@@ -57,14 +57,16 @@ public final class ApplicationDatabase implements AutoCloseable {
     private final SettingRepository settings;
     private final TrackerResultRepository results;
     private final TrackerScreenshotRepository screenshots;
+    private final TrackerDurationRepository durations;
 
     private ApplicationDatabase(final DatabaseConnection connection, final TrackerCredentialRepository credentials, final SettingRepository settings,
-        final TrackerResultRepository results, final TrackerScreenshotRepository screenshots) {
+        final TrackerResultRepository results, final TrackerScreenshotRepository screenshots, final TrackerDurationRepository durations) {
         this.connection = connection;
         this.credentials = credentials;
         this.settings = settings;
         this.results = results;
         this.screenshots = screenshots;
+        this.durations = durations;
     }
 
     /**
@@ -99,7 +101,7 @@ public final class ApplicationDatabase implements AutoCloseable {
 
             LOGGER.debug("Opened database at '{}'", absolutePath);
             return new ApplicationDatabase(connection, credentials, SettingRepository.create(connection), TrackerResultRepository.create(connection),
-                TrackerScreenshotRepository.create(connection));
+                TrackerScreenshotRepository.create(connection), TrackerDurationRepository.create(connection));
         } catch (final SQLException | RuntimeException e) {
             connection.close();
             throw e;
@@ -176,8 +178,17 @@ public final class ApplicationDatabase implements AutoCloseable {
     }
 
     /**
-     * Removes everything stored for several trackers (their credentials, the result of their most recent execution and their latest screenshots)
-     * in a single transaction. The screenshot files themselves are kept.
+     * The durations of each tracker's most recent successful executions, from which its duration is estimated.
+     *
+     * @return the {@link TrackerDurationRepository}
+     */
+    public TrackerDurationRepository durations() {
+        return durations;
+    }
+
+    /**
+     * Removes everything stored for several trackers (their credentials, the result of their most recent execution, their latest screenshots and
+     * the durations of their most recent successful executions) in a single transaction. The screenshot files themselves are kept.
      *
      * @param names the tracker names
      * @return the names of the trackers for which anything was stored (and removed), in the order provided
@@ -191,7 +202,8 @@ public final class ApplicationDatabase implements AutoCloseable {
                 final boolean hadCredentials = credentials.deleteIfStored(name);
                 final boolean hadResult = results.delete(name);
                 final boolean hadScreenshots = screenshots.delete(name);
-                if (hadCredentials || hadResult || hadScreenshots) {
+                final boolean hadDurations = durations.delete(name);
+                if (hadCredentials || hadResult || hadScreenshots || hadDurations) {
                     removed.add(name);
                 }
             }

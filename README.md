@@ -360,6 +360,11 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
       The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
       warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
       attempt are separated within each step, and the screenshot messages are separated by redaction type
+    - Once a tracker has succeeded 3 times, it is estimated to take the average of its last 5 successful executions (not counting the time spent
+      waiting for your input, which is also left out while it runs). A waiting tracker shows its estimate (`~1m 20s`), and a running one the time
+      it has been running against its estimate (`45s / ~1m 20s`). The card shows the estimated time left for the whole execution (from the
+      trackers' estimates, in the order they are executed on the parallel threads, with the number of trackers not estimated yet), or before the
+      first execution how long it is estimated to take
     - An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed.
       Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
       and move between the redaction types with the arrows (or the arrow keys)
@@ -378,9 +383,10 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   that have no username or password listed as unset. Each has fields for the username/email and password, and the result of its most recent
   execution. A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10
   seconds), then moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker).
-  The image button next to a tracker's last result expands its row to show the screenshots of its most recent execution, as on the **Main** tab:
-  its profile screenshots if it succeeded, or its failure screenshot if it failed (from any execution, also before a restart, as long as they are
-  still on disk). Click an enabled or disabled tracker to select it, `Ctrl`+click to add or remove one, `Shift`+click to select a range, or
+  A tracker's estimated duration (see the **Main** tab) is shown below its last result. The image button next to a tracker's last result expands
+  its row to show the screenshots of its most recent execution, as on the **Main** tab: its profile screenshots if it succeeded, or its failure
+  screenshot if it failed (from any execution, also before a restart, as long as they are still on disk). Click an enabled or disabled tracker to
+  select it, `Ctrl`+click to add or remove one, `Shift`+click to select a range, or
   `Ctrl`+`A` to select them all (only the rest of a group if all selected trackers are in it, then both groups if pressed again), to enable,
   disable or remove them together (`Alt`+click selects the text of a row instead). Unset and legacy trackers cannot be selected.
   Trackers can also be [imported from a CSV file](#importing-trackers). **Download** downloads the latest screenshots of every tracker, from any

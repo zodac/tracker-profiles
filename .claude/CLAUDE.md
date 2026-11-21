@@ -90,10 +90,12 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
   responses.
 - **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, the result of each tracker's
-  most recent execution and the profile screenshots of its latest success (both shown on the Trackers tab), through one repository each:
-  `credentials()` (`TrackerCredentialRepository`), `settings()` (`SettingRepository`), `results()` (`TrackerResultRepository`) and `screenshots()`
-  (`TrackerScreenshotRepository`, file paths only). The repositories run their SQL through `DatabaseConnection`, the single
-  connection (WAL journal, `synchronous=NORMAL`), which holds a lock for each statement or transaction (`query`, `exists`, `update`, `batch`,
+  most recent execution and the profile screenshots of its latest success (both shown on the Trackers tab), and the durations of its latest
+  successful executions (see [Estimated Durations](#estimated-durations)), through one repository each: `credentials()`
+  (`TrackerCredentialRepository`), `settings()` (`SettingRepository`), `results()` (`TrackerResultRepository`), `screenshots()`
+  (`TrackerScreenshotRepository`, file paths only) and `durations()` (`TrackerDurationRepository`). The repositories run their SQL through
+  `DatabaseConnection`, the single connection (WAL journal, `synchronous=NORMAL`), which holds a lock for each statement or transaction
+  (`query`, `exists`, `update`, `batch`,
   `inTransaction`): SQLite allows one writer, so a connection pool would not help. Keep all SQL in the repositories, as constants using numbered
   parameters (`?1`), and wrap any multi-statement change in `inTransaction`. Lists for the web UI use `credentials().findAllStatuses()`, which never
   decrypts a password; only an execution and the CSV export decrypt them (`credentials().findAll()`). Apart from the CSV export (a file download, so
@@ -178,6 +180,20 @@ from the execution start in `TIMEZONE`. The version is the `Implementation-Versi
 browser and a replaced screenshot is fetched again.
 
 In the UI, the screenshots are shown in each expanded tracker above its logs (re-rendered only when they change), and open in a `<dialog>` gallery.
+
+#### Estimated Durations
+
+When a tracker succeeds, `RunManager.trackerCompleted` saves its duration (`finishedAt - startedAt`, minus the time it spent waiting for user
+inputs) with `durations().add`, which keeps only the latest `TrackerDurationRepository.KEPT_DURATIONS` (5) of each tracker. A tracker with at least
+`MINIMUM_DURATIONS` (3) has an estimate, their average (`findEstimates`), kept in memory by `RunManager` (`estimatedDurations()`, loaded by
+`RunManager.create` and reloaded after each save) and returned as `estimatedDuration` in `RunStatus.TrackerProgress` and `TrackerView`. Failed
+and cancelled executions are never counted. `UserInputRequests` adds up the time each tracker spends waiting for inputs (`waitedMillis`, reset
+by `RunManager.trackerStarted` with `resetWaited`), which `TrackerProgress.inputWait` returns, and each `PendingUserInput` has its `requestedAt`.
+
+In the UI, `activeDuration` (`js/run.mjs`) is a tracker's running time without its input wait (so it stops while an input is pending), shown
+against its estimate on its row, and `estimateRemaining` simulates the running and waiting trackers in execution order on
+`NUMBER_OF_PARALLEL_THREADS` threads for the time left in the run card (or the whole execution before the first one, from the waiting trackers
+built from the Trackers tab list). A tracker without an estimate is left out of it, and only counted.
 
 #### Live Browser View
 

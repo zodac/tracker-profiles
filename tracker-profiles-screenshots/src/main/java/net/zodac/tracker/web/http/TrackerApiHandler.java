@@ -290,12 +290,13 @@ public final class TrackerApiHandler extends ApiHandler {
 
         // Keyed by tracker name, ignoring case
         final Map<String, List<ScreenshotFile>> screenshotsByName = runManager.latestScreenshotsByTracker();
+        final Map<String, Long> estimatedDurations = runManager.estimatedDurations();
 
         final List<TrackerView> trackerViews = new ArrayList<>();
         for (final TrackerHandler trackerHandler : TrackerHandlerFactory.allHandlers()) {
             final String key = trackerHandler.name().toLowerCase(Locale.ROOT);
             trackerViews.add(TrackerView.of(trackerHandler, credentialsByName.get(key), resultsByName.get(key),
-                screenshotsByName.getOrDefault(trackerHandler.name(), List.of())));
+                screenshotsByName.getOrDefault(trackerHandler.name(), List.of()), estimatedDurations.get(trackerHandler.name())));
         }
 
         // Listed by the name they were stored with, after the supported trackers
@@ -304,7 +305,8 @@ public final class TrackerApiHandler extends ApiHandler {
         for (final String legacyName : legacyNames) {
             final String key = legacyName.toLowerCase(Locale.ROOT);
             trackerViews.add(TrackerView.ofLegacy(storedName(legacyName, credentialsByName.get(key), resultsByName.get(key)),
-                credentialsByName.get(key), resultsByName.get(key), screenshotsByName.getOrDefault(legacyName, List.of())));
+                credentialsByName.get(key), resultsByName.get(key), screenshotsByName.getOrDefault(legacyName, List.of()),
+                estimatedDurations.get(legacyName)));
         }
         return trackerViews;
     }
@@ -410,33 +412,38 @@ public final class TrackerApiHandler extends ApiHandler {
     /**
      * A tracker and its stored credentials, as returned to the web UI.
      *
-     * @param name        the tracker name
-     * @param type        the tracker type, or {@code null} for a legacy tracker
-     * @param urls        the tracker URLs (empty for a legacy tracker)
-     * @param username    the stored username or email (empty if not set)
-     * @param hasPassword whether a password has been stored
-     * @param enabled     whether the tracker is enabled for execution
-     * @param lastRunAt   when the tracker last finished executing, as epoch milliseconds, or {@code null} if it has never been executed
-     * @param lastRunOk   whether the most recent execution was successful, or {@code null} if it has never been executed
-     * @param screenshots the screenshots of the latest execution (the profile screenshots if it succeeded, or the failure screenshot if it
-     *                    failed) that still exist, retrieved with
-     *                    {@code /api/screenshots?tracker={name}&id={id}&latest=true}
-     * @param legacy      whether the tracker is no longer supported (its handler has been removed), so it is only kept until removed by the user
+     * @param name              the tracker name
+     * @param type              the tracker type, or {@code null} for a legacy tracker
+     * @param urls              the tracker URLs (empty for a legacy tracker)
+     * @param username          the stored username or email (empty if not set)
+     * @param hasPassword       whether a password has been stored
+     * @param enabled           whether the tracker is enabled for execution
+     * @param lastRunAt         when the tracker last finished executing, as epoch milliseconds, or {@code null} if it has never been executed
+     * @param lastRunOk         whether the most recent execution was successful, or {@code null} if it has never been executed
+     * @param estimatedDuration the estimated duration of the tracker in milliseconds (the average of its most recent successful executions,
+     *                          excluding any time spent waiting for a user input), or {@code null} if it has not succeeded often enough
+     * @param screenshots       the screenshots of the latest execution (the profile screenshots if it succeeded, or the failure screenshot if it
+     *                          failed) that still exist, retrieved with
+     *                          {@code /api/screenshots?tracker={name}&id={id}&latest=true}
+     * @param legacy            whether the tracker is no longer supported (its handler has been removed), so it is only kept until removed by
+     *                          the user
      */
     record TrackerView(String name, @Nullable String type, List<String> urls, String username, boolean hasPassword, boolean enabled,
-        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, List<RunStatus.Screenshot> screenshots, boolean legacy) {
+        @Nullable Long lastRunAt, @Nullable Boolean lastRunOk, @Nullable Long estimatedDuration, List<RunStatus.Screenshot> screenshots,
+        boolean legacy) {
 
         /**
          * Creates a {@link TrackerView} from a {@link TrackerHandler} and its stored credentials.
          *
-         * @param trackerHandler the {@link TrackerHandler}
-         * @param credential     the {@link StoredTrackerCredential}, or {@code null} if none are stored
-         * @param result         the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
-         * @param screenshots    the latest {@link ScreenshotFile}s of the tracker
+         * @param trackerHandler    the {@link TrackerHandler}
+         * @param credential        the {@link StoredTrackerCredential}, or {@code null} if none are stored
+         * @param result            the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
+         * @param screenshots       the latest {@link ScreenshotFile}s of the tracker
+         * @param estimatedDuration the estimated duration of the tracker in milliseconds, or {@code null} if it has none
          * @return the {@link TrackerView}
          */
         static TrackerView of(final TrackerHandler trackerHandler, final @Nullable TrackerCredentialStatus credential,
-            final @Nullable StoredTrackerResult result, final List<ScreenshotFile> screenshots) {
+            final @Nullable StoredTrackerResult result, final List<ScreenshotFile> screenshots, final @Nullable Long estimatedDuration) {
             return new TrackerView(
                 trackerHandler.name(),
                 trackerHandler.type().name(),
@@ -446,6 +453,7 @@ public final class TrackerApiHandler extends ApiHandler {
                 credential != null && credential.enabled(),
                 result == null ? null : result.finishedAt(),
                 result == null ? null : result.successful(),
+                estimatedDuration,
                 screenshots.stream().map(RunStatus.Screenshot::of).toList(),
                 false
             );
@@ -454,14 +462,15 @@ public final class TrackerApiHandler extends ApiHandler {
         /**
          * Creates a {@link TrackerView} for a legacy tracker, whose handler has been removed, from what is still stored for it.
          *
-         * @param name        the tracker name
-         * @param credential  the {@link TrackerCredentialStatus}, or {@code null} if none are stored
-         * @param result      the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
-         * @param screenshots the latest {@link ScreenshotFile}s of the tracker
+         * @param name              the tracker name
+         * @param credential        the {@link TrackerCredentialStatus}, or {@code null} if none are stored
+         * @param result            the {@link StoredTrackerResult} of the most recent execution, or {@code null} if it has never been executed
+         * @param screenshots       the latest {@link ScreenshotFile}s of the tracker
+         * @param estimatedDuration the estimated duration of the tracker in milliseconds, or {@code null} if it has none
          * @return the {@link TrackerView}
          */
         static TrackerView ofLegacy(final String name, final @Nullable TrackerCredentialStatus credential, final @Nullable StoredTrackerResult result,
-            final List<ScreenshotFile> screenshots) {
+            final List<ScreenshotFile> screenshots, final @Nullable Long estimatedDuration) {
             return new TrackerView(
                 name,
                 null,
@@ -471,6 +480,7 @@ public final class TrackerApiHandler extends ApiHandler {
                 credential != null && credential.enabled(),
                 result == null ? null : result.finishedAt(),
                 result == null ? null : result.successful(),
+                estimatedDuration,
                 screenshots.stream().map(RunStatus.Screenshot::of).toList(),
                 true
             );
