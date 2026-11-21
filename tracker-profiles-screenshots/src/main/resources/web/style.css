@@ -327,13 +327,12 @@ main:has(> #tab-main:not([hidden])) {
     filter: brightness(0.92);
 }
 
-/* A button waiting for a second click to confirm its action (see confirmThenRun): its colours inverted, with a ring */
+/* A button waiting for a second click to confirm its action (see confirmThenRun): its colours inverted */
 .button.danger-solid.confirming,
 .button.danger-solid.confirming:hover:not(:disabled) {
     background: var(--surface);
     color: var(--danger);
     filter: none;
-    box-shadow: 0 0 0 3px var(--danger-soft), 0 0 0 5px var(--danger);
 }
 
 .button.large {

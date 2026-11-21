@@ -92,7 +92,7 @@ export function formatTime(epochMillis) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Two-step confirmation: the first click of a button arms it (highlighted, reading 'Confirm?'), and only a second click runs its action. Clicking
+// Two-step confirmation: the first click of a button arms it (its colours inverted, reading 'Confirm'), and only a second click runs its action. Clicking
 // anywhere else (or Escape) disarms it. Buttons are found by their key (data-confirm-key), so a button re-rendered while armed stays armed
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -110,7 +110,7 @@ export function isConfirming(key) {
 export function applyConfirmation(button) {
     const confirming = isConfirming(button.dataset.confirmKey)
     button.classList.toggle('confirming', confirming)
-    button.textContent = confirming ? 'Confirm?' : button.dataset.confirmLabel
+    button.textContent = confirming ? 'Confirm' : button.dataset.confirmLabel
 }
 
 function updateConfirmButtons() {
