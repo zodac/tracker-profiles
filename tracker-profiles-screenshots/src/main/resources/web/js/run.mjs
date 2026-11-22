@@ -28,8 +28,12 @@ export function isActive(status) {
 
 export function formatDuration(milliseconds) {
     const totalSeconds = Math.max(0, Math.round(milliseconds / 1000))
-    const minutes = Math.floor(totalSeconds / 60)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor(totalSeconds / 60) % 60
     const seconds = totalSeconds % 60
+    if (hours > 0) {
+        return `${hours}hr ${String(minutes).padStart(2, '0')}m`
+    }
     return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, '0')}s` : `${seconds}s`
 }
 
