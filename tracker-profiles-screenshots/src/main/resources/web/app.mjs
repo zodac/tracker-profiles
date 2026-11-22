@@ -26,6 +26,7 @@ import {toggleTheme, updateThemeToggle} from './js/theme-toggle.mjs'
 import {
     changeSelectedTrackers,
     clearSelection,
+    enableFailedTrackersOnly,
     importTrackers,
     loadTrackers,
     releasePinnedTrackersOutside,
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
         changeSelectedTrackers('remove')
     })
     byId('selection-clear').addEventListener('click', clearSelection)
+    byId('failed-only-button').addEventListener('click', enableFailedTrackersOnly)
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && hasConfirmation()) {
             clearConfirmation()

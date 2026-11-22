@@ -19,6 +19,7 @@ package net.zodac.tracker.web.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -292,6 +293,20 @@ class ApplicationDatabaseTest {
                 new TrackerDurationEstimate("Alpha", 50_200L, 5),
                 new TrackerDurationEstimate("Beta", 2_333L, 3)
             );
+    }
+
+    @Test
+    void givenStoredTrackers_whenEnabledAndDisabledTogether_thenOnlyChangedTrackersAreReported() throws SQLException {
+        applicationDatabase.credentials().save("Alpha", "user", "password", false);
+        applicationDatabase.credentials().save("Beta", "user", "password", true);
+        applicationDatabase.credentials().save("Gamma", "user", "", false);
+        applicationDatabase.credentials().save("Delta", "user", "password", true);
+
+        assertThat(applicationDatabase.changeEnabled(List.of("Alpha", "Gamma", "Delta"), List.of("Beta", "Unknown")))
+            .containsExactly("Alpha", "Beta");
+        assertThat(applicationDatabase.credentials().findAllStatuses())
+            .extracting(TrackerCredentialStatus::name, TrackerCredentialStatus::enabled)
+            .containsExactlyInAnyOrder(tuple("Alpha", true), tuple("Beta", false), tuple("Gamma", false), tuple("Delta", true));
     }
 
     @Test

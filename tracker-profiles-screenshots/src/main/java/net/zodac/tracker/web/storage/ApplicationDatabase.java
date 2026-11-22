@@ -214,6 +214,22 @@ public final class ApplicationDatabase implements AutoCloseable {
     }
 
     /**
+     * Enables and disables several trackers in a single transaction. A tracker is only enabled if it has a username and password.
+     *
+     * @param enabledNames  the names of the trackers to enable
+     * @param disabledNames the names of the trackers to disable
+     * @return the names of the trackers that were changed (the enabled ones first, each in the order provided)
+     * @throws SQLException thrown if the database cannot be updated, in which case no tracker is changed
+     */
+    public List<String> changeEnabled(final Collection<String> enabledNames, final Collection<String> disabledNames) throws SQLException {
+        return connection.inTransaction(() -> {
+            final List<String> changed = new ArrayList<>(credentials.changeEnabled(enabledNames, true));
+            changed.addAll(credentials.changeEnabled(disabledNames, false));
+            return changed;
+        });
+    }
+
+    /**
      * Creates a {@link DatabaseBackup} of everything stored except the tracker credentials, read in a single transaction so it is consistent.
      *
      * @return the {@link DatabaseBackup}

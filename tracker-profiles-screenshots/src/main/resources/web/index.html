@@ -75,6 +75,8 @@
         <div class="toolbar">
             <input type="search" id="tracker-search" class="search" placeholder="Search trackers" aria-label="Search trackers">
             <span id="tracker-summary" class="muted"></span>
+            <button id="failed-only-button" class="button" type="button" data-confirm-key="failed-only" data-confirm-label="Enable failed only"
+                    title="Enable the trackers whose last run failed, and disable those whose last run succeeded, so the next execution only runs the failed trackers">Enable failed only</button>
             <details id="download-menu" class="menu">
                 <summary class="button primary" title="Download the latest screenshots of the trackers">
                     <span class="download-icon" aria-hidden="true"></span>Download

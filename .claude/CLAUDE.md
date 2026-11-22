@@ -86,7 +86,9 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `TrackerApiHandler` (`/api/trackers`, including `POST /api/trackers/import` for CSV content read by `TrackerCsvReader`,
   `GET /api/trackers/export` for a CSV file written by `TrackerCsvWriter` (every supported tracker with a username and password, or only the header
   row if none, so it doubles as a sample file), and `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one
-  transaction), `SettingsApiHandler` (`/api/settings`),
+  transaction, and `POST /api/trackers/failed-only` to enable every tracker whose saved result failed and disable every one whose result
+  succeeded, in one transaction (`ApplicationDatabase.changeEnabled`), for the **Enable failed only** button of the Trackers tab, which, unlike
+  Failures only, works after a restart), `SettingsApiHandler` (`/api/settings`),
   `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `BackupApiHandler` (`/api/backup`, see
   [Backup and Restore](#backup-and-restore)), `StaticResourceHandler` (`/`, keeping each file in memory with an `ETag`). API handlers
   extend `ApiHandler`, which requires `Content-Type: application/json` (or another type of `acceptsContentType` that needs a CORS preflight) on
@@ -105,8 +107,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   keeps the stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in
   `js/constants.mjs`). Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the
   required `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if
-  a stored password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (left out of
-  `SettingsService.listSettings`, so not shown on the Settings tab) or logged.
+  a stored password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (left
+  out of `SettingsService.listSettings`, so not shown on the Settings tab) or logged.
 - **Schema migrations** — the schema is versioned by Flyway (`flyway-core`, which includes SQLite support): `ApplicationDatabase.open` applies the
   migrations in `src/main/resources/db/migration` before opening its connection. To change the schema, add the next `V<n>__<description>.sql` (never
   edit a released migration, as Flyway validates their checksums), and update `LATEST_SCHEMA_VERSION` in `ApplicationDatabaseTest`. A database created

@@ -391,7 +391,10 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   Trackers can also be [imported from a CSV file](#importing-trackers). **Download** downloads the latest screenshots of every tracker, from any
   execution (also before a restart): **All**, **Successful** (the profile screenshots of each tracker's latest success), one redaction type
   (**Blur redaction**, **Box redaction** or **No redaction**), or **Errors** (the failure screenshot of each tracker whose latest execution
-  failed). Each option shows how many screenshots it has
+  failed). Each option shows how many screenshots it has.
+  **Enable failed only** (select it twice to confirm) enables every tracker whose most recent execution failed and disables every tracker whose
+  most recent execution succeeded, so the next execution only runs the failed trackers (such as after upgrading the application, which forgets the
+  failures that the **Failures only** button of the **Main** tab runs). Trackers that have never been executed are left as they are.
   A tracker that is no longer supported (removed from the application) is listed as legacy, and never executed. It is never removed
   automatically, so the screenshots of its most recent execution can still be retrieved; removing it clears its credentials, result and
   screenshots from the database (the screenshot files are kept on disk). Trackers are identified only by name (ignoring case), so a tracker that

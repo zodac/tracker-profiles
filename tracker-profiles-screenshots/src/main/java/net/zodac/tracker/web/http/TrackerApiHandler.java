@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -52,7 +53,8 @@ import org.jspecify.annotations.Nullable;
  * Handles requests to list every tracker with its stored credentials, most recent result and its latest screenshots
  * ({@code GET}), save the credentials for a
  * tracker ({@code PUT}), import credentials from a CSV file ({@code POST /api/trackers/import}), export the credentials of every supported tracker
- * with a username and password as a CSV file ({@code GET /api/trackers/export}), and remove the stored credentials for a tracker
+ * with a username and password as a CSV file ({@code GET /api/trackers/export}), enable the trackers whose most recent execution failed and disable
+ * those whose most recent execution succeeded ({@code POST /api/trackers/failed-only}), and remove the stored credentials for a tracker
  * ({@code DELETE /api/trackers/{name}}).
  *
  * <p>
@@ -75,6 +77,7 @@ public final class TrackerApiHandler extends ApiHandler {
 
     private static final String IMPORT_PATH = "import";
     private static final String BULK_PATH = "bulk";
+    private static final String FAILED_ONLY_PATH = "failed-only";
     private static final String EXPORT_PATH = "export";
     private static final String EXPORT_FILE_NAME = "trackers.csv";
 
@@ -154,6 +157,10 @@ public final class TrackerApiHandler extends ApiHandler {
             handleBulkChange(exchange);
             return;
         }
+        if (FAILED_ONLY_PATH.equals(pathParameter)) {
+            handleFailedOnly(exchange);
+            return;
+        }
 
         if (!IMPORT_PATH.equals(pathParameter)) {
             throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown action: '%s'".formatted(pathParameter));
@@ -216,6 +223,20 @@ public final class TrackerApiHandler extends ApiHandler {
                 yield removed;
             }
         };
+        sendJson(exchange, HttpStatus.OK, new BulkResult(changed, listTrackers()));
+    }
+
+    // Enables the trackers whose most recent execution failed (if they have a username and password), and disables those whose most recent execution
+    // succeeded, in a single transaction, so that only the failed trackers are executed. Trackers never executed, and legacy trackers, are unchanged
+    private void handleFailedOnly(final HttpExchange exchange) throws IOException, SQLException {
+        final Map<Boolean, List<String>> namesBySuccess = new HashMap<>();
+        for (final StoredTrackerResult result : applicationDatabase.results().findAll()) {
+            TrackerHandlerFactory.findMatchingHandler(result.name())
+                .ifPresent(trackerHandler -> namesBySuccess.computeIfAbsent(result.successful(), _ -> new ArrayList<>()).add(trackerHandler.name()));
+        }
+
+        final List<String> changed = applicationDatabase.changeEnabled(namesBySuccess.getOrDefault(false, List.of()),
+            namesBySuccess.getOrDefault(true, List.of()));
         sendJson(exchange, HttpStatus.OK, new BulkResult(changed, listTrackers()));
     }
 

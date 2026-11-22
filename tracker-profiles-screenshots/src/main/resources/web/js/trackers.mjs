@@ -1,7 +1,7 @@
 import {REDUCED_MOTION_QUERY, SAVED_PASSWORD_VALUE, TYPING_SAVE_DELAY_MS, UNSET_MOVE_DELAY_MS} from './constants.mjs'
 import {ESTIMATE_DESCRIPTION, formatDuration, formatEstimate, renderRunSummary} from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
-import {byId, el, pluralise, request, showToast} from './util.mjs'
+import {byId, confirmThenRun, el, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Trackers
@@ -218,6 +218,7 @@ export function renderTrackers() {
         return tracker.enabled
     }).length
     byId('tracker-summary').textContent = `${totalEnabled} of ${pluralise(supported.length, 'supported tracker')} enabled`
+    byId('failed-only-button').disabled = failedOnlyChanges().length === 0
     renderSelection()
     renderRunSummary()
 }
@@ -608,6 +609,49 @@ export function changeSelectedTrackers(action) {
             clearSelection()
             renderTrackersWithMove(changed)
         })
+}
+
+// The trackers that Enable failed only would change: those whose last run failed and are disabled (with a username and password to enable them), and
+// those whose last run succeeded and are enabled. Trackers never executed, and legacy trackers, are left as they are
+function failedOnlyChanges() {
+    return trackers.filter(function (tracker) {
+        if (tracker.legacy || tracker.lastRunAt === null) {
+            return false
+        }
+        return tracker.lastRunOk ? tracker.enabled : !tracker.enabled && hasCredentials(tracker)
+    })
+}
+
+// Enables the trackers whose last run failed and disables those whose last run succeeded (such as to run the failed trackers again after an
+// upgrade). The first click only asks for confirmation (see confirmThenRun)
+export function enableFailedTrackersOnly() {
+    confirmThenRun('failed-only', function () {
+        const button = byId('failed-only-button')
+        button.disabled = true
+        let changed = []
+        request('POST', '/api/trackers/failed-only', {})
+            .then(function (result) {
+                trackers = result.trackers
+                changed = result.changed
+                const enabled = changed.filter(function (name) {
+                    const tracker = findTracker(name)
+                    return Boolean(tracker) && tracker.enabled
+                }).length
+                showToast(`Enabled ${pluralise(enabled, 'failed tracker')} and disabled ${pluralise(changed.length - enabled, 'successful tracker')}`)
+            })
+            .catch(function (error) {
+                showToast(`Unable to enable the failed trackers: ${error.message}`, 'error')
+            })
+            .finally(function () {
+                changed.forEach(function (name) {
+                    unpinTracker(name)
+                    if (findTracker(name)) {
+                        trackerRowsByName.get(name).resetInput()
+                    }
+                })
+                renderTrackersWithMove(changed)
+            })
+    })
 }
 
 function createTrackerRow(tracker) {
