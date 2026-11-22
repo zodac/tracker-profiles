@@ -93,7 +93,7 @@ public final class WebServer {
             httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());
             httpServer.start();
 
-            LOGGER.info("Web UI available on port {}", applicationConfiguration.webUiPort());
+            LOGGER.info("Web UI available at http://127.0.0.1:{}", applicationConfiguration.webUiPort());
             return new WebServer(httpServer, applicationDatabase);
         } catch (final IOException | SQLException | RuntimeException e) {
             applicationDatabase.close();
