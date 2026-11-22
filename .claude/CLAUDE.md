@@ -60,6 +60,17 @@ After any change to the web UI (anything in `src/main/resources/web/`, or a chan
 before committing: it builds and starts the application and screenshots the affected tabs. Look at the screenshots, and send them to the user
 with `SendUserFile` for review, with any option set to a non-default value through environment variables if the change depends on it.
 
+### README Screenshots
+
+The screenshots of the web UI in the README are WebP files attached to each GitHub release, never committed: the README links to
+`https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-<tab>-<theme>.webp` (`#gh-light-mode-only`/`#gh-dark-mode-only`, as
+markdownlint does not allow `<picture>`). `.github/scripts/generate_readme_screenshots.sh <image> <directory>` starts the released image, restores
+the demo data of `python/readme_demo_backup.py` (made-up credentials, results and durations) with `POST /api/backup`, and screenshots the `main`,
+`trackers` and `settings` tabs (by URL hash) in the light and dark themes with headless Chrome, converted with `cwebp`. `publish.yml` runs it after
+pushing the image (`continue-on-error`, so it never fails a release) and attaches the files to the release; the `README Screenshots` workflow
+(`readme_screenshots.yml`, run manually) generates them again for an existing release. `python/readme_demo_backup.py` is not part of the Docker
+image. Keep the file names (linked from the README), the tab hashes and the demo backup (a `BackupManifest`) in step with the web UI.
+
 ## Architecture Overview
 
 ### Execution Flow

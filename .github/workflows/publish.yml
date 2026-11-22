@@ -132,6 +132,15 @@ jobs:
             zodac/tracker-profiles:${{ steps.version.outputs.version }}
             zodac/tracker-profiles:latest
 
+      # Release assets rather than files in the repository, linked from README.md (releases/latest/download/<file>). Never fails the release:
+      # the screenshots of an existing release can be generated again by the 'README Screenshots' workflow
+      - name: Generate the README screenshots of the web UI
+        continue-on-error: true
+        run: |
+          sudo apt-get update && sudo apt-get install --yes --no-install-recommends webp
+          .github/scripts/generate_readme_screenshots.sh \
+            "zodac/tracker-profiles:${{ steps.version.outputs.version }}" readme-screenshots
+
       - name: Get previous tag
         id: prev_tag
         run: |
@@ -184,6 +193,7 @@ jobs:
           name: v${{ steps.version.outputs.version }}
           tag: ${{ steps.version.outputs.version }}
           body: ${{ steps.release_body.outputs.body }}
+          artifacts: "readme-screenshots/*.webp"
 
       - name: Summary
         if: env.has_changes == 'true'
