@@ -1,4 +1,4 @@
-import {TYPING_SAVE_DELAY_MS} from './constants.mjs'
+import {NUMBER_LINE_ALL_LABELS, NUMBER_LINE_MAXIMUM_VALUES, TYPING_SAVE_DELAY_MS} from './constants.mjs'
 import {formatTypeName, isActive, latestStatus, refreshStatus} from './run.mjs'
 import {loadTrackers, renderTrackers, trackersLoaded} from './trackers.mjs'
 import {byId, confirmThenRun, el, hasKey, pluralise, request, showToast} from './util.mjs'
@@ -314,6 +314,91 @@ function sortableChoiceInput(setting, onChange, label) {
     }
 }
 
+// The step between the labelled values of a number line, so that a long range stays readable (every value still has a tick)
+function numberLineLabelStep(count) {
+    if (count <= NUMBER_LINE_ALL_LABELS) {
+        return 1
+    }
+    return Math.ceil(count / NUMBER_LINE_ALL_LABELS / 2) * 2
+}
+
+// An integer setting with a small range, as a number line of every valid value: a slider with a tick for each value, which saves when released
+function numberLineInput(setting, onChange, label) {
+    const minimum = setting.minimum
+    const maximum = setting.maximum
+    const labelStep = numberLineLabelStep(maximum - minimum + 1)
+    let disabled = !setting.editable
+
+    const slider = el('input', {
+        type: 'range',
+        min: String(minimum),
+        max: String(maximum),
+        step: '1',
+        disabled: disabled,
+        'aria-label': label,
+    })
+    const current = el('output', {className: 'number-line-value', 'aria-hidden': 'true'})
+    const ticks = el('div', {className: 'number-line-ticks'})
+
+    function position(value) {
+        return maximum === minimum ? 0 : (value - minimum) / (maximum - minimum)
+    }
+
+    function render() {
+        const value = Number(slider.value)
+        slider.style.setProperty('--fill', String(position(value)))
+        current.textContent = slider.value
+        ticks.querySelectorAll('.number-line-tick').forEach(function (tick) {
+            tick.classList.toggle('selected', Number(tick.dataset.value) === value)
+            tick.classList.toggle('filled', Number(tick.dataset.value) <= value)
+        })
+    }
+
+    function select(value) {
+        if (disabled || String(value) === slider.value) {
+            return
+        }
+        slider.value = String(value)
+        render()
+        onChange(slider.value, true)
+    }
+
+    for (let value = minimum; value <= maximum; value++) {
+        const labelled = value === minimum || value === maximum || value % labelStep === 0
+        const tickValue = value
+        ticks.append(el('span', {
+            className: labelled ? 'number-line-tick labelled' : 'number-line-tick',
+            dataset: {value: String(value)},
+            onclick: function () {
+                select(tickValue)
+            },
+        }, [labelled ? el('span', {className: 'number-line-label', text: String(value)}) : null]))
+    }
+    ticks.querySelectorAll('.number-line-tick').forEach(function (tick) {
+        tick.style.setProperty('--position', String(position(Number(tick.dataset.value))))
+    })
+
+    slider.addEventListener('input', render)
+    slider.addEventListener('change', function () {
+        onChange(slider.value, true)
+    })
+
+    const element = el('div', {className: 'number-line'}, [el('div', {className: 'number-line-track'}, [slider, ticks]), current])
+    return {
+        element: element,
+        setValue: function (value) {
+            const number = Number.parseInt(value, 10)
+            slider.value = String(Number.isNaN(number) ? minimum : Math.min(maximum, Math.max(minimum, number)))
+            render()
+        },
+        setDisabled: function (isDisabled) {
+            disabled = isDisabled || !setting.editable
+            slider.disabled = disabled
+            element.classList.toggle('disabled', disabled)
+        },
+    }
+}
+
 // Creates the input for a setting. 'onChange' is called with the new value and whether to save it immediately (rather than after typing)
 function settingInput(setting, onChange, onFlush) {
     const disabled = !setting.editable
@@ -359,6 +444,11 @@ function settingInput(setting, onChange, onFlush) {
 
     if (setting.type === 'MULTI_SELECT') {
         return sortableChoiceInput(setting, onChange, label)
+    }
+
+    if (setting.type === 'INTEGER' && setting.minimum !== null && setting.maximum !== null
+        && setting.maximum - setting.minimum < NUMBER_LINE_MAXIMUM_VALUES) {
+        return numberLineInput(setting, onChange, label)
     }
 
     const input = el('input', {

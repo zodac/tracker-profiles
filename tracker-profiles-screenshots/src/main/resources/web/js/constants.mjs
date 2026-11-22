@@ -13,6 +13,10 @@ export const MAXIMUM_PASTED_TEXT_LENGTH = 1000
 export const BROWSER_VIEW_ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
 export const BROWSER_VIEW_ZOOM_STORAGE_KEY = 'tracker-profiles-browser-zoom'
 export const TYPING_SAVE_DELAY_MS = 1000
+// An integer setting with at most this many valid values is a number line (otherwise a text field), with a label for every value up to
+// NUMBER_LINE_ALL_LABELS of them
+export const NUMBER_LINE_MAXIMUM_VALUES = 32
+export const NUMBER_LINE_ALL_LABELS = 10
 export const THEME_STORAGE_KEY = 'tracker-profiles-theme'
 // Shown (masked) in the password field of a tracker with a saved password, which is never sent to the browser. Private-use characters, so it
 // cannot match a password that is typed

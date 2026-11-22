@@ -283,7 +283,8 @@ polled, except the status every 10s during an execution (no logs), so the page t
   group), so the run options come first, with `Scope.STARTUP` options read-only, and a value saved in the UI that differs from its environment
   variable (or default, if not set) marked with a bar (`SettingView.changedInWebUi`; a saved value has no badge). While an execution is running,
   every option is locked. `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to
-  include it.
+  include it. An `INTEGER` option with at most `NUMBER_LINE_MAXIMUM_VALUES` (32) valid values is a number line (a slider with a tick for each value,
+  saved when released), any other a text field.
 - The Trackers tab has a **Download** menu (`#download-menu`, a `<details>` closed by a click outside it or Escape), listing
   `RunStatus.downloads` with their counts (`updateTrackerDownloads`, re-rendered only when they change), an option with none disabled.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and

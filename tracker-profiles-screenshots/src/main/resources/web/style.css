@@ -1987,6 +1987,150 @@ kbd {
     margin-top: 6px;
 }
 
+/* Integer settings with a small range, as a number line of every valid value */
+
+.number-line {
+    --thumb: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.number-line-track {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.number-line input[type="range"] {
+    display: block;
+    width: 100%;
+    height: var(--thumb);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+}
+
+.number-line input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) calc(var(--fill, 0) * 100%), var(--border) 0);
+}
+
+.number-line input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--accent) calc(var(--fill, 0) * 100%), var(--border) 0);
+}
+
+.number-line input[type="range"]::-webkit-slider-thumb {
+    width: var(--thumb);
+    height: var(--thumb);
+    margin-top: calc((4px - var(--thumb)) / 2);
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    appearance: none;
+}
+
+.number-line input[type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--thumb);
+    height: var(--thumb);
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.number-line input[type="range"]:focus-visible {
+    outline: none;
+}
+
+.number-line input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-soft);
+}
+
+.number-line input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-soft);
+}
+
+/* Each tick is centred under the thumb's position for its value */
+.number-line-ticks {
+    position: relative;
+    height: 26px;
+    margin-top: 2px;
+}
+
+.number-line-tick {
+    position: absolute;
+    top: 0;
+    left: calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--position, 0));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 14px;
+    height: 100%;
+    transform: translateX(-50%);
+    cursor: pointer;
+}
+
+.number-line-tick::before {
+    content: "";
+    width: 1px;
+    height: 4px;
+    background: var(--border);
+}
+
+.number-line-tick.labelled::before {
+    height: 6px;
+    background: var(--text-muted);
+}
+
+.number-line-tick.filled::before {
+    background: var(--accent);
+}
+
+.number-line-label {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.number-line-tick:hover .number-line-label {
+    color: var(--text);
+}
+
+.number-line-tick.selected .number-line-label {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.number-line-value {
+    min-width: 3ch;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.number-line.disabled input[type="range"],
+.number-line.disabled .number-line-tick {
+    cursor: not-allowed;
+}
+
+.number-line.disabled {
+    opacity: 0.55;
+}
+
 /* Toasts */
 
 .toasts {

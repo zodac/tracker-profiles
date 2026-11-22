@@ -47,16 +47,16 @@ public enum ConfigurationOption {
         "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
 
     /**
-     * The number of trackers executed in parallel.
-     */
-    NUMBER_OF_PARALLEL_THREADS(Group.RUN, "Parallel execution", "5", Range.of(1, 32),
-        "The number of trackers to execute at the same time", Scope.EXECUTION),
-
-    /**
      * The order in which trackers are executed.
      */
     EXECUTION_ORDER(Group.RUN, "Execution order", "ALPHABETICAL", OptionType.SELECT, names(ExecutionOrder.values()),
         "The order in which trackers are executed: by name, or headless or manual trackers first (each by name)", Scope.EXECUTION),
+
+    /**
+     * The number of trackers executed in parallel.
+     */
+    NUMBER_OF_PARALLEL_THREADS(Group.RUN, "Parallel execution", "5", Range.of(1, 32),
+        "The number of trackers to execute at the same time", Scope.EXECUTION),
 
     /**
      * The number of screenshot attempts per tracker.
