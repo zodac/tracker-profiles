@@ -32,7 +32,9 @@ testing, `docker-compose.yml` in the repository root (git-ignored) builds `docke
 
 The compose files harden the container (follow the same standard in any new compose file): UID `1000`, `cap_drop: ALL`,
 `no-new-privileges`, `read_only: true`, `/tmp` as a `noexec` tmpfs, `init: true`, memory and pids limits, log rotation, and the port bound to
-`127.0.0.1`. So the application must never write outside `/tmp` and the volumes, nor load native code from `/tmp`: the SQLite native library is
+`127.0.0.1`. The image declares the volumes `/app/data` (the database) and `/app/screenshots` (the screenshot folder, so a compose file need not
+mount it), and the paths of both are `Scope.STARTUP` options, since they must match a volume. So the application must never write outside `/tmp`
+and the volumes, nor load native code from `/tmp`: the SQLite native library is
 extracted to `/app/native` when the image is built and loaded from there by `start.sh` (`org.sqlite.lib.path`). Chrome runs with `--no-sandbox`
 and `--disable-dev-shm-usage`, so it needs no capabilities, and keeps its shared memory in `/tmp`.
 
@@ -445,8 +447,9 @@ UI) → environment variable → `ConfigurationOption.defaultValue()`, via the p
 New env vars must be:
 
 1. Added to `ConfigurationOption`, among the constants of its group, in the order shown on the Settings tab (most commonly changed first). Use
-   `Group.RUN` for options likely to be changed for an execution, otherwise `Group.OUTPUT` or `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only
-   read at startup (a web UI change would have no effect), otherwise `Scope.EXECUTION`.
+   `Group.RUN` for options likely to be changed for an execution, otherwise `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only read at
+   startup (a web UI change would have no effect), or is a deployment concern (such as a path that must be a mounted volume, as the screenshot
+   folder), otherwise `Scope.EXECUTION`.
    An `OptionType.INTEGER` option is declared with its `Range.of(min, max)`, which validates it (`parseInteger`), is appended to its
    description, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
    against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
@@ -454,8 +457,8 @@ New env vars must be:
 2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically
 3. Loaded in the `load()` constructor call with the `Source` parser for its type (`source.bool(...)`, `integer(...)`, `select(...)`,
    `multiSelect(...)`, or `get(...)` for a string), or a private static `getXxx(source)` method for anything else
-4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Group.RUN`, the `Settings` table for
-   other editable options, otherwise the `Startup-Only Options` table, in the `environment` of `docs/docker-compose.example.yml` (and the local,
+4. Documented in the README `### Configuration Options` section, in the `Run Options` table for `Group.RUN`, otherwise the `Startup-Only Options`
+   table (adding a table for any other editable option), in the `environment` of `docs/docker-compose.example.yml` (and the local,
    git-ignored `docker-compose.yml` if it exists), and in the README performance analysis block, in alphabetical order (except the run options
    in the `Run Options` table and the compose files, which are in the order of the Settings tab)
 

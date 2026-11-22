@@ -14,7 +14,6 @@
     - [Browser UI](#browser-ui)
     - [Configuration Options](#configuration-options)
         - [Run Options](#run-options)
-        - [Settings](#settings)
         - [Startup-Only Options](#startup-only-options)
         - [JVM Options](#jvm-options)
 - [Versioning](#versioning)
@@ -399,8 +398,9 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
   is renamed in the application is treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and
   the new name as a separate tracker without credentials, which must be entered again (or imported) before it is executed
 - **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run** (those
-  you are most likely to change for an execution), **Output** and **System**. A value changed here from the one set by its environment
-  variable (or its default, if not set) is marked with a bar.
+  you are most likely to change for an execution) and **System** (which can only be set as environment variables, so is shown read-only,
+  collapsed below the **Backup** section). A value changed here from the one set by its environment variable (or its default, if not set) is
+  marked with a bar.
   Settings are locked while an execution is in progress. The **Backup** section below them downloads or restores a
   [backup of the database](#backing-up-and-restoring)
 
@@ -492,9 +492,14 @@ empty directory, and update it:
 
 - Set `SECRET_KEY` (marked with a `TODO`) to a new secret, for example the output of `openssl rand -base64 32`, and keep the same value for as long
   as the same database is used
-- Update the [configuration options](#configuration-options) as needed, which are grouped by what they configure (most can also be changed later in
-  the [web UI](#web-ui))
+- Update the [configuration options](#configuration-options) as needed, which are grouped by what they configure (the run options can also be
+  changed later in the [web UI](#web-ui))
 - Create the screenshot directory (`/tmp/screenshots` by default), which must be writable by the container user (UID `1000`)
+
+The screenshots are saved in the `/app/screenshots` volume of the container. The example bind-mounts a directory of the host there, so the
+screenshots can be opened from the host. Mounting it is optional: without it, Docker creates an anonymous volume, which is reused when
+`docker compose up` recreates the container (such as after a change to the compose file), but not after `docker compose down`. The screenshots in
+it can be downloaded from the web UI, or kept by a [backup](#backing-up-and-restoring).
 
 Then start the application with `docker compose up -d`. The web UI is available at [http://localhost:8080](http://localhost:8080), the
 application logs are shown with `docker compose logs -f`, and the application is stopped with `docker compose down`.
@@ -521,16 +526,14 @@ display, X server or `DISPLAY` variable, on Linux or Windows.
 
 ### Configuration Options
 
-All options are set with environment variables on the docker image, and most can also be changed in the [web UI](#web-ui). They fall into three
-groups:
+All options are set with environment variables on the docker image. They fall into two groups:
 
-- [Run Options](#run-options) are shown first on the **Settings** tab (under **Run**), as they are the most likely to be changed for an
-  execution
-- [Settings](#settings) are shown below them on the **Settings** tab, under **Output** and **System**
+- [Run Options](#run-options) can also be changed on the **Settings** tab of the [web UI](#web-ui) (under **Run**), as they are the most likely
+  to be changed for an execution
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
 
 A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including after the
-container is restarted. Run options and settings cannot be changed while an execution is in progress.
+container is restarted. Run options cannot be changed while an execution is in progress.
 
 Headless browsers always use a resolution of 1920x1080. Browsers with a UI (for [manual trackers](#manual-interaction)) are shown in the web UI, so
 they use the resolution of the screen of the browser that started the execution (between 800x600 and 7680x4320).
@@ -548,29 +551,22 @@ These options apply from the next execution.
 | *NUMBER_OF_SCREENSHOT_ATTEMPTS* | The number of times to attempt to screenshot a tracker before marking it as a fail [min: 1, max: 5]                                                                                                                                             | 1             |
 | *ENABLE_TRANSLATION_TO_ENGLISH* | Whether to translate non-English trackers to English                                                                                                                                                                                            | true          |
 
-#### Settings
-
-Changes to these options apply from the next execution.
-
-| Environment Variable           | Description                                                                                                                                                                                              | Default Value    |
-|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|
-| *OUTPUT_DIRECTORY_NAME_FORMAT* | The name of the output directory to be created for the of the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)) | yyyy-MM-dd       |
-| *OUTPUT_DIRECTORY_PARENT_PATH* | The output location of the new directory created for the screenshots                                                                                                                                     | /app/screenshots |
-
 #### Startup-Only Options
 
 These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
 (greyed out, with the value of `SECRET_KEY` hidden), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
 itself, so are not shown in the web UI.
 
-| Environment Variable   | Description                                                                                                                                                     | Default Value                 |
-|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| *DATABASE_PATH*        | The path to the SQLite database storing tracker credentials, settings saved in the [web UI](#web-ui) and tracker results (inside the `/app/data` docker volume) | /app/data/tracker-profiles.db |
-| *JAVA_ADDITIONAL_OPTS* | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                  |                               |
-| *JAVA_OPTS*            | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                  |                               |
-| *SECRET_KEY*           | **Required.** The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown in the web UI)                       |                               |
-| *TIMEZONE*             | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                        | UTC                           |
-| *WEB_UI_PORT*          | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                          | 8080                          |
+| Environment Variable           | Description                                                                                                                                                                                                  | Default Value                 |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| *DATABASE_PATH*                | The path to the SQLite database storing tracker credentials, settings saved in the [web UI](#web-ui) and tracker results (inside the `/app/data` docker volume)                                              | /app/data/tracker-profiles.db |
+| *JAVA_ADDITIONAL_OPTS*         | Additional JVM options to be appended to [start.sh](./docker/scripts/start.sh)                                                                                                                               |                               |
+| *JAVA_OPTS*                    | Replaces all default JVM options entirely; if unset or empty, the built-in defaults are used (see [JVM Options](#jvm-options))                                                                               |                               |
+| *OUTPUT_DIRECTORY_NAME_FORMAT* | The date format used to name the output directory created for the screenshots (see [Patterns for Formatting and Parsing](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html)) | yyyy-MM-dd                    |
+| *OUTPUT_DIRECTORY_PARENT_PATH* | The location in which the dated output directory for the screenshots is created (the `/app/screenshots` docker volume, see [Running With Docker Compose](#running-with-docker-compose))                      | /app/screenshots              |
+| *SECRET_KEY*                   | **Required.** The secret used to encrypt the tracker passwords stored in the database, at least 16 characters (never shown in the web UI)                                                                    |                               |
+| *TIMEZONE*                     | The local timezone, used for the date in the names of the output directory and of downloaded screenshots                                                                                                     | UTC                           |
+| *WEB_UI_PORT*                  | The port on which the [web UI](#web-ui) is served [min: 1, max: 65535]                                                                                                                                       | 8080                          |
 
 #### JVM Options
 

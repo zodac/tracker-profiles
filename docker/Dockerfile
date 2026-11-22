@@ -198,11 +198,11 @@ COPY --from=java_app_builder /app/native/libsqlitejdbc.so /app/native/libsqlitej
 # Configure nonroot user
 ARG PUID=1000
 ARG PGID=1000
-# Create user and group, and the directory for the web UI database (see DATABASE_PATH)
+# Create user and group, and the directories for the web UI database (see DATABASE_PATH) and the screenshots (see OUTPUT_DIRECTORY_PARENT_PATH)
 RUN groupadd -g ${PGID} nonroot && \
     useradd -l -u ${PUID} -g nonroot -d /tmp/chrome-home -m nonroot && \
-    mkdir -p /app/data && \
-    chown -R nonroot:nonroot /tmp/chrome-home /app/data
+    mkdir -p /app/data /app/screenshots && \
+    chown -R nonroot:nonroot /tmp/chrome-home /app/data /app/screenshots
 # Set environment and user
 ENV HOME=/tmp/chrome-home
 # hadolint ignore=DL3066
@@ -210,6 +210,8 @@ USER nonroot
 VOLUME /tmp/chrome-home
 # Web UI database (tracker credentials and saved settings), kept separate from the screenshots so it can be mounted or cleared on its own
 VOLUME /app/data
+# Screenshots, mounted to keep them on the host (an anonymous volume otherwise, as the root filesystem is read-only)
+VOLUME /app/screenshots
 
 # Copy JDK & JAR
 COPY --from=jdk_builder /opt/jdk /opt/jdk

@@ -25,11 +25,10 @@ services:
       NUMBER_OF_PARALLEL_THREADS: "5"
       NUMBER_OF_SCREENSHOT_ATTEMPTS: "1"
       ENABLE_TRANSLATION_TO_ENGLISH: "true"
-      # Output configuration (can also be changed on the 'Settings' tab of the web UI)
-      OUTPUT_DIRECTORY_NAME_FORMAT: "yyyy-MM-dd"
-      OUTPUT_DIRECTORY_PARENT_PATH: "/app/screenshots"
       # System configuration (only read on startup)
       DATABASE_PATH: "/app/data/tracker-profiles.db"
+      OUTPUT_DIRECTORY_NAME_FORMAT: "yyyy-MM-dd"
+      OUTPUT_DIRECTORY_PARENT_PATH: "/app/screenshots"
       SECRET_KEY: "change-me-strong-secret"  # <--- TODO: Change this, generate using `openssl rand -base64 32`, and keep it for as long as the database is used
       TIMEZONE: "UTC"
       WEB_UI_PORT: "8080"
@@ -55,7 +54,7 @@ services:
       - /tmp:size=256m,noexec,nosuid,nodev  # Browser shared memory (~35m with 5 parallel browsers)
     user: "1000:1000"  # nonroot user
     volumes:
-      - /tmp/screenshots:/app/screenshots  # Must be writable by UID 1000 (Windows: "C:/tmp/screenshots:/app/screenshots")
+      - /tmp/screenshots:/app/screenshots  # Optional (an anonymous volume otherwise), must be writable by UID 1000
       - tracker-chrome-cache:/tmp/chrome-home
       - tracker-profiles-data:/app/data
 

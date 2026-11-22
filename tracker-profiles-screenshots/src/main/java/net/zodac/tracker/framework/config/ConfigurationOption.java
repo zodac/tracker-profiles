@@ -71,23 +71,23 @@ public enum ConfigurationOption {
         "Whether to translate non-English trackers to English", Scope.EXECUTION),
 
     /**
-     * The date format used to name the output directory.
-     */
-    OUTPUT_DIRECTORY_NAME_FORMAT(Group.OUTPUT, "Folder name format", "yyyy-MM-dd", OptionType.STRING, List.of(),
-        "The date format used to name the output directory created for the screenshots", Scope.EXECUTION),
-
-    /**
-     * The parent path of the output directory.
-     */
-    OUTPUT_DIRECTORY_PARENT_PATH(Group.OUTPUT, "Screenshot folder", "/app/screenshots", OptionType.STRING, List.of(),
-        "The location in which the dated output directory for the screenshots is created", Scope.EXECUTION),
-
-    /**
      * The path to the SQLite database used by the web UI.
      */
     DATABASE_PATH(Group.SYSTEM, "Database", "/app/data/tracker-profiles.db", OptionType.STRING, List.of(),
         "The path to the SQLite database file storing tracker credentials and settings changed in the web UI (in its own docker volume)",
         Scope.STARTUP),
+
+    /**
+     * The date format used to name the output directory.
+     */
+    OUTPUT_DIRECTORY_NAME_FORMAT(Group.SYSTEM, "Folder name format", "yyyy-MM-dd", OptionType.STRING, List.of(),
+        "The date format used to name the output directory created for the screenshots", Scope.STARTUP),
+
+    /**
+     * The parent path of the output directory.
+     */
+    OUTPUT_DIRECTORY_PARENT_PATH(Group.SYSTEM, "Screenshot folder", "/app/screenshots", OptionType.STRING, List.of(),
+        "The location in which the dated output directory for the screenshots is created (in its own docker volume)", Scope.STARTUP),
 
     /**
      * The secret used to encrypt the passwords stored in the database.
@@ -363,11 +363,6 @@ public enum ConfigurationOption {
          * Options likely to be changed for an execution.
          */
         RUN("Run"),
-
-        /**
-         * Where and how the screenshots are saved.
-         */
-        OUTPUT("Output"),
 
         /**
          * The application itself.
