@@ -434,8 +434,9 @@ When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter
 **Screenshot trackers** (and the tab title changes), showing the tracker's browser live. All prompts are in one **Waiting for your input** section,
 which can be collapsed to put them aside. Scrolling over a browser scrolls its page, and clicking in it selects it (marked with a blue ring), after
 which your clicks, scrolling and typing are sent to it until you click elsewhere. `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code).
-Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Skip tracker** fails the
-current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run together (as
+Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Reload page** reloads the
+page in the browser and keeps waiting, such as to get a new captcha before (or after) one expires. **Skip tracker** fails the current attempt for
+that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run together (as
 many as `NUMBER_OF_PARALLEL_THREADS` at once), started in the order set by `EXECUTION_ORDER` (by name, or headless or manual trackers first;
 choose **Manual first** to have the prompts shown straight away). Several prompts can be shown at once, each with its own browser, and answered in
 any order while the headless trackers continue.

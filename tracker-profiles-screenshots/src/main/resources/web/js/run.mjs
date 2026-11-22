@@ -327,6 +327,8 @@ function respondToInput(input, action, button) {
         .then(function (status) {
             if (action === 'skip') {
                 showToast(`Skipped ${input.trackerName}`)
+            } else if (action === 'reload') {
+                showToast(`Reloading the page of ${input.trackerName}`)
             } else {
                 showToast(`Continuing ${input.trackerName}`)
             }
@@ -345,7 +347,14 @@ function createInputCard(input) {
     const skipButton = el('button', {
         className: 'button', type: 'button', text: 'Skip tracker', title: 'Fail this attempt for the tracker, and move on',
     })
+    const reloadButton = el('button', {
+        className: 'button', type: 'button', text: 'Reload page',
+        title: 'Reload the page in the browser (such as a captcha that has expired), and keep waiting for the input',
+    })
     const continueButton = el('button', {className: 'button primary', type: 'button', text: 'Continue'})
+    reloadButton.addEventListener('click', function () {
+        respondToInput(input, 'reload', reloadButton)
+    })
     skipButton.addEventListener('click', function () {
         respondToInput(input, 'skip', skipButton)
     })
@@ -364,10 +373,11 @@ function createInputCard(input) {
                     className: 'muted',
                     text: 'Scrolling over the browser scrolls its page. Click in it to select it: your clicks, scrolling and typing go to it until '
                         + 'you click elsewhere, and Ctrl+V pastes your clipboard. Zoom in with its toolbar or Ctrl+scroll, or show it on the whole '
-                        + 'screen. Skipping fails this attempt for the tracker. Continuing is automatic if the page changes',
+                        + 'screen. Reloading the page gets a new captcha if it has expired. Skipping fails this attempt for the tracker. Continuing is automatic if '
+                        + 'the page changes',
                 }),
             ]),
-            el('div', {className: 'input-actions'}, [skipButton, continueButton]),
+            el('div', {className: 'input-actions'}, [reloadButton, skipButton, continueButton]),
         ]),
         browserView,
     ])

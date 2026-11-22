@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -37,7 +38,8 @@ import org.apache.logging.log4j.Logger;
  * the input, and the web UI, which shows each {@link PendingUserInput} and sends the user's {@link UserInputResponse}.
  *
  * <p>
- * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves). A
+ * A request is also completed without a response when the page in the browser changes (the user has progressed past the page themselves), except
+ * for {@link #RELOAD_GRACE_MILLIS} after the user reloads the page (see {@link #reloading(long)}), so a reload is not taken as a page change. A
  * request never times out: it waits until the user responds, or the execution is cancelled.
  *
  * <p>
@@ -48,12 +50,15 @@ public final class UserInputRequests {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final long POLL_INTERVAL_MILLIS = 500L;
+    private static final long RELOAD_GRACE_MILLIS = 5_000L;
 
     private static final Lock LOCK = new ReentrantLock();
     private static final Condition RESPONDED = LOCK.newCondition();
     // Every registered request, and the response to each request the user has responded to (until its tracker sees it)
     private static final Map<Long, PendingUserInput> PENDING = new LinkedHashMap<>();
     private static final Map<Long, UserInputResponse> RESPONSES = new HashMap<>();
+    // When the user last reloaded the page of each request, as the page is not checked for a change while it reloads
+    private static final Map<Long, Long> RELOADED_AT = new HashMap<>();
     // The total time spent waiting by the requests of each tracker that have finished, since the tracker was last reset
     private static final Map<String, Long> WAITED_MILLIS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private static long nextId = 1L;
@@ -89,6 +94,7 @@ public final class UserInputRequests {
             try {
                 PENDING.remove(id);
                 RESPONSES.remove(id);
+                RELOADED_AT.remove(id);
                 WAITED_MILLIS.merge(trackerName, Math.max(0L, System.currentTimeMillis() - request.requestedAt()), Long::sum);
             } finally {
                 LOCK.unlock();
@@ -135,10 +141,41 @@ public final class UserInputRequests {
                 LOCK.unlock();
             }
 
-            if (pageChanged.getAsBoolean()) {
+            if (!isReloading(id) && pageChanged.getAsBoolean()) {
                 LOGGER.trace("Page change detected for request #{}, continuing", id);
                 return;
             }
+        }
+    }
+
+    private static boolean isReloading(final long id) {
+        LOCK.lock();
+        try {
+            final Long reloadedAt = RELOADED_AT.get(id);
+            return reloadedAt != null && System.currentTimeMillis() - reloadedAt < RELOAD_GRACE_MILLIS;
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    /**
+     * Records that the user is reloading the page of a waiting request (such as a captcha that has expired), so the page is not checked for a
+     * change for {@link #RELOAD_GRACE_MILLIS}: the request keeps waiting after the reload.
+     *
+     * @param id the {@link PendingUserInput#id()}
+     * @return the name of the tracker waiting for the input, or {@link Optional#empty()} if the request has already finished
+     */
+    public static Optional<String> reloading(final long id) {
+        LOCK.lock();
+        try {
+            final PendingUserInput request = PENDING.get(id);
+            if (request == null || RESPONSES.containsKey(id)) {
+                return Optional.empty();
+            }
+            RELOADED_AT.put(id, System.currentTimeMillis());
+            return Optional.of(request.trackerName());
+        } finally {
+            LOCK.unlock();
         }
     }
 

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import net.zodac.tracker.framework.ExecutionCancellation;
@@ -106,6 +107,28 @@ class UserInputRequestsTest {
         waiting.get(WAIT_SECONDS, TimeUnit.SECONDS);
         assertThat(waiting)
             .isCompleted();
+    }
+
+    @Test
+    void givenReloadingRequest_whenPageChanges_thenRequestKeepsWaitingUntilContinued() throws Exception {
+        final AtomicBoolean pageChanged = new AtomicBoolean(false);
+        final CompletableFuture<Void> waiting = awaitInBackground(pageChanged::get);
+        final UserInputRequests.PendingUserInput pendingInput = awaitPendingInput();
+
+        assertThat(UserInputRequests.reloading(pendingInput.id()))
+            .contains(TRACKER_NAME);
+        pageChanged.set(true);
+
+        assertThatThrownBy(() -> waiting.get(1L, TimeUnit.SECONDS))
+            .isInstanceOf(TimeoutException.class);
+        UserInputRequests.respond(pendingInput.id(), UserInputResponse.CONTINUE);
+        waiting.get(WAIT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void givenNoWaitingRequest_whenReloading_thenNoTrackerIsReturned() {
+        assertThat(UserInputRequests.reloading(Long.MAX_VALUE))
+            .isEmpty();
     }
 
     @Test

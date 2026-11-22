@@ -174,6 +174,27 @@ public final class BrowserView {
     }
 
     /**
+     * Reloads the page in the tab, as the user would with the browser's reload button.
+     *
+     * @throws IllegalStateException thrown if the view is closed, or the browser cannot be reached
+     * @throws InterruptedException  thrown if interrupted while sending the reload
+     */
+    public void reload() throws InterruptedException {
+        lock.lock();
+        try {
+            if (closed) {
+                throw new IllegalStateException("The browser is closed");
+            }
+            final WebSocket socket = connect();
+            if (socket == null || !send(socket, new DevToolsCommand("Page.reload", Map.of()))) {
+                throw new IllegalStateException("Unable to reload the page in the browser");
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Whether the view is closed, either by {@link #close()} or because the browser closed the connection.
      *
      * @return {@code true} if the view is closed

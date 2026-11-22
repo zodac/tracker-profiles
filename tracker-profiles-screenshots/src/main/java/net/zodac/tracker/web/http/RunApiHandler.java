@@ -19,6 +19,7 @@ package net.zodac.tracker.web.http;
 
 import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
+import java.util.Objects;
 import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.input.UserInputResponse;
 import net.zodac.tracker.web.RunManager;
@@ -29,7 +30,8 @@ import org.jspecify.annotations.Nullable;
  * ({@code POST /api/run/failed}), both with the optional body {@code {"screenWidth": 1920, "screenHeight": 1080}} for the resolution of the browsers
  * with a UI, cancel the running execution ({@code POST /api/run/cancel}) or a single running tracker
  * ({@code POST /api/run/cancel/{tracker}}), respond to a request for a user input ({@code POST /api/run/input/{id}/continue} or
- * {@code .../skip}), and retrieve the status of the execution ({@code GET /api/run}).
+ * {@code .../skip}) or reload its page in the tracker's browser ({@code .../reload}), and retrieve the status of the execution
+ * ({@code GET /api/run}).
  */
 public final class RunApiHandler extends ApiHandler {
 
@@ -137,11 +139,23 @@ public final class RunApiHandler extends ApiHandler {
         final boolean waiting = switch (parts[1]) {
             case "continue" -> runManager.respondToInput(inputId, UserInputResponse.CONTINUE);
             case "skip" -> runManager.respondToInput(inputId, UserInputResponse.SKIP);
+            case "reload" -> reloadInputPage(inputId);
             default -> throw new HttpRequestException(HttpStatus.NOT_FOUND, "Unknown input action: '%s'".formatted(parts[1]));
         };
 
         if (!waiting) {
             throw new HttpRequestException(HttpStatus.CONFLICT, "The tracker is no longer waiting for this input");
+        }
+    }
+
+    private boolean reloadInputPage(final long inputId) {
+        try {
+            return runManager.reloadInputPage(inputId);
+        } catch (final IllegalStateException e) {
+            throw new HttpRequestException(HttpStatus.CONFLICT, Objects.requireNonNullElse(e.getMessage(), "The browser is not shown"), e);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HttpRequestException(HttpStatus.SERVICE_UNAVAILABLE, "Interrupted while reloading the page", e);
         }
     }
 

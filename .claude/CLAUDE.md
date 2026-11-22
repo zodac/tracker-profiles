@@ -137,7 +137,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   and calls `DisplayUtils.confirm(trackerName, instruction)`, which waits in `framework.input.UserInputRequests` until the user responds in the web UI
   (`POST /api/run/input/{id}/continue|skip`) or the page in the browser changes; it never times out (only a cancellation ends it otherwise). The
   prompt in the web UI shows the tracker's browser, in which the user provides the input (see
-  [Live Browser View](#live-browser-view)). There is no dialog on the display: the virtual display is never seen by the user.
+  [Live Browser View](#live-browser-view)). There is no dialog on the display: the virtual display is never seen by the user. **Reload page**
+  (`POST /api/run/input/{id}/reload`, `RunManager.reloadInputPage`) reloads the tracker's page with DevTools (`BrowserView.reload`), such as for a
+  captcha that has expired, and keeps waiting: `UserInputRequests.reloading` stops checking the page for a change for 5s, so the reload is not
+  taken as one.
 - **`web.log.WebLogAppender`** — a Log4j2 appender installed programmatically, keeping the log messages of the current execution separately for
   each tracker (from the `tracker` key of the `ThreadContext`, since trackers run in parallel; messages not logged by a tracker are only written to
   the console), and each tracker's latest `INFO`+ message for `RunStatus` (cleared by `RunManager` when a step completes or an attempt starts). Each

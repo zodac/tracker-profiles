@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -374,6 +375,25 @@ public final class RunManager implements ExecutionListener {
      */
     public boolean respondToInput(final long inputId, final UserInputResponse response) {
         return UserInputRequests.respond(inputId, response);
+    }
+
+    /**
+     * Reloads the page in the browser of a tracker waiting for a user input (such as a captcha that has expired), which keeps waiting for the input.
+     *
+     * @param inputId the {@link UserInputRequests.PendingUserInput#id()}
+     * @return {@code true} if the request was waiting for a response
+     * @throws IllegalStateException thrown if the tracker's browser is not open, or cannot be reached
+     * @throws InterruptedException  thrown if interrupted while reloading the page
+     */
+    public boolean reloadInputPage(final long inputId) throws InterruptedException {
+        final Optional<String> trackerName = UserInputRequests.reloading(inputId);
+        if (trackerName.isEmpty()) {
+            return false;
+        }
+        BrowserViews.find(trackerName.get())
+            .orElseThrow(() -> new IllegalStateException("No browser is open for %s".formatted(trackerName.get())))
+            .reload();
+        return true;
     }
 
     /**
