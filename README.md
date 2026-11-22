@@ -1,8 +1,6 @@
 # Tracker Profiles
 
-A self-hosted web app that logs in to your private torrent trackers and saves a redacted, full-page screenshot of each profile page. Run it as
-a Docker container, then do everything from your browser: add your trackers, start an execution, solve a captcha or 2FA in the tracker's own
-browser shown live in the page, and download the screenshots.
+A self-hosted web app that logs in to your private torrent trackers and saves a redacted, full-page screenshot of each profile page.
 
 ![The Main tab of the web UI, listing the enabled trackers with their estimated durations](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-main-light.webp#gh-light-mode-only)
 ![The Main tab of the web UI, listing the enabled trackers with their estimated durations](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-main-dark.webp#gh-dark-mode-only)
@@ -32,9 +30,8 @@ browser shown live in the page, and download the screenshots.
 - [AI Usage](#ai-usage)
     - [AI Agents](#ai-agents)
     - [Established Patterns](#established-patterns)
-    - [Human Review](#human-review)
-    - [Exceptions](#exceptions)
-        - [JavaScript Redaction](#javascript-redaction)
+    - [JavaScript Redaction](#javascript-redaction)
+    - [UI](#ui)
 - [Contributing](#contributing)
     - [Requirements](#requirements)
     - [Install Git Hooks](#install-git-hooks)
@@ -59,17 +56,11 @@ install or run on the host besides Docker.
   full-page screenshot, and logs out, with several trackers executed in parallel
 - **Redaction** of your email address, IP address (including ISP) and passkeys (for torrents or IRC), with a solid box, a Gaussian blur, or no
   redaction (several types can be selected, with a screenshot for each)
-- **Live progress**: follow every tracker of an execution as it runs, with its current step, its own logs, and an estimated time left, and cancel
-  the whole execution or a single tracker
 - **Manual trackers**: a tracker that needs a captcha or 2FA to log in shows its browser live in the web UI, where you complete the step (nothing
   is shown on the host, so it also works on a headless server)
 - **Cloudflare verification** checks are passed automatically, without any user input
 - **Screenshot history**: the latest screenshots and result of every tracker are kept across restarts, can be viewed in the web UI, and downloaded
   individually or as a zip file. Only the trackers that failed can be executed again
-- **Tracker management**: enter credentials in the web UI or import them from a CSV file, enable or disable trackers in bulk, and back up
-  everything (credentials, settings and screenshots) to restore on another machine
-- **Secure by default**: passwords are encrypted in the database, the web UI is only reachable from the host by default, and the container runs
-  as a non-root user with a read-only filesystem
 
 ### Redaction Examples
 
@@ -107,7 +98,7 @@ Below are examples of the different types of redaction from the [MooKo](https://
 ## Quick Start
 
 Download the [example compose file](./docs/docker-compose.example.yml) into an empty directory, set a new secret to encrypt the stored
-passwords, create the screenshot directory (writable by the container user, UID `1000`), and start the container:
+passwords, and start the container:
 
 ```bash
 curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/zodac/tracker-profiles/master/docs/docker-compose.example.yml
@@ -126,8 +117,6 @@ Then open the web UI at [http://localhost:8080](http://localhost:8080):
 
 See [Using The Web UI](#using-the-web-ui) for more details, and [Running With Docker Compose](#running-with-docker-compose) for the options of the
 compose file.
-
-Screenshots are saved to `/tmp/screenshots/<date>/` on your host. See [Configuration Options](#configuration-options) for the full list of settings.
 
 ## Trackers
 
@@ -376,39 +365,13 @@ Start an execution, and follow the progress of each tracker as it runs.
 ![The Main tab of the web UI, listing the enabled trackers with their estimated durations](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-main-light.webp#gh-light-mode-only)
 ![The Main tab of the web UI, listing the enabled trackers with their estimated durations](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-main-dark.webp#gh-dark-mode-only)
 
-- **Start** executes every enabled tracker (it is disabled until at least one tracker is enabled). Once an execution has ended with failed
-  trackers, **Failures only** executes just those trackers again (any that have since been disabled are left out), while the trackers that
-  succeeded stay listed (with their logs and screenshots) until the next **Start** or a restart. The run options and settings can be changed
-  between executions. The card with these buttons stays at the top of the page as you scroll, and hovering over the status in the header shows
-  how many trackers succeeded and failed
-- Every tracker in the execution is listed, grouped as in progress, waiting, failed or succeeded. Before the first execution, the enabled
-  trackers are listed as waiting, in the order they will be executed, and stay in place once it starts. A tracker moves between groups as the
-  execution continues, so once it finishes the trackers are grouped by whether they succeeded or failed. The arrows on each group move to the
-  previous or next group
-- Each tracker shows which step it is on (opening the tracker, logging in, opening the profile page, taking the screenshots, logging out), its
-  latest message (for a failed tracker, why it failed) and how long it took. Expand a tracker to see its own logs, which update while it runs.
-  The logs are grouped by step, each showing whether it is done, running, failed or not run, how long it took and how many messages (and
-  warnings) it has. The step in progress, or the step that failed, is opened automatically. If a tracker is retried, the messages of each
-  attempt are separated within each step, and the screenshot messages are separated by redaction type
-- Once a tracker has succeeded 3 times, it is estimated to take the average of its last 5 successful executions (not counting the time spent
-  waiting for your input, which is also left out while it runs). A waiting tracker shows its estimate (`~1m 20s`), and a running one the time
-  it has been running against its estimate (`45s / ~1m 20s`). The card shows the estimated time left for the whole execution (from the
-  trackers' estimates, in the order they are executed on the parallel threads, leaving out any tracker not estimated yet), or before the
-  first execution how long it is estimated to take
-- An expanded tracker also shows thumbnails of its screenshots: one per redaction type once it succeeds, or its failure screenshot if it failed.
-  Select a thumbnail to view the screenshot (scaled to 1080p, with a link to open it at full size),
-  and move between the redaction types with the arrows (or the arrow keys)
-- Each screenshot can be downloaded on its own, as can every screenshot of a tracker. **Download all** downloads the screenshots of the
-  trackers that succeeded in the current (or most recent) execution only; screenshots from earlier executions are downloaded from the
-  **Trackers** tab. Screenshots deleted or moved since are left out, and the button is hidden when there are none. Several screenshots are
-  downloaded as a `.zip` file named `tracker-profiles_v<version>_<date>.zip`, where the date is when the latest execution started
-  (`yyyy-MM-dd_HH:mm:ss`, in `TIMEZONE`). The thumbnails only show the current (or most recent) execution, which is kept in memory until the
-  application restarts (the screenshots are still saved to the output directory as before)
-- A running execution can be cancelled, which closes all browsers and stops immediately (trackers already screenshot are kept), without stopping
-  the container. A single running tracker can also be stopped with the **Cancel** button on its row (such as a tracker that is clearly
-  failing): its browser is closed, and it fails without another attempt, while the other trackers continue. Both buttons ask you to confirm:
-  the first click changes the button to **Confirm**, and a second click cancels, while clicking anywhere else (or `Escape`) leaves it running
-- Messages not logged by a tracker (such as the summary of the execution) are only written to the container logs
+- **Start** executes every enabled tracker. If an execution has ended with failed trackers, **Failures only** executes just those trackers again
+- Every tracker is grouped as in progress, waiting, failed or succeeded
+- Each tracker shows which step it is on, and its latest message/failure
+- Each tracker's 'in progress' screen can also be expanded to show the live browser (in read-only mode)
+- If a tracker requires a manual input, the browser will appear and request you to perform the input. See [manual tracker](#manual-interaction).
+- If a tracker has succeeded 3 times, an estimated time will appear based on previous runs
+- Each screenshot can be downloaded after execution
 
 ### Trackers Tab
 
@@ -417,29 +380,18 @@ Enter the credentials of each tracker, enable the trackers to execute, and downl
 ![The Trackers tab of the web UI, listing the enabled and disabled trackers with their credentials and last run](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-trackers-light.webp#gh-light-mode-only)
 ![The Trackers tab of the web UI, listing the enabled and disabled trackers with their credentials and last run](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-trackers-dark.webp#gh-dark-mode-only)
 
-- Every supported tracker is listed, grouped as enabled or disabled (manual trackers are tagged as *Manual input*), with trackers that have no
-  username or password listed as unset. Each has fields for the username/email and password, the result of its most recent execution, and its
-  estimated duration (see the [Main tab](#main-tab))
-- A tracker whose credentials have just been set (or removed) stays where it is until you click elsewhere (or make no change for 10 seconds), then
-  moves to its new group. A saved password is shown as dots, and deleting them removes the password (and disables the tracker)
-- The image button next to a tracker's last result expands its row to show the screenshots of its most recent execution, as on the **Main** tab: its
-  profile screenshots if it succeeded, or its failure screenshot if it failed (from any execution, also before a restart, as long as they are still
-  on disk)
-- Click an enabled or disabled tracker to select it, `Ctrl`+click to add or remove one, `Shift`+click to select a range, or `Ctrl`+`A` to select them
-  all (only the rest of a group if all selected trackers are in it, then both groups if pressed again), to enable, disable or remove them together
-  (`Alt`+click selects the text of a row instead). Unset and legacy trackers cannot be selected
-- **Import CSV** and **Export CSV** add or save the credentials of many trackers at once (see [Importing Trackers](#importing-trackers))
-- **Download** downloads the latest screenshots of every tracker, from any execution (also before a restart): **All**, **Successful** (the profile
-  screenshots of each tracker's latest success), one redaction type (**Blur redaction**, **Box redaction** or **No redaction**), or **Errors** (the
-  failure screenshot of each tracker whose latest execution failed). Each option shows how many screenshots it has
-- **Enable failed only** (select it twice to confirm) enables every tracker whose most recent execution failed and disables every tracker whose most
-  recent execution succeeded, so the next execution only runs the failed trackers (such as after upgrading the application, which forgets the failures
-  that the **Failures only** button of the **Main** tab runs). Trackers that have never been executed are left as they are
-- A tracker that is no longer supported (removed from the application) is listed as legacy, and never executed. It is never removed automatically, so
-  the screenshots of its most recent execution can still be retrieved; removing it clears its credentials, result and screenshots from the database
-  (the screenshot files are kept on disk). Trackers are identified only by name (ignoring case), so a tracker that is renamed in the application is
-  treated the same way: the old name is listed as legacy (with its credentials, last run and screenshots), and the new name as a separate tracker
-  without credentials, which must be entered again (or imported) before it is executed
+- Every supported tracker is listed, grouped as enabled or disabled, with trackers that have no username or password listed as unset
+- Each tracker's last result is saved, so you can download screenshots from the last run
+- **Import CSV** and **Export CSV** allow you to add or save the credentials of multiple trackers at once
+  (see [Importing Trackers](#importing-trackers))
+- **Download** allows you to bulk download the latest screenshots of every tracker:
+    - **All**
+    - **Successful** (the profile screenshots of each tracker's latest success)
+    - **Blur redaction**/ **Box redaction**/ **No redaction**
+    - **Errors** (the failure screenshot of each tracker whose latest execution failed)
+- **Enable failed only** enables every tracker whose most recent execution failed and disables every tracker whose most recent execution succeeded
+- A tracker that is no longer supported (removed from the application) is listed as legacy. It is not removed automatically, so it can be kept as a
+  history
 
 ### Settings Tab
 
@@ -448,11 +400,8 @@ Change the run options, and back up or restore the application.
 ![The Settings tab of the web UI, showing the run options and the backup section](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-settings-light.webp#gh-light-mode-only)
 ![The Settings tab of the web UI, showing the run options and the backup section](https://github.com/zodac/tracker-profiles/releases/latest/download/web-ui-settings-dark.webp#gh-dark-mode-only)
 
-- Every [configuration option](#configuration-options) is shown with its value, preloaded from the environment variables, grouped as **Run**
-  (those you are most likely to change for an execution) and **System** (which can only be set as environment variables, so is shown read-only,
-  collapsed below the **Backup** section)
-- A value changed here from the one set by its environment variable (or its default, if not set) is marked with a bar, and is used from the next
-  execution. Settings are locked while an execution is in progress
+- Every [configuration option](#configuration-options) is shown with its value
+- A value changed here from the one set by its environment variable (or its default, if not set) is marked with a bar,
 - The **Backup** section downloads or restores a [backup](#backing-up-and-restoring) of the trackers, settings and screenshots
 
 ### Manual Trackers
@@ -460,34 +409,18 @@ Change the run options, and back up or restore the application.
 When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears on the **Main** tab, below
 **Screenshot trackers** (and the tab title changes), showing the tracker's browser live. All prompts are in one **Waiting for your input** section,
 which can be collapsed to put them aside. Clicking in a browser selects it (marked with a blue ring), after which your clicks, scrolling and
-typing are sent to it until you click elsewhere (until then, scrolling over it scrolls this page). `Ctrl`+`V` pastes text from your clipboard
-(such as a 2FA code). Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes.
-**Reload page** reloads the page in the browser and keeps waiting, such as to get a new captcha before (or after) one expires. **Skip tracker**
-fails the current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run
-together (as many as `NUMBER_OF_PARALLEL_THREADS` at once), started in the order set by `EXECUTION_ORDER` (by name, or headless or manual
-trackers first; choose **Manual first** to have the prompts shown straight away). Several prompts can be shown at once, each with its own
+typing are sent to it until you click elsewhere (until then, scrolling over it scrolls this page). `Ctrl`+`V` pastes text from your clipboard (such as
+a 2FA code). Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Reload page**
+reloads the page in the browser and keeps waiting, such as to get a new captcha before (or after) one expires. **Skip tracker**
+fails the current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Several prompts can be shown at once,
+each with its own
 browser, and answered in any order while the headless trackers continue.
-
-If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
-selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. Each prompt starts with the
-browser fitted to the page.
-
-The browser of any tracker in progress can also be watched (but not used) from its row on the **Main** tab, by opening **Live browser**.
-
-The browsers of manual trackers run on a virtual display inside the container (started by [start.sh](./docker/scripts/start.sh)), and are only
-ever shown in the web UI, so the host needs no display, X server or `DISPLAY` variable, on Linux or Windows.
-
-> **Note:** Earlier versions showed the browser on the host's display. If your compose file still sets `DISPLAY` or mounts `/tmp/.X11-unix`, both
-> can be removed: they are no longer used.
 
 ### Importing Trackers
 
-Credentials for many trackers can be added at once with **Import CSV** on the **Trackers** tab. Copy the
-[trackers_example.csv](trackers_example.csv) file and update it with your login information for each tracker. Any unwanted trackers can be deleted,
-or prefixed with `#` so they are ignored. The tracker names are case-insensitive.
-
-Each imported tracker is enabled, and replaces any credentials already saved for it. Trackers in the file that are not supported are listed after
-the import, and are not saved.
+Credentials for many trackers can be added at once with **Import CSV** on the **Trackers** tab. The format is `trackerName,username,password`. You can
+export at any time to get a template for the CSV which you can update with your login information for each tracker. Each imported tracker is enabled,
+and replaces any credentials already saved for it. Trackers in the file that are not supported are ignored.
 
 **Export CSV** downloads `trackers.csv` with every supported tracker that has a username and password (enabled or disabled), in the same format, so
 it can be imported again (for example, into a new container). If no tracker has been set yet, the file only has the header row, and can be used as a
@@ -520,8 +453,8 @@ machine: the credentials and screenshots too, if the backup includes them.
 ### Stored Data And Security
 
 Tracker credentials, settings saved in the web UI, the result of each tracker's most recent execution and the location of the screenshots of its
-latest successful execution are stored in a SQLite database
-(`DATABASE_PATH`), in the `/app/data` volume of the container. This is separate from the screenshots, so it can be mounted, backed up or cleared on
+latest successful execution are stored in a SQLite database (`DATABASE_PATH`), in the `/app/data` volume of the container. This is separate from the
+screenshots, so it can be mounted, backed up or cleared on
 its own. The [example compose file](./docs/docker-compose.example.yml) uses the named volume `tracker-profiles-data`:
 
 - The data is kept when the container is recreated (`docker compose down` and `docker compose up`), as the named volume is reused
@@ -550,44 +483,18 @@ encrypted when the application starts.
 The application is run with Docker Compose. Download [docker-compose.example.yml](./docs/docker-compose.example.yml) as `docker-compose.yml` into an
 empty directory, and update it:
 
-- Set `SECRET_KEY` (marked with a `TODO`) to a new secret, for example the output of `openssl rand -base64 32`, and keep the same value for as long
-  as the same database is used
-- Update the [configuration options](#configuration-options) as needed, which are grouped by what they configure (the run options can also be
-  changed later in the [web UI](#using-the-web-ui))
-- Create the screenshot directory (`/tmp/screenshots` by default), which must be writable by the container user (UID `1000`)
+- Set `SECRET_KEY`to a new secret
+- Update the [configuration options](#configuration-options) as needed
+- Optionally create and mount a screenshot directory (`/tmp/screenshots` by default), which must be writable by the container user (UID `1000`)
 
-The screenshots are saved in the `/app/screenshots` volume of the container. The example bind-mounts a directory of the host there, so the
-screenshots can be opened from the host. Mounting it is optional: without it, Docker creates an anonymous volume, which is reused when
-`docker compose up` recreates the container (such as after a change to the compose file), but not after `docker compose down`. The screenshots in
-it can be downloaded from the web UI, or kept by a [backup](#backing-up-and-restoring).
-
-Then start the application with `docker compose up -d`. The web UI is available at [http://localhost:8080](http://localhost:8080), the
-application logs are shown with `docker compose logs -f`, and the application is stopped with `docker compose down`.
-
-The example uses a fixed image version (the latest release), so update the `image` tag to upgrade. It also restricts the container:
-
-- The web UI is only reachable from the host itself (`127.0.0.1:8080:8080`), since it has no authentication. To reach it from other devices on your
-  local network, change it to `8080:8080`
-- The container runs as a non-root user with no Linux capabilities, a read-only root filesystem (with `/tmp` in memory, and the data in volumes),
-  and limits on memory and processes. The limits suit the default of 5 parallel browsers, so raise them if `NUMBER_OF_PARALLEL_THREADS` is
-  increased
-
-The example works the same way on Linux and Windows, as the browsers are shown in the web UI (see [Manual Trackers](#manual-trackers)). On
-Windows, save the screenshots to a Windows path (such as `C:/tmp/screenshots:/app/screenshots`).
+Then start the application with `docker compose up -d`. The web UI is available at [http://localhost:8080](http://localhost:8080).
 
 ### Configuration Options
 
 All options are set with environment variables on the docker image. They fall into two groups:
 
-- [Run Options](#run-options) can also be changed on the [Settings tab](#settings-tab) of the web UI (under **Run**), as they are the most likely
-  to be changed for an execution
+- [Run Options](#run-options) can also be changed on the [Settings tab](#settings-tab) of the web UI (under **Run**)
 - [Startup-Only Options](#startup-only-options) can only be set as environment variables, and need the container to be restarted to change
-
-A value changed in the web UI is saved to the database (`DATABASE_PATH`), and from then on overrides the environment variable, including after the
-container is restarted. Run options cannot be changed while an execution is in progress.
-
-Headless browsers always use a resolution of 1920x1080. Browsers with a UI (for [manual trackers](#manual-interaction)) are shown in the web UI, so
-they use the resolution of the screen of the browser that started the execution (between 800x600 and 7680x4320).
 
 #### Run Options
 
@@ -604,8 +511,8 @@ These options apply from the next execution.
 
 #### Startup-Only Options
 
-These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
-(greyed out, except `SECRET_KEY`, which is never shown), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
+These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference (greyed
+out, except `SECRET_KEY`, which is never shown), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
 itself, so are not shown in the web UI.
 
 | Environment Variable           | Description                                                                                                                                                                                                  | Default Value                 |
@@ -651,13 +558,6 @@ removals will be released as `PATCH` versions.
 
 ## AI Usage
 
-I use AI agents to perform the "first-pass" implementation for a new tracker site. The AI will investigate and evaluate the generate structure of the
-site and build an initial handler. Based off of this, I'll refine and test until I'm happy that it matches the same standards as the existing
-implementations.
-
-Since there were over 100 implementations prior to using AI, there are established patterns and styles to follow, hopefully guiding the AI to follow
-the same standards.
-
 ### AI Agents
 
 [Claude Code](https://claude.com/claude-code) employs a multi-agent pipeline to implement each new tracker handler:
@@ -672,6 +572,13 @@ the same standards.
 
 ### Established Patterns
 
+I use AI agents to perform the "first-pass" implementation for a new tracker site. The AI will investigate and evaluate the generate structure of the
+site and build an initial handler. Based off of this, I'll refine and test until I'm happy that it matches the same standards as the existing
+implementations.
+
+Since there were over 100 implementations prior to using AI, there are established patterns and styles to follow, hopefully guiding the AI to follow
+the same standards.
+
 Every implementation relies on:
 
 - **Existing handler code**: The agents study the handlers already in
@@ -682,19 +589,16 @@ Every implementation relies on:
 - **Agent definitions**: Each agent has a [Markdown](.claude/agents) file defining its scope, and how to parse the tracker to build the handler, which
   is refined over time
 
-### Human Review
-
-All AI-generated code is reviewed and approved before being merged, including manual testing of the new handler. Since each handler needs to be tested
-against a real site, there's no value to automating much testing, so each implementation will be verified manually.
-
-### Exceptions
-
 #### JavaScript Redaction
 
 The [JavaScript redaction logic](./tracker-profiles-screenshots/src/main/resources/net/zodac/tracker/framework/redactor) used
 in [JavaScriptRedactor](./tracker-profiles-screenshots/src/main/java/net/zodac/tracker/framework/redactor/JavaScriptRedactor.java) is mostly AI
 created with little input from me. I don't know JavaScript well enough to perform this overlay-based redaction, but I verify against all tracker
 handlers when updates are made, to cover as many cases as possible.
+
+#### UI
+
+The UI has been built by AI agents, since I don't write UI code. The pre-existing CLI implementation has now moved to the UI.
 
 ## Contributing
 
@@ -757,7 +661,8 @@ browsers, which can be used for debugging a new implementation.
 ### Performance Analysis
 
 To generate a `.jfr` file for profiling with [Java Mission Control (JMC)](https://jdk.java.net/jmc/), build and run the JAR with JFR flags
-(environment variables are prefixed before `java`, equivalent to `environment` in the [compose file](./docs/docker-compose.example.yml)), then start an
+(environment variables are prefixed before `java`, equivalent to `environment` in the [compose file](./docs/docker-compose.example.yml)), then start
+an
 execution from the [web UI](#using-the-web-ui) at [http://localhost:8080](http://localhost:8080):
 
 ```bash

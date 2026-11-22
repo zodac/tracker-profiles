@@ -132,9 +132,11 @@ jobs:
             zodac/tracker-profiles:${{ steps.version.outputs.version }}
             zodac/tracker-profiles:latest
 
-      # Release assets rather than files in the repository, linked from README.md (releases/latest/download/<file>). Never fails the release:
-      # the screenshots of an existing release can be generated again by the 'README Screenshots' workflow
+      # Release assets rather than files in the repository, linked from README.md (releases/latest/download/<file>). A failure never stops the
+      # release, but fails the job once it is published (see the last step), so the screenshots can be generated again by the 'README
+      # Screenshots' workflow
       - name: Generate the README screenshots of the web UI
+        id: readme_screenshots
         continue-on-error: true
         run: |
           sudo apt-get update && sudo apt-get install --yes --no-install-recommends webp
@@ -201,3 +203,10 @@ jobs:
           echo "Docker image and GitHub release created for version: ${{ steps.version.outputs.version }}"
           echo "Pull the image using:"
           echo "docker pull zodac/tracker-profiles:${{ steps.version.outputs.version }}"
+
+      # The release has no screenshots, so the images of the README are missing until they are generated again
+      - name: Fail if the README screenshots were not generated
+        if: steps.readme_screenshots.outcome == 'failure'
+        run: |
+          echo "::error title=README screenshots missing::The README screenshots of the web UI were not generated, so the images of the README are missing. Run the 'README Screenshots' workflow for release ${{ steps.version.outputs.version }} once fixed"
+          exit 1

@@ -67,8 +67,9 @@ The screenshots of the web UI in the README are WebP files attached to each GitH
 markdownlint does not allow `<picture>`). `.github/scripts/generate_readme_screenshots.sh <image> <directory>` starts the released image, restores
 the demo data of `python/readme_demo_backup.py` (made-up credentials, results and durations) with `POST /api/backup`, and screenshots the `main`,
 `trackers` and `settings` tabs (by URL hash) in the light and dark themes with headless Chrome, converted with `cwebp`. `publish.yml` runs it after
-pushing the image (`continue-on-error`, so it never fails a release) and attaches the files to the release; the `README Screenshots` workflow
-(`readme_screenshots.yml`, run manually) generates them again for an existing release. `python/readme_demo_backup.py` is not part of the Docker
+pushing the image and attaches the files to the release. A failure never stops the release (`continue-on-error`), but fails the job once the
+release is published, as the README images are then missing until the `README Screenshots` workflow (`readme_screenshots.yml`, run manually)
+generates them again for that release. `python/readme_demo_backup.py` is not part of the Docker
 image. Keep the file names (linked from the README), the tab hashes and the demo backup (a `BackupManifest`) in step with the web UI.
 
 ## Architecture Overview
