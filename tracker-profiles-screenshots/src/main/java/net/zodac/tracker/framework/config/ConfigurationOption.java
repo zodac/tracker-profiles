@@ -299,7 +299,7 @@ public enum ConfigurationOption {
     }
 
     /**
-     * Whether the value is secret, so is never returned to the web UI or logged.
+     * Whether the value is secret, so is never listed in the web UI or logged.
      *
      * @return {@code true} if the value is secret
      */

@@ -37,8 +37,6 @@ import org.jspecify.annotations.Nullable;
  */
 public final class SettingsService {
 
-    private static final String MASKED_VALUE = "********";
-
     private final ApplicationDatabase applicationDatabase;
     private final BooleanSupplier executionInProgress;
     private final SavedSettingsListener savedSettingsListener;
@@ -64,7 +62,7 @@ public final class SettingsService {
     }
 
     /**
-     * Lists every {@link ConfigurationOption} with its current value.
+     * Lists every {@link ConfigurationOption} with its current value, except a {@link ConfigurationOption#sensitive()} one, which is never shown.
      *
      * @return the {@link SettingView}s
      * @throws SQLException thrown if the saved settings cannot be read
@@ -73,6 +71,7 @@ public final class SettingsService {
         final Map<String, String> overrides = applicationDatabase.settings().findAll();
         return ConfigurationOption.ALL_VALUES
             .stream()
+            .filter(option -> !option.sensitive())
             .sorted(Comparator.comparing(ConfigurationOption::group))
             .map(option -> SettingView.of(option, overrides.get(option.name())))
             .toList();
@@ -195,10 +194,6 @@ public final class SettingsService {
          * @return the {@link SettingView}
          */
         static SettingView of(final ConfigurationOption option, final @Nullable String savedValue) {
-            if (option.sensitive()) {
-                return sensitive(option);
-            }
-
             final String environmentValue = option.environmentValue().orElse(null);
             final String value;
             final Source source;
@@ -259,15 +254,6 @@ public final class SettingsService {
 
         private static @Nullable Integer maximum(final ConfigurationOption option) {
             return option.range().map(ConfigurationOption.Range::maximum).orElse(null);
-        }
-
-        // A secret value is never returned, only whether it is set
-        private static SettingView sensitive(final ConfigurationOption option) {
-            final boolean set = option.environmentValue().filter(value -> !value.isEmpty()).isPresent();
-            final String maskedValue = set ? MASKED_VALUE : "";
-            return new SettingView(option.name(), option.group().label(), option.label(), option.type(), option.description(),
-                option.allowedValues(), null, null, "", set ? MASKED_VALUE : null, null, maskedValue, set ? Source.ENVIRONMENT : Source.DEFAULT,
-                false, option.editableAtRuntime());
         }
     }
 

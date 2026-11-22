@@ -105,8 +105,8 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   keeps the stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in
   `js/constants.mjs`). Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the
   required `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if
-  a stored password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (masked in
-  `SettingView`) or logged.
+  a stored password cannot be decrypted (the secret changed). `SECRET_KEY` is `ConfigurationOption.sensitive()`: never returned by the API (left out of
+  `SettingsService.listSettings`, so not shown on the Settings tab) or logged.
 - **Schema migrations** — the schema is versioned by Flyway (`flyway-core`, which includes SQLite support): `ApplicationDatabase.open` applies the
   migrations in `src/main/resources/db/migration` before opening its connection. To change the schema, add the next `V<n>__<description>.sql` (never
   edit a released migration, as Flyway validates their checksums), and update `LATEST_SCHEMA_VERSION` in `ApplicationDatabaseTest`. A database created

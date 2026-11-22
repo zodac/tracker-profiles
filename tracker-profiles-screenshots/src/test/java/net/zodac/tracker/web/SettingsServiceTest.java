@@ -59,7 +59,7 @@ class SettingsServiceTest {
     }
 
     @Test
-    void givenNoSavedSettings_whenListed_thenEveryOptionIsReturnedInGroupOrder() throws SQLException {
+    void givenNoSavedSettings_whenListed_thenEveryNonSensitiveOptionIsReturnedInGroupOrder() throws SQLException {
         final List<SettingsService.SettingView> settings = settingsService.listSettings();
 
         assertThat(settings)
@@ -202,15 +202,11 @@ class SettingsServiceTest {
     }
 
     @Test
-    void givenSecretKeyOption_whenListed_thenValueIsNeverReturnedAndCannotBeChanged() throws SQLException {
-        final SettingsService.SettingView secretKey = find(settingsService.listSettings(), ConfigurationOption.SECRET_KEY);
-
-        assertThat(secretKey)
-            .returns("", SettingsService.SettingView::defaultValue)
-            .returns(null, SettingsService.SettingView::savedValue)
-            .returns(false, SettingsService.SettingView::editable);
-        assertThat(secretKey.value())
-            .isIn("", "********");
+    void givenSecretKeyOption_whenListed_thenItIsNotReturned() throws SQLException {
+        assertThat(settingsService.listSettings())
+            .extracting(SettingsService.SettingView::name)
+            .isNotEmpty()
+            .doesNotContain(ConfigurationOption.SECRET_KEY.name());
     }
 
     @Test
@@ -256,6 +252,7 @@ class SettingsServiceTest {
     private static List<String> namesInGroupOrder() {
         return ConfigurationOption.ALL_VALUES
             .stream()
+            .filter(option -> !option.sensitive())
             .sorted(Comparator.comparing(ConfigurationOption::group))
             .map(Enum::name)
             .toList();

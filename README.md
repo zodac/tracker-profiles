@@ -554,7 +554,7 @@ These options apply from the next execution.
 #### Startup-Only Options
 
 These options are read once when the container starts. The application options are shown on the **Settings** tab of the web UI for reference
-(greyed out, with the value of `SECRET_KEY` hidden), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
+(greyed out, except `SECRET_KEY`, which is never shown), but cannot be changed there. `JAVA_OPTS` and `JAVA_ADDITIONAL_OPTS` configure the container
 itself, so are not shown in the web UI.
 
 | Environment Variable           | Description                                                                                                                                                                                                  | Default Value                 |
