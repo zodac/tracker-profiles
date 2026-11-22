@@ -239,8 +239,8 @@ to an `Input.*` DevTools command, so the page receives it as a real input.
 In the UI (`js/browser-view.mjs`), frames are drawn on a `<canvas>` (the CSP does not allow `blob:` images), and streaming stops while the page is
 hidden or the view is not in the page. The input prompt shows an interactive view (pointer events with pointer capture, keys while it is focused
 except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. The wheel scrolls the
-browser while the pointer is over an interactive view or one is focused (a window listener), and the page otherwise; only a focused (clicked
-into) interactive view has a ring in the `--selected` colour, never one that is only hovered, since keys only reach a focused view. The prompts
+browser only while an interactive view is focused (a window listener, at the pointer if it is over the view, otherwise the middle of the page), and
+the page otherwise (even over the view); only a focused (clicked into) interactive view has a ring in the `--selected` colour. The prompts
 are in one collapsible `#pending-inputs` card below the run card (open by default, and again once none are pending), and their views stream
 only while it is open. Every view has a toolbar to zoom the frame (`Fit`, which scales it down to the page, or a fixed level from
 `BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is focused) or show it in full

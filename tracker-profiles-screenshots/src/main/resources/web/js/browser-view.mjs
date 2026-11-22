@@ -457,22 +457,21 @@ function clampedPosition(view, event) {
     return {x: Math.min(1, Math.max(0, point.x)), y: Math.min(1, Math.max(0, point.y))}
 }
 
-// Scrolling goes to the browser of an input while the pointer is over it, or anywhere while it is selected (clicked into, until something else
-// is clicked), and otherwise scrolls this page. Ctrl+scroll zooms the view instead (see addZoomListeners)
+// Scrolling goes to the browser of an input only while it is selected (clicked into, until something else is clicked), wherever the pointer is,
+// and otherwise scrolls this page (even over the browser). Ctrl+scroll zooms the view instead (see addZoomListeners)
 window.addEventListener('wheel', function (event) {
     if (event.ctrlKey || event.metaKey) {
         return
     }
-    const hovered = event.target instanceof Element ? event.target.closest('.browser-view-screen.interactive') : null
-    const selected = document.activeElement instanceof Element && document.activeElement.matches('.browser-view-screen.interactive')
+    const screen = document.activeElement instanceof Element && document.activeElement.matches('.browser-view-screen.interactive')
         ? document.activeElement : null
-    const screen = hovered || selected
     const view = screen ? screen.parentElement : null
     if (!view || !views.has(view) || view.canvas.hidden) {
         return
     }
     event.preventDefault()
     // Outside the selected browser, the middle of its page is scrolled
+    const hovered = event.target instanceof Node && screen.contains(event.target)
     queueInput(view, wheelInput(view, event, hovered ? clampedPosition(view, event) : {x: 0.5, y: 0.5}))
 }, {passive: false})
 

@@ -436,14 +436,14 @@ encrypted when the application starts.
 
 When a [manual tracker](#manual-interaction) needs you to solve a captcha, enter a 2FA code or similar, a prompt appears on the **Main** tab, below
 **Screenshot trackers** (and the tab title changes), showing the tracker's browser live. All prompts are in one **Waiting for your input** section,
-which can be collapsed to put them aside. Scrolling over a browser scrolls its page, and clicking in it selects it (marked with a blue ring), after
-which your clicks, scrolling and typing are sent to it until you click elsewhere. `Ctrl`+`V` pastes text from your clipboard (such as a 2FA code).
-Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes. **Reload page** reloads the
-page in the browser and keeps waiting, such as to get a new captcha before (or after) one expires. **Skip tracker** fails the current attempt for
-that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run together (as
-many as `NUMBER_OF_PARALLEL_THREADS` at once), started in the order set by `EXECUTION_ORDER` (by name, or headless or manual trackers first;
-choose **Manual first** to have the prompts shown straight away). Several prompts can be shown at once, each with its own browser, and answered in
-any order while the headless trackers continue.
+which can be collapsed to put them aside. Clicking in a browser selects it (marked with a blue ring), after which your clicks, scrolling and
+typing are sent to it until you click elsewhere (until then, scrolling over it scrolls this page). `Ctrl`+`V` pastes text from your clipboard
+(such as a 2FA code). Complete the step, then select **Continue**; the execution also continues by itself if the page in the browser changes.
+**Reload page** reloads the page in the browser and keeps waiting, such as to get a new captcha before (or after) one expires. **Skip tracker**
+fails the current attempt for that tracker. The prompt waits until you respond (or the execution is cancelled). Manual and headless trackers run
+together (as many as `NUMBER_OF_PARALLEL_THREADS` at once), started in the order set by `EXECUTION_ORDER` (by name, or headless or manual
+trackers first; choose **Manual first** to have the prompts shown straight away). Several prompts can be shown at once, each with its own
+browser, and answered in any order while the headless trackers continue.
 
 If text in the browser is hard to read, zoom in with the toolbar above it (or `Ctrl`+scroll, and `Ctrl`+`=`, `Ctrl`+`-` or `Ctrl`+`0` while it is
 selected), which scrolls the view rather than changing the page, or show it on the whole screen with **Full screen**. Each prompt starts with the
