@@ -59,9 +59,32 @@ function renderSettings() {
         group.settings.push(setting)
     })
 
+    // A group of read-only settings (set only by environment variables, such as System) is listed after the Backup card, collapsed and without
+    // descriptions, since it is only for reference
+    const isReadOnly = function (group) {
+        return group.settings.every(function (setting) {
+            return !setting.editable
+        })
+    }
     const container = byId('settings-groups')
-    container.replaceChildren.apply(container, groups.map(function (group) {
-        return el('div', {className: 'card settings-group'}, [el('h2', {text: group.name})].concat(group.settings.map(renderSettingRow)))
+    container.replaceChildren.apply(container, groups.filter(function (group) {
+        return !isReadOnly(group)
+    }).map(function (group) {
+        return el('div', {className: 'card settings-group'}, [el('h2', {text: group.name})].concat(group.settings.map(function (setting) {
+            return renderSettingRow(setting, true)
+        })))
+    }))
+
+    // Settings are reloaded, so an expanded group is kept expanded
+    const readOnlyContainer = byId('settings-read-only-groups')
+    const expanded = new Set(Array.from(readOnlyContainer.querySelectorAll('details[open]')).map(function (details) {
+        return details.dataset.group
+    }))
+    readOnlyContainer.replaceChildren.apply(readOnlyContainer, groups.filter(isReadOnly).map(function (group) {
+        return el('details', {className: 'card settings-group read-only-group', open: expanded.has(group.name), dataset: {group: group.name}},
+            [el('summary', {}, [el('h2', {text: group.name})])].concat(group.settings.map(function (setting) {
+                return renderSettingRow(setting, false)
+            })))
     }))
 }
 
@@ -498,7 +521,7 @@ function showRowError(row, errorMessage, message) {
 }
 
 // A setting on the Settings tab
-function renderSettingRow(setting) {
+function renderSettingRow(setting, showDescription) {
     const name = setting.name
     const row = el('div', {className: 'setting-row'})
     const nameLine = el('div', {className: 'setting-name'})
@@ -529,7 +552,7 @@ function renderSettingRow(setting) {
     refresh()
 
     row.append(
-        el('div', {}, [nameLine, el('p', {className: 'setting-description', text: setting.description})]),
+        el('div', {}, [nameLine, showDescription ? el('p', {className: 'setting-description', text: setting.description}) : null]),
         el('div', {className: 'setting-input'}, [control.element, errorMessage])
     )
     return row

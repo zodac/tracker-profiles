@@ -280,11 +280,12 @@ polled, except the status every 10s during an execution (no logs), so the page t
   previous/next buttons (`scrollToGroup`), the run card is pinned under the header (`position: sticky`, except on small screens), and the header
   status has a tooltip with the count of each state. The tab is wider than the others (90% of the window), for the browsers of the inputs. The
   Settings tab shows every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by
-  group), so the run options come first, with `Scope.STARTUP` options read-only, and a value saved in the UI that differs from its environment
-  variable (or default, if not set) marked with a bar (`SettingView.changedInWebUi`; a saved value has no badge). While an execution is running,
-  every option is locked. `MULTI_SELECT` options are a list dragged into order (or moved with the arrow keys on the handle), each with a switch to
-  include it. An `INTEGER` option with at most `NUMBER_LINE_MAXIMUM_VALUES` (32) valid values is a number line (a slider with a tick for each value,
-  saved when released), any other a text field.
+  group), so the run options come first, with `Scope.STARTUP` options read-only. A group whose options are all `Scope.STARTUP` (such as System)
+  is listed after the Backup card instead, collapsed by default and without descriptions (`#settings-read-only-groups`). A value saved in the UI
+  that differs from its environment variable (or default, if not set) is marked with a bar (`SettingView.changedInWebUi`; a saved value has no
+  badge). While an execution is running, every option is locked. `MULTI_SELECT` options are a list dragged into order (or moved with the arrow
+  keys on the handle), each with a switch to include it. An `INTEGER` option with at most `NUMBER_LINE_MAXIMUM_VALUES` (32) valid values is a
+  number line (a slider with a tick for each value, saved when released), any other a text field.
 - The Trackers tab has a **Download** menu (`#download-menu`, a `<details>` closed by a click outside it or Escape), listing
   `RunStatus.downloads` with their counts (`updateTrackerDownloads`, re-rendered only when they change), an option with none disabled.
 - The Trackers tab groups trackers as enabled, disabled, and unset (no username or password, with the last run, enable and
