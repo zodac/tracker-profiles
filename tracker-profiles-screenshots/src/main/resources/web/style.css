@@ -661,8 +661,8 @@ select:disabled {
     background: var(--surface-muted);
 }
 
-/* The browser of an input that receives the scrolling (while the pointer is over it) or the keys and scrolling (while it is selected) */
-.browser-view:has(> .browser-view-screen.interactive:is(:hover, :focus)) {
+/* The browser of an input that is selected (clicked into), which receives the keys and scrolling */
+.browser-view:has(> .browser-view-screen.interactive:focus) {
     border-color: var(--selected);
     box-shadow: 0 0 0 2px var(--selected);
 }

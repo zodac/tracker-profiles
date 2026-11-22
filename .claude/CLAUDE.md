@@ -239,13 +239,14 @@ to an `Input.*` DevTools command, so the page receives it as a real input.
 In the UI (`js/browser-view.mjs`), frames are drawn on a `<canvas>` (the CSP does not allow `blob:` images), and streaming stops while the page is
 hidden or the view is not in the page. The input prompt shows an interactive view (pointer events with pointer capture, keys while it is focused
 except the paste shortcut, whose text is sent with `Input.insertText`), sending queued events in order, one request at a time. The wheel scrolls the
-browser while the pointer is over an interactive view or one is focused (a window listener), and the page otherwise; an interactive view that receives
-it has a ring in the `--selected` colour. The prompts are in one collapsible `#pending-inputs` card below the run card (open by default, and again
-once none are pending), and their views stream only while it is open. Every view has a toolbar to zoom the frame (`Fit`, which scales it down to the
-page, or a fixed level from `BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is
-focused) or show it in full screen. Zooming only changes how the frame is drawn, never the page in the browser (which would change its screenshots),
-and the zoom chosen for a view-only view is kept in `localStorage` (an interactive view always starts at `Fit`). A running tracker's row on the Main
-tab has a closed **Live browser** panel, which shows a view-only stream while it (and the row) is open.
+browser while the pointer is over an interactive view or one is focused (a window listener), and the page otherwise; only a focused (clicked
+into) interactive view has a ring in the `--selected` colour, never one that is only hovered, since keys only reach a focused view. The prompts
+are in one collapsible `#pending-inputs` card below the run card (open by default, and again once none are pending), and their views stream
+only while it is open. Every view has a toolbar to zoom the frame (`Fit`, which scales it down to the page, or a fixed level from
+`BROWSER_VIEW_ZOOM_LEVELS`, scrolling the view; also Ctrl+scroll, and Ctrl+`=`/`-`/`0` while an interactive view is focused) or show it in full
+screen. Zooming only changes how the frame is drawn, never the page in the browser (which would change its screenshots), and the zoom chosen for a
+view-only view is kept in `localStorage` (an interactive view always starts at `Fit`). A running tracker's row on the Main tab has a closed **Live
+browser** panel, which shows a view-only stream while it (and the row) is open.
 
 #### Cancelling an Execution
 
