@@ -85,10 +85,10 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `GET /api/trackers/export` for a CSV file written by `TrackerCsvWriter` (every supported tracker with a username and password, or only the header
   row if none, so it doubles as a sample file), and `POST /api/trackers/bulk` to enable, disable or remove the selected trackers in one
   transaction), `SettingsApiHandler` (`/api/settings`),
-  `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `StaticResourceHandler` (`/`, keeping each file in memory with an
-  `ETag`). API handlers
-  extend `ApiHandler`, which requires `Content-Type: application/json` on `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error
-  responses.
+  `ScreenshotApiHandler` (`/api/screenshots`, see [Screenshots](#screenshots)), `BackupApiHandler` (`/api/backup`, see
+  [Backup and Restore](#backup-and-restore)), `StaticResourceHandler` (`/`, keeping each file in memory with an `ETag`). API handlers
+  extend `ApiHandler`, which requires `Content-Type: application/json` (or another type of `acceptsContentType` that needs a CORS preflight) on
+  `POST`/`PUT` (CSRF protection) and maps `HttpRequestException` to error responses.
 - **`web.storage.ApplicationDatabase`** — SQLite (`sqlite-jdbc`), holding tracker credentials, settings overrides, the result of each tracker's
   most recent execution and the profile screenshots of its latest success (both shown on the Trackers tab), and the durations of its latest
   successful executions (see [Estimated Durations](#estimated-durations)), through one repository each: `credentials()`
@@ -99,7 +99,7 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   `inTransaction`): SQLite allows one writer, so a connection pool would not help. Keep all SQL in the repositories, as constants using numbered
   parameters (`?1`), and wrap any multi-statement change in `inTransaction`. Lists for the web UI use `credentials().findAllStatuses()`, which never
   decrypts a password; only an execution and the CSV export decrypt them (`credentials().findAll()`). Apart from the CSV export (a file download, so
-  that it can be imported again), passwords are never returned by the API; a `null` password on save
+  that it can be imported again) and a backup that includes them, passwords are never returned by the API; a `null` password on save
   keeps the stored one, and an empty password removes it (the UI shows a saved password as a placeholder value, `SAVED_PASSWORD_VALUE` in
   `js/constants.mjs`). Passwords are encrypted by `PasswordCipher` (AES-256-GCM, tracker name as associated data) with a key derived (PBKDF2) from the
   required `SECRET_KEY` env var and a salt stored in the `metadata` table. `ApplicationDatabase.open` encrypts any plain-text passwords, and fails if
@@ -149,6 +149,24 @@ Lives in `net.zodac.tracker.web`. Uses the JDK `com.sun.net.httpserver.HttpServe
   The UI fetches a tracker's logs only while it is expanded, polling with the ID of the last message it has, and groups them by step (a phase),
   with a divider per attempt once a tracker is retried and a heading per section. `RunStatus` gives each completed step's time for the phase
   durations.
+
+#### Backup and Restore
+
+`web.backup.BackupService` creates and restores a backup: a zip (`BackupArchive`) with `backup.json` first (`BackupManifest`: format version, what
+is included, and the `storage.DatabaseBackup` of `ApplicationDatabase.backup()`, every table except the credentials, read in one transaction), then
+`trackers.csv` if the credentials are included (written by `TrackerCsvWriter` for `StoredTrackerCredential.isExported`, as the CSV export, with
+each tracker's enabled state in the manifest), then the screenshot files under `screenshots/` if included (`RunManager.latestScreenshots(ALL)`, as
+the Download menu's All, named by their path relative to the screenshot folder, the parent of `outputDirectory()`). `GET
+/api/backup?credentials=true&screenshots=true` (`BackupApiHandler`) streams it. `POST /api/backup` takes the zip as the body (`Content-Type:
+application/zip`, accepted by `BackupApiHandler.acceptsContentType`) and reads it as it is uploaded: the manifest (validated) and the CSV come first,
+so the screenshot files listed in the manifest are only then extracted into the current screenshot folder (never outside it). The database is then
+restored by `RunManager.restoreBackup`, which rejects it (`409`) during an execution, keeps only the settings of options that can be saved in the web
+UI, and holds its lock while `ApplicationDatabase.restore` **merges** the backup in one transaction (settings, credentials, results, and the
+screenshots and durations of each tracker in the backup replace those stored for the same setting or tracker; everything else is kept, so a legacy
+tracker is never removed) and its in-memory state and the configuration are reloaded. A backup is a file kept by the user, so a change to what it
+holds must increase `BackupManifest.FORMAT_VERSION` and keep restoring backups of every earlier version (a newer version is rejected). On the
+Settings tab, the **Backup** card has a Download backup menu (`<details>`, with a switch each for the credentials and screenshots) and a Restore
+button (two-step `confirmThenRun`, then a file input), disabled during an execution.
 
 #### Screenshots
 

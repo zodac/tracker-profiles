@@ -40,9 +40,10 @@ import org.jspecify.annotations.Nullable;
  * error responses, and provides helpers to read and write JSON.
  *
  * <p>
- * Requests with a body ({@code POST}/{@code PUT}) must send a {@code Content-Type} of {@code application/json}. Since browsers cannot send these
- * cross-origin without a CORS preflight (which is never approved), this prevents other websites from triggering actions through the user's
- * browser. The same applies to {@code DELETE}, which cannot be sent cross-origin without a preflight.
+ * Requests with a body ({@code POST}/{@code PUT}) must send a {@code Content-Type} of {@code application/json} (or another type accepted by
+ * {@link #acceptsContentType(String)}). Since browsers cannot send these cross-origin without a CORS preflight (which is never approved), this
+ * prevents other websites from triggering actions through the user's browser. The same applies to {@code DELETE}, which cannot be sent
+ * cross-origin without a preflight.
  */
 public abstract class ApiHandler implements HttpHandler {
 
@@ -88,11 +89,11 @@ public abstract class ApiHandler implements HttpHandler {
         switch (method) {
             case "GET" -> handleGet(exchange, pathParameter);
             case "POST" -> {
-                requireJsonContentType(exchange);
+                requireContentType(exchange);
                 handlePost(exchange, pathParameter);
             }
             case "PUT" -> {
-                requireJsonContentType(exchange);
+                requireContentType(exchange);
                 handlePut(exchange, pathParameter);
             }
             case "DELETE" -> handleDelete(exchange, pathParameter);
@@ -247,10 +248,22 @@ public abstract class ApiHandler implements HttpHandler {
         }
     }
 
-    private static void requireJsonContentType(final HttpExchange exchange) {
+    /**
+     * Whether the {@code Content-Type} of a request with a body ({@code POST}/{@code PUT}) is accepted. Only a type that a browser cannot send
+     * cross-origin without a CORS preflight may be accepted (so never {@code text/plain}, {@code multipart/form-data} or
+     * {@code application/x-www-form-urlencoded}).
+     *
+     * @param contentType the {@code Content-Type} of the request
+     * @return {@code true} if it is accepted, which by default is only {@code application/json}
+     */
+    protected boolean acceptsContentType(final String contentType) {
+        return contentType.toLowerCase(Locale.ROOT).startsWith(JSON_CONTENT_TYPE);
+    }
+
+    private void requireContentType(final HttpExchange exchange) {
         final String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-        if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith(JSON_CONTENT_TYPE)) {
-            throw new HttpRequestException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content-Type must be '%s'".formatted(JSON_CONTENT_TYPE));
+        if (contentType == null || !acceptsContentType(contentType)) {
+            throw new HttpRequestException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported Content-Type: '%s'".formatted(contentType));
         }
     }
 

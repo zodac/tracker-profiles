@@ -51,6 +51,7 @@ public final class TrackerDurationRepository {
         WHERE name = ?1
         AND finished_at NOT IN (SELECT finished_at FROM tracker_durations WHERE name = ?1 ORDER BY finished_at DESC LIMIT ?2)""";
     private static final String DELETE = "DELETE FROM tracker_durations WHERE name = ?1";
+    private static final String SELECT_ALL = "SELECT name, finished_at, duration FROM tracker_durations ORDER BY name, finished_at";
 
     private final DatabaseConnection connection;
 
@@ -114,5 +115,38 @@ public final class TrackerDurationRepository {
      */
     boolean delete(final String name) throws SQLException {
         return connection.update(DELETE, statement -> statement.setString(1, name)) > 0;
+    }
+
+    /**
+     * Retrieves every stored duration, for a {@link DatabaseBackup}.
+     *
+     * @return the {@link StoredTrackerDuration}s, ordered by tracker name, then from the oldest
+     * @throws SQLException thrown if the database cannot be read
+     */
+    List<StoredTrackerDuration> findAll() throws SQLException {
+        return connection.query(SELECT_ALL, resultSet -> new StoredTrackerDuration(
+            resultSet.getString("name"),
+            resultSet.getLong("finished_at"),
+            resultSet.getLong("duration")
+        ));
+    }
+
+    /**
+     * Replaces the stored durations of every tracker with any duration in {@code trackerDurations} (in a single transaction, or the transaction
+     * already in progress). The durations of other trackers are not changed.
+     *
+     * @param trackerDurations the {@link StoredTrackerDuration}s
+     * @throws SQLException thrown if the database cannot be updated, in which case nothing is changed
+     */
+    void replaceTrackers(final List<StoredTrackerDuration> trackerDurations) throws SQLException {
+        final List<String> trackerNames = trackerDurations.stream().map(StoredTrackerDuration::name).distinct().toList();
+        connection.inTransaction(() -> {
+            connection.batch(DELETE, trackerNames, (statement, trackerName) -> statement.setString(1, trackerName));
+            return connection.batch(INSERT, trackerDurations, (statement, trackerDuration) -> {
+                statement.setString(1, trackerDuration.name());
+                statement.setLong(2, trackerDuration.finishedAt());
+                statement.setLong(3, trackerDuration.duration());
+            });
+        });
     }
 }

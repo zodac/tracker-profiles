@@ -87,4 +87,19 @@ public final class TrackerResultRepository {
     boolean delete(final String name) throws SQLException {
         return connection.update(DELETE, statement -> statement.setString(1, name)) > 0;
     }
+
+    /**
+     * Saves several results (in a single transaction, or the transaction already in progress), each replacing any result already stored for its
+     * tracker.
+     *
+     * @param trackerResults the {@link StoredTrackerResult}s
+     * @throws SQLException thrown if the database cannot be updated, in which case nothing is changed
+     */
+    void saveAll(final List<StoredTrackerResult> trackerResults) throws SQLException {
+        connection.batch(UPSERT, trackerResults, (statement, trackerResult) -> {
+            statement.setString(1, trackerResult.name());
+            statement.setLong(2, trackerResult.finishedAt());
+            statement.setInt(3, trackerResult.successful() ? 1 : 0);
+        });
+    }
 }

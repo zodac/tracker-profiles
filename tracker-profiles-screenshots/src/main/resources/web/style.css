@@ -1885,6 +1885,47 @@ kbd {
     padding: 4px 0;
 }
 
+#backup .setting-input > .button,
+#backup-menu {
+    align-self: flex-start;
+}
+
+.backup-options {
+    left: 0;
+    right: auto;
+    gap: 4px;
+    width: 340px;
+}
+
+.backup-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.backup-option:hover {
+    background: var(--surface-muted);
+}
+
+.backup-option-label {
+    display: block;
+    font-size: 13px;
+}
+
+.backup-option-hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.backup-options > .button {
+    margin: 4px 10px 6px;
+}
+
 .settings-group > h2 {
     padding: 12px 16px 8px;
 }

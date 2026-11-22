@@ -326,6 +326,58 @@ class ApplicationDatabaseTest {
             .isEmpty();
     }
 
+    @Test
+    void givenBackup_whenRestoredInAnotherDatabase_thenItIsMergedWithWhatIsStored() throws IOException, SQLException {
+        applicationDatabase.settings().replaceAll(Map.of("LOG_LEVEL", "DEBUG"));
+        applicationDatabase.results().save(new StoredTrackerResult("Alpha", 2_000L, true));
+        applicationDatabase.screenshots().replace("Alpha", List.of(new StoredTrackerScreenshot("Alpha", "box", 0, "/screenshots/Alpha.png", 2_000L)));
+        for (int i = 1; i <= TrackerDurationRepository.MINIMUM_DURATIONS; i++) {
+            applicationDatabase.durations().add("Alpha", i * 1_000L, 10_000L);
+        }
+        final DatabaseBackup backup = applicationDatabase.backup();
+
+        try (final ApplicationDatabase otherDatabase = ApplicationDatabase.open(tempDirectory.resolve("other.db"), "another-secret-key-value")) {
+            otherDatabase.settings().replaceAll(Map.of("log_level", "WARN", "NUMBER_OF_SCREENSHOT_ATTEMPTS", "3"));
+            otherDatabase.credentials().save("Beta", "other", "password", false);
+            otherDatabase.results().save(new StoredTrackerResult("alpha", 1_000L, false));
+            otherDatabase.results().save(new StoredTrackerResult("Beta", 1_000L, false));
+            otherDatabase.screenshots().replace("Alpha", List.of(new StoredTrackerScreenshot("Alpha", "failure", 0, "/errors/Alpha.png", 1_000L)));
+            otherDatabase.durations().add("Alpha", 9_000L, 50_000L);
+
+            otherDatabase.restore(backup, List.of(new StoredTrackerCredential("Alpha", "user", "password", true)));
+
+            assertThat(otherDatabase.settings().findAll())
+                .containsExactlyInAnyOrderEntriesOf(Map.of("LOG_LEVEL", "DEBUG", "NUMBER_OF_SCREENSHOT_ATTEMPTS", "3"));
+            assertThat(otherDatabase.credentials().findAll())
+                .containsExactly(new StoredTrackerCredential("Alpha", "user", "password", true),
+                    new StoredTrackerCredential("Beta", "other", "password", false));
+            assertThat(otherDatabase.results().findAll())
+                .containsExactly(new StoredTrackerResult("alpha", 2_000L, true), new StoredTrackerResult("Beta", 1_000L, false));
+            assertThat(otherDatabase.screenshots().findAll())
+                .containsExactly(new StoredTrackerScreenshot("Alpha", "box", 0, "/screenshots/Alpha.png", 2_000L));
+            assertThat(otherDatabase.durations().findEstimates())
+                .containsExactly(new TrackerDurationEstimate("Alpha", 10_000L, TrackerDurationRepository.MINIMUM_DURATIONS));
+        }
+    }
+
+    @Test
+    void givenInvalidBackups_whenRestored_thenExceptionIsThrownAndNothingIsChanged() throws SQLException {
+        applicationDatabase.settings().replaceAll(Map.of("LOG_LEVEL", "DEBUG"));
+        final DatabaseBackup duplicateResults = new DatabaseBackup(Map.of(), List.of(new StoredTrackerResult("Alpha", 1_000L, true),
+            new StoredTrackerResult("alpha", 2_000L, true)), List.of(), List.of());
+        final DatabaseBackup negativeDuration = new DatabaseBackup(Map.of(), List.of(), List.of(),
+            List.of(new StoredTrackerDuration("Alpha", 1_000L, -1L)));
+
+        assertThatThrownBy(() -> applicationDatabase.restore(duplicateResults, List.of()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("more than one entry for 'alpha'");
+        assertThatThrownBy(() -> applicationDatabase.restore(negativeDuration, List.of()))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("an entry of durations is incomplete");
+        assertThat(applicationDatabase.settings().findAll())
+            .containsExactlyEntriesOf(Map.of("LOG_LEVEL", "DEBUG"));
+    }
+
     private Path databasePath() {
         return tempDirectory.resolve("nested").resolve("test.db");
     }

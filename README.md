@@ -401,7 +401,8 @@ The application is used through a web UI on port `8080` (configurable with `WEB_
 - **Settings**: the [configuration options](#configuration-options), preloaded from the environment variables, grouped as **Run** (those
   you are most likely to change for an execution), **Output** and **System**. A value changed here from the one set by its environment
   variable (or its default, if not set) is marked with a bar.
-  Settings are locked while an execution is in progress
+  Settings are locked while an execution is in progress. The **Backup** section below them downloads or restores a
+  [backup of the database](#backing-up-and-restoring)
 
 Changes are saved automatically (text fields once you stop typing), with a pop-up confirming each save. The UI follows your operating system's
 light/dark mode, which can be overridden with the button in the header (the choice is remembered by your browser).
@@ -461,6 +462,28 @@ it can be imported again (for example, into a new container). If no tracker has 
 template for the import.
 
 > **Note:** The exported file contains your passwords in plain text, so keep it somewhere safe and delete it once it is no longer needed.
+
+### Backing Up And Restoring
+
+**Download backup** in the **Backup** section of the **Settings** tab downloads a zip file (`tracker-profiles_backup_v<version>_<date>.zip`)
+with the settings saved in the web UI, and the last run, latest screenshots and estimated duration of each tracker. Its menu has two options:
+
+- **Tracker credentials**: the credentials of every supported tracker with a username and password, as a `trackers.csv` file in the format of
+  [Export CSV](#importing-trackers) (and whether each tracker is enabled)
+- **Screenshots**: the latest screenshots of every tracker, as downloaded with **Download** > **All** on the **Trackers** tab
+
+**Restore backup** (select it twice to confirm, then choose the file) restores everything in a backup, such as to move the application to another
+machine: the credentials and screenshots too, if the backup includes them.
+
+- A restore is merged with what is already stored: the settings, trackers and screenshots in the backup replace those already stored for the same
+  setting or tracker, and anything else is kept
+- The screenshots are restored into the current screenshot folder (`OUTPUT_DIRECTORY_PARENT_PATH`), in the same dated folders as when they were
+  backed up. A screenshot that was not included is only shown if its file is still found where it was taken
+- The `SECRET_KEY` of the new machine does not need to be the same
+- Settings that no longer exist, or can only be set as environment variables, are not restored, nor are trackers that are no longer supported
+- A backup cannot be restored while an execution is in progress
+
+> **Note:** A backup with the tracker credentials contains your passwords in plain text, so keep it somewhere safe.
 
 ### Running With Docker Compose
 

@@ -17,6 +17,7 @@
 
 package net.zodac.tracker.web.storage;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -73,14 +74,31 @@ public final class TrackerScreenshotRepository {
     public void replace(final String trackerName, final List<StoredTrackerScreenshot> screenshots) throws SQLException {
         connection.inTransaction(() -> {
             connection.update(DELETE_FOR_TRACKER, statement -> statement.setString(1, trackerName));
-            return connection.batch(INSERT, screenshots, (statement, screenshot) -> {
-                statement.setString(1, screenshot.name());
-                statement.setString(2, screenshot.id());
-                statement.setInt(3, screenshot.position());
-                statement.setString(4, screenshot.path());
-                statement.setLong(5, screenshot.savedAt());
-            });
+            return connection.batch(INSERT, screenshots, TrackerScreenshotRepository::bindInsert);
         });
+    }
+
+    /**
+     * Replaces the stored screenshots of every tracker with any screenshot in {@code screenshots} (in a single transaction, or the transaction
+     * already in progress). The screenshots of other trackers, and the screenshot files themselves, are not changed.
+     *
+     * @param screenshots the {@link StoredTrackerScreenshot}s
+     * @throws SQLException thrown if the database cannot be updated, in which case nothing is changed
+     */
+    void replaceTrackers(final List<StoredTrackerScreenshot> screenshots) throws SQLException {
+        final List<String> trackerNames = screenshots.stream().map(StoredTrackerScreenshot::name).distinct().toList();
+        connection.inTransaction(() -> {
+            connection.batch(DELETE_FOR_TRACKER, trackerNames, (statement, trackerName) -> statement.setString(1, trackerName));
+            return connection.batch(INSERT, screenshots, TrackerScreenshotRepository::bindInsert);
+        });
+    }
+
+    private static void bindInsert(final PreparedStatement statement, final StoredTrackerScreenshot screenshot) throws SQLException {
+        statement.setString(1, screenshot.name());
+        statement.setString(2, screenshot.id());
+        statement.setInt(3, screenshot.position());
+        statement.setString(4, screenshot.path());
+        statement.setLong(5, screenshot.savedAt());
     }
 
     /**

@@ -38,6 +38,10 @@ import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.screenshot.ScreenshotDownload;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
+import net.zodac.tracker.web.storage.DatabaseBackup;
+import net.zodac.tracker.web.storage.StoredTrackerResult;
+import net.zodac.tracker.web.storage.StoredTrackerScreenshot;
+import net.zodac.tracker.web.storage.TrackerDurationRepository;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -418,6 +422,34 @@ class RunManagerTest {
         assertThat(runManager.status().downloads())
             .extracting(RunStatus.Download::type, RunStatus.Download::count)
             .containsExactly(tuple("all", 3), tuple("successful", 2), tuple("blur", 1), tuple("box", 1), tuple("none", 0), tuple("errors", 1));
+    }
+
+    @Test
+    void givenBackup_whenRestored_thenLatestScreenshotsAndEstimatesAreReloadedAndOnlySavableSettingsAreRestored() throws IOException, SQLException {
+        final DatabaseBackup backup;
+        try (final ApplicationDatabase otherDatabase = ApplicationDatabase.open(tempDirectory.resolve("other.db"), SECRET_KEY)) {
+            otherDatabase.settings().replaceAll(Map.of("NUMBER_OF_SCREENSHOT_ATTEMPTS", "3", "WEB_UI_PORT", "9090", "REMOVED_OPTION", "value"));
+            otherDatabase.results().save(new StoredTrackerResult("Alpha", 1_000L, true));
+            otherDatabase.screenshots().replace("Alpha", List.of(new StoredTrackerScreenshot("Alpha", "box", 0,
+                createScreenshot("Alpha_box.png").toAbsolutePath().toString(), 1_000L)));
+            for (int i = 1; i <= TrackerDurationRepository.MINIMUM_DURATIONS; i++) {
+                otherDatabase.durations().add("Alpha", i * 1_000L, 10_000L);
+            }
+            backup = otherDatabase.backup();
+        }
+
+        final RunManager runManager = RunManager.create(openDatabase(), WebLogAppender.install());
+        final Map<String, String> restoredSettings = runManager.restoreBackup(backup, List.of());
+
+        assertThat(restoredSettings)
+            .containsExactlyEntriesOf(Map.of("NUMBER_OF_SCREENSHOT_ATTEMPTS", "3"));
+        assertThat(Configuration.get().numberOfScreenshotAttempts())
+            .isEqualTo(3);
+        assertThat(runManager.latestScreenshots("Alpha"))
+            .extracting(ScreenshotFile::fileName)
+            .containsExactly("Alpha_box.png");
+        assertThat(runManager.estimatedDurations())
+            .containsExactlyEntriesOf(Map.of("Alpha", 10_000L));
     }
 
     private static int downloadCount(final RunManager runManager, final ScreenshotDownload screenshotDownload) {

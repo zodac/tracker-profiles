@@ -1,7 +1,7 @@
 import {TYPING_SAVE_DELAY_MS} from './constants.mjs'
 import {formatTypeName, isActive, latestStatus, refreshStatus} from './run.mjs'
-import {renderTrackers, trackersLoaded} from './trackers.mjs'
-import {byId, el, hasKey, request, showToast} from './util.mjs'
+import {loadTrackers, renderTrackers, trackersLoaded} from './trackers.mjs'
+import {byId, confirmThenRun, el, hasKey, pluralise, request, showToast} from './util.mjs'
 
 // ---------------------------------------------------------------------------------------------------------------
 // Settings (on the Settings tab)
@@ -72,6 +72,93 @@ export function applyRunStateToSettings(status) {
         settingRows[name].setLocked(active)
     })
     byId('settings-locked').hidden = !active
+    byId('backup-restore').disabled = active
+    byId('backup-restore-row').classList.toggle('locked', active)
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Backup (on the Settings tab): the Download backup menu chooses whether the credentials and screenshots are included. The first click of Restore
+// only asks for confirmation (see confirmThenRun), and the second chooses the file
+// ---------------------------------------------------------------------------------------------------------------
+
+export function updateBackupDownload() {
+    const credentials = byId('backup-credentials').checked
+    const screenshots = byId('backup-screenshots').checked
+    byId('backup-download').href = `/api/backup?credentials=${credentials}&screenshots=${screenshots}`
+}
+
+// The number of screenshots included is shown when the menu is opened, from the latest status
+export function onBackupMenuToggled() {
+    if (!byId('backup-menu').open) {
+        return
+    }
+    const all = latestStatus && latestStatus.downloads ? latestStatus.downloads.find(function (download) {
+        return download.type === 'all'
+    }) : null
+    byId('backup-screenshot-count').textContent = all ? String(all.count) : ''
+}
+
+export function closeBackupMenu() {
+    byId('backup-menu').open = false
+}
+
+export function chooseBackupToRestore() {
+    confirmThenRun('restore-backup', function () {
+        byId('backup-file').click()
+    })
+}
+
+export function restoreBackup(file) {
+    const restoreButton = byId('backup-restore')
+    restoreButton.disabled = true
+    fetch('/api/backup', {method: 'POST', headers: {'Content-Type': 'application/zip'}, body: file})
+        .then(async function (response) {
+            const text = await response.text()
+            const json = text ? JSON.parse(text) : null
+            if (!response.ok) {
+                throw new Error(json && json.error ? json.error : `Request failed with status ${response.status}`)
+            }
+            return json
+        })
+        .then(function (result) {
+            // The restored settings replace any change waiting to be saved
+            Object.keys(settingTimers).forEach(function (name) {
+                clearTimeout(settingTimers[name])
+                delete settingTimers[name]
+            })
+            Object.keys(unsavedSettings).forEach(function (name) {
+                delete unsavedSettings[name]
+            })
+
+            showToast(restoreMessage(file.name, result))
+            return Promise.all([loadSettings(), loadTrackers(), refreshStatus()])
+        })
+        .catch(function (error) {
+            showToast(`${file.name} was not restored: ${error.message}`, 'error')
+        })
+        .finally(function () {
+            restoreButton.disabled = isActive(latestStatus)
+            byId('backup-file').value = ''
+        })
+}
+
+function restoreMessage(fileName, result) {
+    const restored = [pluralise(result.settings, 'setting')]
+    if (result.credentialsIncluded) {
+        restored.push(pluralise(result.trackers, 'tracker'))
+    }
+    if (result.screenshotsIncluded) {
+        restored.push(pluralise(result.screenshots, 'screenshot'))
+    }
+
+    let message = `Restored ${fileName}: ${restored.join(', ')}`
+    if (result.unsupportedTrackers.length > 0) {
+        message += `. Not restored, since they are not supported: ${result.unsupportedTrackers.join(', ')}`
+    }
+    if (result.ignoredSettings.length > 0) {
+        message += `. Not restored, since they no longer exist or can only be set as environment variables: ${result.ignoredSettings.join(', ')}`
+    }
+    return message
 }
 
 // A list of the allowed values in order, where each can be dragged (or moved with the arrow keys) into position, and included or excluded

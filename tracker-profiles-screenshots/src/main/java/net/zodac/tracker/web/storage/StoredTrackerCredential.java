@@ -18,6 +18,7 @@
 package net.zodac.tracker.web.storage;
 
 import net.zodac.tracker.framework.TrackerCredential;
+import net.zodac.tracker.framework.TrackerHandlerFactory;
 
 /**
  * A tracker's credentials as stored in the {@link ApplicationDatabase}.
@@ -36,6 +37,16 @@ public record StoredTrackerCredential(String name, String username, String passw
      */
     public boolean hasPassword() {
         return !password.isBlank();
+    }
+
+    /**
+     * Whether the credentials are exported to a CSV file (by the CSV export, and in a backup): only those of a supported tracker with a username
+     * and password, so the file can be imported again.
+     *
+     * @return {@code true} if the credentials are exported
+     */
+    public boolean isExported() {
+        return !username.isBlank() && hasPassword() && TrackerHandlerFactory.findMatchingHandler(name).isPresent();
     }
 
     /**

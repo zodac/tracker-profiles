@@ -111,8 +111,7 @@ public final class TrackerApiHandler extends ApiHandler {
     private void sendExport(final HttpExchange exchange) throws IOException, SQLException {
         final List<TrackerCredential> credentials = applicationDatabase.credentials().findAll()
             .stream()
-            .filter(credential -> !credential.username().isBlank() && credential.hasPassword())
-            .filter(credential -> TrackerHandlerFactory.findMatchingHandler(credential.name()).isPresent())
+            .filter(StoredTrackerCredential::isExported)
             .map(StoredTrackerCredential::toTrackerCredential)
             .toList();
 

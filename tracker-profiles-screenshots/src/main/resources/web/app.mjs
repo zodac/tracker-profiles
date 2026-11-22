@@ -13,7 +13,14 @@ import {
     togglePendingInputs,
 } from './js/run.mjs'
 import {closeDownloadMenu, setUpGallery} from './js/screenshots.mjs'
-import {unsavedSettings} from './js/settings.mjs'
+import {
+    chooseBackupToRestore,
+    closeBackupMenu,
+    onBackupMenuToggled,
+    restoreBackup,
+    unsavedSettings,
+    updateBackupDownload,
+} from './js/settings.mjs'
 import {showTab} from './js/tabs.mjs'
 import {toggleTheme, updateThemeToggle} from './js/theme-toggle.mjs'
 import {
@@ -62,6 +69,8 @@ document.addEventListener('DOMContentLoaded', function () {
             clearConfirmation()
         } else if (event.key === 'Escape' && byId('download-menu').open) {
             closeDownloadMenu()
+        } else if (event.key === 'Escape' && byId('backup-menu').open) {
+            closeBackupMenu()
         } else if (event.key === 'Escape' && selectedTrackers.size > 0) {
             clearSelection()
         } else if (isSelectAllShortcut(event)) {
@@ -75,6 +84,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!byId('download-menu').contains(event.target)) {
             closeDownloadMenu()
         }
+        if (!byId('backup-menu').contains(event.target)) {
+            closeBackupMenu()
+        }
     }, true)
     byId('import-button').addEventListener('click', function () {
         byId('import-file').click()
@@ -83,6 +95,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const file = byId('import-file').files[0]
         if (file) {
             importTrackers(file)
+        }
+    })
+    byId('backup-menu').addEventListener('toggle', onBackupMenuToggled)
+    byId('backup-credentials').addEventListener('change', updateBackupDownload)
+    byId('backup-screenshots').addEventListener('change', updateBackupDownload)
+    byId('backup-download').addEventListener('click', closeBackupMenu)
+    updateBackupDownload()
+    byId('backup-restore').addEventListener('click', chooseBackupToRestore)
+    byId('backup-file').addEventListener('change', function () {
+        const file = byId('backup-file').files[0]
+        if (file) {
+            restoreBackup(file)
         }
     })
     window.addEventListener('hashchange', showTab)

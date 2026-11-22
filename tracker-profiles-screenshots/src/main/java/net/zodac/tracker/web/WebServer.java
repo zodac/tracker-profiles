@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.ConfigurationOption;
+import net.zodac.tracker.web.backup.BackupService;
+import net.zodac.tracker.web.http.BackupApiHandler;
 import net.zodac.tracker.web.http.BrowserApiHandler;
 import net.zodac.tracker.web.http.LogApiHandler;
 import net.zodac.tracker.web.http.RunApiHandler;
@@ -87,6 +89,7 @@ public final class WebServer {
             httpServer.createContext(ScreenshotApiHandler.CONTEXT_PATH, ScreenshotApiHandler.create(runManager));
             httpServer.createContext(TrackerApiHandler.CONTEXT_PATH, TrackerApiHandler.create(applicationDatabase, runManager));
             httpServer.createContext(SettingsApiHandler.CONTEXT_PATH, SettingsApiHandler.create(settingsService));
+            httpServer.createContext(BackupApiHandler.CONTEXT_PATH, BackupApiHandler.create(BackupService.create(applicationDatabase, runManager)));
             httpServer.createContext(StaticResourceHandler.CONTEXT_PATH, StaticResourceHandler.create());
             httpServer.start();
 

@@ -24,7 +24,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.flywaydb.core.Flyway;
@@ -208,6 +210,44 @@ public final class ApplicationDatabase implements AutoCloseable {
                 }
             }
             return removed;
+        });
+    }
+
+    /**
+     * Creates a {@link DatabaseBackup} of everything stored except the tracker credentials, read in a single transaction so it is consistent.
+     *
+     * @return the {@link DatabaseBackup}
+     * @throws SQLException thrown if the database cannot be read
+     */
+    public DatabaseBackup backup() throws SQLException {
+        return connection.inTransaction(() -> new DatabaseBackup(settings.findAll(), results.findAll(), screenshots.findAll(), durations.findAll()));
+    }
+
+    /**
+     * Restores a {@link DatabaseBackup} (and any credentials backed up with it) in a single transaction, merging it with what is already stored:
+     * the settings, results, screenshots and durations in the backup replace those stored for the same setting or tracker, and the credentials
+     * replace those of the same tracker (as a CSV import does). Anything else stored is kept. The settings are restored as they are, so they should
+     * first be limited to the options that can be saved (see {@link DatabaseBackup#withSettings(Map)}).
+     *
+     * @param backup             the {@link DatabaseBackup} to restore
+     * @param trackerCredentials the {@link StoredTrackerCredential}s to restore, with their passwords in plain text (empty if the backup has none)
+     * @throws IllegalArgumentException thrown if the backup is invalid
+     * @throws SQLException             thrown if the database cannot be updated, in which case nothing is changed
+     */
+    public void restore(final DatabaseBackup backup, final List<StoredTrackerCredential> trackerCredentials) throws SQLException {
+        backup.validate();
+        connection.inTransaction(() -> {
+            final Map<String, String> mergedSettings = new LinkedHashMap<>(settings.findAll());
+            backup.settings().forEach((name, value) -> {
+                mergedSettings.keySet().removeIf(name::equalsIgnoreCase);
+                mergedSettings.put(name, value);
+            });
+            settings.replaceAll(mergedSettings);
+            credentials.saveAll(trackerCredentials);
+            results.saveAll(backup.results());
+            screenshots.replaceTrackers(backup.screenshots());
+            durations.replaceTrackers(backup.durations());
+            return mergedSettings.size();
         });
     }
 

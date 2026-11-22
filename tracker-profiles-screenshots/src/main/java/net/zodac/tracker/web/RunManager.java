@@ -47,6 +47,7 @@ import net.zodac.tracker.framework.TrackerHandlerFactory;
 import net.zodac.tracker.framework.TrackerType;
 import net.zodac.tracker.framework.config.ApplicationConfiguration;
 import net.zodac.tracker.framework.config.Configuration;
+import net.zodac.tracker.framework.config.ConfigurationOption;
 import net.zodac.tracker.framework.driver.BrowserResolution;
 import net.zodac.tracker.framework.driver.DriverPool;
 import net.zodac.tracker.framework.gui.DisplayValidator;
@@ -59,6 +60,7 @@ import net.zodac.tracker.web.log.WebLogAppender;
 import net.zodac.tracker.web.screenshot.ScreenshotDownload;
 import net.zodac.tracker.web.screenshot.ScreenshotFile;
 import net.zodac.tracker.web.storage.ApplicationDatabase;
+import net.zodac.tracker.web.storage.DatabaseBackup;
 import net.zodac.tracker.web.storage.StoredTrackerCredential;
 import net.zodac.tracker.web.storage.StoredTrackerResult;
 import net.zodac.tracker.web.storage.StoredTrackerScreenshot;
@@ -134,6 +136,11 @@ public final class RunManager implements ExecutionListener {
      * @throws SQLException thrown if the saved screenshots, results or durations cannot be read from the database
      */
     public static RunManager create(final ApplicationDatabase applicationDatabase, final WebLogAppender webLogAppender) throws SQLException {
+        return new RunManager(applicationDatabase, webLogAppender, loadLatestScreenshots(applicationDatabase),
+            loadLatestExecutionFailed(applicationDatabase), loadEstimatedDurations(applicationDatabase));
+    }
+
+    private static Map<String, List<ScreenshotFile>> loadLatestScreenshots(final ApplicationDatabase applicationDatabase) throws SQLException {
         final Map<String, List<ScreenshotFile>> screenshotsByTracker = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (final StoredTrackerScreenshot stored : applicationDatabase.screenshots().findAll()) {
             final ScreenshotFile screenshot = toScreenshotFile(stored);
@@ -142,14 +149,16 @@ public final class RunManager implements ExecutionListener {
             }
         }
         screenshotsByTracker.replaceAll((_, screenshots) -> List.copyOf(screenshots));
+        return screenshotsByTracker;
+    }
 
+    private static Set<String> loadLatestExecutionFailed(final ApplicationDatabase applicationDatabase) throws SQLException {
         final Set<String> latestExecutionFailed = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         applicationDatabase.results().findAll()
             .stream()
             .filter(result -> !result.successful())
             .forEach(result -> latestExecutionFailed.add(result.name()));
-        return new RunManager(applicationDatabase, webLogAppender, screenshotsByTracker, latestExecutionFailed,
-            loadEstimatedDurations(applicationDatabase));
+        return latestExecutionFailed;
     }
 
     private static Map<String, Long> loadEstimatedDurations(final ApplicationDatabase applicationDatabase) throws SQLException {
@@ -670,6 +679,64 @@ public final class RunManager implements ExecutionListener {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Restores a {@link DatabaseBackup} and the credentials backed up with it (see {@link ApplicationDatabase#restore(DatabaseBackup, List)}),
+     * unless an execution is in progress, then reloads the latest screenshots, results and estimated durations of the trackers, and the
+     * {@link Configuration}. Only the settings of options that can be saved in the web UI are restored. The current (or most recent) execution is
+     * kept, with its screenshots and logs.
+     *
+     * @param backup             the {@link DatabaseBackup} to restore
+     * @param trackerCredentials the {@link StoredTrackerCredential}s to restore (empty if the backup has none)
+     * @return the settings that were restored, keyed by environment variable name
+     * @throws IllegalArgumentException thrown if the backup is invalid
+     * @throws IllegalStateException    thrown if an execution is in progress
+     * @throws SQLException             thrown if the database cannot be updated, in which case nothing is changed
+     */
+    public Map<String, String> restoreBackup(final DatabaseBackup backup, final List<StoredTrackerCredential> trackerCredentials)
+        throws SQLException {
+        backup.validate();
+        final Map<String, String> restoredSettings = new TreeMap<>(backup.settings());
+        restoredSettings.keySet().removeIf(name -> !isSavedInWebUi(ConfigurationOption.find(name)));
+
+        // Held throughout, so no execution can start until the backup has been restored and loaded
+        lock.lock();
+        try {
+            checkCanRestoreBackup();
+            applicationDatabase.restore(backup.withSettings(restoredSettings), trackerCredentials);
+            latestScreenshots.clear();
+            latestScreenshots.putAll(loadLatestScreenshots(applicationDatabase));
+            latestExecutionFailed.clear();
+            latestExecutionFailed.addAll(loadLatestExecutionFailed(applicationDatabase));
+            estimatedDurations.clear();
+            estimatedDurations.putAll(loadEstimatedDurations(applicationDatabase));
+
+            try {
+                reloadConfiguration(applicationDatabase);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.warn("Restored settings are invalid with the current environment variables (checked again on each execution): {}",
+                    e.getMessage());
+            }
+        } finally {
+            lock.unlock();
+        }
+        return restoredSettings;
+    }
+
+    /**
+     * Checks that a backup can be restored, since no execution is in progress.
+     *
+     * @throws IllegalStateException thrown if an execution is in progress
+     */
+    public void checkCanRestoreBackup() {
+        if (isExecutionInProgress()) {
+            throw new IllegalStateException("A backup cannot be restored while an execution is in progress");
+        }
+    }
+
+    private static boolean isSavedInWebUi(final @Nullable ConfigurationOption option) {
+        return option != null && option.editableAtRuntime();
     }
 
     // Only the screenshots whose files still exist (they may have been deleted or moved since), by tracker name (case-insensitive): those of each
