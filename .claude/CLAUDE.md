@@ -282,7 +282,9 @@ polled, except the status every 10s during an execution (no logs), so the page t
   starts (a row whose tracker is waiting again is collapsed and its logs reset), and kept while the execution prepares its trackers, so nothing is
   re-rendered. A running tracker's row has a Cancel button (both Cancel buttons use the two-step `confirmThenRun` of `util.mjs`, not
   `window.confirm`: the first click arms the button by its `data-confirm-key`, a click elsewhere or Escape disarms it), each group has
-  previous/next buttons (`scrollToGroup`), the run card is pinned under the header (`position: sticky`, except on small screens), and the header
+  previous/next buttons (`scrollToGroup`), the run card is pinned under the header (`position: sticky`, except on small screens) and condensed
+  (one line, smaller buttons) once pinned, when `#run-card-sentinel` above it scrolls under the header (`setUpRunCardCondensing`, an
+  `IntersectionObserver`), with a bottom margin keeping the room of the full card so the page below never moves, and the header
   status has a tooltip with the count of each state. The tab is wider than the others (90% of the window), for the browsers of the inputs. The
   Settings tab shows every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by
   group), so the run options come first, with `Scope.STARTUP` options read-only. A group whose options are all `Scope.STARTUP` (such as System)

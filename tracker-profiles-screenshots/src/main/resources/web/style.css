@@ -1381,6 +1381,60 @@ a.icon-button {
     font-size: 20px;
 }
 
+/* Directly above the run card, taking no room (cancelling the gap of the tab panel) */
+.run-card-sentinel {
+    margin-bottom: -16px;
+}
+
+/* Once pinned, the run card is condensed so it covers less of the page (such as the browsers of the inputs). Its margin (set by
+   updateRunCardCondensed) keeps the room of the full card, so the page below it does not move */
+.run-card.condensed {
+    padding: 10px 20px;
+}
+
+.run-card.condensed .run-summary > div {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    min-width: 0;
+}
+
+.run-card.condensed h2 {
+    flex: none;
+    font-size: 16px;
+}
+
+.run-card.condensed .run-summary p {
+    margin: 0;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.run-card.condensed .button.large {
+    min-width: 96px;
+    padding: 6px 18px;
+    font-size: 14px;
+}
+
+.run-card.condensed .run-progress {
+    margin-top: 8px;
+}
+
+.run-card.condensed .progress-track {
+    height: 6px;
+}
+
+.run-card.condensed .progress-counts {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.run-card.condensed .download-link {
+    padding-block: 2px;
+}
+
 .run-card .button.large {
     min-width: 140px;
     padding: 14px 36px;

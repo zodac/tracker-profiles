@@ -21,6 +21,8 @@ export let statusTimer = null
 export let latestStatus = null
 // Whether the last status request failed, so the error is only shown once while the application cannot be reached
 let statusUnreachable = false
+// Whether the page is scrolled past the top of the run card, so it is pinned under the header
+let runCardScrolledPast = false
 
 export function isActive(status) {
     return Boolean(status) && (status.state === 'RUNNING' || status.state === 'CANCELLING')
@@ -130,6 +132,41 @@ export function renderRunSummary() {
     byId('run-description').textContent = runDescription(latestStatus)
     if (latestStatus.state === 'IDLE') {
         renderExecutionTrackers(latestStatus)
+    }
+}
+
+// Condenses the run card while it is pinned under the header (it is not pinned on small screens), when the sentinel above it has scrolled under
+// the header
+export function setUpRunCardCondensing() {
+    const runCard = byId('run-card')
+    const observer = new IntersectionObserver(function (entries) {
+        const entry = entries[entries.length - 1]
+        runCardScrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < entry.rootBounds.top
+        updateRunCardCondensed(runCardScrolledPast)
+    }, {rootMargin: `-${parseFloat(getComputedStyle(runCard).top) || 0}px 0px 0px 0px`})
+    observer.observe(byId('run-card-sentinel'))
+    // The card is only pinned on larger screens
+    window.addEventListener('resize', function () {
+        updateRunCardCondensed(runCardScrolledPast)
+    })
+}
+
+// The margin below the condensed card keeps the room of the full card, so the page below it never moves (which could otherwise make the page short
+// enough to scroll back up, expanding the card again)
+export function updateRunCardCondensed(condensed) {
+    const runCard = byId('run-card')
+    const pinned = getComputedStyle(runCard).position === 'sticky'
+    const shouldCondense = condensed && pinned && !byId('tab-main').hidden
+    if (shouldCondense === runCard.classList.contains('condensed')) {
+        return
+    }
+    if (shouldCondense) {
+        const fullHeight = runCard.offsetHeight
+        runCard.classList.add('condensed')
+        runCard.style.marginBottom = `${Math.max(0, fullHeight - runCard.offsetHeight)}px`
+    } else {
+        runCard.classList.remove('condensed')
+        runCard.style.marginBottom = ''
     }
 }
 

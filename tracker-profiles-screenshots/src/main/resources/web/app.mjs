@@ -10,6 +10,7 @@ import {
     scheduleStatusRefresh,
     startRun,
     statusTimer,
+    setUpRunCardCondensing,
     togglePendingInputs,
 } from './js/run.mjs'
 import {closeDownloadMenu, setUpGallery} from './js/screenshots.mjs'
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     byId('cancel-button').addEventListener('click', cancelRun)
     byId('pending-inputs').addEventListener('toggle', togglePendingInputs)
+    setUpRunCardCondensing()
     setUpGallery()
     byId('tracker-search').addEventListener('input', renderTrackers)
     byId('selection-enable').addEventListener('click', function () {

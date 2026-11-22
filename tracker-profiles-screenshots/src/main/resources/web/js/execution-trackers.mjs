@@ -9,6 +9,7 @@ import {
     isActive,
     latestStatus,
     refreshStatus,
+    updateRunCardCondensed,
 } from './run.mjs'
 import {updateTrackerScreenshots} from './screenshots.mjs'
 import {currentSettingValue} from './settings.mjs'
@@ -405,6 +406,10 @@ function scrollToGroup(card) {
     }
     const runCard = byId('run-card')
     const pinned = getComputedStyle(runCard).position === 'sticky'
+    // The run card is condensed once the page is scrolled, so the group is placed under the condensed card
+    if (pinned && window.scrollY + card.getBoundingClientRect().top > runCard.offsetTop) {
+        updateRunCardCondensed(true)
+    }
     const offset = pinned ? parseFloat(getComputedStyle(runCard).top) + runCard.offsetHeight + 12 : 72
     window.scrollTo({
         top: window.scrollY + card.getBoundingClientRect().top - offset,
