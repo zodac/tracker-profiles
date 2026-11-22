@@ -323,7 +323,7 @@ public final class DriverPool {
         try {
             trackerType = instance.pooledDrivers.get(driver);
             instance.freshDrivers.remove(driver);
-            instance.driversByTracker.values().removeIf(assigned -> assigned == driver);
+            instance.driversByTracker.values().removeIf(driver::equals);
             terminated = instance.terminatedDrivers.remove(driver);
         } finally {
             instance.lock.unlock();
