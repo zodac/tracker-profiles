@@ -44,13 +44,13 @@ public enum ConfigurationOption {
      * The redaction types to apply.
      */
     REDACTION_TYPE(Group.RUN, "Redaction", "BOX", OptionType.MULTI_SELECT, names(RedactionType.values()),
-        "The redaction types to apply (if more than one is selected then multiple screenshots will be taken)", Scope.EXECUTION),
+        "The redaction types to apply", Scope.EXECUTION),
 
     /**
      * The order in which trackers are executed.
      */
     EXECUTION_ORDER(Group.RUN, "Execution order", "ALPHABETICAL", OptionType.SELECT, names(ExecutionOrder.values()),
-        "The order in which trackers are executed: by name, or headless or manual trackers first (each by name)", Scope.EXECUTION),
+        "The order in which trackers are executed", Scope.EXECUTION),
 
     /**
      * The number of trackers executed in parallel.
@@ -62,13 +62,13 @@ public enum ConfigurationOption {
      * The number of screenshot attempts per tracker.
      */
     NUMBER_OF_SCREENSHOT_ATTEMPTS(Group.RUN, "Attempts per tracker", "1", Range.of(1, 5),
-        "The number of times to attempt to screenshot a tracker before marking it as a fail", Scope.EXECUTION),
+        "The number of times to attempt to screenshot a tracker", Scope.EXECUTION),
 
     /**
      * Whether to translate non-English trackers.
      */
     ENABLE_TRANSLATION_TO_ENGLISH(Group.RUN, "Translate to English", "true", OptionType.BOOLEAN, List.of(),
-        "Whether to translate non-English trackers to English", Scope.EXECUTION),
+        "Translate non-English trackers to English", Scope.EXECUTION),
 
     /**
      * The path to the SQLite database used by the web UI.
@@ -214,15 +214,12 @@ public enum ConfigurationOption {
     }
 
     /**
-     * A user-facing description of the option, including the {@link #range()} of an {@link OptionType#INTEGER} option.
+     * A user-facing description of the option.
      *
      * @return the description
      */
     public String description() {
-        if (range == null) {
-            return description;
-        }
-        return "%s [min: %d, max: %d]".formatted(description, range.minimum(), range.maximum());
+        return description;
     }
 
     /**

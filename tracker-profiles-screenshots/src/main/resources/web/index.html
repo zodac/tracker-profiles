@@ -107,46 +107,30 @@
         <div id="settings-groups"></div>
         <div id="backup" class="card settings-group">
             <h2>Backup</h2>
-            <div class="setting-row">
-                <div>
-                    <div class="setting-name"><strong class="setting-label">Download backup</strong></div>
-                    <p class="setting-description">A zip file with the settings saved in the web UI, and the last run, latest screenshots and
-                        estimated duration of each tracker. The tracker credentials and the screenshot files can also be included.</p>
-                </div>
-                <div class="setting-input">
-                    <details id="backup-menu" class="menu">
-                        <summary class="button primary" title="Choose what to include in the backup">Download backup</summary>
-                        <div class="menu-items backup-options">
-                            <label class="backup-option">
-                                <span>
-                                    <span class="backup-option-label">Tracker credentials</span>
-                                    <span class="backup-option-hint">As in Export CSV, with the passwords in plain text</span>
-                                </span>
-                                <span class="switch"><input type="checkbox" id="backup-credentials"><span class="switch-track"></span></span>
-                            </label>
-                            <label class="backup-option">
-                                <span>
-                                    <span class="backup-option-label">Screenshots <span id="backup-screenshot-count" class="menu-count"></span></span>
-                                    <span class="backup-option-hint">The latest screenshots of every tracker, as in Download &rsaquo; All</span>
-                                </span>
-                                <span class="switch"><input type="checkbox" id="backup-screenshots"><span class="switch-track"></span></span>
-                            </label>
-                            <a id="backup-download" class="button primary" href="/api/backup" download>Download</a>
-                        </div>
-                    </details>
-                </div>
-            </div>
-            <div id="backup-restore-row" class="setting-row">
-                <div>
-                    <div class="setting-name"><strong class="setting-label">Restore backup</strong></div>
-                    <p class="setting-description">Restores everything in a backup, such as one downloaded on another machine: the credentials and
-                        screenshots too, if it includes them. Anything stored that is not in the backup is kept.</p>
-                </div>
-                <div class="setting-input">
-                    <button id="backup-restore" class="button danger-solid" type="button" data-confirm-key="restore-backup"
-                            data-confirm-label="Restore backup" title="Choose a backup file to restore, replacing everything stored">Restore backup</button>
-                    <input type="file" id="backup-file" accept=".zip,application/zip" hidden>
-                </div>
+            <div class="backup-actions">
+                <details id="backup-menu" class="menu">
+                    <summary class="button primary" title="Choose what to include in the backup">Download backup</summary>
+                    <div class="menu-items backup-options">
+                        <label class="backup-option">
+                            <span>
+                                <span class="backup-option-label">Tracker credentials</span>
+                                <span class="backup-option-hint">As in Export CSV, with the passwords in plain text</span>
+                            </span>
+                            <span class="switch"><input type="checkbox" id="backup-credentials"><span class="switch-track"></span></span>
+                        </label>
+                        <label class="backup-option">
+                            <span>
+                                <span class="backup-option-label">Screenshots <span id="backup-screenshot-count" class="menu-count"></span></span>
+                                <span class="backup-option-hint">The latest screenshots of every tracker, as in Download &rsaquo; All</span>
+                            </span>
+                            <span class="switch"><input type="checkbox" id="backup-screenshots"><span class="switch-track"></span></span>
+                        </label>
+                        <a id="backup-download" class="button primary" href="/api/backup" download>Download</a>
+                    </div>
+                </details>
+                <button id="backup-restore" class="button danger-solid" type="button" data-confirm-key="restore-backup"
+                        data-confirm-label="Restore backup" title="Choose a backup file to restore, replacing everything stored">Restore backup</button>
+                <input type="file" id="backup-file" accept=".zip,application/zip" hidden>
             </div>
         </div>
         <div id="settings-read-only-groups"></div>

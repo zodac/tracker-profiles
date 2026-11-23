@@ -96,7 +96,6 @@ export function applyRunStateToSettings(status) {
     })
     byId('settings-locked').hidden = !active
     byId('backup-restore').disabled = active
-    byId('backup-restore-row').classList.toggle('locked', active)
 }
 
 // ---------------------------------------------------------------------------------------------------------------

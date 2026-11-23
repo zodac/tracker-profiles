@@ -1987,9 +1987,14 @@ kbd {
     align-items: center;
 }
 
-#backup .setting-input > .button,
-#backup-menu {
-    align-self: flex-start;
+/* The Download backup menu and the Restore button, side by side */
+.backup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
 }
 
 .backup-options {

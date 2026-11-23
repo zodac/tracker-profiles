@@ -181,8 +181,8 @@ UI, and holds its lock while `ApplicationDatabase.restore` **merges** the backup
 screenshots and durations of each tracker in the backup replace those stored for the same setting or tracker; everything else is kept, so a legacy
 tracker is never removed) and its in-memory state and the configuration are reloaded. A backup is a file kept by the user, so a change to what it
 holds must increase `BackupManifest.FORMAT_VERSION` and keep restoring backups of every earlier version (a newer version is rejected). On the
-Settings tab, the **Backup** card has a Download backup menu (`<details>`, with a switch each for the credentials and screenshots) and a Restore
-button (two-step `confirmThenRun`, then a file input), disabled during an execution.
+Settings tab, the **Backup** card has only two buttons on one line, with no description: a Download backup menu (`<details>`, with a switch each
+for the credentials and screenshots) and a Restore button (two-step `confirmThenRun`, then a file input), disabled during an execution.
 
 #### Screenshots
 
@@ -467,8 +467,8 @@ New env vars must be:
    `Group.RUN` for options likely to be changed for an execution, otherwise `Group.SYSTEM`. Use `Scope.STARTUP` if the value is only read at
    startup (a web UI change would have no effect), or is a deployment concern (such as a path that must be a mounted volume, as the screenshot
    folder), otherwise `Scope.EXECUTION`.
-   An `OptionType.INTEGER` option is declared with its `Range.of(min, max)`, which validates it (`parseInteger`), is appended to its
-   description, and limits the web UI input; a `SELECT`/`MULTI_SELECT` option is validated
+   An `OptionType.INTEGER` option is declared with its `Range.of(min, max)`, which validates it (`parseInteger`) and limits the web UI
+   input (it is not added to the description, which is kept short, as the input shows the valid values); a `SELECT`/`MULTI_SELECT` option is validated
    against its allowed values (`parseAllowedValue`). A secret value must be marked in `ConfigurationOption.sensitive()`, and masked in
    `ApplicationConfiguration.printableValue()`
 2. Added as a record component (alphabetical order among components); `print()` and `toString()` list every component automatically
