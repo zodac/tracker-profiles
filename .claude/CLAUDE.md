@@ -297,7 +297,7 @@ polled, except the status every 10s during an execution (no logs), so the page t
   previous/next buttons (`scrollToGroup`), the run card is pinned under the header (`position: sticky`, except on small screens) and condensed
   (one line, smaller buttons) once pinned, when `#run-card-sentinel` above it scrolls under the header (`setUpRunCardCondensing`, an
   `IntersectionObserver`), with a bottom margin keeping the room of the full card so the page below never moves, and the header
-  status has a tooltip with the count of each state. The tab is wider than the others (90% of the window), for the browsers of the inputs. The
+  status has a tooltip with the count of each state. Every tab is 90% of the window wide (at least 1320px), for the browsers of the inputs. The
   Settings tab shows every option under its `ConfigurationOption.Group`, in the order of the constants (`SettingsService.listSettings` sorts by
   group), so the run options come first, with `Scope.STARTUP` options read-only. A group whose options are all `Scope.STARTUP` (such as System)
   is listed after the Backup card instead, collapsed by default and without descriptions (`#settings-read-only-groups`). A value saved in the UI
