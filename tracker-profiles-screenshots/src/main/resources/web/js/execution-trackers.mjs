@@ -128,7 +128,7 @@ function createBrowserPanel(tracker) {
     const panel = el('details', {className: 'tracker-browser', hidden: true}, [
         el('summary', {}, [
             el('span', {className: 'tracker-browser-title', text: 'Live browser'}),
-            el('span', {className: 'muted', text: 'View only: the browser can be used when the tracker needs you'}),
+            el('span', {className: 'muted', text: 'Read-only'}),
         ]),
     ])
     panel.addEventListener('toggle', function () {
